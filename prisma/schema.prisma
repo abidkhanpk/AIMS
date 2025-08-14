@@ -22,16 +22,20 @@ model User {
   updatedAt DateTime @updatedAt
 
   // A user can belong to one academy
-  academy   Academy? @relation(fields: [academyId], references: [id])
+  academy   Academy? @relation("AcademyUsers", fields: [academyId], references: [id])
   academyId String?
+
+  // A user can be an admin of one academy
+  adminOfAcademy Academy? @relation("AcademyAdmin")
 
   // For TEACHER role
   studentsAsTeacher User[] @relation("TeacherToStudent")
+  authoredProgress  Progress[] @relation("AuthoredProgress") // Progress reports authored by this user
 
   // For STUDENT role
   teachersAsStudent User[] @relation("TeacherToStudent")
   parentsAsStudent  User[] @relation("ParentToStudent")
-  progress          Progress[]
+  progress          Progress[] @relation("StudentProgress") // This user's progress reports
   subjects          Subject[]  @relation("StudentSubjects")
 
 
@@ -53,11 +57,11 @@ model Academy {
   updatedAt DateTime @updatedAt
 
   // An academy has one admin
-  admin   User?    @relation(fields: [adminId], references: [id])
+  admin   User?    @relation("AcademyAdmin", fields: [adminId], references: [id])
   adminId String?  @unique
 
   // An academy has many users
-  users   User[]
+  users   User[] @relation("AcademyUsers")
 }
 
 
@@ -79,14 +83,14 @@ model Progress {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  student   User     @relation(fields: [studentId], references: [id])
+  student   User     @relation("StudentProgress", fields: [studentId], references: [id])
   studentId String
 
   subject   Subject  @relation(fields: [subjectId], references: [id])
   subjectId String
 
   // The teacher who created the progress entry
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User     @relation("AuthoredProgress", fields: [authorId], references: [id])
   authorId  String
 }
 
