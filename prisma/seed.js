@@ -5,121 +5,123 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('Start seeding ...');
+  const saltRounds = 10;
+  const password = 'password123';
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const saltRounds = 10;
-    const password = await bcrypt.hash('password123', saltRounds);
+  // Create Developer
+  const developer = await prisma.user.create({
+    data: {
+      email: 'developer@lms.com',
+      password: hashedPassword,
+      role: 'DEVELOPER',
+      firstName: 'Developer',
+      lastName: 'User',
+    },
+  });
 
-    // Create Developer
-    const developer = await prisma.user.create({
-        data: {
-            email: 'dev@lms.com',
-            password,
-            firstName: 'Super',
-            lastName: 'Developer',
-            role: 'DEVELOPER',
-        },
-    });
+  // Create Admin
+  const admin = await prisma.user.create({
+    data: {
+      email: 'admin@lms.com',
+      password: hashedPassword,
+      role: 'ADMIN',
+      firstName: 'Admin',
+      lastName: 'User',
+    },
+  });
 
-    // Create Academy and Admin
-    const academy = await prisma.academy.create({
-        data: {
-            name: 'Global Tech Academy',
-            appTitle: 'GTA LMS',
-            admin: {
-                create: {
-                    email: 'admin@gta.com',
-                    password,
-                    firstName: 'Admin',
-                    lastName: 'User',
-                    role: 'ADMIN',
-                }
-            }
-        },
-        include: { admin: true }
-    });
+  // Create Academy
+  const academy = await prisma.academy.create({
+    data: {
+      name: 'My Academy',
+      adminId: admin.id,
+    },
+  });
 
-    const admin = academy.admin;
+  // Update Admin with Academy ID
+  await prisma.user.update({
+    where: { id: admin.id },
+    data: { academyId: academy.id },
+  });
 
-    // Create Teacher
-    const teacher = await prisma.user.create({
-        data: {
-            email: 'teacher@gta.com',
-            password,
-            firstName: 'Teacher',
-            lastName: 'User',
-            role: 'TEACHER',
-            academyId: academy.id,
-            creatorId: admin.id,
-        },
-    });
+  // Create Teacher
+  const teacher = await prisma.user.create({
+    data: {
+      email: 'teacher@lms.com',
+      password: hashedPassword,
+      role: 'TEACHER',
+      firstName: 'Teacher',
+      lastName: 'User',
+      academyId: academy.id,
+    },
+  });
 
-    // Create Student
-    const student = await prisma.user.create({
-        data: {
-            email: 'student@gta.com',
-            password,
-            firstName: 'Student',
-            lastName: 'User',
-            role: 'STUDENT',
-            academyId: academy.id,
-            creatorId: admin.id,
-        },
-    });
+  // Create Student
+  const student = await prisma.user.create({
+    data: {
+      email: 'student@lms.com',
+      password: hashedPassword,
+      role: 'STUDENT',
+      firstName: 'Student',
+      lastName: 'User',
+      academyId: academy.id,
+    },
+  });
 
-    // Create Parent
-    const parent = await prisma.user.create({
-        data: {
-            email: 'parent@gta.com',
-            password,
-            firstName: 'Parent',
-            lastName: 'User',
-            role: 'PARENT',
-            academyId: academy.id,
-            creatorId: admin.id,
-        },
-    });
+  // Create Parent
+  const parent = await prisma.user.create({
+    data: {
+      email: 'parent@lms.com',
+      password: hashedPassword,
+      role: 'PARENT',
+      firstName: 'Parent',
+      lastName: 'User',
+      academyId: academy.id,
+    },
+  });
 
-    // Create Subject
-    const subject = await prisma.subject.create({
-        data: {
-            name: 'Introduction to Programming',
-            description: 'Learn the fundamentals of programming.',
-        },
-    });
+  // Create Subject
+  const subject = await prisma.subject.create({
+    data: {
+      name: 'Mathematics',
+      description: 'Learn about numbers and equations.',
+    },
+  });
 
-    // Assign student to teacher
-    await prisma.user.update({
-        where: { id: teacher.id },
-        data: {
-            studentsAsTeacher: { connect: { id: student.id } }
-        }
-    });
+  // Assign Student to Subject
+  await prisma.studentSubject.create({
+    data: {
+      studentId: student.id,
+      subjectId: subject.id,
+    },
+  });
 
-    // Assign parent to student
-    await prisma.user.update({
-        where: { id: parent.id },
-        data: {
-            childrenAsParent: { connect: { id: student.id } }
-        }
-    });
+  // Assign Teacher to Student
+  await prisma.userRelation.create({
+    data: {
+      teacherId: teacher.id,
+      studentId: student.id,
+    },
+  });
 
-    // Enroll student in subject
-    await prisma.user.update({
-        where: { id: student.id },
-        data: {
-            subjects: { connect: { id: subject.id } }
-        }
-    });
+  // Assign Parent to Student
+  await prisma.userRelation.create({
+    data: {
+      parentId: parent.id,
+      studentId: student.id,
+      teacherId: teacher.id,
+    },
+  });
 
-    console.log('Seeding finished.');
+  console.log({ developer, admin, teacher, student, parent });
 }
 
 main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

@@ -1,100 +1,90 @@
-
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  firstName String
-  lastName  String
-  role      Role     @default(STUDENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // A user can belong to one academy
-  academy   Academy? @relation("AcademyUsers", fields: [academyId], references: [id])
-  academyId String?
-
-  // A user can be an admin of one academy
-  adminOfAcademy Academy? @relation("AcademyAdmin")
-
-  // For TEACHER role
-  studentsAsTeacher User[] @relation("TeacherToStudent")
-  authoredProgress  Progress[] @relation("AuthoredProgress") // Progress reports authored by this user
-
-  // For STUDENT role
-  teachersAsStudent User[] @relation("TeacherToStudent")
-  parentsAsStudent  User[] @relation("ParentToStudent")
-  progress          Progress[] @relation("StudentProgress") // This user's progress reports
-  subjects          Subject[]  @relation("StudentSubjects")
-
-
-  // For PARENT role
-  childrenAsParent User[] @relation("ParentToStudent")
-
-  // For ADMIN role
-  createdUsers User[] @relation("AdminCreatedUsers")
-  creator      User?  @relation("AdminCreatedUsers", fields: [creatorId], references: [id])
-  creatorId    String?
+  id              String    @id @default(cuid())
+  email           String    @unique
+  password        String
+  role            UserRole
+  firstName       String
+  lastName        String
+  academyId       String?
+  academy         Academy?
+  subjects        StudentSubject[]
+  studentProgress Progress[] @relation("studentProgress")
+  teacherProgress Progress[] @relation("teacherProgress")
+  teacherRelations UserRelation[] @relation("teacher")
+  studentRelations UserRelation[] @relation("student")
+  parentRelations  UserRelation[] @relation("parent")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Academy {
+  id          String   @id @default(cuid())
+  name        String
+  logo        String?
+  adminId     String   @unique
+  admin       User     @relation(fields: [adminId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Subject {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  students    StudentSubject[]
+  progress    Progress[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model StudentSubject {
   id        String   @id @default(cuid())
-  name      String
-  logoUrl   String?
-  appTitle  String
+  studentId String
+  subjectId String
+  student   User     @relation(fields: [studentId], references: [id])
+  subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // An academy has one admin
-  admin   User?    @relation("AcademyAdmin", fields: [adminId], references: [id])
-  adminId String?  @unique
-
-  // An academy has many users
-  users   User[] @relation("AcademyUsers")
-}
-
-
-model Subject {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  students  User[]     @relation("StudentSubjects")
-  progress  Progress[]
+  @@unique([studentId, subjectId])
 }
 
 model Progress {
   id          String   @id @default(cuid())
-  percentage  Int?
-  notes       String?
+  studentId   String
+  subjectId   String
+  teacherId   String
+  progressText String?
+  progressPercentage Float?
+  student     User     @relation("studentProgress", fields: [studentId], references: [id])
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  teacher     User     @relation("teacherProgress", fields: [teacherId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  student   User     @relation("StudentProgress", fields: [studentId], references: [id])
-  studentId String
-
-  subject   Subject  @relation(fields: [subjectId], references: [id])
-  subjectId String
-
-  // The teacher who created the progress entry
-  author    User     @relation("AuthoredProgress", fields: [authorId], references: [id])
-  authorId  String
 }
 
-enum Role {
+model UserRelation {
+  id          String   @id @default(cuid())
+  teacherId   String
+  studentId   String
+  teacher     User     @relation("teacher", fields: [teacherId], references: [id])
+  student     User     @relation("student", fields: [studentId], references: [id])
+  parentId    String?
+  parent      User?    @relation("parent", fields: [parentId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum UserRole {
   DEVELOPER
   ADMIN
   TEACHER

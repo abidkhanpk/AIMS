@@ -1,82 +1,78 @@
 
-# Learning Management System (LMS)
+# LMS (Learning Management System)
 
-This is a full-featured, production-ready Learning Management System (LMS) built with Node.js, Express, PostgreSQL, and Prisma. The frontend is rendered using EJS and styled with Bootstrap 5.
+This is a full-featured Learning Management System (LMS) built with Node.js, Express, PostgreSQL, and Prisma.
 
 ## Features
 
-- **User Roles:** Developer, Admin, Teacher, Parent, Student.
-- **Multi-Academy:** Each academy has its own branding and users.
-- **Progress Tracking:** Teachers can track student progress.
-- **Secure Authentication:** Passwords are hashed with bcrypt, and sessions are used for authentication.
-- **Role-Based Access Control:** Routes are protected based on user roles.
+- User Roles: Developer, Admin, Teacher, Parent, Student
+- Multi-Academy Branding
+- Progress Tracking
+- Secure Authentication & Authorization
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (v14 or later)
-- [PostgreSQL](https://www.postgresql.org/)
+- Node.js
+- PostgreSQL
 
 ## Getting Started
 
-### 1. Clone the repository
+1. **Clone the repository:**
 
-```bash
-git clone <repository-url>
-cd lms
-```
+   ```bash
+   git clone <repository-url>
+   ```
 
-### 2. Install dependencies
+2. **Install dependencies:**
 
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-### 3. Set up environment variables
+3. **Set up the database:**
 
-Create a `.env` file in the root of the project and add the following:
+   - Create a PostgreSQL database.
+   - Copy the `.env.example` file to `.env` and update the `DATABASE_URL` with your database connection string.
 
-```
-# Application Configuration
-PORT=3000
-SESSION_SECRET="a_very_secret_key_that_should_be_changed"
+4. **Run database migrations:**
 
-# Database URL for Prisma
-# Replace with your actual PostgreSQL connection string
-DATABASE_URL="postgresql://user:password@localhost:5432/lmsdb?schema=public"
-```
+   ```bash
+   npx prisma migrate dev --name init
+   ```
 
-**Note:** Make sure to replace the `DATABASE_URL` with your actual PostgreSQL connection string.
+5. **Seed the database:**
 
-### 4. Run database migrations
+   ```bash
+   npm run seed
+   ```
 
-This will create the necessary tables in your database.
+6. **Start the application:**
 
-```bash
-npm run migrate
-```
+   ```bash
+   npm start
+   ```
 
-### 5. Seed the database
+## Available Scripts
 
-This will populate the database with sample data.
+- `npm start`: Starts the application.
+- `npm run seed`: Seeds the database with initial data.
+- `npx prisma migrate dev`: Runs database migrations.
+- `npx prisma generate`: Generates the Prisma client.
 
-```bash
-npm run seed
-```
+## Default Login Credentials
 
-### 6. Run the application
-
-```bash
-npm start
-```
-
-The application will be available at [http://localhost:3000](http://localhost:3000).
-
-## Sample Users
-
-The seed script creates the following users. The password for all users is `password123`.
-
-- **Developer:** `dev@lms.com`
-- **Admin:** `admin@gta.com`
-- **Teacher:** `teacher@gta.com`
-- **Student:** `student@gta.com`
-- **Parent:** `parent@gta.com`
+- **Developer:**
+  - Email: `developer@lms.com`
+  - Password: `password123`
+- **Admin:**
+  - Email: `admin@lms.com`
+  - Password: `password123`
+- **Teacher:**
+  - Email: `teacher@lms.com`
+  - Password: `password123`
+- **Student:**
+  - Email: `student@lms.com`
+  - Password: `password123`
+- **Parent:**
+  - Email: `parent@lms.com`
+  - Password: `password123`
