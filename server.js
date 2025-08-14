@@ -29,7 +29,7 @@ app.use(session({
 }));
 
 // CSRF protection middleware
-const csrfProtection = csrf({ cookie: true });
+const csrfProtection = csrf();
 app.use(csrfProtection);
 
 // Make CSRF token available to all views
