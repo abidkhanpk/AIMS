@@ -15,6 +15,7 @@ exports.postLogin = async (req, res) => {
         if (user && await bcrypt.compare(password, user.password)) {
             req.session.userId = user.id;
             req.session.userRole = user.role;
+            // Redirect to the main dashboard route which will handle role-based redirection
             res.redirect('/dashboard');
         } else {
             res.render('login', { title: 'Login', error: 'Invalid email or password' });
@@ -28,22 +29,38 @@ exports.postLogin = async (req, res) => {
 exports.getLogout = (req, res) => {
     req.session.destroy(err => {
         if (err) {
-            return res.redirect('/dashboard');
+            // If error, still try to redirect to home
+            return res.redirect('/');
         }
         res.clearCookie('connect.sid');
         res.redirect('/');
     });
 };
 
+// This function now acts as a router to the correct dashboard.
 exports.getDashboard = async (req, res) => {
     if (!req.session.userId) {
         return res.redirect('/login');
     }
-    try {
-        const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
-        res.render('dashboard', { title: 'Dashboard', user });
-    } catch (error) {
-        console.error(error);
-        res.redirect('/login');
+
+    const userRole = req.session.userRole;
+    switch (userRole) {
+        case 'DEVELOPER':
+            res.redirect('/developer/admins');
+            break;
+        case 'ADMIN':
+            res.redirect('/admin/users');
+            break;
+        case 'TEACHER':
+            res.redirect('/teacher/students');
+            break;
+        case 'PARENT':
+            res.redirect('/parent/children');
+            break;
+        case 'STUDENT':
+            res.redirect('/student/progress');
+            break;
+        default:
+            res.redirect('/login');
     }
 };

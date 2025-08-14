@@ -39,17 +39,34 @@ app.use((req, res, next) => {
 });
 
 const authRoutes = require('./src/routes/auth');
+const devRoutes = require('./src/routes/developer');
+const adminRoutes = require('./src/routes/admin');
+const teacherRoutes = require('./src/routes/teacher');
+const parentRoutes = require('./src/routes/parent');
+const studentRoutes = require('./src/routes/student');
 
-// Middleware to pass user to all views if logged in
+// Middleware to pass user and academy info to all views if logged in
 app.use(async (req, res, next) => {
     if (req.session.userId) {
-        res.locals.user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+        const user = await prisma.user.findUnique({
+            where: { id: req.session.userId },
+            include: { academy: true } // Include academy for branding
+        });
+        res.locals.user = user;
+        if (user && user.academy) {
+            res.locals.academy = user.academy;
+        }
     }
     next();
 });
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/developer', devRoutes);
+app.use('/admin', adminRoutes);
+app.use('/teacher', teacherRoutes);
+app.use('/parent', parentRoutes);
+app.use('/student', studentRoutes);
 
 app.get('/', (req, res) => {
     res.render('index', { title: 'LMS Home' });

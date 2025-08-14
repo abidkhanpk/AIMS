@@ -1,0 +1,44 @@
+
+<%- include('../partials/header', { title: title }) %>
+
+<div class="container-fluid">
+    <h1 class="mt-4">My Children's Progress</h1>
+
+    <% children.forEach(child => { %>
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4><%= child.firstName %> <%= child.lastName %></h4>
+            </div>
+            <div class="card-body">
+                <% if (child.progress.length === 0) { %>
+                    <p>No progress reports yet.</p>
+                <% } else { %>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Date</th>
+                                    <th>Percentage</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% child.progress.forEach(entry => { %>
+                                    <tr>
+                                        <td><%= entry.subject.name %></td>
+                                        <td><%= new Date(entry.createdAt).toLocaleDateString() %></td>
+                                        <td><%= entry.percentage %>%</td>
+                                        <td><%= entry.notes %></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    <% }) %>
+</div>
+
+<%- include('../partials/footer') %>

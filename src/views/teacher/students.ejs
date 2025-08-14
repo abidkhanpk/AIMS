@@ -1,0 +1,30 @@
+
+<%- include('../partials/header', { title: title }) %>
+
+<div class="container-fluid">
+    <h1 class="mt-4">My Students</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">Assigned Students</div>
+        <div class="card-body">
+            <div class="list-group">
+                <% students.forEach(student => { %>
+                    <div class="list-group-item">
+                        <h5 class="mb-1"><%= student.firstName %> <%= student.lastName %></h5>
+                        <p class="mb-1">Subjects:</p>
+                        <ul>
+                            <% student.subjects.forEach(subject => { %>
+                                <li>
+                                    <%= subject.name %>
+                                    <a href="/teacher/students/<%= student.id %>/subjects/<%= subject.id %>/progress" class="btn btn-sm btn-info ms-2">View/Update Progress</a>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
