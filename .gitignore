@@ -1,0 +1,12 @@
+
+# Dependencies
+/node_modules
+
+# Prisma
+/prisma/migrations/*.sql
+
+# Environment
+.env
+
+# Production
+/build

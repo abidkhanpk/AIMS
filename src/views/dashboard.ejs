@@ -1,0 +1,13 @@
+
+<%- include('partials/header', { title: 'Dashboard' }) %>
+
+<div class="container-fluid">
+    <h1 class="mt-4">Dashboard</h1>
+    <p>Welcome, <%= user.firstName %>!</p>
+    <p>Your role is: <strong><%= user.role %></strong></p>
+
+    <!-- Content will be dynamically rendered based on the user's role -->
+
+</div>
+
+<%- include('partials/footer') %>
