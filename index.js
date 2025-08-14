@@ -36,7 +36,7 @@ try {
 
   // Routes
   console.log('Loading routes...');
-  const authRoutes = require('./routes/auth');
+  const authRoutes = require('./routes/auth')(prisma);
   const adminRoutes = require('./routes/admin');
   const teacherRoutes = require('./routes/teacher');
   const studentRoutes = require('./routes/student');

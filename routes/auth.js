@@ -1,10 +1,13 @@
 
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
 
-router.get('/login', authController.getLogin);
-router.post('/login', authController.postLogin);
-router.post('/logout', authController.postLogout);
+module.exports = (prisma) => {
+  const authController = require('../controllers/authController')(prisma);
 
-module.exports = router;
+  router.get('/login', authController.getLogin);
+  router.post('/login', authController.postLogin);
+  router.post('/logout', authController.postLogout);
+
+  return router;
+};
