@@ -1,78 +1,70 @@
-
 # LMS (Learning Management System)
 
-This is a full-featured Learning Management System (LMS) built with Node.js, Express, PostgreSQL, and Prisma.
+A modular, scalable, and secure LMS for academies with multi-role support.
 
 ## Features
 
-- User Roles: Developer, Admin, Teacher, Parent, Student
-- Multi-Academy Branding
-- Progress Tracking
-- Secure Authentication & Authorization
+- Multi-academy branding
+- Role-based dashboards (Developer, Admin, Teacher, Parent, Student)
+- Progress tracking per student/subject
+- Responsive UI (Bootstrap 5, jQuery)
+- Secure authentication & authorization
+- PostgreSQL with Prisma ORM
 
-## Prerequisites
+## Setup Instructions
 
-- Node.js
-- PostgreSQL
-
-## Getting Started
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone <repository-url>
-   ```
-
-2. **Install dependencies:**
-
+1. **Clone the repository**
+2. **Install dependencies**
    ```bash
    npm install
    ```
+3. **Configure environment variables**
+   - Copy `.env.example` to `.env` and fill in your values.
 
-3. **Set up the database:**
-
-   - Create a PostgreSQL database.
-   - Copy the `.env.example` file to `.env` and update the `DATABASE_URL` with your database connection string.
-
-4. **Run database migrations:**
-
+4. **Run Prisma migrations**
    ```bash
-   npx prisma migrate dev --name init
+   npx prisma migrate dev
    ```
 
-5. **Seed the database:**
-
+5. **Seed the database**
    ```bash
    npm run seed
    ```
 
-6. **Start the application:**
-
+6. **Start the server**
    ```bash
    npm start
    ```
 
-## Available Scripts
+## Folder Structure
 
-- `npm start`: Starts the application.
-- `npm run seed`: Seeds the database with initial data.
-- `npx prisma migrate dev`: Runs database migrations.
-- `npx prisma generate`: Generates the Prisma client.
+- `/backend` - Express.js API, Prisma, services, middleware
+- `/frontend` - HTML5, Bootstrap 5, jQuery templates
 
-## Default Login Credentials
+## Environment Variables
 
-- **Developer:**
-  - Email: `developer@lms.com`
-  - Password: `password123`
-- **Admin:**
-  - Email: `admin@lms.com`
-  - Password: `password123`
-- **Teacher:**
-  - Email: `teacher@lms.com`
-  - Password: `password123`
-- **Student:**
-  - Email: `student@lms.com`
-  - Password: `password123`
-- **Parent:**
-  - Email: `parent@lms.com`
-  - Password: `password123`
+See `.env.example` for required variables.
+
+## Usage
+
+- Access the app at `http://localhost:3000`
+- Log in with sample credentials from the seed script (see `/backend/prisma/seed.js`)
+- Each role sees their own dashboard and branding
+- CRUD operations available for users, subjects, progress, and branding
+
+## Prisma
+
+- Schema: `/backend/prisma/schema.prisma`
+- Migration: `npx prisma migrate dev`
+- Seed: `npm run seed`
+
+## Security
+
+- Passwords hashed with bcrypt
+- CSRF protection enabled
+- Role-based access control middleware
+
+## Notes
+
+- For production, set secure values in `.env`
+- Update branding assets in `/frontend/public/assets`

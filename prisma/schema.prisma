@@ -1,90 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  password        String
-  role            UserRole
-  firstName       String
-  lastName        String
-  academyId       String?
-  academy         Academy?
-  subjects        StudentSubject[]
-  studentProgress Progress[] @relation("studentProgress")
-  teacherProgress Progress[] @relation("teacherProgress")
-  teacherRelations UserRelation[] @relation("teacher")
-  studentRelations UserRelation[] @relation("student")
-  parentRelations  UserRelation[] @relation("parent")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-}
-
-model Academy {
-  id          String   @id @default(cuid())
-  name        String
-  logo        String?
-  adminId     String   @unique
-  admin       User     @relation(fields: [adminId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  password     String
+  name         String
+  role         Role
+  adminId      Int?     // For teachers, parents, students: points to their admin
+  admin        User?    @relation("AdminUsers", fields: [adminId], references: [id])
+  users        User[]   @relation("AdminUsers") // For admin: all sub-users
+  appTitle     String?  // Only for admin
+  appLogoUrl   String?  // Only for admin
+  subjects     Subject[] @relation("StudentSubjects")
+  teaching     Subject[] @relation("TeacherSubjects")
+  parentOf     User[]   @relation("ParentStudents")
+  parents      User[]   @relation("ParentStudents")
+  progressAsStudent Progress[] @relation("ProgressStudent")
+  progressAsTeacher Progress[] @relation("ProgressTeacher")
+  createdAt    DateTime @default(now())
 }
 
 model Subject {
-  id          String    @id @default(cuid())
-  name        String
-  description String?
-  students    StudentSubject[]
-  progress    Progress[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-model StudentSubject {
-  id        String   @id @default(cuid())
-  studentId String
-  subjectId String
-  student   User     @relation(fields: [studentId], references: [id])
-  subject   Subject  @relation(fields: [subjectId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([studentId, subjectId])
+  id         Int      @id @default(autoincrement())
+  name       String
+  adminId    Int
+  admin      User     @relation(fields: [adminId], references: [id])
+  teacherId  Int
+  teacher    User     @relation("TeacherSubjects", fields: [teacherId], references: [id])
+  students   User[]   @relation("StudentSubjects")
+  progress   Progress[]
+  createdAt  DateTime @default(now())
 }
 
 model Progress {
-  id          String   @id @default(cuid())
-  studentId   String
-  subjectId   String
-  teacherId   String
-  progressText String?
-  progressPercentage Float?
-  student     User     @relation("studentProgress", fields: [studentId], references: [id])
-  subject     Subject  @relation(fields: [subjectId], references: [id])
-  teacher     User     @relation("teacherProgress", fields: [teacherId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  studentId  Int
+  subjectId  Int
+  teacherId  Int
+  text       String?
+  percentage Int?
+  createdAt  DateTime @default(now())
+  student    User     @relation("ProgressStudent", fields: [studentId], references: [id])
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  teacher    User     @relation("ProgressTeacher", fields: [teacherId], references: [id])
 }
 
-model UserRelation {
-  id          String   @id @default(cuid())
-  teacherId   String
-  studentId   String
-  teacher     User     @relation("teacher", fields: [teacherId], references: [id])
-  student     User     @relation("student", fields: [studentId], references: [id])
-  parentId    String?
-  parent      User?    @relation("parent", fields: [parentId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum Role {
+  DEVELOPER
+  ADMIN
+  TEACHER
+  PARENT
+  STUDENT
+}
+  text       String?
+  percentage Int?
+  createdAt  DateTime @default(now())
+  student    User     @relation("ProgressStudent", fields: [studentId], references: [id])
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  teacher    User     @relation("ProgressTeacher", fields: [teacherId], references: [id])
 }
 
-enum UserRole {
+enum Role {
   DEVELOPER
   ADMIN
   TEACHER
