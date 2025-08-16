@@ -14,13 +14,25 @@ interface Student {
   }[];
   progressRecords: {
     id: string;
-    text: string;
-    percent: number;
+    date: string;
+    lesson: string;
+    homework: string;
+    lessonProgress: number;
+    score: number;
+    remarks: string;
     createdAt: string;
     course: {
       id: string;
       name: string;
     };
+    parentRemarks: {
+      id: string;
+      remark: string;
+      createdAt: string;
+      parent: {
+        name: string;
+      };
+    }[];
   }[];
 }
 
@@ -34,8 +46,12 @@ export default function TeacherDashboard() {
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedCourse, setSelectedCourse] = useState('');
-  const [progressText, setProgressText] = useState('');
-  const [progressPercent, setProgressPercent] = useState('');
+  const [progressDate, setProgressDate] = useState(new Date().toISOString().split('T')[0]);
+  const [lesson, setLesson] = useState('');
+  const [homework, setHomework] = useState('');
+  const [lessonProgress, setLessonProgress] = useState('');
+  const [score, setScore] = useState('');
+  const [remarks, setRemarks] = useState('');
   const [updatingProgress, setUpdatingProgress] = useState(false);
 
   useEffect(() => {
@@ -62,8 +78,12 @@ export default function TeacherDashboard() {
   const handleUpdateProgress = (student: Student) => {
     setSelectedStudent(student);
     setSelectedCourse('');
-    setProgressText('');
-    setProgressPercent('');
+    setProgressDate(new Date().toISOString().split('T')[0]);
+    setLesson('');
+    setHomework('');
+    setLessonProgress('');
+    setScore('');
+    setRemarks('');
     setShowProgressModal(true);
   };
 
@@ -82,8 +102,12 @@ export default function TeacherDashboard() {
         body: JSON.stringify({
           studentId: selectedStudent.id,
           courseId: selectedCourse,
-          text: progressText || null,
-          percent: progressPercent ? parseFloat(progressPercent) : null,
+          date: progressDate,
+          lesson: lesson || null,
+          homework: homework || null,
+          lessonProgress: lessonProgress ? parseFloat(lessonProgress) : null,
+          score: score ? parseFloat(score) : null,
+          remarks: remarks || null,
         }),
       });
 
@@ -136,27 +160,27 @@ export default function TeacherDashboard() {
           <Card.Body>
             <i className="bi bi-people display-4 text-muted"></i>
             <h4 className="mt-3 text-muted">No Students Assigned</h4>
-            <p className="text-muted">You don't have any students assigned to you yet. Please contact your administrator.</p>
+            <p className="text-muted">You don&apos;t have any students assigned to you yet. Please contact your administrator.</p>
           </Card.Body>
         </Card>
       ) : (
         <Row className="g-4">
           {students.map((student) => (
-            <Col key={student.id} lg={6} xl={4}>
-              <Card className="h-100 shadow-sm">
+            <Col key={student.id} xl={12}>
+              <Card className="shadow-sm">
                 <Card.Header className="bg-light">
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
-                      <h6 className="mb-0 fw-bold">{student.name}</h6>
+                      <h5 className="mb-0 fw-bold">{student.name}</h5>
                       <small className="text-muted">{student.email}</small>
                     </div>
                     <Button
-                      variant="outline-success"
+                      variant="success"
                       size="sm"
                       onClick={() => handleUpdateProgress(student)}
                     >
                       <i className="bi bi-plus-circle me-1"></i>
-                      Update Progress
+                      Add Progress
                     </Button>
                   </div>
                 </Card.Header>
@@ -167,53 +191,90 @@ export default function TeacherDashboard() {
                     </div>
                   ) : (
                     <div className="table-responsive">
-                      <Table size="sm" className="mb-0">
+                      <Table className="mb-0">
                         <thead className="table-light">
                           <tr>
-                            <th>Subject</th>
-                            <th>Progress</th>
-                            <th>Last Update</th>
+                            <th>Date</th>
+                            <th>Course</th>
+                            <th>Lesson</th>
+                            <th>Homework</th>
+                            <th>Progress %</th>
+                            <th>Score</th>
+                            <th>Remarks</th>
+                            <th>Parent Remarks</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {student.studentCourses.map(({ course }) => {
-                            const latestProgress = getLatestProgress(student, course.id);
-                            return (
-                              <tr key={course.id}>
-                                <td className="fw-medium">{course.name}</td>
+                          {student.progressRecords.length === 0 ? (
+                            <tr>
+                              <td colSpan={8} className="text-center py-3 text-muted">
+                                No progress records yet
+                              </td>
+                            </tr>
+                          ) : (
+                            student.progressRecords.map((progress) => (
+                              <tr key={progress.id}>
+                                <td className="small">
+                                  {new Date(progress.date).toLocaleDateString()}
+                                </td>
+                                <td className="fw-medium small">
+                                  {progress.course.name}
+                                </td>
+                                <td className="small">
+                                  {progress.lesson || '-'}
+                                </td>
+                                <td className="small">
+                                  {progress.homework || '-'}
+                                </td>
                                 <td>
-                                  {latestProgress ? (
-                                    <div>
-                                      {latestProgress.percent !== null && (
-                                        <Badge bg="primary" className="me-1">
-                                          {latestProgress.percent}%
-                                        </Badge>
-                                      )}
-                                      {latestProgress.text && (
-                                        <small className="text-muted d-block">
-                                          {latestProgress.text.length > 30 
-                                            ? latestProgress.text.substring(0, 30) + '...'
-                                            : latestProgress.text
-                                          }
-                                        </small>
-                                      )}
-                                    </div>
+                                  {progress.lessonProgress !== null ? (
+                                    <Badge bg="primary">
+                                      {progress.lessonProgress}%
+                                    </Badge>
                                   ) : (
-                                    <Badge bg="secondary">No progress</Badge>
+                                    <span className="text-muted small">-</span>
                                   )}
                                 </td>
                                 <td>
-                                  {latestProgress ? (
-                                    <small className="text-muted">
-                                      {new Date(latestProgress.createdAt).toLocaleDateString()}
-                                    </small>
+                                  {progress.score !== null ? (
+                                    <Badge bg="success">
+                                      {progress.score}
+                                    </Badge>
                                   ) : (
-                                    <small className="text-muted">-</small>
+                                    <span className="text-muted small">-</span>
+                                  )}
+                                </td>
+                                <td className="small">
+                                  {progress.remarks ? (
+                                    progress.remarks.length > 30 
+                                      ? progress.remarks.substring(0, 30) + '...'
+                                      : progress.remarks
+                                  ) : '-'}
+                                </td>
+                                <td className="small">
+                                  {progress.parentRemarks.length > 0 ? (
+                                    <div>
+                                      {progress.parentRemarks.map((remark, idx) => (
+                                        <div key={remark.id} className="mb-1">
+                                          <Badge bg="info" className="me-1">
+                                            {remark.parent.name}
+                                          </Badge>
+                                          <small className="text-muted">
+                                            {remark.remark.length > 20 
+                                              ? remark.remark.substring(0, 20) + '...'
+                                              : remark.remark
+                                            }
+                                          </small>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-muted">-</span>
                                   )}
                                 </td>
                               </tr>
-                            );
-                          })}
+                            ))
+                          )}
                         </tbody>
                       </Table>
                     </div>
@@ -230,55 +291,105 @@ export default function TeacherDashboard() {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-graph-up me-2"></i>
-            Update Progress for {selectedStudent?.name}
+            Add Progress for {selectedStudent?.name}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmitProgress}>
-            <Form.Group className="mb-3">
-              <Form.Label>Select Subject</Form.Label>
-              <Form.Select
-                value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
-                required
-              >
-                <option value="">Choose a subject...</option>
-                {selectedStudent?.studentCourses.map(({ course }) => (
-                  <option key={course.id} value={course.id}>
-                    {course.name}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Select Subject *</Form.Label>
+                  <Form.Select
+                    value={selectedCourse}
+                    onChange={(e) => setSelectedCourse(e.target.value)}
+                    required
+                  >
+                    <option value="">Choose a subject...</option>
+                    {selectedStudent?.studentCourses.map(({ course }) => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={progressDate}
+                    onChange={(e) => setProgressDate(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Progress Percentage (Optional)</Form.Label>
+                  <Form.Label>Lesson</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={lesson}
+                    onChange={(e) => setLesson(e.target.value)}
+                    placeholder="Enter lesson topic"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Homework</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={homework}
+                    onChange={(e) => setHomework(e.target.value)}
+                    placeholder="Enter homework description"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Lesson Progress (%)</Form.Label>
                   <Form.Control
                     type="number"
                     min="0"
                     max="100"
                     step="0.1"
-                    value={progressPercent}
-                    onChange={(e) => setProgressPercent(e.target.value)}
-                    placeholder="Enter percentage (0-100)"
+                    value={lessonProgress}
+                    onChange={(e) => setLessonProgress(e.target.value)}
+                    placeholder="Enter progress percentage"
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Progress Notes (Optional)</Form.Label>
+                  <Form.Label>Score/Marks</Form.Label>
                   <Form.Control
-                    as="textarea"
-                    rows={3}
-                    value={progressText}
-                    onChange={(e) => setProgressText(e.target.value)}
-                    placeholder="Enter progress notes..."
+                    type="number"
+                    step="0.1"
+                    value={score}
+                    onChange={(e) => setScore(e.target.value)}
+                    placeholder="Enter score or marks"
                   />
                 </Form.Group>
               </Col>
             </Row>
+
+            <Form.Group className="mb-4">
+              <Form.Label>Remarks</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Enter your remarks about student's performance..."
+              />
+            </Form.Group>
 
             <div className="d-flex justify-content-end gap-2">
               <Button variant="secondary" onClick={() => setShowProgressModal(false)}>
@@ -287,17 +398,17 @@ export default function TeacherDashboard() {
               <Button
                 type="submit"
                 variant="success"
-                disabled={updatingProgress || (!progressText && !progressPercent)}
+                disabled={updatingProgress || (!lesson && !homework && !lessonProgress && !score && !remarks)}
               >
                 {updatingProgress ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />
-                    Updating...
+                    Adding...
                   </>
                 ) : (
                   <>
                     <i className="bi bi-check-circle me-2"></i>
-                    Update Progress
+                    Add Progress
                   </>
                 )}
               </Button>

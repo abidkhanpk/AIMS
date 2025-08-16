@@ -2,6 +2,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { Container, Nav, Navbar, NavDropdown, Image } from 'react-bootstrap';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import NotificationDropdown from './NotificationDropdown';
 
 interface Settings {
   appTitle: string;
@@ -31,7 +32,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       // Use default settings on error
       setSettings({
         appTitle: 'LMS Academy',
-        headerImg: '/assets/logo.png',
+        headerImg: '/assets/default-logo.png',
       });
     }
   };
@@ -51,7 +52,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 style={{ objectFit: 'cover' }}
                 onError={(e) => {
                   // Fallback to default logo on error
-                  (e.target as HTMLImageElement).src = '/assets/logo.png';
+                  (e.target as HTMLImageElement).src = '/assets/default-logo.png';
                 }}
               />
             )}
@@ -71,27 +72,35 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               )}
             </Nav>
-            <Nav>
+            <Nav className="d-flex align-items-center">
               {status === 'authenticated' && user && (
-                <NavDropdown 
-                  title={
-                    <span className="text-light">
-                      <i className="bi bi-person-circle me-1"></i>
-                      {user.name || user.email}
-                    </span>
-                  } 
-                  id="basic-nav-dropdown"
-                  align="end"
-                >
-                  <NavDropdown.Item disabled className="text-muted small">
-                    Role: {user.role}
-                  </NavDropdown.Item>
-                  <NavDropdown.Divider />
-                  <NavDropdown.Item onClick={() => signOut()}>
-                    <i className="bi bi-box-arrow-right me-2"></i>
-                    Sign Out
-                  </NavDropdown.Item>
-                </NavDropdown>
+                <>
+                  {/* Notification Dropdown */}
+                  <div className="me-2">
+                    <NotificationDropdown />
+                  </div>
+                  
+                  {/* User Dropdown */}
+                  <NavDropdown 
+                    title={
+                      <span className="text-light">
+                        <i className="bi bi-person-circle me-1"></i>
+                        {user.name || user.email}
+                      </span>
+                    } 
+                    id="basic-nav-dropdown"
+                    align="end"
+                  >
+                    <NavDropdown.Item disabled className="text-muted small">
+                      Role: {user.role}
+                    </NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => signOut()}>
+                      <i className="bi bi-box-arrow-right me-2"></i>
+                      Sign Out
+                    </NavDropdown.Item>
+                  </NavDropdown>
+                </>
               )}
               {status === 'unauthenticated' && (
                 <Link href="/auth/signin" passHref>

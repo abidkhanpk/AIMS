@@ -129,7 +129,7 @@ export default function StudentDashboard() {
               <Row className="align-items-center">
                 <Col md={8}>
                   <h5 className="mb-1">Welcome back, {studentData.name}!</h5>
-                  <p className="text-muted mb-0">Here's your overall academic progress</p>
+                  <p className="text-muted mb-0">Here&apos;s your overall academic progress</p>
                 </Col>
                 <Col md={4} className="text-md-end">
                   {overallProgress !== null ? (
@@ -158,7 +158,7 @@ export default function StudentDashboard() {
           <Card.Body>
             <i className="bi bi-book display-4 text-muted"></i>
             <h4 className="mt-3 text-muted">No Subjects Assigned</h4>
-            <p className="text-muted">You don't have any subjects assigned yet. Please contact your administrator.</p>
+            <p className="text-muted">You don&apos;t have any subjects assigned yet. Please contact your administrator.</p>
           </Card.Body>
         </Card>
       ) : (

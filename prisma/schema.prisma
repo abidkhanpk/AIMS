@@ -15,6 +15,28 @@ enum Role {
   STUDENT
 }
 
+enum NotificationType {
+  PARENT_REMARK
+  PROGRESS_UPDATE
+  SYSTEM_ALERT
+  FEE_DUE
+  FEE_PAID
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum FeeStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -37,6 +59,12 @@ model User {
   progressRecords    Progress[]         @relation("StudentProgress")
   progressUpdates    Progress[]         @relation("TeacherProgress")
   createdCourses     Course[]
+  parentRemarks      ParentRemark[]     @relation("ParentRemarks")
+  sentNotifications  Notification[]     @relation("NotificationSender")
+  receivedNotifications Notification[]  @relation("NotificationReceiver")
+  userSettings       UserSettings?
+  studentFees        Fee[]              @relation("StudentFees")
+  feePayments        Fee[]              @relation("FeePayments")
 }
 
 model Course {
@@ -90,28 +118,102 @@ model StudentCourse {
 }
 
 model Progress {
-  id        String   @id @default(uuid())
-  studentId String
-  courseId  String
-  teacherId String
-  text      String?
-  percent   Float?
-  createdAt DateTime @default(now())
+  id             String           @id @default(uuid())
+  studentId      String
+  courseId       String
+  teacherId      String
+  date           DateTime         @default(now())
+  lesson         String?          // Manually typed by teacher
+  homework       String?          // Homework description
+  lessonProgress Float?           // Lesson progress percentage
+  score          Float?           // Score/marks assigned by teacher
+  remarks        String?          // Teacher remarks
+  attendance     AttendanceStatus @default(PRESENT) // Attendance status
+  createdAt      DateTime         @default(now())
 
   // Relations
-  student User   @relation("StudentProgress", fields: [studentId], references: [id])
-  course  Course @relation(fields: [courseId], references: [id])
-  teacher User   @relation("TeacherProgress", fields: [teacherId], references: [id])
+  student       User           @relation("StudentProgress", fields: [studentId], references: [id])
+  course        Course         @relation(fields: [courseId], references: [id])
+  teacher       User           @relation("TeacherProgress", fields: [teacherId], references: [id])
+  parentRemarks ParentRemark[]
+}
+
+model ParentRemark {
+  id         String   @id @default(uuid())
+  progressId String
+  parentId   String
+  remark     String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  progress Progress @relation(fields: [progressId], references: [id])
+  parent   User     @relation("ParentRemarks", fields: [parentId], references: [id])
+}
+
+model Fee {
+  id          String    @id @default(uuid())
+  studentId   String
+  title       String    // Fee title (e.g., "Tuition Fee", "Library Fee")
+  description String?   // Optional description
+  amount      Float     // Fee amount
+  dueDate     DateTime  // Due date for payment
+  status      FeeStatus @default(PENDING)
+  paidDate    DateTime? // Date when fee was paid
+  paidById    String?   // Parent who paid the fee
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  student User  @relation("StudentFees", fields: [studentId], references: [id])
+  paidBy  User? @relation("FeePayments", fields: [paidById], references: [id])
+}
+
+model Notification {
+  id         String           @id @default(uuid())
+  type       NotificationType
+  title      String
+  message    String
+  senderId   String
+  receiverId String
+  isRead     Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  // Relations
+  sender   User @relation("NotificationSender", fields: [senderId], references: [id])
+  receiver User @relation("NotificationReceiver", fields: [receiverId], references: [id])
 }
 
 model Settings {
-  id         String @id @default(uuid())
-  adminId    String @unique
-  appTitle   String @default("LMS Academy")
-  headerImg  String @default("/assets/logo.png")
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String  @id @default(uuid())
+  adminId        String  @unique
+  appTitle       String  @default("LMS Academy")
+  headerImg      String  @default("/assets/default-logo.png")
+  enableHomePage Boolean @default(true) // Developer can enable/disable homepage
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   admin User @relation(fields: [adminId], references: [id])
+}
+
+model UserSettings {
+  id                    String  @id @default(uuid())
+  userId                String  @unique
+  enableNotifications   Boolean @default(true)
+  emailNotifications    Boolean @default(true)
+  parentRemarkNotifications Boolean @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+}
+
+model AppSettings {
+  id             String  @id @default(uuid())
+  appLogo        String  @default("/assets/app-logo.png")
+  appName        String  @default("LMS Academy")
+  enableHomePage Boolean @default(true) // Global homepage setting for developers
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }

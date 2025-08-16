@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Form, Button, Table, Card, Row, Col, Modal, Alert, Spinner, Badge } from 'react-bootstrap';
 
 interface Admin {
@@ -28,6 +28,8 @@ export default function DeveloperDashboard() {
   const [appTitle, setAppTitle] = useState('');
   const [headerImage, setHeaderImage] = useState('');
   const [updatingSettings, setUpdatingSettings] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchAdmins();
@@ -83,8 +85,56 @@ export default function DeveloperDashboard() {
   const handleShowSettings = (admin: Admin) => {
     setSelectedAdmin(admin);
     setAppTitle(admin.settings?.appTitle || 'LMS Academy');
-    setHeaderImage(admin.settings?.headerImg || '/assets/logo.png');
+    setHeaderImage(admin.settings?.headerImg || '/assets/default-logo.png');
     setShowSettingsModal(true);
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Invalid file type. Please upload JPEG, PNG, GIF, or WebP images only.');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size too large. Please upload images smaller than 5MB.');
+      return;
+    }
+
+    setUploadingLogo(true);
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+
+      const res = await fetch('/api/upload/logo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setHeaderImage(data.logoUrl);
+        setSuccess('Logo uploaded successfully!');
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to upload logo');
+      }
+    } catch (error) {
+      setError('Error uploading logo');
+    } finally {
+      setUploadingLogo(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSaveSettings = async () => {
@@ -295,30 +345,37 @@ export default function DeveloperDashboard() {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Header Image URL</Form.Label>
-                  <Form.Control 
-                    type="url" 
-                    value={headerImage} 
-                    onChange={(e) => setHeaderImage(e.target.value)}
-                    placeholder="Enter image URL"
-                  />
+                  <Form.Label>Header Logo</Form.Label>
+                  <div className="d-flex gap-2">
+                    <Form.Control 
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleLogoUpload}
+                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                      disabled={uploadingLogo}
+                    />
+                    {uploadingLogo && (
+                      <Spinner animation="border" size="sm" />
+                    )}
+                  </div>
                   <Form.Text className="text-muted">
-                    Logo/image displayed in the header
+                    Upload JPEG, PNG, GIF, or WebP (max 5MB)
                   </Form.Text>
                 </Form.Group>
               </Col>
             </Row>
+            
             {headerImage && (
               <div className="mb-3">
-                <Form.Label>Preview</Form.Label>
-                <div className="border rounded p-3 bg-light">
+                <Form.Label>Current Logo Preview</Form.Label>
+                <div className="border rounded p-3 bg-light text-center">
                   <img 
                     src={headerImage} 
                     alt="Header preview" 
-                    style={{ maxHeight: '60px', maxWidth: '200px' }}
+                    style={{ maxHeight: '80px', maxWidth: '200px' }}
                     className="rounded"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).src = '/assets/default-logo.png';
                     }}
                   />
                 </div>

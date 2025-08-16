@@ -4,19 +4,34 @@ import Link from 'next/link';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 
 interface Settings {
   appTitle: string;
   headerImg: string;
+  enableHomePage?: boolean;
 }
 
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
-  const [settings, setSettings] = useState<Settings>({ appTitle: 'LMS Academy', headerImg: '/assets/logo.png' });
+  const [settings, setSettings] = useState<Settings>({ appTitle: 'LMS Academy', headerImg: '/assets/logo.png', enableHomePage: true });
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetchSettings();
   }, []);
+
+  useEffect(() => {
+    // If homepage is disabled and user is not authenticated, redirect to signin
+    if (!loading && !settings.enableHomePage && status === 'unauthenticated') {
+      router.push('/auth/signin');
+    }
+    // If user is authenticated, redirect to dashboard
+    if (status === 'authenticated') {
+      router.push('/dashboard');
+    }
+  }, [settings.enableHomePage, status, loading, router]);
 
   const fetchSettings = async () => {
     try {
@@ -27,8 +42,29 @@ const Home: NextPage = () => {
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Show loading while checking settings
+  if (loading) {
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-2 text-muted">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If homepage is disabled, don't render the homepage content
+  if (!settings.enableHomePage) {
+    return null; // Router will handle redirect
+  }
 
   return (
     <div>

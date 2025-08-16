@@ -1,0 +1,73 @@
+import { NextApiRequest, NextApiResponse } from 'next';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
+import { prisma } from '../../../lib/prisma';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  if (session.user.role !== 'DEVELOPER') {
+    return res.status(403).json({ message: 'Only developers can access this endpoint' });
+  }
+
+  if (req.method === 'GET') {
+    try {
+      // Get global app settings
+      let appSettings = await prisma.appSettings.findFirst();
+      
+      if (!appSettings) {
+        // Create default app settings if none exist
+        appSettings = await prisma.appSettings.create({
+          data: {
+            appLogo: '/assets/app-logo.png',
+            appName: 'LMS Academy',
+            enableHomePage: true,
+          }
+        });
+      }
+
+      res.status(200).json(appSettings);
+    } catch (error) {
+      console.error('Error fetching developer settings:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  } else if (req.method === 'POST') {
+    const { enableHomePage, appName, appLogo } = req.body;
+
+    try {
+      // Get existing settings or create new ones
+      let appSettings = await prisma.appSettings.findFirst();
+      
+      if (appSettings) {
+        // Update existing settings
+        appSettings = await prisma.appSettings.update({
+          where: { id: appSettings.id },
+          data: {
+            ...(enableHomePage !== undefined && { enableHomePage }),
+            ...(appName && { appName }),
+            ...(appLogo && { appLogo }),
+          }
+        });
+      } else {
+        // Create new settings
+        appSettings = await prisma.appSettings.create({
+          data: {
+            appLogo: appLogo || '/assets/app-logo.png',
+            appName: appName || 'LMS Academy',
+            enableHomePage: enableHomePage !== undefined ? enableHomePage : true,
+          }
+        });
+      }
+
+      res.status(200).json(appSettings);
+    } catch (error) {
+      console.error('Error updating developer settings:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  } else {
+    res.status(405).json({ message: 'Method not allowed' });
+  }
+}

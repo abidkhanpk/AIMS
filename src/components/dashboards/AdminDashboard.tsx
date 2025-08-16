@@ -20,6 +20,14 @@ interface Course {
   };
 }
 
+const roleConfig = {
+  TEACHER: { icon: 'bi-person-workspace', color: 'success', title: 'Teachers' },
+  PARENT: { icon: 'bi-people', color: 'info', title: 'Parents' },
+  STUDENT: { icon: 'bi-mortarboard', color: 'warning', title: 'Students' },
+  DEVELOPER: { icon: 'bi-code-slash', color: 'secondary', title: 'Developers' },
+  ADMIN: { icon: 'bi-gear-fill', color: 'primary', title: 'Admins' }
+} as const;
+
 function UserManagementTab({ role }: { role: Role }) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +37,8 @@ function UserManagementTab({ role }: { role: Role }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const config = roleConfig[role as keyof typeof roleConfig];
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -80,14 +90,6 @@ function UserManagementTab({ role }: { role: Role }) {
       setCreating(false);
     }
   };
-
-  const roleConfig = {
-    TEACHER: { icon: 'bi-person-workspace', color: 'success', title: 'Teachers' },
-    PARENT: { icon: 'bi-people', color: 'info', title: 'Parents' },
-    STUDENT: { icon: 'bi-mortarboard', color: 'warning', title: 'Students' }
-  };
-
-  const config = roleConfig[role];
 
   return (
     <div>

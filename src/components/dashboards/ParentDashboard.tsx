@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Table, Badge, Alert, Spinner, Accordion } from 'react-bootstrap';
+import { Card, Row, Col, Table, Badge, Alert, Spinner, Accordion, Button, Modal, Form } from 'react-bootstrap';
 
 interface Child {
   id: string;
@@ -14,8 +14,12 @@ interface Child {
   }[];
   progressRecords: {
     id: string;
-    text: string;
-    percent: number;
+    date: string;
+    lesson: string;
+    homework: string;
+    lessonProgress: number;
+    score: number;
+    remarks: string;
     createdAt: string;
     course: {
       id: string;
@@ -25,6 +29,14 @@ interface Child {
       id: string;
       name: string;
     };
+    parentRemarks: {
+      id: string;
+      remark: string;
+      createdAt: string;
+      parent: {
+        name: string;
+      };
+    }[];
   }[];
 }
 
@@ -32,6 +44,13 @@ export default function ParentDashboard() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Remark modal states
+  const [showRemarkModal, setShowRemarkModal] = useState(false);
+  const [selectedProgress, setSelectedProgress] = useState<any>(null);
+  const [remarkText, setRemarkText] = useState('');
+  const [addingRemark, setAddingRemark] = useState(false);
 
   useEffect(() => {
     fetchChildren();
@@ -54,6 +73,45 @@ export default function ParentDashboard() {
     }
   };
 
+  const handleAddRemark = (progress: any) => {
+    setSelectedProgress(progress);
+    setRemarkText('');
+    setShowRemarkModal(true);
+  };
+
+  const handleSubmitRemark = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProgress || !remarkText.trim()) return;
+
+    setAddingRemark(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/progress/parent-remark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          progressId: selectedProgress.id,
+          remark: remarkText.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess('Remark added successfully!');
+        setShowRemarkModal(false);
+        fetchChildren(); // Refresh data
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to add remark');
+      }
+    } catch (error) {
+      setError('Error adding remark');
+    } finally {
+      setAddingRemark(false);
+    }
+  };
+
   const getProgressForCourse = (child: Child, courseId: string) => {
     return child.progressRecords.filter(p => p.course.id === courseId);
   };
@@ -66,14 +124,14 @@ export default function ParentDashboard() {
   const getAverageProgress = (child: Child) => {
     const coursesWithProgress = child.studentCourses.filter(sc => {
       const latestProgress = getLatestProgress(child, sc.course.id);
-      return latestProgress && latestProgress.percent !== null;
+      return latestProgress && latestProgress.lessonProgress !== null;
     });
 
     if (coursesWithProgress.length === 0) return null;
 
     const total = coursesWithProgress.reduce((sum, sc) => {
       const latestProgress = getLatestProgress(child, sc.course.id);
-      return sum + (latestProgress?.percent || 0);
+      return sum + (latestProgress?.lessonProgress || 0);
     }, 0);
 
     return Math.round(total / coursesWithProgress.length);
@@ -83,7 +141,7 @@ export default function ParentDashboard() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" />
-        <p className="mt-2 text-muted">Loading your children's progress...</p>
+        <p className="mt-2 text-muted">Loading your children&apos;s progress...</p>
       </div>
     );
   }
@@ -96,18 +154,19 @@ export default function ParentDashboard() {
             <i className="bi bi-people me-2 text-info"></i>
             Parent Dashboard
           </h1>
-          <p className="text-muted">Monitor your children's academic progress</p>
+          <p className="text-muted">Monitor your children&apos;s academic progress</p>
         </div>
       </div>
 
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
       {children.length === 0 ? (
         <Card className="text-center py-5">
           <Card.Body>
             <i className="bi bi-person-x display-4 text-muted"></i>
             <h4 className="mt-3 text-muted">No Children Assigned</h4>
-            <p className="text-muted">You don't have any children assigned to your account. Please contact your administrator.</p>
+            <p className="text-muted">You don&apos;t have any children assigned to your account. Please contact your administrator.</p>
           </Card.Body>
         </Card>
       ) : (
@@ -115,8 +174,8 @@ export default function ParentDashboard() {
           {children.map((child) => {
             const averageProgress = getAverageProgress(child);
             return (
-              <Col key={child.id} lg={6}>
-                <Card className="h-100 shadow-sm">
+              <Col key={child.id} lg={12}>
+                <Card className="shadow-sm">
                   <Card.Header className="bg-light">
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
@@ -170,16 +229,16 @@ export default function ParentDashboard() {
                                   <div className="text-end">
                                     {latestProgress ? (
                                       <div>
-                                        {latestProgress.percent !== null && (
+                                        {latestProgress.lessonProgress !== null && (
                                           <Badge 
-                                            bg={latestProgress.percent >= 80 ? 'success' : 
-                                                latestProgress.percent >= 60 ? 'warning' : 'danger'}
+                                            bg={latestProgress.lessonProgress >= 80 ? 'success' : 
+                                                latestProgress.lessonProgress >= 60 ? 'warning' : 'danger'}
                                           >
-                                            {latestProgress.percent}%
+                                            {latestProgress.lessonProgress}%
                                           </Badge>
                                         )}
                                         <div className="small text-muted">
-                                          {new Date(latestProgress.createdAt).toLocaleDateString()}
+                                          {new Date(latestProgress.date).toLocaleDateString()}
                                         </div>
                                       </div>
                                     ) : (
@@ -201,43 +260,90 @@ export default function ParentDashboard() {
                                         <tr>
                                           <th>Date</th>
                                           <th>Teacher</th>
+                                          <th>Lesson</th>
+                                          <th>Homework</th>
                                           <th>Progress</th>
-                                          <th>Notes</th>
+                                          <th>Score</th>
+                                          <th>Remarks</th>
+                                          <th>My Remarks</th>
+                                          <th>Action</th>
                                         </tr>
                                       </thead>
                                       <tbody>
                                         {allProgress.map((progress) => (
                                           <tr key={progress.id}>
                                             <td className="text-muted small">
-                                              {new Date(progress.createdAt).toLocaleDateString()}
+                                              {new Date(progress.date).toLocaleDateString()}
                                             </td>
                                             <td className="fw-medium small">
                                               {progress.teacher.name}
                                             </td>
+                                            <td className="small">
+                                              {progress.lesson || '-'}
+                                            </td>
+                                            <td className="small">
+                                              {progress.homework || '-'}
+                                            </td>
                                             <td>
-                                              {progress.percent !== null ? (
+                                              {progress.lessonProgress !== null ? (
                                                 <Badge 
-                                                  bg={progress.percent >= 80 ? 'success' : 
-                                                      progress.percent >= 60 ? 'warning' : 'danger'}
+                                                  bg={progress.lessonProgress >= 80 ? 'success' : 
+                                                      progress.lessonProgress >= 60 ? 'warning' : 'danger'}
                                                   className="small"
                                                 >
-                                                  {progress.percent}%
+                                                  {progress.lessonProgress}%
+                                                </Badge>
+                                              ) : (
+                                                <span className="text-muted small">-</span>
+                                              )}
+                                            </td>
+                                            <td>
+                                              {progress.score !== null ? (
+                                                <Badge bg="success" className="small">
+                                                  {progress.score}
                                                 </Badge>
                                               ) : (
                                                 <span className="text-muted small">-</span>
                                               )}
                                             </td>
                                             <td className="small">
-                                              {progress.text ? (
+                                              {progress.remarks ? (
                                                 <span className="text-muted">
-                                                  {progress.text.length > 50 
-                                                    ? progress.text.substring(0, 50) + '...'
-                                                    : progress.text
+                                                  {progress.remarks.length > 30 
+                                                    ? progress.remarks.substring(0, 30) + '...'
+                                                    : progress.remarks
                                                   }
                                                 </span>
                                               ) : (
-                                                <span className="text-muted">No notes</span>
+                                                <span className="text-muted">-</span>
                                               )}
+                                            </td>
+                                            <td className="small">
+                                              {progress.parentRemarks.length > 0 ? (
+                                                <div>
+                                                  {progress.parentRemarks.map((remark) => (
+                                                    <div key={remark.id} className="mb-1">
+                                                      <small className="text-info">
+                                                        {remark.remark.length > 20 
+                                                          ? remark.remark.substring(0, 20) + '...'
+                                                          : remark.remark
+                                                        }
+                                                      </small>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              ) : (
+                                                <span className="text-muted">-</span>
+                                              )}
+                                            </td>
+                                            <td>
+                                              <Button
+                                                variant="outline-info"
+                                                size="sm"
+                                                onClick={() => handleAddRemark(progress)}
+                                              >
+                                                <i className="bi bi-chat-dots"></i>
+                                              </Button>
                                             </td>
                                           </tr>
                                         ))}
@@ -258,6 +364,67 @@ export default function ParentDashboard() {
           })}
         </Row>
       )}
+
+      {/* Add Remark Modal */}
+      <Modal show={showRemarkModal} onHide={() => setShowRemarkModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-chat-dots me-2"></i>
+            Add Your Remark
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedProgress && (
+            <div className="mb-3">
+              <div className="bg-light p-3 rounded">
+                <strong>Progress Details:</strong>
+                <div className="small text-muted mt-1">
+                  <div><strong>Date:</strong> {new Date(selectedProgress.date).toLocaleDateString()}</div>
+                  <div><strong>Course:</strong> {selectedProgress.course.name}</div>
+                  <div><strong>Teacher:</strong> {selectedProgress.teacher.name}</div>
+                  {selectedProgress.lesson && <div><strong>Lesson:</strong> {selectedProgress.lesson}</div>}
+                </div>
+              </div>
+            </div>
+          )}
+          <Form onSubmit={handleSubmitRemark}>
+            <Form.Group className="mb-4">
+              <Form.Label>Your Remark</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={4}
+                value={remarkText}
+                onChange={(e) => setRemarkText(e.target.value)}
+                placeholder="Enter your remark about your child's progress..."
+                required
+              />
+            </Form.Group>
+
+            <div className="d-flex justify-content-end gap-2">
+              <Button variant="secondary" onClick={() => setShowRemarkModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="info"
+                disabled={addingRemark || !remarkText.trim()}
+              >
+                {addingRemark ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-check-circle me-2"></i>
+                    Add Remark
+                  </>
+                )}
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

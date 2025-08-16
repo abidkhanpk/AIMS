@@ -16,7 +16,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     let settings;
 
-    if (session.user.role === 'ADMIN') {
+    if (session.user.role === 'DEVELOPER') {
+      // Developer gets global app settings
+      let appSettings = await prisma.appSettings.findFirst();
+      
+      if (!appSettings) {
+        // Create default app settings if none exist
+        appSettings = await prisma.appSettings.create({
+          data: {
+            appLogo: '/assets/app-logo.png',
+            appName: 'LMS Academy',
+            enableHomePage: true,
+          }
+        });
+      }
+
+      settings = {
+        appTitle: appSettings.appName,
+        headerImg: appSettings.appLogo,
+        enableHomePage: appSettings.enableHomePage,
+      };
+    } else if (session.user.role === 'ADMIN') {
       // Admin gets their own settings
       settings = await prisma.settings.findUnique({
         where: { adminId: session.user.id },
@@ -24,6 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           id: true,
           appTitle: true,
           headerImg: true,
+          enableHomePage: true,
         }
       });
     } else if (session.user.adminId) {
@@ -34,13 +55,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           id: true,
           appTitle: true,
           headerImg: true,
+          enableHomePage: true,
         }
       });
     } else {
-      // Developer or users without admin - return default settings
+      // Users without admin - return default settings
       settings = {
         appTitle: 'LMS Academy',
         headerImg: '/assets/logo.png',
+        enableHomePage: true,
       };
     }
 
@@ -49,7 +72,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       settings = {
         appTitle: 'LMS Academy',
         headerImg: '/assets/logo.png',
+        enableHomePage: true,
       };
+    }
+
+    // For non-developers, check global homepage setting
+    if (session.user.role !== 'DEVELOPER') {
+      const appSettings = await prisma.appSettings.findFirst();
+      if (appSettings && !appSettings.enableHomePage) {
+        settings.enableHomePage = false;
+      }
     }
 
     res.status(200).json(settings);

@@ -256,42 +256,62 @@ async function main() {
 
   console.log('✅ Student-Course assignments created');
 
-  // Create sample progress records
+  // Create sample progress records with correct field names and enum values
   const progressRecords = [
     {
       studentId: student1.id,
       courseId: mathCourse.id,
       teacherId: teacher1.id,
-      text: 'Excellent work on algebra problems. Shows strong understanding of concepts.',
-      percent: 92.5,
+      lesson: 'Algebra Fundamentals',
+      homework: 'Complete exercises 1-10 on page 45',
+      lessonProgress: 92.5,
+      score: 95.0,
+      remarks: 'Excellent work on algebra problems. Shows strong understanding of concepts.',
+      attendance: 'PRESENT' as const,
     },
     {
       studentId: student1.id,
       courseId: scienceCourse.id,
       teacherId: teacher2.id,
-      text: 'Good progress in physics. Needs more practice with problem-solving.',
-      percent: 78.0,
+      lesson: 'Physics - Motion and Forces',
+      homework: 'Read chapter 3 and solve practice problems',
+      lessonProgress: 78.0,
+      score: 82.0,
+      remarks: 'Good progress in physics. Needs more practice with problem-solving.',
+      attendance: 'PRESENT' as const,
     },
     {
       studentId: student2.id,
       courseId: mathCourse.id,
       teacherId: teacher1.id,
-      text: 'Improving steadily. Keep up the good work with geometry.',
-      percent: 85.0,
+      lesson: 'Geometry - Triangles',
+      homework: 'Draw and calculate areas of different triangles',
+      lessonProgress: 85.0,
+      score: 88.0,
+      remarks: 'Improving steadily. Keep up the good work with geometry.',
+      attendance: 'LATE' as const,
     },
     {
       studentId: student2.id,
       courseId: englishCourse.id,
       teacherId: teacher2.id,
-      text: 'Outstanding essay writing skills. Creative and well-structured work.',
-      percent: 94.0,
+      lesson: 'Creative Writing - Essay Structure',
+      homework: 'Write a 500-word essay on your favorite book',
+      lessonProgress: 94.0,
+      score: 96.0,
+      remarks: 'Outstanding essay writing skills. Creative and well-structured work.',
+      attendance: 'PRESENT' as const,
     },
     {
       studentId: student3.id,
       courseId: scienceCourse.id,
       teacherId: teacher2.id,
-      text: 'Shows great interest in biology. Participates actively in class.',
-      percent: 88.5,
+      lesson: 'Biology - Cell Structure',
+      homework: 'Study cell diagrams and prepare for quiz',
+      lessonProgress: 88.5,
+      score: 90.0,
+      remarks: 'Shows great interest in biology. Participates actively in class.',
+      attendance: 'PRESENT' as const,
     },
   ];
 
@@ -302,6 +322,52 @@ async function main() {
   }
 
   console.log('✅ Sample progress records created');
+
+  // Create sample fees
+  const fees = [
+    {
+      studentId: student1.id,
+      title: 'Tuition Fee - Semester 1',
+      description: 'Tuition fee for the first semester',
+      amount: 1500.00,
+      dueDate: new Date('2024-09-15'),
+      status: 'PENDING' as const,
+    },
+    {
+      studentId: student1.id,
+      title: 'Library Fee',
+      description: 'Annual library access fee',
+      amount: 50.00,
+      dueDate: new Date('2024-08-30'),
+      status: 'PAID' as const,
+      paidDate: new Date('2024-08-25'),
+      paidById: parent1.id,
+    },
+    {
+      studentId: student2.id,
+      title: 'Tuition Fee - Semester 1',
+      description: 'Tuition fee for the first semester',
+      amount: 1500.00,
+      dueDate: new Date('2024-09-15'),
+      status: 'PENDING' as const,
+    },
+    {
+      studentId: student3.id,
+      title: 'Lab Fee',
+      description: 'Science laboratory equipment fee',
+      amount: 100.00,
+      dueDate: new Date('2024-09-01'),
+      status: 'OVERDUE' as const,
+    },
+  ];
+
+  for (const fee of fees) {
+    await prisma.fee.create({
+      data: fee,
+    });
+  }
+
+  console.log('✅ Sample fees created');
 
   console.log('🎉 Database seeding completed successfully!');
   console.log('\n📋 Login Credentials:');
