@@ -10,3 +10,7 @@
 
 # Production
 /build
+
+/src/generated/prisma
+/.next
+/.qodo
