@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  DEVELOPER
+  ADMIN
+  TEACHER
+  PARENT
+  STUDENT
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  adminId   String?  // All users except DEVELOPER belong to an admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  admin              User?              @relation("AdminUsers", fields: [adminId], references: [id])
+  managedUsers       User[]             @relation("AdminUsers")
+  settings           Settings?
+  teacherAssignments TeacherStudent[]   @relation("Teacher")
+  studentAssignments TeacherStudent[]   @relation("Student")
+  parentChildren     ParentStudent[]    @relation("Parent")
+  studentParents     ParentStudent[]    @relation("Student")
+  studentCourses     StudentCourse[]
+  progressRecords    Progress[]         @relation("StudentProgress")
+  progressUpdates    Progress[]         @relation("TeacherProgress")
+  createdCourses     Course[]
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  adminId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  admin           User            @relation(fields: [adminId], references: [id])
+  studentCourses  StudentCourse[]
+  progressRecords Progress[]
+}
+
+model TeacherStudent {
+  id        String @id @default(uuid())
+  teacherId String
+  studentId String
+
+  // Relations
+  teacher User @relation("Teacher", fields: [teacherId], references: [id])
+  student User @relation("Student", fields: [studentId], references: [id])
+
+  @@unique([teacherId, studentId])
+}
+
+model ParentStudent {
+  id        String @id @default(uuid())
+  parentId  String
+  studentId String
+
+  // Relations
+  parent  User @relation("Parent", fields: [parentId], references: [id])
+  student User @relation("Student", fields: [studentId], references: [id])
+
+  @@unique([parentId, studentId])
+}
+
+model StudentCourse {
+  id        String @id @default(uuid())
+  studentId String
+  courseId  String
+
+  // Relations
+  student User   @relation(fields: [studentId], references: [id])
+  course  Course @relation(fields: [courseId], references: [id])
+
+  @@unique([studentId, courseId])
+}
+
+model Progress {
+  id        String   @id @default(uuid())
+  studentId String
+  courseId  String
+  teacherId String
+  text      String?
+  percent   Float?
+  createdAt DateTime @default(now())
+
+  // Relations
+  student User   @relation("StudentProgress", fields: [studentId], references: [id])
+  course  Course @relation(fields: [courseId], references: [id])
+  teacher User   @relation("TeacherProgress", fields: [teacherId], references: [id])
+}
+
+model Settings {
+  id         String @id @default(uuid())
+  adminId    String @unique
+  appTitle   String @default("LMS Academy")
+  headerImg  String @default("/assets/logo.png")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  admin User @relation(fields: [adminId], references: [id])
+}
