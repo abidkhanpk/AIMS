@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -14,26 +15,25 @@
   "dependencies": {
     "@prisma/client": "^6.14.0",
     "@prisma/extension-accelerate": "latest",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/multer": "^2.0.0",
-    "@types/node": "^24.3.0",
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
     "bcryptjs": "^3.0.2",
     "bootstrap": "^5.3.3",
     "eslint": "^9.33.0",
     "eslint-config-next": "^15.4.6",
+    "multer": "latest",
     "next": "^15.4.6",
     "next-auth": "^4.24.11",
     "react": "^19.1.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",
     "typescript": "^5.9.2",
-    "multer": "latest"
+    "prisma": "^6.14.0"  // 👈 moved here from devDependencies
   },
   "devDependencies": {
-    "prisma": "^6.14.0",
     "ts-node": "^10.9.2",
-    "@types/multer": "latest"
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.10",
+    "@types/react-dom": "^19.1.7",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/multer": "^2.0.0"
   }
 }
