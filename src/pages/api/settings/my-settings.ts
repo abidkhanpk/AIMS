@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         appSettings = await prisma.appSettings.create({
           data: {
             appLogo: '/assets/app-logo.png',
-            appName: 'LMS Academy',
+            appName: 'AIMS',
             enableHomePage: true,
           }
         });
@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         settings = await prisma.settings.create({
           data: {
             adminId: session.user.id,
-            appTitle: 'LMS Academy',
+            appTitle: 'AIMS',
             headerImg: '/assets/default-logo.png',
             enableHomePage: true,
           },
@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         settings = await prisma.settings.create({
           data: {
             adminId: session.user.adminId,
-            appTitle: 'LMS Academy',
+            appTitle: 'AIMS',
             headerImg: '/assets/default-logo.png',
             enableHomePage: true,
           },
@@ -97,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else {
       // Users without admin - return default settings
       settings = {
-        appTitle: 'LMS Academy',
+        appTitle: 'AIMS',
         headerImg: '/assets/default-logo.png',
         enableHomePage: true,
       };

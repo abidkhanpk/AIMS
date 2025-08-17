@@ -21,6 +21,7 @@ enum NotificationType {
   SYSTEM_ALERT
   FEE_DUE
   FEE_PAID
+  SALARY_PAID
 }
 
 enum AttendanceStatus {
@@ -31,6 +32,13 @@ enum AttendanceStatus {
 }
 
 enum FeeStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum SalaryStatus {
   PENDING
   PAID
   OVERDUE
@@ -65,6 +73,8 @@ model User {
   userSettings       UserSettings?
   studentFees        Fee[]              @relation("StudentFees")
   feePayments        Fee[]              @relation("FeePayments")
+  teacherSalaries    Salary[]           @relation("TeacherSalaries")
+  salaryPayments     Salary[]           @relation("SalaryPayments")
 }
 
 model Course {
@@ -156,6 +166,7 @@ model Fee {
   title       String    // Fee title (e.g., "Tuition Fee", "Library Fee")
   description String?   // Optional description
   amount      Float     // Fee amount
+  currency    String    @default("USD") // Currency symbol/code
   dueDate     DateTime  // Due date for payment
   status      FeeStatus @default(PENDING)
   paidDate    DateTime? // Date when fee was paid
@@ -166,6 +177,25 @@ model Fee {
   // Relations
   student User  @relation("StudentFees", fields: [studentId], references: [id])
   paidBy  User? @relation("FeePayments", fields: [paidById], references: [id])
+}
+
+model Salary {
+  id          String       @id @default(uuid())
+  teacherId   String
+  title       String       // Salary title (e.g., "Monthly Salary", "Bonus")
+  description String?      // Optional description
+  amount      Float        // Salary amount
+  currency    String       @default("USD") // Currency symbol/code
+  dueDate     DateTime     // Due date for payment
+  status      SalaryStatus @default(PENDING)
+  paidDate    DateTime?    // Date when salary was paid
+  paidById    String?      // Admin who paid the salary
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  teacher User  @relation("TeacherSalaries", fields: [teacherId], references: [id])
+  paidBy  User? @relation("SalaryPayments", fields: [paidById], references: [id])
 }
 
 model Notification {
@@ -186,7 +216,7 @@ model Notification {
 model Settings {
   id             String  @id @default(uuid())
   adminId        String  @unique
-  appTitle       String  @default("LMS Academy")
+  appTitle       String  @default("AIMS")
   headerImg      String  @default("/assets/default-logo.png")
   enableHomePage Boolean @default(true) // Developer can enable/disable homepage
   createdAt      DateTime @default(now())
@@ -212,7 +242,7 @@ model UserSettings {
 model AppSettings {
   id             String  @id @default(uuid())
   appLogo        String  @default("/assets/app-logo.png")
-  appName        String  @default("LMS Academy")
+  appName        String  @default("AIMS")
   enableHomePage Boolean @default(true) // Global homepage setting for developers
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

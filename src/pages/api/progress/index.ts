@@ -13,17 +13,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
+  const { teacherId } = req.query;
+
   try {
     let progress;
 
     if (session.user.role === 'ADMIN') {
-      // Admin can see all progress for their students
+      // Admin can see all progress for their students, with optional teacher filtering
+      const whereClause: any = {
+        student: {
+          adminId: session.user.id
+        }
+      };
+
+      // Add teacher filter if provided
+      if (teacherId && typeof teacherId === 'string') {
+        whereClause.teacherId = teacherId;
+      }
+
       progress = await prisma.progress.findMany({
-        where: {
-          student: {
-            adminId: session.user.id
-          }
-        },
+        where: whereClause,
         include: {
           student: {
             select: {

@@ -31,7 +31,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       console.error('Error fetching settings:', error);
       // Use default settings on error
       setSettings({
-        appTitle: 'LMS Academy',
+        appTitle: 'AIMS',
         headerImg: '/assets/default-logo.png',
       });
     }
@@ -58,7 +58,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
             <Link href="/" passHref>
               <Navbar.Brand className="fw-bold">
-                {settings?.appTitle || 'LMS Academy'}
+                {settings?.appTitle || 'AIMS'}
               </Navbar.Brand>
             </Link>
           </div>
@@ -130,8 +130,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="row">
             <div className="col-12 text-center">
               <small>
-                © 2024 {settings?.appTitle || 'LMS Academy'}. All rights reserved.
+                © 2024 {settings?.appTitle || 'AIMS'}. All rights reserved.
               </small>
+              <div className="mt-1">
+                <small className="text-muted fst-italic">
+                  "Aiming higher in learning and management"
+                </small>
+              </div>
             </div>
           </div>
         </Container>

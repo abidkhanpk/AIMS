@@ -38,6 +38,76 @@ interface Student {
   }[];
 }
 
+// Expandable Text Component
+function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: number }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  if (!text || text.length <= maxLength) {
+    return <span>{text || '-'}</span>;
+  }
+
+  return (
+    <span>
+      {expanded ? text : `${text.substring(0, maxLength)}...`}
+      <Button
+        variant="link"
+        size="sm"
+        className="p-0 ms-1"
+        onClick={() => setExpanded(!expanded)}
+      >
+        {expanded ? 'Show less' : 'Show more'}
+      </Button>
+    </span>
+  );
+}
+
+// Parent Remarks Modal
+function ParentRemarksModal({ show, onHide, remarks }: { 
+  show: boolean; 
+  onHide: () => void; 
+  remarks: any[] 
+}) {
+  return (
+    <Modal show={show} onHide={onHide} size="lg">
+      <Modal.Header closeButton>
+        <Modal.Title>
+          <i className="bi bi-chat-dots me-2"></i>
+          Parent Remarks
+        </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {remarks && remarks.length > 0 ? (
+          <div className="space-y-3">
+            {remarks.map((remark) => (
+              <Card key={remark.id} className="mb-3">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <strong className="text-primary">{remark.parent.name}</strong>
+                    <small className="text-muted">
+                      {new Date(remark.createdAt).toLocaleDateString()}
+                    </small>
+                  </div>
+                  <p className="mb-0">{remark.remark}</p>
+                </Card.Body>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <i className="bi bi-chat-dots display-6 text-muted"></i>
+            <p className="mt-2 text-muted">No parent remarks yet</p>
+          </div>
+        )}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Close
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
+
 export default function TeacherDashboard() {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +126,10 @@ export default function TeacherDashboard() {
   const [remarks, setRemarks] = useState('');
   const [attendance, setAttendance] = useState<AttendanceStatus>('PRESENT');
   const [updatingProgress, setUpdatingProgress] = useState(false);
+
+  // Parent remarks modal states
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [selectedRemarks, setSelectedRemarks] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAssignedStudents();
@@ -131,6 +205,11 @@ export default function TeacherDashboard() {
     } finally {
       setUpdatingProgress(false);
     }
+  };
+
+  const handleViewParentRemarks = (remarks: any[]) => {
+    setSelectedRemarks(remarks);
+    setShowRemarksModal(true);
   };
 
   const getAttendanceBadge = (attendance: AttendanceStatus) => {
@@ -242,10 +321,10 @@ export default function TeacherDashboard() {
                                   {getAttendanceBadge(progress.attendance)}
                                 </td>
                                 <td className="small">
-                                  {progress.lesson || '-'}
+                                  <ExpandableText text={progress.lesson} maxLength={20} />
                                 </td>
                                 <td className="small">
-                                  {progress.homework || '-'}
+                                  <ExpandableText text={progress.homework} maxLength={20} />
                                 </td>
                                 <td>
                                   {progress.lessonProgress !== null ? (
@@ -266,28 +345,21 @@ export default function TeacherDashboard() {
                                   )}
                                 </td>
                                 <td className="small">
-                                  {progress.remarks ? (
-                                    progress.remarks.length > 30 
-                                      ? progress.remarks.substring(0, 30) + '...'
-                                      : progress.remarks
-                                  ) : '-'}
+                                  <ExpandableText text={progress.remarks} maxLength={30} />
                                 </td>
                                 <td className="small">
                                   {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                     <div>
-                                      {progress.parentRemarks.map((remark, idx) => (
-                                        <div key={remark.id} className="mb-1">
-                                          <Badge bg="info" className="me-1">
-                                            {remark.parent.name}
-                                          </Badge>
-                                          <small className="text-muted">
-                                            {remark.remark.length > 20 
-                                              ? remark.remark.substring(0, 20) + '...'
-                                              : remark.remark
-                                            }
-                                          </small>
-                                        </div>
-                                      ))}
+                                      <Badge bg="info" className="me-1">
+                                        {progress.parentRemarks.length} remark{progress.parentRemarks.length > 1 ? 's' : ''}
+                                      </Badge>
+                                      <Button
+                                        variant="outline-info"
+                                        size="sm"
+                                        onClick={() => handleViewParentRemarks(progress.parentRemarks)}
+                                      >
+                                        <i className="bi bi-eye"></i>
+                                      </Button>
                                     </div>
                                   ) : (
                                     <span className="text-muted">-</span>
@@ -474,6 +546,13 @@ export default function TeacherDashboard() {
           </Form>
         </Modal.Body>
       </Modal>
+
+      {/* Parent Remarks Modal */}
+      <ParentRemarksModal
+        show={showRemarksModal}
+        onHide={() => setShowRemarksModal(false)}
+        remarks={selectedRemarks}
+      />
     </div>
   );
 }

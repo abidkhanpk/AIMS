@@ -9,7 +9,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState({ appTitle: 'LMS Academy', headerImg: '/assets/logo.png' });
+  const [settings, setSettings] = useState({ appTitle: 'AIMS', headerImg: '/assets/logo.png' });
   const router = useRouter();
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function SignIn() {
     <>
       <Head>
         <title>Sign In - {settings.appTitle}</title>
-        <meta name="description" content="Sign in to your LMS account" />
+        <meta name="description" content="Sign in to your AIMS account" />
       </Head>
 
       <div className="min-vh-100 d-flex align-items-center bg-light">
@@ -88,6 +88,7 @@ export default function SignIn() {
                     )}
                     <h2 className="fw-bold text-dark mb-2">Welcome Back</h2>
                     <p className="text-muted">Sign in to {settings.appTitle}</p>
+                    <p className="text-muted small fst-italic">"Aiming higher in learning and management"</p>
                   </div>
 
                   {error && (
@@ -151,12 +152,6 @@ export default function SignIn() {
                   </div>
                 </Card.Body>
               </Card>
-
-              <div className="text-center mt-4">
-                <small className="text-muted">
-                  © 2024 {settings.appTitle}. All rights reserved.
-                </small>
-              </div>
             </Col>
           </Row>
         </Container>

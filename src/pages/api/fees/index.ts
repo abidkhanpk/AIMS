@@ -117,7 +117,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ message: 'Only admins can create fees' });
     }
 
-    const { studentId, title, description, amount, dueDate } = req.body;
+    const { studentId, title, description, amount, currency, dueDate } = req.body;
 
     if (!studentId || !title || !amount || !dueDate) {
       return res.status(400).json({ message: 'Student ID, title, amount, and due date are required' });
@@ -143,6 +143,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           title,
           description: description || null,
           amount: parseFloat(amount),
+          currency: currency || 'USD',
           dueDate: new Date(dueDate),
         },
         include: {
@@ -167,7 +168,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: {
             type: 'FEE_DUE',
             title: 'New Fee Due',
-            message: `A new fee "${title}" of $${amount} is due for ${student.name} on ${new Date(dueDate).toLocaleDateString()}`,
+            message: `A new fee "${title}" of ${currency || 'USD'} ${amount} is due for ${student.name} on ${new Date(dueDate).toLocaleDateString()}`,
             senderId: session.user.id,
             receiverId: parentStudent.parent.id,
           }
@@ -177,6 +178,66 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(201).json(fee);
     } catch (error) {
       console.error('Error creating fee:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  } else if (req.method === 'PUT') {
+    // Only admins can update fees
+    if (session.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can update fees' });
+    }
+
+    const { id, title, description, amount, currency, dueDate, status } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: 'Fee ID is required' });
+    }
+
+    try {
+      // Verify fee belongs to this admin's student
+      const existingFee = await prisma.fee.findFirst({
+        where: {
+          id,
+          student: {
+            adminId: session.user.id
+          }
+        }
+      });
+
+      if (!existingFee) {
+        return res.status(404).json({ message: 'Fee not found or access denied' });
+      }
+
+      const updatedFee = await prisma.fee.update({
+        where: { id },
+        data: {
+          ...(title && { title }),
+          ...(description !== undefined && { description }),
+          ...(amount && { amount: parseFloat(amount) }),
+          ...(currency && { currency }),
+          ...(dueDate && { dueDate: new Date(dueDate) }),
+          ...(status && { status }),
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            }
+          },
+          paidBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            }
+          }
+        }
+      });
+
+      res.status(200).json(updatedFee);
+    } catch (error) {
+      console.error('Error updating fee:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   } else {
