@@ -16,20 +16,25 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email }
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
+          });
 
-        if (user && bcrypt.compareSync(credentials.password, user.password)) {
-          const { password, ...userWithoutPassword } = user;
-          return {
-            id: userWithoutPassword.id,
-            name: userWithoutPassword.name,
-            email: userWithoutPassword.email,
-            role: userWithoutPassword.role,
-            adminId: userWithoutPassword.adminId,
-          };
-        } else {
+          if (user && bcrypt.compareSync(credentials.password, user.password)) {
+            const { password, ...userWithoutPassword } = user;
+            return {
+              id: userWithoutPassword.id,
+              name: userWithoutPassword.name,
+              email: userWithoutPassword.email,
+              role: userWithoutPassword.role,
+              adminId: userWithoutPassword.adminId,
+            };
+          } else {
+            return null;
+          }
+        } catch (error) {
+          console.error('Auth error:', error);
           return null;
         }
       }
@@ -55,11 +60,14 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/auth/signin',
+    error: '/auth/signin',
   },
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development',
 };
 
 export default NextAuth(authOptions);

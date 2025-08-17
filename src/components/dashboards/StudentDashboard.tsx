@@ -14,8 +14,13 @@ interface StudentData {
   }[];
   progressRecords: {
     id: string;
-    text: string;
-    percent: number;
+    date: string;
+    lesson: string;
+    homework: string;
+    lessonProgress: number;
+    score: number;
+    remarks: string;
+    attendance: string;
     createdAt: string;
     course: {
       id: string;
@@ -55,7 +60,7 @@ export default function StudentDashboard() {
   };
 
   const getProgressForCourse = (courseId: string) => {
-    if (!studentData) return [];
+    if (!studentData || !studentData.progressRecords) return [];
     return studentData.progressRecords.filter(p => p.course.id === courseId);
   };
 
@@ -65,18 +70,18 @@ export default function StudentDashboard() {
   };
 
   const getOverallProgress = () => {
-    if (!studentData) return null;
+    if (!studentData || !studentData.studentCourses) return null;
     
     const coursesWithProgress = studentData.studentCourses.filter(sc => {
       const latestProgress = getLatestProgress(sc.course.id);
-      return latestProgress && latestProgress.percent !== null;
+      return latestProgress && latestProgress.lessonProgress !== null;
     });
 
     if (coursesWithProgress.length === 0) return null;
 
     const total = coursesWithProgress.reduce((sum, sc) => {
       const latestProgress = getLatestProgress(sc.course.id);
-      return sum + (latestProgress?.percent || 0);
+      return sum + (latestProgress?.lessonProgress || 0);
     }, 0);
 
     return Math.round(total / coursesWithProgress.length);
@@ -86,6 +91,21 @@ export default function StudentDashboard() {
     if (percent >= 80) return 'success';
     if (percent >= 60) return 'warning';
     return 'danger';
+  };
+
+  const getAttendanceBadge = (attendance: string) => {
+    switch (attendance) {
+      case 'PRESENT':
+        return <Badge bg="success" className="small">Present</Badge>;
+      case 'ABSENT':
+        return <Badge bg="danger" className="small">Absent</Badge>;
+      case 'LATE':
+        return <Badge bg="warning" className="small">Late</Badge>;
+      case 'EXCUSED':
+        return <Badge bg="info" className="small">Excused</Badge>;
+      default:
+        return <Badge bg="secondary" className="small">Unknown</Badge>;
+    }
   };
 
   if (loading) {
@@ -153,7 +173,7 @@ export default function StudentDashboard() {
       </Row>
 
       {/* Subjects Progress */}
-      {studentData.studentCourses.length === 0 ? (
+      {!studentData.studentCourses || studentData.studentCourses.length === 0 ? (
         <Card className="text-center py-5">
           <Card.Body>
             <i className="bi bi-book display-4 text-muted"></i>
@@ -179,10 +199,10 @@ export default function StudentDashboard() {
                         )}
                       </div>
                       <div className="text-end">
-                        {latestProgress && latestProgress.percent !== null ? (
+                        {latestProgress && latestProgress.lessonProgress !== null ? (
                           <div>
-                            <Badge bg={getProgressVariant(latestProgress.percent)} className="fs-6">
-                              {latestProgress.percent}%
+                            <Badge bg={getProgressVariant(latestProgress.lessonProgress)} className="fs-6">
+                              {latestProgress.lessonProgress}%
                             </Badge>
                             <div className="small text-muted mt-1">Current Progress</div>
                           </div>
@@ -191,11 +211,11 @@ export default function StudentDashboard() {
                         )}
                       </div>
                     </div>
-                    {latestProgress && latestProgress.percent !== null && (
+                    {latestProgress && latestProgress.lessonProgress !== null && (
                       <div className="mt-2">
                         <ProgressBar 
-                          now={latestProgress.percent} 
-                          variant={getProgressVariant(latestProgress.percent)}
+                          now={latestProgress.lessonProgress} 
+                          variant={getProgressVariant(latestProgress.lessonProgress)}
                           style={{ height: '8px' }}
                         />
                       </div>
@@ -220,42 +240,56 @@ export default function StudentDashboard() {
                               <tr>
                                 <th>Date</th>
                                 <th>Teacher</th>
+                                <th>Lesson</th>
+                                <th>Progress</th>
                                 <th>Score</th>
-                                <th>Notes</th>
+                                <th>Attendance</th>
                               </tr>
                             </thead>
                             <tbody>
                               {allProgress.slice(0, 5).map((progress) => (
                                 <tr key={progress.id}>
                                   <td className="text-muted small">
-                                    {new Date(progress.createdAt).toLocaleDateString()}
+                                    {new Date(progress.date).toLocaleDateString()}
                                   </td>
                                   <td className="fw-medium small">
                                     {progress.teacher.name}
                                   </td>
+                                  <td className="small">
+                                    {progress.lesson ? (
+                                      <span className="text-muted">
+                                        {progress.lesson.length > 20 
+                                          ? progress.lesson.substring(0, 20) + '...'
+                                          : progress.lesson
+                                        }
+                                      </span>
+                                    ) : (
+                                      <span className="text-muted">-</span>
+                                    )}
+                                  </td>
                                   <td>
-                                    {progress.percent !== null ? (
+                                    {progress.lessonProgress !== null ? (
                                       <Badge 
-                                        bg={getProgressVariant(progress.percent)}
+                                        bg={getProgressVariant(progress.lessonProgress)}
                                         className="small"
                                       >
-                                        {progress.percent}%
+                                        {progress.lessonProgress}%
                                       </Badge>
                                     ) : (
                                       <span className="text-muted small">-</span>
                                     )}
                                   </td>
-                                  <td className="small">
-                                    {progress.text ? (
-                                      <span className="text-muted">
-                                        {progress.text.length > 40 
-                                          ? progress.text.substring(0, 40) + '...'
-                                          : progress.text
-                                        }
-                                      </span>
+                                  <td>
+                                    {progress.score !== null ? (
+                                      <Badge bg="success" className="small">
+                                        {progress.score}
+                                      </Badge>
                                     ) : (
-                                      <span className="text-muted">No notes</span>
+                                      <span className="text-muted small">-</span>
                                     )}
+                                  </td>
+                                  <td>
+                                    {getAttendanceBadge(progress.attendance)}
                                   </td>
                                 </tr>
                               ))}
@@ -280,7 +314,7 @@ export default function StudentDashboard() {
       )}
 
       {/* Recent Activity Summary */}
-      {studentData.progressRecords.length > 0 && (
+      {studentData.progressRecords && studentData.progressRecords.length > 0 && (
         <Row className="mt-4">
           <Col>
             <Card className="shadow-sm">
@@ -294,13 +328,13 @@ export default function StudentDashboard() {
                 <div className="row">
                   <div className="col-md-4 text-center">
                     <div className="border-end">
-                      <h4 className="text-primary mb-0">{studentData.studentCourses.length}</h4>
+                      <h4 className="text-primary mb-0">{studentData.studentCourses?.length || 0}</h4>
                       <small className="text-muted">Enrolled Subjects</small>
                     </div>
                   </div>
                   <div className="col-md-4 text-center">
                     <div className="border-end">
-                      <h4 className="text-success mb-0">{studentData.progressRecords.length}</h4>
+                      <h4 className="text-success mb-0">{studentData.progressRecords?.length || 0}</h4>
                       <small className="text-muted">Progress Updates</small>
                     </div>
                   </div>
@@ -308,7 +342,7 @@ export default function StudentDashboard() {
                     <h4 className={`mb-0 text-${overallProgress ? getProgressVariant(overallProgress) : 'muted'}`}>
                       {overallProgress || 0}%
                     </h4>
-                    <small className="text-muted">Average Score</small>
+                    <small className="text-muted">Average Progress</small>
                   </div>
                 </div>
               </Card.Body>

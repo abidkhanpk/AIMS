@@ -47,8 +47,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           enableHomePage: true,
         }
       });
+
+      // If admin doesn't have settings, create default ones
+      if (!settings) {
+        settings = await prisma.settings.create({
+          data: {
+            adminId: session.user.id,
+            appTitle: 'LMS Academy',
+            headerImg: '/assets/default-logo.png',
+            enableHomePage: true,
+          },
+          select: {
+            id: true,
+            appTitle: true,
+            headerImg: true,
+            enableHomePage: true,
+          }
+        });
+      }
     } else if (session.user.adminId) {
-      // Other users get their admin's settings
+      // Other users (TEACHER, PARENT, STUDENT) get their admin's settings
       settings = await prisma.settings.findUnique({
         where: { adminId: session.user.adminId },
         select: {
@@ -58,20 +76,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           enableHomePage: true,
         }
       });
+
+      // If admin settings don't exist, create default ones for the admin
+      if (!settings) {
+        settings = await prisma.settings.create({
+          data: {
+            adminId: session.user.adminId,
+            appTitle: 'LMS Academy',
+            headerImg: '/assets/default-logo.png',
+            enableHomePage: true,
+          },
+          select: {
+            id: true,
+            appTitle: true,
+            headerImg: true,
+            enableHomePage: true,
+          }
+        });
+      }
     } else {
       // Users without admin - return default settings
       settings = {
         appTitle: 'LMS Academy',
-        headerImg: '/assets/logo.png',
-        enableHomePage: true,
-      };
-    }
-
-    if (!settings) {
-      // Return default settings if none found
-      settings = {
-        appTitle: 'LMS Academy',
-        headerImg: '/assets/logo.png',
+        headerImg: '/assets/default-logo.png',
         enableHomePage: true,
       };
     }

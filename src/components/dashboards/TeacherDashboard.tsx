@@ -64,12 +64,14 @@ export default function TeacherDashboard() {
       const res = await fetch('/api/users/assigned-students');
       if (res.ok) {
         const data = await res.json();
-        setStudents(data);
+        setStudents(Array.isArray(data) ? data : []);
       } else {
         setError('Failed to fetch assigned students');
+        setStudents([]);
       }
     } catch (error) {
       setError('Error fetching assigned students');
+      setStudents([]);
     } finally {
       setLoading(false);
     }
@@ -126,11 +128,6 @@ export default function TeacherDashboard() {
     }
   };
 
-  const getLatestProgress = (student: Student, courseId: string) => {
-    const courseProgress = student.progressRecords.filter(p => p.course.id === courseId);
-    return courseProgress.length > 0 ? courseProgress[0] : null;
-  };
-
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -155,7 +152,7 @@ export default function TeacherDashboard() {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      {students.length === 0 ? (
+      {!students || students.length === 0 ? (
         <Card className="text-center py-5">
           <Card.Body>
             <i className="bi bi-people display-4 text-muted"></i>
@@ -185,7 +182,7 @@ export default function TeacherDashboard() {
                   </div>
                 </Card.Header>
                 <Card.Body className="p-0">
-                  {student.studentCourses.length === 0 ? (
+                  {!student.studentCourses || student.studentCourses.length === 0 ? (
                     <div className="text-center py-3">
                       <small className="text-muted">No subjects assigned</small>
                     </div>
@@ -205,7 +202,7 @@ export default function TeacherDashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {student.progressRecords.length === 0 ? (
+                          {!student.progressRecords || student.progressRecords.length === 0 ? (
                             <tr>
                               <td colSpan={8} className="text-center py-3 text-muted">
                                 No progress records yet
@@ -252,7 +249,7 @@ export default function TeacherDashboard() {
                                   ) : '-'}
                                 </td>
                                 <td className="small">
-                                  {progress.parentRemarks.length > 0 ? (
+                                  {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                     <div>
                                       {progress.parentRemarks.map((remark, idx) => (
                                         <div key={remark.id} className="mb-1">
@@ -306,7 +303,7 @@ export default function TeacherDashboard() {
                     required
                   >
                     <option value="">Choose a subject...</option>
-                    {selectedStudent?.studentCourses.map(({ course }) => (
+                    {selectedStudent?.studentCourses?.map(({ course }) => (
                       <option key={course.id} value={course.id}>
                         {course.name}
                       </option>
