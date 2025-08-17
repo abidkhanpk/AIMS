@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge } from 'react-bootstrap';
-import { Role } from '@prisma/client';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, Modal } from 'react-bootstrap';
+import { Role, FeeStatus, AttendanceStatus } from '@prisma/client';
 
 interface User {
   id: string;
@@ -18,6 +18,58 @@ interface Course {
   _count?: {
     studentCourses: number;
   };
+}
+
+interface Fee {
+  id: string;
+  title: string;
+  description?: string;
+  amount: number;
+  dueDate: string;
+  status: FeeStatus;
+  paidDate?: string;
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  paidBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+interface Progress {
+  id: string;
+  date: string;
+  lesson?: string;
+  homework?: string;
+  lessonProgress?: number;
+  score?: number;
+  remarks?: string;
+  attendance: AttendanceStatus;
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  course: {
+    id: string;
+    name: string;
+  };
+  teacher: {
+    id: string;
+    name: string;
+  };
+  parentRemarks?: Array<{
+    id: string;
+    remark: string;
+    createdAt: string;
+    parent: {
+      name: string;
+    };
+  }>;
 }
 
 const roleConfig = {
@@ -46,12 +98,14 @@ function UserManagementTab({ role }: { role: Role }) {
       const res = await fetch(`/api/users?role=${role}`);
       if (res.ok) {
         const data = await res.json();
-        setUsers(data);
+        setUsers(Array.isArray(data) ? data : []);
       } else {
         setError('Failed to fetch users');
+        setUsers([]);
       }
     } catch (error) {
       setError('Error fetching users');
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -654,6 +708,373 @@ function AssignmentsTab() {
   );
 }
 
+function FeeManagementTab() {
+  const [fees, setFees] = useState<Fee[]>([]);
+  const [students, setStudents] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Fee creation states
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [feeTitle, setFeeTitle] = useState('');
+  const [feeDescription, setFeeDescription] = useState('');
+  const [feeAmount, setFeeAmount] = useState('');
+  const [feeDueDate, setFeeDueDate] = useState('');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [feesRes, studentsRes] = await Promise.all([
+        fetch('/api/fees'),
+        fetch('/api/users?role=STUDENT'),
+      ]);
+      
+      if (feesRes.ok) setFees(await feesRes.json());
+      if (studentsRes.ok) setStudents(await studentsRes.json());
+    } catch (error) {
+      setError('Error fetching data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateFee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/fees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: selectedStudent,
+          title: feeTitle,
+          description: feeDescription,
+          amount: parseFloat(feeAmount),
+          dueDate: feeDueDate,
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess('Fee created successfully!');
+        fetchData();
+        setSelectedStudent('');
+        setFeeTitle('');
+        setFeeDescription('');
+        setFeeAmount('');
+        setFeeDueDate('');
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to create fee');
+      }
+    } catch (error) {
+      setError('Error creating fee');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const getStatusBadge = (status: FeeStatus) => {
+    switch (status) {
+      case 'PAID':
+        return <Badge bg="success">Paid</Badge>;
+      case 'PENDING':
+        return <Badge bg="warning">Pending</Badge>;
+      case 'OVERDUE':
+        return <Badge bg="danger">Overdue</Badge>;
+      case 'CANCELLED':
+        return <Badge bg="secondary">Cancelled</Badge>;
+      default:
+        return <Badge bg="secondary">{status}</Badge>;
+    }
+  };
+
+  return (
+    <div>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+
+      <Row className="g-4">
+        <Col lg={4}>
+          <Card className="h-100 shadow-sm">
+            <Card.Header className="bg-warning text-dark">
+              <h6 className="mb-0">
+                <i className="bi bi-cash-coin me-2"></i>
+                Create New Fee
+              </h6>
+            </Card.Header>
+            <Card.Body>
+              <Form onSubmit={handleCreateFee}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Select Student</Form.Label>
+                  <Form.Select 
+                    value={selectedStudent}
+                    onChange={(e) => setSelectedStudent(e.target.value)}
+                    required
+                    size="sm"
+                  >
+                    <option value="">Choose a student...</option>
+                    {students.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Fee Title</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    value={feeTitle} 
+                    onChange={(e) => setFeeTitle(e.target.value)} 
+                    required 
+                    placeholder="e.g., Tuition Fee"
+                    size="sm"
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control 
+                    as="textarea" 
+                    rows={2} 
+                    value={feeDescription} 
+                    onChange={(e) => setFeeDescription(e.target.value)}
+                    placeholder="Optional description"
+                    size="sm"
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Amount ($)</Form.Label>
+                  <Form.Control 
+                    type="number" 
+                    step="0.01"
+                    value={feeAmount} 
+                    onChange={(e) => setFeeAmount(e.target.value)} 
+                    required 
+                    placeholder="0.00"
+                    size="sm"
+                  />
+                </Form.Group>
+                <Form.Group className="mb-4">
+                  <Form.Label>Due Date</Form.Label>
+                  <Form.Control 
+                    type="date" 
+                    value={feeDueDate} 
+                    onChange={(e) => setFeeDueDate(e.target.value)} 
+                    required 
+                    size="sm"
+                  />
+                </Form.Group>
+                <Button 
+                  variant="warning" 
+                  type="submit" 
+                  disabled={creating}
+                  className="w-100"
+                  size="sm"
+                >
+                  {creating ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-plus-circle me-2"></i>
+                      Create Fee
+                    </>
+                  )}
+                </Button>
+              </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={8}>
+          <Card className="shadow-sm">
+            <Card.Header className="bg-light">
+              <div className="d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">
+                  <i className="bi bi-cash-coin me-2"></i>
+                  Fee Management
+                </h6>
+                <Badge bg="warning">{fees.length} Total</Badge>
+              </div>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {loading ? (
+                <div className="text-center py-4">
+                  <Spinner animation="border" size="sm" />
+                  <p className="mt-2 text-muted small">Loading fees...</p>
+                </div>
+              ) : fees.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className="bi bi-cash-coin display-6 text-muted"></i>
+                  <p className="mt-2 text-muted small">No fees found</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover size="sm" className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Student</th>
+                        <th>Title</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Paid By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fees.map((fee) => (
+                        <tr key={fee.id}>
+                          <td className="fw-medium">{fee.student.name}</td>
+                          <td>{fee.title}</td>
+                          <td className="fw-bold text-success">${fee.amount.toFixed(2)}</td>
+                          <td className="text-muted small">
+                            {new Date(fee.dueDate).toLocaleDateString()}
+                          </td>
+                          <td>{getStatusBadge(fee.status)}</td>
+                          <td className="text-muted small">
+                            {fee.paidBy ? fee.paidBy.name : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+}
+
+function ProgressOverviewTab() {
+  const [progress, setProgress] = useState<Progress[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchProgress();
+  }, []);
+
+  const fetchProgress = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/progress');
+      if (res.ok) {
+        const data = await res.json();
+        setProgress(data);
+      } else {
+        setError('Failed to fetch progress data');
+      }
+    } catch (error) {
+      setError('Error fetching progress data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAttendanceBadge = (attendance: AttendanceStatus) => {
+    switch (attendance) {
+      case 'PRESENT':
+        return <Badge bg="success">Present</Badge>;
+      case 'ABSENT':
+        return <Badge bg="danger">Absent</Badge>;
+      case 'LATE':
+        return <Badge bg="warning">Late</Badge>;
+      case 'EXCUSED':
+        return <Badge bg="info">Excused</Badge>;
+      default:
+        return <Badge bg="secondary">{attendance}</Badge>;
+    }
+  };
+
+  return (
+    <div>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">
+              <i className="bi bi-graph-up me-2"></i>
+              Student Progress Overview
+            </h6>
+            <Badge bg="info">{progress.length} Records</Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" size="sm" />
+              <p className="mt-2 text-muted small">Loading progress data...</p>
+            </div>
+          ) : progress.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-graph-up display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">No progress records found</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Course</th>
+                    <th>Teacher</th>
+                    <th>Lesson</th>
+                    <th>Progress</th>
+                    <th>Score</th>
+                    <th>Attendance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {progress.map((record) => (
+                    <tr key={record.id}>
+                      <td className="text-muted small">
+                        {new Date(record.date).toLocaleDateString()}
+                      </td>
+                      <td className="fw-medium">{record.student.name}</td>
+                      <td>{record.course.name}</td>
+                      <td className="text-muted">{record.teacher.name}</td>
+                      <td>{record.lesson || '-'}</td>
+                      <td>
+                        {record.lessonProgress ? (
+                          <Badge bg="primary">{record.lessonProgress}%</Badge>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td>
+                        {record.score ? (
+                          <Badge bg="success">{record.score}</Badge>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td>{getAttendanceBadge(record.attendance)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   return (
     <div className="container-fluid">
@@ -663,7 +1084,7 @@ export default function AdminDashboard() {
             <i className="bi bi-speedometer2 me-2 text-primary"></i>
             Admin Dashboard
           </h1>
-          <p className="text-muted">Manage users, subjects, and assignments</p>
+          <p className="text-muted">Manage users, subjects, assignments, fees, and monitor progress</p>
         </div>
       </div>
 
@@ -722,6 +1143,28 @@ export default function AdminDashboard() {
           }
         >
           <AssignmentsTab />
+        </Tab>
+        <Tab 
+          eventKey="fees" 
+          title={
+            <span>
+              <i className="bi bi-cash-coin me-2"></i>
+              Fees
+            </span>
+          }
+        >
+          <FeeManagementTab />
+        </Tab>
+        <Tab 
+          eventKey="progress" 
+          title={
+            <span>
+              <i className="bi bi-graph-up me-2"></i>
+              Progress
+            </span>
+          }
+        >
+          <ProgressOverviewTab />
         </Tab>
       </Tabs>
     </div>

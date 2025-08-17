@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
+import { AttendanceStatus } from '@prisma/client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -13,6 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
+  // Only teachers can update progress
   if (session.user.role !== 'TEACHER') {
     return res.status(403).json({ message: 'Only teachers can update progress' });
   }
@@ -20,60 +22,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { 
     studentId, 
     courseId, 
-    date,
-    lesson,
-    homework,
-    lessonProgress,
-    score,
+    lesson, 
+    homework, 
+    lessonProgress, 
+    score, 
     remarks,
-    attendance
+    attendance = 'PRESENT' // Default to PRESENT if not provided
   } = req.body;
 
-  if (!studentId || !courseId || !attendance) {
-    return res.status(400).json({ message: 'Student ID, Course ID, and attendance are required' });
+  if (!studentId || !courseId) {
+    return res.status(400).json({ message: 'Student ID and Course ID are required' });
   }
 
-  // Validate attendance value
-  const validAttendanceValues = ['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'];
-  if (!validAttendanceValues.includes(attendance)) {
-    return res.status(400).json({ message: 'Invalid attendance value' });
-  }
-
-  // If student is absent, only attendance should be recorded (no progress data)
-  if (attendance === 'ABSENT') {
-    if (lesson || homework || lessonProgress !== undefined || score !== undefined || remarks) {
-      return res.status(400).json({ message: 'Cannot record progress data when student is absent' });
-    }
-  } else {
-    // For present/late/excused students, at least one progress field should be provided
-    if (!lesson && !homework && lessonProgress === undefined && score === undefined && !remarks) {
-      return res.status(400).json({ message: 'At least one progress field must be provided for present students' });
-    }
+  // Validate attendance status
+  const validAttendanceStatuses: AttendanceStatus[] = ['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'];
+  if (!validAttendanceStatuses.includes(attendance)) {
+    return res.status(400).json({ message: 'Invalid attendance status' });
   }
 
   try {
-    // Verify teacher is assigned to this student
-    const teacherAssignment = await prisma.teacherStudent.findFirst({
+    // Verify the teacher is assigned to this student
+    const teacherStudent = await prisma.teacherStudent.findFirst({
       where: {
         teacherId: session.user.id,
-        studentId
+        studentId: studentId
       }
     });
 
-    if (!teacherAssignment) {
+    if (!teacherStudent) {
       return res.status(403).json({ message: 'You are not assigned to this student' });
     }
 
-    // Verify student is assigned to this course
+    // Verify the student is enrolled in this course
     const studentCourse = await prisma.studentCourse.findFirst({
       where: {
-        studentId,
-        courseId
+        studentId: studentId,
+        courseId: courseId
       }
     });
 
     if (!studentCourse) {
-      return res.status(404).json({ message: 'Student is not assigned to this course' });
+      return res.status(404).json({ message: 'Student is not enrolled in this course' });
     }
 
     // Create progress record
@@ -82,13 +71,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         studentId,
         courseId,
         teacherId: session.user.id,
-        date: date ? new Date(date) : new Date(),
-        lesson: attendance === 'ABSENT' ? null : (lesson || null),
-        homework: attendance === 'ABSENT' ? null : (homework || null),
-        lessonProgress: attendance === 'ABSENT' ? null : (lessonProgress !== undefined ? parseFloat(lessonProgress) : null),
-        score: attendance === 'ABSENT' ? null : (score !== undefined ? parseFloat(score) : null),
-        remarks: attendance === 'ABSENT' ? `Student was absent` : (remarks || null),
-        attendance: attendance,
+        lesson: lesson || null,
+        homework: homework || null,
+        lessonProgress: lessonProgress ? parseFloat(lessonProgress) : null,
+        score: score ? parseFloat(score) : null,
+        remarks: remarks || null,
+        attendance: attendance as AttendanceStatus,
       },
       include: {
         student: {
@@ -102,44 +90,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           select: {
             id: true,
             name: true,
-            description: true,
           }
         },
         teacher: {
           select: {
             id: true,
             name: true,
-            email: true,
           }
         }
       }
     });
 
-    // Create notification for parents (only if there's meaningful progress or if absent)
+    // Create notifications for parents
     const parentStudents = await prisma.parentStudent.findMany({
       where: { studentId },
       include: { parent: true }
     });
 
     for (const parentStudent of parentStudents) {
-      let notificationMessage;
-      
-      if (attendance === 'ABSENT') {
-        notificationMessage = `${progress.student.name} was marked absent in ${progress.course.name} on ${new Date(progress.date).toLocaleDateString()}`;
-      } else {
-        notificationMessage = `${progress.teacher.name} updated progress for ${progress.student.name} in ${progress.course.name}`;
-        if (attendance === 'LATE') {
-          notificationMessage += ` (Student was late)`;
-        } else if (attendance === 'EXCUSED') {
-          notificationMessage += ` (Excused absence)`;
-        }
-      }
-
       await prisma.notification.create({
         data: {
           type: 'PROGRESS_UPDATE',
-          title: attendance === 'ABSENT' ? 'Attendance Alert' : 'New Progress Update',
-          message: notificationMessage,
+          title: 'Progress Update',
+          message: `New progress update for ${progress.student.name} in ${progress.course.name}. Attendance: ${attendance}${lesson ? `, Lesson: ${lesson}` : ''}${score ? `, Score: ${score}` : ''}`,
           senderId: session.user.id,
           receiverId: parentStudent.parent.id,
         }

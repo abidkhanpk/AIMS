@@ -13,24 +13,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const { studentId, courseId } = req.query;
-
   try {
-    let progressRecords;
+    let progress;
 
     if (session.user.role === 'ADMIN') {
-      // Admins can see progress for their managed students
-      const whereClause: any = {
-        student: {
-          adminId: session.user.id
-        }
-      };
-
-      if (studentId) whereClause.studentId = studentId as string;
-      if (courseId) whereClause.courseId = courseId as string;
-
-      progressRecords = await prisma.progress.findMany({
-        where: whereClause,
+      // Admin can see all progress for their students
+      progress = await prisma.progress.findMany({
+        where: {
+          student: {
+            adminId: session.user.id
+          }
+        },
         include: {
           student: {
             select: {
@@ -43,30 +36,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             select: {
               id: true,
               name: true,
-              description: true,
             }
           },
           teacher: {
             select: {
               id: true,
               name: true,
-              email: true,
+            }
+          },
+          parentRemarks: {
+            include: {
+              parent: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
             }
           }
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: {
+          date: 'desc'
+        }
       });
     } else if (session.user.role === 'TEACHER') {
-      // Teachers can see progress for their assigned students
-      const whereClause: any = {
-        teacherId: session.user.id
-      };
+      // Teacher can see progress for their assigned students
+      const teacherStudents = await prisma.teacherStudent.findMany({
+        where: { teacherId: session.user.id },
+        select: { studentId: true }
+      });
 
-      if (studentId) whereClause.studentId = studentId as string;
-      if (courseId) whereClause.courseId = courseId as string;
+      const studentIds = teacherStudents.map(ts => ts.studentId);
 
-      progressRecords = await prisma.progress.findMany({
-        where: whereClause,
+      progress = await prisma.progress.findMany({
+        where: {
+          studentId: {
+            in: studentIds
+          }
+        },
         include: {
           student: {
             select: {
@@ -79,26 +89,136 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             select: {
               id: true,
               name: true,
-              description: true,
             }
           },
           teacher: {
             select: {
               id: true,
               name: true,
-              email: true,
+            }
+          },
+          parentRemarks: {
+            include: {
+              parent: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
             }
           }
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: {
+          date: 'desc'
+        }
+      });
+    } else if (session.user.role === 'PARENT') {
+      // Parent can see progress for their children
+      const parentStudents = await prisma.parentStudent.findMany({
+        where: { parentId: session.user.id },
+        select: { studentId: true }
+      });
+
+      const studentIds = parentStudents.map(ps => ps.studentId);
+
+      progress = await prisma.progress.findMany({
+        where: {
+          studentId: {
+            in: studentIds
+          }
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            }
+          },
+          course: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          teacher: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          parentRemarks: {
+            include: {
+              parent: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
+            }
+          }
+        },
+        orderBy: {
+          date: 'desc'
+        }
+      });
+    } else if (session.user.role === 'STUDENT') {
+      // Student can see their own progress
+      progress = await prisma.progress.findMany({
+        where: {
+          studentId: session.user.id
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            }
+          },
+          course: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          teacher: {
+            select: {
+              id: true,
+              name: true,
+            }
+          },
+          parentRemarks: {
+            include: {
+              parent: {
+                select: {
+                  id: true,
+                  name: true,
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
+            }
+          }
+        },
+        orderBy: {
+          date: 'desc'
+        }
       });
     } else {
-      return res.status(403).json({ message: 'Insufficient permissions' });
+      return res.status(403).json({ message: 'Access denied' });
     }
 
-    res.status(200).json(progressRecords);
+    res.status(200).json(progress);
   } catch (error) {
-    console.error('Error fetching progress records:', error);
+    console.error('Error fetching progress:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner } from 'react-bootstrap';
+import { AttendanceStatus } from '@prisma/client';
 
 interface Student {
   id: string;
@@ -20,6 +21,7 @@ interface Student {
     lessonProgress: number;
     score: number;
     remarks: string;
+    attendance: AttendanceStatus;
     createdAt: string;
     course: {
       id: string;
@@ -52,6 +54,7 @@ export default function TeacherDashboard() {
   const [lessonProgress, setLessonProgress] = useState('');
   const [score, setScore] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [attendance, setAttendance] = useState<AttendanceStatus>('PRESENT');
   const [updatingProgress, setUpdatingProgress] = useState(false);
 
   useEffect(() => {
@@ -86,6 +89,7 @@ export default function TeacherDashboard() {
     setLessonProgress('');
     setScore('');
     setRemarks('');
+    setAttendance('PRESENT');
     setShowProgressModal(true);
   };
 
@@ -110,6 +114,7 @@ export default function TeacherDashboard() {
           lessonProgress: lessonProgress ? parseFloat(lessonProgress) : null,
           score: score ? parseFloat(score) : null,
           remarks: remarks || null,
+          attendance: attendance,
         }),
       });
 
@@ -125,6 +130,21 @@ export default function TeacherDashboard() {
       setError('Error updating progress');
     } finally {
       setUpdatingProgress(false);
+    }
+  };
+
+  const getAttendanceBadge = (attendance: AttendanceStatus) => {
+    switch (attendance) {
+      case 'PRESENT':
+        return <Badge bg="success">Present</Badge>;
+      case 'ABSENT':
+        return <Badge bg="danger">Absent</Badge>;
+      case 'LATE':
+        return <Badge bg="warning">Late</Badge>;
+      case 'EXCUSED':
+        return <Badge bg="info">Excused</Badge>;
+      default:
+        return <Badge bg="secondary">{attendance}</Badge>;
     }
   };
 
@@ -145,7 +165,7 @@ export default function TeacherDashboard() {
             <i className="bi bi-person-workspace me-2 text-success"></i>
             Teacher Dashboard
           </h1>
-          <p className="text-muted">Manage your assigned students and track their progress</p>
+          <p className="text-muted">Manage your assigned students, track their progress, and record attendance</p>
         </div>
       </div>
 
@@ -177,7 +197,7 @@ export default function TeacherDashboard() {
                       onClick={() => handleUpdateProgress(student)}
                     >
                       <i className="bi bi-plus-circle me-1"></i>
-                      Add Progress
+                      Add Progress & Attendance
                     </Button>
                   </div>
                 </Card.Header>
@@ -193,6 +213,7 @@ export default function TeacherDashboard() {
                           <tr>
                             <th>Date</th>
                             <th>Course</th>
+                            <th>Attendance</th>
                             <th>Lesson</th>
                             <th>Homework</th>
                             <th>Progress %</th>
@@ -204,7 +225,7 @@ export default function TeacherDashboard() {
                         <tbody>
                           {!student.progressRecords || student.progressRecords.length === 0 ? (
                             <tr>
-                              <td colSpan={8} className="text-center py-3 text-muted">
+                              <td colSpan={9} className="text-center py-3 text-muted">
                                 No progress records yet
                               </td>
                             </tr>
@@ -216,6 +237,9 @@ export default function TeacherDashboard() {
                                 </td>
                                 <td className="fw-medium small">
                                   {progress.course.name}
+                                </td>
+                                <td>
+                                  {getAttendanceBadge(progress.attendance)}
                                 </td>
                                 <td className="small">
                                   {progress.lesson || '-'}
@@ -288,7 +312,7 @@ export default function TeacherDashboard() {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-graph-up me-2"></i>
-            Add Progress for {selectedStudent?.name}
+            Add Progress & Attendance for {selectedStudent?.name}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -326,6 +350,24 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
+                  <Form.Label>Attendance Status *</Form.Label>
+                  <Form.Select
+                    value={attendance}
+                    onChange={(e) => setAttendance(e.target.value as AttendanceStatus)}
+                    required
+                  >
+                    <option value="PRESENT">Present</option>
+                    <option value="ABSENT">Absent</option>
+                    <option value="LATE">Late</option>
+                    <option value="EXCUSED">Excused</option>
+                  </Form.Select>
+                  <Form.Text className="text-muted">
+                    Mark attendance status for this session
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
                   <Form.Label>Lesson</Form.Label>
                   <Form.Control
                     type="text"
@@ -335,6 +377,9 @@ export default function TeacherDashboard() {
                   />
                 </Form.Group>
               </Col>
+            </Row>
+
+            <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Homework</Form.Label>
@@ -346,9 +391,6 @@ export default function TeacherDashboard() {
                   />
                 </Form.Group>
               </Col>
-            </Row>
-
-            <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Lesson Progress (%)</Form.Label>
@@ -360,9 +402,18 @@ export default function TeacherDashboard() {
                     value={lessonProgress}
                     onChange={(e) => setLessonProgress(e.target.value)}
                     placeholder="Enter progress percentage"
+                    disabled={attendance === 'ABSENT'}
                   />
+                  {attendance === 'ABSENT' && (
+                    <Form.Text className="text-muted">
+                      Progress cannot be recorded for absent students
+                    </Form.Text>
+                  )}
                 </Form.Group>
               </Col>
+            </Row>
+
+            <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Score/Marks</Form.Label>
@@ -372,7 +423,13 @@ export default function TeacherDashboard() {
                     value={score}
                     onChange={(e) => setScore(e.target.value)}
                     placeholder="Enter score or marks"
+                    disabled={attendance === 'ABSENT'}
                   />
+                  {attendance === 'ABSENT' && (
+                    <Form.Text className="text-muted">
+                      Score cannot be recorded for absent students
+                    </Form.Text>
+                  )}
                 </Form.Group>
               </Col>
             </Row>
@@ -384,7 +441,11 @@ export default function TeacherDashboard() {
                 rows={3}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
-                placeholder="Enter your remarks about student's performance..."
+                placeholder={
+                  attendance === 'ABSENT' 
+                    ? "Enter remarks about the absence..." 
+                    : "Enter your remarks about student's performance..."
+                }
               />
             </Form.Group>
 
@@ -395,7 +456,7 @@ export default function TeacherDashboard() {
               <Button
                 type="submit"
                 variant="success"
-                disabled={updatingProgress || (!lesson && !homework && !lessonProgress && !score && !remarks)}
+                disabled={updatingProgress}
               >
                 {updatingProgress ? (
                   <>
@@ -405,7 +466,7 @@ export default function TeacherDashboard() {
                 ) : (
                   <>
                     <i className="bi bi-check-circle me-2"></i>
-                    Add Progress
+                    Add Progress & Attendance
                   </>
                 )}
               </Button>
