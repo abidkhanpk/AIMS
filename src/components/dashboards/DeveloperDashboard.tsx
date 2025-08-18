@@ -6,11 +6,17 @@ interface Admin {
   name: string;
   email: string;
   role: string;
+  isActive: boolean;
+  mobile?: string;
+  dateOfBirth?: string;
+  address?: string;
   createdAt: string;
   settings?: {
     appTitle: string;
     headerImg: string;
+    tagline: string;
     enableHomePage: boolean;
+    defaultCurrency: string;
   };
 }
 
@@ -18,7 +24,26 @@ interface AppSettings {
   id: string;
   appLogo: string;
   appName: string;
+  tagline: string;
   enableHomePage: boolean;
+  defaultCurrency: string;
+  monthlyPrice: number;
+  yearlyPrice: number;
+}
+
+interface Subscription {
+  id: string;
+  adminId: string;
+  plan: string;
+  amount: number;
+  currency: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  admin: {
+    name: string;
+    email: string;
+  };
 }
 
 function AdminManagementTab() {
@@ -28,17 +53,45 @@ function AdminManagementTab() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [appTitle, setAppTitle] = useState('');
   const [headerImage, setHeaderImage] = useState('');
+  const [tagline, setTagline] = useState('');
   const [enableHomePage, setEnableHomePage] = useState(true);
+  const [defaultCurrency, setDefaultCurrency] = useState('USD');
   const [updatingSettings, setUpdatingSettings] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Edit form states
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editMobile, setEditMobile] = useState('');
+  const [editDateOfBirth, setEditDateOfBirth] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [updating, setUpdating] = useState(false);
+
+  const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
+  ];
 
   useEffect(() => {
     fetchAdmins();
@@ -71,7 +124,15 @@ function AdminManagementTab() {
       const res = await fetch('/api/users/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role: 'ADMIN' }),
+        body: JSON.stringify({ 
+          name, 
+          email, 
+          password, 
+          role: 'ADMIN',
+          mobile: mobile || null,
+          dateOfBirth: dateOfBirth || null,
+          address: address || null
+        }),
       });
 
       if (res.ok) {
@@ -80,6 +141,9 @@ function AdminManagementTab() {
         setName('');
         setEmail('');
         setPassword('');
+        setMobile('');
+        setDateOfBirth('');
+        setAddress('');
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create admin');
@@ -91,11 +155,89 @@ function AdminManagementTab() {
     }
   };
 
+  const handleShowEdit = (admin: Admin) => {
+    setSelectedAdmin(admin);
+    setEditName(admin.name);
+    setEditEmail(admin.email);
+    setEditMobile(admin.mobile || '');
+    setEditDateOfBirth(admin.dateOfBirth ? admin.dateOfBirth.split('T')[0] : '');
+    setEditAddress(admin.address || '');
+    setEditPassword('');
+    setShowEditModal(true);
+  };
+
+  const handleUpdateAdmin = async () => {
+    if (!selectedAdmin) return;
+
+    setUpdating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const updateData: any = {
+        id: selectedAdmin.id,
+        name: editName,
+        email: editEmail,
+        mobile: editMobile || null,
+        dateOfBirth: editDateOfBirth || null,
+        address: editAddress || null,
+      };
+
+      if (editPassword) {
+        updateData.password = editPassword;
+      }
+
+      const res = await fetch('/api/users/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      });
+
+      if (res.ok) {
+        setSuccess('Admin updated successfully!');
+        fetchAdmins();
+        setShowEditModal(false);
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to update admin');
+      }
+    } catch (error) {
+      setError('Error updating admin');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleToggleAdminStatus = async (adminId: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch('/api/users/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: adminId, 
+          isActive: !currentStatus 
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess(`Admin ${!currentStatus ? 'enabled' : 'disabled'} successfully!`);
+        fetchAdmins();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to update admin status');
+      }
+    } catch (error) {
+      setError('Error updating admin status');
+    }
+  };
+
   const handleShowSettings = (admin: Admin) => {
     setSelectedAdmin(admin);
-    setAppTitle(admin.settings?.appTitle || 'LMS Academy');
+    setAppTitle(admin.settings?.appTitle || 'AIMS');
     setHeaderImage(admin.settings?.headerImg || '/assets/default-logo.png');
+    setTagline(admin.settings?.tagline || 'Academy Information and Management System');
     setEnableHomePage(admin.settings?.enableHomePage ?? true);
+    setDefaultCurrency(admin.settings?.defaultCurrency || 'USD');
     setShowSettingsModal(true);
   };
 
@@ -159,7 +301,9 @@ function AdminManagementTab() {
           adminId: selectedAdmin.id, 
           appTitle, 
           headerImg: headerImage,
-          enableHomePage
+          tagline,
+          enableHomePage,
+          defaultCurrency
         }),
       });
 
@@ -195,7 +339,7 @@ function AdminManagementTab() {
             <Card.Body>
               <Form onSubmit={handleCreateAdmin}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Full Name</Form.Label>
+                  <Form.Label>Full Name *</Form.Label>
                   <Form.Control 
                     type="text" 
                     value={name} 
@@ -205,7 +349,7 @@ function AdminManagementTab() {
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Email Address</Form.Label>
+                  <Form.Label>Email Address *</Form.Label>
                   <Form.Control 
                     type="email" 
                     value={email} 
@@ -214,8 +358,8 @@ function AdminManagementTab() {
                     placeholder="Enter admin's email"
                   />
                 </Form.Group>
-                <Form.Group className="mb-4">
-                  <Form.Label>Password</Form.Label>
+                <Form.Group className="mb-3">
+                  <Form.Label>Password *</Form.Label>
                   <Form.Control 
                     type="password" 
                     value={password} 
@@ -227,6 +371,33 @@ function AdminManagementTab() {
                   <Form.Text className="text-muted">
                     Password must be at least 6 characters long
                   </Form.Text>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Mobile Number</Form.Label>
+                  <Form.Control 
+                    type="tel" 
+                    value={mobile} 
+                    onChange={(e) => setMobile(e.target.value)} 
+                    placeholder="Enter mobile number"
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Date of Birth</Form.Label>
+                  <Form.Control 
+                    type="date" 
+                    value={dateOfBirth} 
+                    onChange={(e) => setDateOfBirth(e.target.value)} 
+                  />
+                </Form.Group>
+                <Form.Group className="mb-4">
+                  <Form.Label>Address</Form.Label>
+                  <Form.Control 
+                    as="textarea"
+                    rows={2}
+                    value={address} 
+                    onChange={(e) => setAddress(e.target.value)} 
+                    placeholder="Enter address"
+                  />
                 </Form.Group>
                 <Button 
                   variant="primary" 
@@ -280,8 +451,9 @@ function AdminManagementTab() {
                       <tr>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Status</th>
                         <th>App Title</th>
-                        <th>Homepage</th>
+                        <th>Currency</th>
                         <th>Created</th>
                         <th>Actions</th>
                       </tr>
@@ -292,27 +464,50 @@ function AdminManagementTab() {
                           <td className="fw-medium">{admin.name}</td>
                           <td className="text-muted">{admin.email}</td>
                           <td>
+                            <Badge bg={admin.isActive ? 'success' : 'danger'}>
+                              {admin.isActive ? 'Active' : 'Disabled'}
+                            </Badge>
+                          </td>
+                          <td>
                             <Badge bg="info" className="text-dark">
                               {admin.settings?.appTitle || 'Default'}
                             </Badge>
                           </td>
                           <td>
-                            <Badge bg={admin.settings?.enableHomePage ? 'success' : 'danger'}>
-                              {admin.settings?.enableHomePage ? 'Enabled' : 'Disabled'}
+                            <Badge bg="secondary">
+                              {admin.settings?.defaultCurrency || 'USD'}
                             </Badge>
                           </td>
                           <td className="text-muted small">
                             {new Date(admin.createdAt).toLocaleDateString()}
                           </td>
                           <td>
-                            <Button 
-                              variant="outline-primary" 
-                              size="sm" 
-                              onClick={() => handleShowSettings(admin)}
-                            >
-                              <i className="bi bi-gear me-1"></i>
-                              Settings
-                            </Button>
+                            <div className="d-flex gap-1">
+                              <Button 
+                                variant="outline-primary" 
+                                size="sm" 
+                                onClick={() => handleShowEdit(admin)}
+                                title="Edit Admin"
+                              >
+                                <i className="bi bi-pencil"></i>
+                              </Button>
+                              <Button 
+                                variant="outline-secondary" 
+                                size="sm" 
+                                onClick={() => handleShowSettings(admin)}
+                                title="Settings"
+                              >
+                                <i className="bi bi-gear"></i>
+                              </Button>
+                              <Button 
+                                variant={admin.isActive ? "outline-danger" : "outline-success"}
+                                size="sm" 
+                                onClick={() => handleToggleAdminStatus(admin.id, admin.isActive)}
+                                title={admin.isActive ? "Disable Admin" : "Enable Admin"}
+                              >
+                                <i className={`bi bi-${admin.isActive ? 'x-circle' : 'check-circle'}`}></i>
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -324,6 +519,110 @@ function AdminManagementTab() {
           </Card>
         </Col>
       </Row>
+
+      {/* Edit Admin Modal */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-pencil me-2"></i>
+            Edit Admin: {selectedAdmin?.name}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Full Name *</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    value={editName} 
+                    onChange={(e) => setEditName(e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Email Address *</Form.Label>
+                  <Form.Control 
+                    type="email" 
+                    value={editEmail} 
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Mobile Number</Form.Label>
+                  <Form.Control 
+                    type="tel" 
+                    value={editMobile} 
+                    onChange={(e) => setEditMobile(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Date of Birth</Form.Label>
+                  <Form.Control 
+                    type="date" 
+                    value={editDateOfBirth} 
+                    onChange={(e) => setEditDateOfBirth(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Form.Group className="mb-3">
+              <Form.Label>Address</Form.Label>
+              <Form.Control 
+                as="textarea"
+                rows={2}
+                value={editAddress} 
+                onChange={(e) => setEditAddress(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>New Password</Form.Label>
+              <Form.Control 
+                type="password" 
+                value={editPassword} 
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="Leave blank to keep current password"
+                minLength={6}
+              />
+              <Form.Text className="text-muted">
+                Leave blank to keep current password
+              </Form.Text>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            Cancel
+          </Button>
+          <Button 
+            variant="primary" 
+            onClick={handleUpdateAdmin}
+            disabled={updating}
+          >
+            {updating ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Updating...
+              </>
+            ) : (
+              <>
+                <i className="bi bi-check-circle me-2"></i>
+                Update Admin
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       {/* Settings Modal */}
       <Modal show={showSettingsModal} onHide={() => setShowSettingsModal(false)} size="lg">
@@ -345,12 +644,39 @@ function AdminManagementTab() {
                     onChange={(e) => setAppTitle(e.target.value)}
                     placeholder="Enter app title"
                   />
-                  <Form.Text className="text-muted">
-                    This will appear in the navigation bar
-                  </Form.Text>
                 </Form.Group>
               </Col>
               <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Default Currency</Form.Label>
+                  <Form.Select 
+                    value={defaultCurrency} 
+                    onChange={(e) => setDefaultCurrency(e.target.value)}
+                  >
+                    {currencies.map((currency) => (
+                      <option key={currency.code} value={currency.code}>
+                        {currency.symbol} {currency.name} ({currency.code})
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Tagline</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    value={tagline} 
+                    onChange={(e) => setTagline(e.target.value)}
+                    placeholder="Enter tagline"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
                 <Form.Group className="mb-3">
                   <Form.Label>Header Logo</Form.Label>
                   <div className="d-flex gap-2">
@@ -442,9 +768,26 @@ function GlobalSettingsTab() {
   const [success, setSuccess] = useState('');
   const [appName, setAppName] = useState('');
   const [appLogo, setAppLogo] = useState('');
+  const [tagline, setTagline] = useState('');
   const [enableHomePage, setEnableHomePage] = useState(true);
+  const [defaultCurrency, setDefaultCurrency] = useState('USD');
+  const [monthlyPrice, setMonthlyPrice] = useState(29.99);
+  const [yearlyPrice, setYearlyPrice] = useState(299.99);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
+  ];
 
   useEffect(() => {
     fetchGlobalSettings();
@@ -457,9 +800,13 @@ function GlobalSettingsTab() {
       if (res.ok) {
         const data = await res.json();
         setAppSettings(data);
-        setAppName(data.appName || 'LMS Academy');
+        setAppName(data.appName || 'AIMS');
         setAppLogo(data.appLogo || '/assets/app-logo.png');
+        setTagline(data.tagline || 'Academy Information and Management System');
         setEnableHomePage(data.enableHomePage ?? true);
+        setDefaultCurrency(data.defaultCurrency || 'USD');
+        setMonthlyPrice(data.monthlyPrice || 29.99);
+        setYearlyPrice(data.yearlyPrice || 299.99);
       } else {
         setError('Failed to fetch global settings');
       }
@@ -530,7 +877,11 @@ function GlobalSettingsTab() {
         body: JSON.stringify({ 
           appName, 
           appLogo,
-          enableHomePage
+          tagline,
+          enableHomePage,
+          defaultCurrency,
+          monthlyPrice: parseFloat(monthlyPrice.toString()),
+          yearlyPrice: parseFloat(yearlyPrice.toString())
         }),
       });
 
@@ -580,12 +931,65 @@ function GlobalSettingsTab() {
                   onChange={(e) => setAppName(e.target.value)}
                   placeholder="Enter application name"
                 />
-                <Form.Text className="text-muted">
-                  This will be the default name for all new admin instances
-                </Form.Text>
               </Form.Group>
             </Col>
             <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Default Currency</Form.Label>
+                <Form.Select 
+                  value={defaultCurrency} 
+                  onChange={(e) => setDefaultCurrency(e.target.value)}
+                >
+                  {currencies.map((currency) => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.symbol} {currency.name} ({currency.code})
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={12}>
+              <Form.Group className="mb-3">
+                <Form.Label>Application Tagline</Form.Label>
+                <Form.Control 
+                  type="text" 
+                  value={tagline} 
+                  onChange={(e) => setTagline(e.target.value)}
+                  placeholder="Enter application tagline"
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Monthly Subscription Price</Form.Label>
+                <Form.Control 
+                  type="number" 
+                  step="0.01"
+                  value={monthlyPrice} 
+                  onChange={(e) => setMonthlyPrice(parseFloat(e.target.value))}
+                  placeholder="Enter monthly price"
+                />
+              </Form.Group>
+            </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Yearly Subscription Price</Form.Label>
+                <Form.Control 
+                  type="number" 
+                  step="0.01"
+                  value={yearlyPrice} 
+                  onChange={(e) => setYearlyPrice(parseFloat(e.target.value))}
+                  placeholder="Enter yearly price"
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={12}>
               <Form.Group className="mb-3">
                 <Form.Label>Application Logo</Form.Label>
                 <div className="d-flex gap-2">
@@ -618,7 +1022,7 @@ function GlobalSettingsTab() {
                   onChange={(e) => setEnableHomePage(e.target.checked)}
                 />
                 <Form.Text className="text-muted">
-                  <strong>Global Homepage Control:</strong> When disabled, all users will be redirected directly to the sign-in page instead of the homepage. This overrides individual admin settings.
+                  <strong>Global Homepage Control:</strong> When disabled, all users will be redirected directly to the sign-in page instead of the homepage.
                 </Form.Text>
               </Form.Group>
             </Col>
@@ -667,6 +1071,142 @@ function GlobalSettingsTab() {
   );
 }
 
+function SubscriptionManagementTab() {
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
+
+  const fetchSubscriptions = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/subscriptions');
+      if (res.ok) {
+        const data = await res.json();
+        setSubscriptions(data);
+      } else {
+        setError('Failed to fetch subscriptions');
+      }
+    } catch (error) {
+      setError('Error fetching subscriptions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyPayment = async (subscriptionId: string) => {
+    try {
+      const res = await fetch('/api/subscriptions/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscriptionId }),
+      });
+
+      if (res.ok) {
+        setSuccess('Subscription payment verified successfully!');
+        fetchSubscriptions();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to verify payment');
+      }
+    } catch (error) {
+      setError('Error verifying payment');
+    }
+  };
+
+  return (
+    <div>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-warning text-dark">
+          <h5 className="mb-0">
+            <i className="bi bi-credit-card me-2"></i>
+            Subscription Management
+          </h5>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner animation="border" />
+              <p className="mt-2 text-muted">Loading subscriptions...</p>
+            </div>
+          ) : subscriptions.length === 0 ? (
+            <div className="text-center py-5">
+              <i className="bi bi-credit-card display-4 text-muted"></i>
+              <p className="mt-2 text-muted">No subscriptions found</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Admin</th>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Period</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscriptions.map((subscription) => (
+                    <tr key={subscription.id}>
+                      <td>
+                        <div>
+                          <div className="fw-medium">{subscription.admin.name}</div>
+                          <small className="text-muted">{subscription.admin.email}</small>
+                        </div>
+                      </td>
+                      <td>
+                        <Badge bg="info">
+                          {subscription.plan}
+                        </Badge>
+                      </td>
+                      <td className="fw-medium">
+                        {subscription.currency} {subscription.amount}
+                      </td>
+                      <td className="text-muted small">
+                        {new Date(subscription.startDate).toLocaleDateString()} - {new Date(subscription.endDate).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <Badge bg={
+                          subscription.status === 'ACTIVE' ? 'success' :
+                          subscription.status === 'PROCESSING' ? 'warning' :
+                          subscription.status === 'EXPIRED' ? 'danger' : 'secondary'
+                        }>
+                          {subscription.status}
+                        </Badge>
+                      </td>
+                      <td>
+                        {subscription.status === 'PROCESSING' && (
+                          <Button 
+                            variant="outline-success" 
+                            size="sm" 
+                            onClick={() => handleVerifyPayment(subscription.id)}
+                          >
+                            <i className="bi bi-check-circle me-1"></i>
+                            Verify
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
+    </div>
+  );
+}
+
 export default function DeveloperDashboard() {
   return (
     <div className="container-fluid">
@@ -676,7 +1216,7 @@ export default function DeveloperDashboard() {
             <i className="bi bi-code-slash me-2 text-secondary"></i>
             Developer Dashboard
           </h1>
-          <p className="text-muted">Manage system administrators and global settings</p>
+          <p className="text-muted">Manage system administrators, global settings, and subscriptions</p>
         </div>
       </div>
 
@@ -702,6 +1242,17 @@ export default function DeveloperDashboard() {
           }
         >
           <AdminManagementTab />
+        </Tab>
+        <Tab 
+          eventKey="subscriptions" 
+          title={
+            <span>
+              <i className="bi bi-credit-card me-2"></i>
+              Subscriptions
+            </span>
+          }
+        >
+          <SubscriptionManagementTab />
         </Tab>
       </Tabs>
     </div>

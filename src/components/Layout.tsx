@@ -7,6 +7,7 @@ import NotificationDropdown from './NotificationDropdown';
 interface Settings {
   appTitle: string;
   headerImg: string;
+  tagline: string;
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -33,32 +34,44 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       setSettings({
         appTitle: 'AIMS',
         headerImg: '/assets/default-logo.png',
+        tagline: 'Academy Information and Management System',
       });
     }
   };
 
   return (
     <>
-      <Navbar bg="dark" variant="dark" expand="lg" className="shadow-sm">
+      <Navbar bg="dark" variant="dark" expand="lg" className="shadow-sm" style={{ minHeight: '80px' }}>
         <Container fluid className="px-3">
           <div className="d-flex align-items-center">
             {settings?.headerImg && (
-              <Image 
-                src={settings.headerImg} 
-                height={40} 
-                width={40}
-                className="me-2 rounded" 
-                alt="Header Image"
-                style={{ objectFit: 'cover' }}
-                onError={(e) => {
-                  // Fallback to default logo on error
-                  (e.target as HTMLImageElement).src = '/assets/default-logo.png';
-                }}
-              />
+              <div className="me-3">
+                <Image 
+                  src={settings.headerImg} 
+                  alt="Header Image"
+                  className="rounded"
+                  style={{ 
+                    maxHeight: '60px',
+                    maxWidth: '120px',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain'
+                  }}
+                  onError={(e) => {
+                    // Fallback to default logo on error
+                    (e.target as HTMLImageElement).src = '/assets/default-logo.png';
+                  }}
+                />
+              </div>
             )}
             <Link href="/" passHref>
-              <Navbar.Brand className="fw-bold">
-                {settings?.appTitle || 'AIMS'}
+              <Navbar.Brand className="fw-bold d-flex flex-column">
+                <div className="fs-4">{settings?.appTitle || 'AIMS'}</div>
+                {settings?.tagline && (
+                  <small className="text-light opacity-75 fw-normal" style={{ fontSize: '0.75rem', lineHeight: '1' }}>
+                    {settings.tagline}
+                  </small>
+                )}
               </Navbar.Brand>
             </Link>
           </div>
@@ -76,7 +89,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {status === 'authenticated' && user && (
                 <>
                   {/* Notification Dropdown */}
-                  <div className="me-2">
+                  <div className="me-2 position-relative">
                     <NotificationDropdown />
                   </div>
                   
@@ -134,7 +147,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </small>
               <div className="mt-1">
                 <small className="text-muted fst-italic">
-                  "Aiming higher in learning and management"
+                  {settings?.tagline || 'Academy Information and Management System'}
                 </small>
               </div>
             </div>

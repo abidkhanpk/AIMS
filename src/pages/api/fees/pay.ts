@@ -13,59 +13,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  // Only parents can pay fees
-  if (session.user.role !== 'PARENT') {
-    return res.status(403).json({ message: 'Only parents can pay fees' });
-  }
+  const { 
+    feeId, 
+    paidAmount, 
+    paymentDetails, 
+    paymentProof 
+  } = req.body;
 
-  const { feeId } = req.body;
-
-  if (!feeId) {
-    return res.status(400).json({ message: 'Fee ID is required' });
+  if (!feeId || !paidAmount) {
+    return res.status(400).json({ message: 'Fee ID and paid amount are required' });
   }
 
   try {
-    // Verify the fee exists and belongs to one of the parent's children
-    const fee = await prisma.fee.findFirst({
-      where: {
-        id: feeId,
-        student: {
-          studentParents: {
-            some: {
-              parentId: session.user.id
-            }
-          }
-        }
-      },
+    // Verify the fee exists and user has permission to pay it
+    const fee = await prisma.fee.findUnique({
+      where: { id: feeId },
       include: {
         student: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            adminId: true,
+          include: {
+            studentParents: {
+              include: {
+                parent: true
+              }
+            }
           }
         }
       }
     });
 
     if (!fee) {
-      return res.status(404).json({ message: 'Fee not found or you are not authorized to pay this fee' });
+      return res.status(404).json({ message: 'Fee not found' });
     }
 
-    if (fee.status === 'PAID') {
-      return res.status(400).json({ message: 'Fee has already been paid' });
+    // Check if user is a parent of the student or the student themselves
+    let hasPermission = false;
+    if (session.user.role === 'PARENT') {
+      hasPermission = fee.student.studentParents.some(sp => sp.parent.id === session.user.id);
+    } else if (session.user.role === 'STUDENT') {
+      hasPermission = fee.studentId === session.user.id;
     }
 
-    if (fee.status === 'CANCELLED') {
-      return res.status(400).json({ message: 'Fee has been cancelled' });
+    if (!hasPermission) {
+      return res.status(403).json({ message: 'Access denied' });
     }
 
-    // Update fee status to paid
+    // Update fee with payment information and set status to PROCESSING
     const updatedFee = await prisma.fee.update({
       where: { id: feeId },
       data: {
-        status: 'PAID',
+        status: 'PROCESSING',
+        paidAmount: parseFloat(paidAmount),
+        paymentDetails: paymentDetails || null,
+        paymentProof: paymentProof || null,
         paidDate: new Date(),
         paidById: session.user.id,
       },
@@ -75,6 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             id: true,
             name: true,
             email: true,
+            adminId: true,
           }
         },
         paidBy: {
@@ -87,13 +87,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    // Create notification for admin
+    // Create notification for admin about payment submission
     if (fee.student.adminId) {
       await prisma.notification.create({
         data: {
-          type: 'FEE_PAID',
-          title: 'Fee Payment Received',
-          message: `${session.user.name} has paid the fee "${fee.title}" ($${fee.amount}) for ${fee.student.name}`,
+          type: 'PAYMENT_PROCESSING',
+          title: 'Fee Payment Submitted',
+          message: `Payment for "${fee.title}" (${fee.currency} ${paidAmount}) has been submitted by ${session.user.name} and is awaiting verification`,
           senderId: session.user.id,
           receiverId: fee.student.adminId,
         }

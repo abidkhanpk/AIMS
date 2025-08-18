@@ -3,7 +3,7 @@
 /node_modules
 
 # Prisma
-/prisma/migrations/*.sql
+#/prisma/migrations/*.sql
 
 # Environment
 .env

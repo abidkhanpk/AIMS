@@ -22,6 +22,10 @@ enum NotificationType {
   FEE_DUE
   FEE_PAID
   SALARY_PAID
+  SUBSCRIPTION_DUE
+  SUBSCRIPTION_PAID
+  PAYMENT_PROCESSING
+  PAYMENT_VERIFIED
 }
 
 enum AttendanceStatus {
@@ -33,6 +37,7 @@ enum AttendanceStatus {
 
 enum FeeStatus {
   PENDING
+  PROCESSING
   PAID
   OVERDUE
   CANCELLED
@@ -40,9 +45,23 @@ enum FeeStatus {
 
 enum SalaryStatus {
   PENDING
+  PROCESSING
   PAID
   OVERDUE
   CANCELLED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PENDING
+  PROCESSING
+  EXPIRED
+  CANCELLED
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  YEARLY
 }
 
 model User {
@@ -52,6 +71,18 @@ model User {
   password  String
   role      Role
   adminId   String?  // All users except DEVELOPER belong to an admin
+  isActive  Boolean  @default(true) // For disabling users
+  
+  // Additional user details
+  mobile    String?
+  dateOfBirth DateTime?
+  address   String?
+  
+  // Teacher specific fields
+  qualification String?
+  payRate      Float?
+  payType      String? // hourly, monthly, etc.
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -75,6 +106,8 @@ model User {
   feePayments        Fee[]              @relation("FeePayments")
   teacherSalaries    Salary[]           @relation("TeacherSalaries")
   salaryPayments     Salary[]           @relation("SalaryPayments")
+  subscriptions      Subscription[]     @relation("AdminSubscriptions")
+  subscriptionPayments Subscription[]   @relation("SubscriptionPayments")
 }
 
 model Course {
@@ -140,6 +173,7 @@ model Progress {
   remarks        String?          // Teacher remarks
   attendance     AttendanceStatus @default(PRESENT) // Attendance status
   createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
   // Relations
   student       User           @relation("StudentProgress", fields: [studentId], references: [id])
@@ -171,6 +205,13 @@ model Fee {
   status      FeeStatus @default(PENDING)
   paidDate    DateTime? // Date when fee was paid
   paidById    String?   // Parent who paid the fee
+  
+  // Payment processing fields
+  paidAmount     Float?    // Amount actually paid
+  paymentDetails String?   // Payment details/remarks
+  paymentProof   String?   // Screenshot/proof file path
+  processedDate  DateTime? // Date when payment was processed by admin
+  
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -190,12 +231,45 @@ model Salary {
   status      SalaryStatus @default(PENDING)
   paidDate    DateTime?    // Date when salary was paid
   paidById    String?      // Admin who paid the salary
+  
+  // Payment processing fields
+  paidAmount     Float?    // Amount actually paid
+  paymentDetails String?   // Payment details/remarks
+  paymentProof   String?   // Screenshot/proof file path
+  processedDate  DateTime? // Date when payment was processed
+  
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   // Relations
   teacher User  @relation("TeacherSalaries", fields: [teacherId], references: [id])
   paidBy  User? @relation("SalaryPayments", fields: [paidById], references: [id])
+}
+
+model Subscription {
+  id          String             @id @default(uuid())
+  adminId     String
+  plan        SubscriptionPlan
+  amount      Float
+  currency    String             @default("USD")
+  startDate   DateTime
+  endDate     DateTime
+  status      SubscriptionStatus @default(ACTIVE)
+  
+  // Payment processing fields
+  paidAmount     Float?    // Amount actually paid
+  paidDate       DateTime? // Date when subscription was paid
+  paymentDetails String?   // Payment details/remarks
+  paymentProof   String?   // Screenshot/proof file path
+  processedDate  DateTime? // Date when payment was processed by developer
+  paidById       String?   // Admin who paid the subscription
+  
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // Relations
+  admin  User  @relation("AdminSubscriptions", fields: [adminId], references: [id])
+  paidBy User? @relation("SubscriptionPayments", fields: [paidById], references: [id])
 }
 
 model Notification {
@@ -218,7 +292,9 @@ model Settings {
   adminId        String  @unique
   appTitle       String  @default("AIMS")
   headerImg      String  @default("/assets/default-logo.png")
+  tagline        String  @default("Academy Information and Management System")
   enableHomePage Boolean @default(true) // Developer can enable/disable homepage
+  defaultCurrency String @default("USD") // Admin's default currency
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -243,7 +319,14 @@ model AppSettings {
   id             String  @id @default(uuid())
   appLogo        String  @default("/assets/app-logo.png")
   appName        String  @default("AIMS")
+  tagline        String  @default("Academy Information and Management System")
   enableHomePage Boolean @default(true) // Global homepage setting for developers
+  defaultCurrency String @default("USD") // Global default currency
+  
+  // Subscription settings
+  monthlyPrice   Float   @default(29.99)
+  yearlyPrice    Float   @default(299.99)
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }

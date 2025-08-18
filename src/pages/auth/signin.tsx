@@ -9,7 +9,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState({ appTitle: 'AIMS', headerImg: '/assets/logo.png' });
+  const [settings, setSettings] = useState({ appTitle: 'AIMS', headerImg: '/assets/app-logo.png' });
   const router = useRouter();
 
   useEffect(() => {
@@ -20,20 +20,23 @@ export default function SignIn() {
       }
     });
 
-    // Fetch default settings for branding
-    fetchSettings();
+    // Fetch app settings for branding
+    fetchAppSettings();
   }, [router]);
 
-  const fetchSettings = async () => {
+  const fetchAppSettings = async () => {
     try {
-      const res = await fetch('/api/settings/my-settings');
+      const res = await fetch('/api/settings/developer');
       if (res.ok) {
         const data = await res.json();
-        setSettings(data);
+        setSettings({
+          appTitle: data.appName || 'AIMS',
+          headerImg: data.appLogo || '/assets/app-logo.png'
+        });
       }
     } catch (error) {
       // Use default settings on error
-      console.error('Error fetching settings:', error);
+      console.error('Error fetching app settings:', error);
     }
   };
 
@@ -50,7 +53,11 @@ export default function SignIn() {
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        if (result.error === 'Account disabled') {
+          setError('Your account has been disabled. Please contact your administrator.');
+        } else {
+          setError('Invalid email or password');
+        }
       } else {
         router.push('/dashboard');
       }
@@ -79,16 +86,21 @@ export default function SignIn() {
                       <img 
                         src={settings.headerImg} 
                         alt="Logo" 
-                        style={{ maxHeight: '80px', maxWidth: '200px' }}
+                        style={{ 
+                          maxHeight: '100px', 
+                          maxWidth: '250px',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain'
+                        }}
                         className="mb-3"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).src = '/assets/app-logo.png';
                         }}
                       />
                     )}
                     <h2 className="fw-bold text-dark mb-2">Welcome Back</h2>
                     <p className="text-muted">Sign in to {settings.appTitle}</p>
-                    <p className="text-muted small fst-italic">"Aiming higher in learning and management"</p>
                   </div>
 
                   {error && (

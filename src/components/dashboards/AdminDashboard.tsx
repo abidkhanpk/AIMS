@@ -1372,10 +1372,10 @@ function SalaryManagementTab() {
       ]);
       
       if (salariesRes.ok) {
-        const progressData = await salariesRes.json();
-        setSalaries(progressData);
+        const salariesData = await salariesRes.json();
+        setSalaries(salariesData);
       } else {
-        setError('Failed to fetch progress data');
+        setError('Failed to fetch salary data');
       }
 
       if (teachersRes.ok) {
@@ -1383,7 +1383,7 @@ function SalaryManagementTab() {
         setTeachers(teachersData);
       }
     } catch (error) {
-      setError('Error fetching data');
+      setError('Error fetching salary data');
     } finally {
       setLoading(false);
     }

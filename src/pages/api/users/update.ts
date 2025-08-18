@@ -14,25 +14,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  // Only admins can update users
-  if (session.user.role !== 'ADMIN') {
-    return res.status(403).json({ message: 'Only admins can update users' });
-  }
-
-  const { id, name, email, password } = req.body;
+  const { 
+    id, 
+    name, 
+    email, 
+    password, 
+    mobile, 
+    dateOfBirth, 
+    address,
+    // Teacher specific fields
+    qualification,
+    payRate,
+    payType,
+    // Admin status update (only for developers)
+    isActive
+  } = req.body;
 
   if (!id || !name || !email) {
     return res.status(400).json({ message: 'ID, name, and email are required' });
   }
 
   try {
-    // Verify user belongs to this admin
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        id,
-        adminId: session.user.id
-      }
-    });
+    // Check permissions and get existing user
+    let existingUser;
+    
+    if (session.user.role === 'DEVELOPER') {
+      // Developers can update any user
+      existingUser = await prisma.user.findUnique({
+        where: { id }
+      });
+    } else if (session.user.role === 'ADMIN') {
+      // Admins can only update users under their administration
+      existingUser = await prisma.user.findFirst({
+        where: {
+          id,
+          adminId: session.user.id
+        }
+      });
+    } else {
+      return res.status(403).json({ message: 'Insufficient permissions' });
+    }
 
     if (!existingUser) {
       return res.status(404).json({ message: 'User not found or access denied' });
@@ -61,6 +82,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       updateData.password = await bcrypt.hash(password, 12);
     }
 
+    // Add additional fields if provided
+    if (mobile !== undefined) updateData.mobile = mobile;
+    if (dateOfBirth) updateData.dateOfBirth = new Date(dateOfBirth);
+    if (address !== undefined) updateData.address = address;
+
+    // Add teacher specific fields
+    if (existingUser.role === 'TEACHER') {
+      if (qualification !== undefined) updateData.qualification = qualification;
+      if (payRate !== undefined) updateData.payRate = payRate ? parseFloat(payRate) : null;
+      if (payType !== undefined) updateData.payType = payType;
+    }
+
+    // Only developers can update isActive status
+    if (session.user.role === 'DEVELOPER' && isActive !== undefined) {
+      updateData.isActive = isActive;
+      
+      // If disabling an admin, also disable all their sub-users
+      if (!isActive && existingUser.role === 'ADMIN') {
+        await prisma.user.updateMany({
+          where: { adminId: existingUser.id },
+          data: { isActive: false }
+        });
+      }
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id },
       data: updateData,
@@ -69,6 +115,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         name: true,
         email: true,
         role: true,
+        mobile: true,
+        dateOfBirth: true,
+        address: true,
+        qualification: true,
+        payRate: true,
+        payType: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true,
       }

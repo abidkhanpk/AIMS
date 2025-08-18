@@ -6,42 +6,55 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
-interface Settings {
-  appTitle: string;
-  headerImg: string;
-  enableHomePage?: boolean;
+interface AppSettings {
+  appName: string;
+  appLogo: string;
+  enableHomePage: boolean;
+  tagline: string;
 }
 
 const Home: NextPage = () => {
   const { data: session, status } = useSession();
-  const [settings, setSettings] = useState<Settings>({ appTitle: 'LMS Academy', headerImg: '/assets/logo.png', enableHomePage: true });
+  const [appSettings, setAppSettings] = useState<AppSettings>({ 
+    appName: 'AIMS', 
+    appLogo: '/assets/app-logo.png', 
+    enableHomePage: true,
+    tagline: 'Academy Information and Management System'
+  });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    fetchSettings();
+    fetchAppSettings();
   }, []);
 
   useEffect(() => {
     // If homepage is disabled and user is not authenticated, redirect to signin
-    if (!loading && !settings.enableHomePage && status === 'unauthenticated') {
+    if (!loading && !appSettings.enableHomePage && status === 'unauthenticated') {
       router.push('/auth/signin');
+      return;
     }
     // If user is authenticated, redirect to dashboard
     if (status === 'authenticated') {
       router.push('/dashboard');
+      return;
     }
-  }, [settings.enableHomePage, status, loading, router]);
+  }, [appSettings.enableHomePage, status, loading, router]);
 
-  const fetchSettings = async () => {
+  const fetchAppSettings = async () => {
     try {
-      const res = await fetch('/api/settings/my-settings');
+      const res = await fetch('/api/settings/developer');
       if (res.ok) {
         const data = await res.json();
-        setSettings(data);
+        setAppSettings({
+          appName: data.appName || 'AIMS',
+          appLogo: data.appLogo || '/assets/app-logo.png',
+          enableHomePage: data.enableHomePage !== false,
+          tagline: data.tagline || 'Academy Information and Management System'
+        });
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      console.error('Error fetching app settings:', error);
     } finally {
       setLoading(false);
     }
@@ -62,15 +75,15 @@ const Home: NextPage = () => {
   }
 
   // If homepage is disabled, don't render the homepage content
-  if (!settings.enableHomePage) {
+  if (!appSettings.enableHomePage) {
     return null; // Router will handle redirect
   }
 
   return (
     <div>
       <Head>
-        <title>{settings.appTitle} - Learning Management System</title>
-        <meta name="description" content="Modern Learning Management System for schools and educational institutions" />
+        <title>{appSettings.appName} - Academy Information and Management System</title>
+        <meta name="description" content="Modern Academy Information and Management System for schools and educational institutions" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -81,10 +94,10 @@ const Home: NextPage = () => {
             <Col lg={6}>
               <div className="py-5">
                 <h1 className="display-4 fw-bold mb-4">
-                  Welcome to {settings.appTitle}
+                  Welcome to {appSettings.appName}
                 </h1>
                 <p className="lead mb-4">
-                  A comprehensive Learning Management System designed to streamline education 
+                  {appSettings.tagline} - A comprehensive platform designed to streamline education 
                   and enhance the learning experience for students, teachers, parents, and administrators.
                 </p>
                 {status === 'unauthenticated' && (
@@ -111,14 +124,20 @@ const Home: NextPage = () => {
             </Col>
             <Col lg={6} className="text-center">
               <div className="py-5">
-                {settings.headerImg && (
+                {appSettings.appLogo && (
                   <img 
-                    src={settings.headerImg} 
-                    alt="LMS Logo" 
+                    src={appSettings.appLogo} 
+                    alt="AIMS Logo" 
                     className="img-fluid mb-4"
-                    style={{ maxHeight: '200px', maxWidth: '100%' }}
+                    style={{ 
+                      maxHeight: '200px', 
+                      maxWidth: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain'
+                    }}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/assets/logo.png';
+                      (e.target as HTMLImageElement).src = '/assets/app-logo.png';
                     }}
                   />
                 )}

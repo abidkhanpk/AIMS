@@ -85,6 +85,20 @@ export default function NotificationDropdown() {
         return 'bi-graph-up text-success';
       case 'SYSTEM_ALERT':
         return 'bi-exclamation-triangle text-warning';
+      case 'FEE_DUE':
+        return 'bi-credit-card text-warning';
+      case 'FEE_PAID':
+        return 'bi-check-circle text-success';
+      case 'SALARY_PAID':
+        return 'bi-cash text-success';
+      case 'SUBSCRIPTION_DUE':
+        return 'bi-calendar-x text-warning';
+      case 'SUBSCRIPTION_PAID':
+        return 'bi-check-circle text-success';
+      case 'PAYMENT_PROCESSING':
+        return 'bi-clock text-info';
+      case 'PAYMENT_VERIFIED':
+        return 'bi-check-circle text-success';
       default:
         return 'bi-bell text-primary';
     }
@@ -112,8 +126,18 @@ export default function NotificationDropdown() {
         {unreadCount > 0 && (
           <Badge 
             bg="danger" 
-            className="position-absolute top-0 start-100 translate-middle rounded-pill"
-            style={{ fontSize: '0.7rem' }}
+            className="position-absolute rounded-pill"
+            style={{ 
+              fontSize: '0.65rem',
+              top: '2px',
+              right: '2px',
+              transform: 'translate(25%, -25%)',
+              minWidth: '18px',
+              height: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>

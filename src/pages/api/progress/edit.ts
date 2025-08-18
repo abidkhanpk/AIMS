@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
-import { AttendanceStatus } from '@prisma/client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') {
@@ -14,53 +13,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  if (session.user.role !== 'TEACHER' && session.user.role !== 'ADMIN') {
-    return res.status(403).json({ message: 'Only teachers and admins can edit progress records' });
-  }
-
-  const { id, lesson, homework, lessonProgress, score, remarks, attendance } = req.body;
+  const { 
+    id, 
+    lesson, 
+    homework, 
+    lessonProgress, 
+    score, 
+    remarks, 
+    attendance,
+    date 
+  } = req.body;
 
   if (!id) {
-    return res.status(400).json({ message: 'Progress record ID is required' });
+    return res.status(400).json({ message: 'Progress ID is required' });
   }
 
   try {
-    // Verify access to the progress record
-    let existingProgress;
-    
-    if (session.user.role === 'TEACHER') {
-      // Teacher can only edit their own progress records
-      existingProgress = await prisma.progress.findFirst({
-        where: {
-          id: id,
-          teacherId: session.user.id
-        }
-      });
-    } else if (session.user.role === 'ADMIN') {
-      // Admin can edit progress records for their students
-      existingProgress = await prisma.progress.findFirst({
-        where: {
-          id: id,
-          student: {
-            adminId: session.user.id
-          }
-        }
-      });
-    }
+    // First, verify the progress record exists and user has permission to edit it
+    const existingProgress = await prisma.progress.findUnique({
+      where: { id },
+      include: {
+        student: true,
+        teacher: true,
+        course: true
+      }
+    });
 
     if (!existingProgress) {
-      return res.status(404).json({ message: 'Progress record not found or access denied' });
+      return res.status(404).json({ message: 'Progress record not found' });
     }
 
+    // Check permissions
+    let hasPermission = false;
+    
+    if (session.user.role === 'ADMIN') {
+      // Admin can edit progress for their students
+      hasPermission = existingProgress.student.adminId === session.user.id;
+    } else if (session.user.role === 'TEACHER') {
+      // Teacher can edit progress they created
+      hasPermission = existingProgress.teacherId === session.user.id;
+    }
+
+    if (!hasPermission) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Update the progress record
     const updatedProgress = await prisma.progress.update({
-      where: { id: id },
+      where: { id },
       data: {
-        lesson: lesson || null,
-        homework: homework || null,
-        lessonProgress: lessonProgress ? parseFloat(lessonProgress) : null,
-        score: score ? parseFloat(score) : null,
-        remarks: remarks || null,
-        attendance: attendance as AttendanceStatus,
+        ...(lesson !== undefined && { lesson }),
+        ...(homework !== undefined && { homework }),
+        ...(lessonProgress !== undefined && { lessonProgress: parseFloat(lessonProgress) }),
+        ...(score !== undefined && { score: parseFloat(score) }),
+        ...(remarks !== undefined && { remarks }),
+        ...(attendance !== undefined && { attendance }),
+        ...(date !== undefined && { date: new Date(date) }),
+        updatedAt: new Date()
       },
       include: {
         student: {
@@ -98,9 +107,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
+    // Create notification for parents about the progress update
+    const parentStudents = await prisma.parentStudent.findMany({
+      where: { studentId: existingProgress.studentId },
+      include: { parent: true }
+    });
+
+    for (const parentStudent of parentStudents) {
+      await prisma.notification.create({
+        data: {
+          type: 'PROGRESS_UPDATE',
+          title: 'Progress Updated',
+          message: `Progress for ${existingProgress.student.name} in ${existingProgress.course.name} has been updated`,
+          senderId: session.user.id,
+          receiverId: parentStudent.parent.id,
+        }
+      });
+    }
+
     res.status(200).json(updatedProgress);
   } catch (error) {
-    console.error('Error updating progress record:', error);
+    console.error('Error updating progress:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 }

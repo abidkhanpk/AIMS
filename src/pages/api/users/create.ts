@@ -15,7 +15,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const { name, email, password, role } = req.body;
+  const { 
+    name, 
+    email, 
+    password, 
+    role, 
+    mobile, 
+    dateOfBirth, 
+    address,
+    // Teacher specific fields
+    qualification,
+    payRate,
+    payType
+  } = req.body;
 
   if (!name || !email || !password || !role) {
     return res.status(400).json({ message: 'Missing required fields' });
@@ -55,20 +67,41 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    // Prepare user data
+    const userData: any = {
+      name,
+      email,
+      password: hashedPassword,
+      role: role as Role,
+      adminId,
+    };
+
+    // Add additional fields if provided
+    if (mobile) userData.mobile = mobile;
+    if (dateOfBirth) userData.dateOfBirth = new Date(dateOfBirth);
+    if (address) userData.address = address;
+
+    // Add teacher specific fields
+    if (role === 'TEACHER') {
+      if (qualification) userData.qualification = qualification;
+      if (payRate) userData.payRate = parseFloat(payRate);
+      if (payType) userData.payType = payType;
+    }
+
     // Create user
     const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role as Role,
-        adminId,
-      },
+      data: userData,
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
+        mobile: true,
+        dateOfBirth: true,
+        address: true,
+        qualification: true,
+        payRate: true,
+        payType: true,
         createdAt: true,
       }
     });
@@ -78,8 +111,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await prisma.settings.create({
         data: {
           adminId: user.id,
-          appTitle: 'LMS Academy',
-          headerImg: '/assets/logo.png',
+          appTitle: 'AIMS',
+          headerImg: '/assets/default-logo.png',
         }
       });
     }
