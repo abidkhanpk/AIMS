@@ -26,7 +26,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Teacher specific fields
     qualification,
     payRate,
-    payType
+    payType,
+    // Admin subscription fields
+    subscriptionType,
+    subscriptionAmount,
+    subscriptionStartDate,
+    subscriptionEndDate
   } = req.body;
 
   if (!name || !email || !password || !role) {
@@ -43,6 +48,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   if (!['DEVELOPER', 'ADMIN'].includes(userRole)) {
     return res.status(403).json({ message: 'Insufficient permissions' });
+  }
+
+  // Validate date of birth - only for STUDENT and TEACHER
+  if (dateOfBirth && !['STUDENT', 'TEACHER'].includes(role)) {
+    return res.status(400).json({ message: 'Date of birth is only applicable for students and teachers' });
   }
 
   try {
@@ -78,8 +88,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Add additional fields if provided
     if (mobile) userData.mobile = mobile;
-    if (dateOfBirth) userData.dateOfBirth = new Date(dateOfBirth);
     if (address) userData.address = address;
+
+    // Add date of birth only for STUDENT and TEACHER
+    if (dateOfBirth && ['STUDENT', 'TEACHER'].includes(role)) {
+      userData.dateOfBirth = new Date(dateOfBirth);
+    }
 
     // Add teacher specific fields
     if (role === 'TEACHER') {
@@ -106,13 +120,68 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    // If creating an admin, also create default settings
+    // If creating an admin, also create default settings and subscription
     if (role === 'ADMIN') {
+      // Get app settings for default subscription prices
+      const appSettings = await prisma.appSettings.findFirst();
+      const defaultMonthlyPrice = appSettings?.monthlyPrice || 29.99;
+      const defaultYearlyPrice = appSettings?.yearlyPrice || 299.99;
+      const defaultLifetimePrice = appSettings?.lifetimePrice || 999.99;
+
+      // Determine subscription details
+      let subType = subscriptionType || 'MONTHLY';
+      let subAmount = subscriptionAmount;
+      let subStartDate = subscriptionStartDate ? new Date(subscriptionStartDate) : new Date();
+      let subEndDate = null;
+
+      if (!subAmount) {
+        switch (subType) {
+          case 'MONTHLY':
+            subAmount = defaultMonthlyPrice;
+            break;
+          case 'YEARLY':
+            subAmount = defaultYearlyPrice;
+            break;
+          case 'LIFETIME':
+            subAmount = defaultLifetimePrice;
+            break;
+          default:
+            subAmount = defaultMonthlyPrice;
+        }
+      }
+
+      // Calculate end date for non-lifetime subscriptions
+      if (subType !== 'LIFETIME') {
+        subEndDate = new Date(subStartDate);
+        if (subType === 'MONTHLY') {
+          subEndDate.setMonth(subEndDate.getMonth() + 1);
+        } else if (subType === 'YEARLY') {
+          subEndDate.setFullYear(subEndDate.getFullYear() + 1);
+        }
+      }
+
+      // Create settings with subscription info
       await prisma.settings.create({
         data: {
           adminId: user.id,
           appTitle: 'AIMS',
           headerImg: '/assets/default-logo.png',
+          subscriptionType: subType,
+          subscriptionAmount: subAmount,
+          subscriptionStartDate: subStartDate,
+          subscriptionEndDate: subEndDate,
+        }
+      });
+
+      // Create subscription record
+      await prisma.subscription.create({
+        data: {
+          adminId: user.id,
+          plan: subType,
+          amount: subAmount,
+          startDate: subStartDate,
+          endDate: subEndDate,
+          status: subscriptionEndDate ? 'ACTIVE' : 'EXPIRED', // If no end date provided, mark as expired initially
         }
       });
     }

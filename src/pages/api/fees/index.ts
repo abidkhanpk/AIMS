@@ -117,7 +117,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ message: 'Only admins can create fees' });
     }
 
-    const { studentId, title, description, amount, currency, dueDate } = req.body;
+    const { 
+      studentId, 
+      courseId, 
+      title, 
+      description, 
+      amount, 
+      currency, 
+      dueDate,
+      month,
+      year,
+      isRecurring 
+    } = req.body;
 
     if (!studentId || !title || !amount || !dueDate) {
       return res.status(400).json({ message: 'Student ID, title, amount, and due date are required' });
@@ -137,14 +148,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ message: 'Student not found or not under your administration' });
       }
 
+      // Get admin's default currency if not provided
+      let feeCurrency = currency;
+      if (!feeCurrency) {
+        const settings = await prisma.settings.findUnique({
+          where: { adminId: session.user.id },
+          select: { defaultCurrency: true }
+        });
+        feeCurrency = settings?.defaultCurrency || 'USD';
+      }
+
       const fee = await prisma.fee.create({
         data: {
           studentId,
+          courseId: courseId || null,
           title,
           description: description || null,
           amount: parseFloat(amount),
-          currency: currency || 'USD',
+          currency: feeCurrency,
           dueDate: new Date(dueDate),
+          month: month || null,
+          year: year || null,
+          isRecurring: isRecurring || false,
         },
         include: {
           student: {
@@ -168,7 +193,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: {
             type: 'FEE_DUE',
             title: 'New Fee Due',
-            message: `A new fee "${title}" of ${currency || 'USD'} ${amount} is due for ${student.name} on ${new Date(dueDate).toLocaleDateString()}`,
+            message: `A new fee "${title}" of ${feeCurrency} ${amount} is due for ${student.name} on ${new Date(dueDate).toLocaleDateString()}`,
             senderId: session.user.id,
             receiverId: parentStudent.parent.id,
           }

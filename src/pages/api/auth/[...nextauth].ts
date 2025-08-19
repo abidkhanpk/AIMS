@@ -40,15 +40,80 @@ export const authOptions: NextAuthOptions = {
             throw new Error('Account disabled');
           }
 
-          // If user is not a developer, check if their admin is active
-          if (user.role !== 'DEVELOPER' && user.adminId) {
+          // Check subscription status for admins and their users
+          if (user.role === 'ADMIN') {
+            // Check admin's own subscription
+            const subscription = await prisma.subscription.findFirst({
+              where: {
+                adminId: user.id,
+                status: 'ACTIVE'
+              },
+              orderBy: {
+                createdAt: 'desc'
+              }
+            });
+
+            // Check if subscription is expired (except lifetime)
+            if (subscription && subscription.endDate && subscription.endDate < new Date()) {
+              // Mark subscription as expired
+              await prisma.subscription.update({
+                where: { id: subscription.id },
+                data: { status: 'EXPIRED' }
+              });
+
+              // Disable admin account
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { isActive: false }
+              });
+
+              throw new Error('Subscription expired');
+            }
+
+            if (!subscription || (subscription.endDate && subscription.endDate < new Date())) {
+              throw new Error('Subscription expired');
+            }
+          } else if (user.role !== 'DEVELOPER' && user.adminId) {
+            // Check if admin is active and has valid subscription
             const admin = await prisma.user.findUnique({
               where: { id: user.adminId },
-              select: { isActive: true }
+              select: { 
+                isActive: true,
+                subscriptions: {
+                  where: {
+                    status: 'ACTIVE'
+                  },
+                  orderBy: {
+                    createdAt: 'desc'
+                  },
+                  take: 1
+                }
+              }
             });
 
             if (!admin?.isActive) {
-              throw new Error('Account disabled');
+              throw new Error('Account disabled - Admin subscription expired');
+            }
+
+            // Check admin's subscription
+            const adminSubscription = admin.subscriptions[0];
+            if (adminSubscription && adminSubscription.endDate && adminSubscription.endDate < new Date()) {
+              // Mark admin subscription as expired and disable admin
+              await prisma.subscription.update({
+                where: { id: adminSubscription.id },
+                data: { status: 'EXPIRED' }
+              });
+
+              await prisma.user.update({
+                where: { id: user.adminId },
+                data: { isActive: false }
+              });
+
+              throw new Error('Account disabled - Admin subscription expired');
+            }
+
+            if (!adminSubscription || (adminSubscription.endDate && adminSubscription.endDate < new Date())) {
+              throw new Error('Account disabled - Admin subscription expired');
             }
           }
 
@@ -67,7 +132,11 @@ export const authOptions: NextAuthOptions = {
           };
         } catch (error) {
           console.error('Auth error:', error);
-          if (error instanceof Error && error.message === 'Account disabled') {
+          if (error instanceof Error && (
+            error.message === 'Account disabled' || 
+            error.message === 'Subscription expired' ||
+            error.message === 'Account disabled - Admin subscription expired'
+          )) {
             throw error;
           }
           return null;

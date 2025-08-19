@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
+import { prisma } from '../../../lib/prisma';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -44,10 +45,6 @@ export const config = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
   const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ message: 'Unauthorized' });
@@ -58,33 +55,98 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ message: 'Insufficient permissions' });
   }
 
-  try {
-    await new Promise<void>((resolve, reject) => {
-      upload.single('logo')(req as any, res as any, (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
+  if (req.method === 'POST') {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        upload.single('logo')(req as any, res as any, (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
+        });
       });
-    });
 
-    const file = (req as any).file;
-    if (!file) {
-      return res.status(400).json({ message: 'No file uploaded' });
+      const file = (req as any).file;
+      if (!file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const logoUrl = `/assets/${file.filename}`;
+      
+      // Update settings with the new logo URL
+      const adminId = session.user.role === 'ADMIN' ? session.user.id : session.user.adminId;
+      if (adminId) {
+        await prisma.settings.upsert({
+          where: { adminId },
+          update: { 
+            headerImg: logoUrl,
+            headerImgUrl: logoUrl // Also update the URL field
+          },
+          create: {
+            adminId,
+            headerImg: logoUrl,
+            headerImgUrl: logoUrl,
+            appTitle: 'AIMS',
+          }
+        });
+      }
+      
+      res.status(200).json({
+        message: 'Logo uploaded successfully',
+        logoUrl,
+        filename: file.filename
+      });
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      res.status(500).json({ 
+        message: error.message || 'Error uploading file' 
+      });
+    }
+  } else if (req.method === 'PUT') {
+    // Handle URL-based logo update
+    const { logoUrl } = req.body;
+
+    if (!logoUrl) {
+      return res.status(400).json({ message: 'Logo URL is required' });
     }
 
-    const logoUrl = `/assets/${file.filename}`;
-    
-    res.status(200).json({
-      message: 'Logo uploaded successfully',
-      logoUrl,
-      filename: file.filename
-    });
-  } catch (error: any) {
-    console.error('Upload error:', error);
-    res.status(500).json({ 
-      message: error.message || 'Error uploading file' 
-    });
+    try {
+      // Validate URL format (basic validation)
+      const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+      if (!urlPattern.test(logoUrl)) {
+        return res.status(400).json({ message: 'Invalid URL format' });
+      }
+
+      // Update settings with the new logo URL
+      const adminId = session.user.role === 'ADMIN' ? session.user.id : session.user.adminId;
+      if (adminId) {
+        await prisma.settings.upsert({
+          where: { adminId },
+          update: { 
+            headerImg: logoUrl,
+            headerImgUrl: logoUrl
+          },
+          create: {
+            adminId,
+            headerImg: logoUrl,
+            headerImgUrl: logoUrl,
+            appTitle: 'AIMS',
+          }
+        });
+      }
+
+      res.status(200).json({
+        message: 'Logo URL updated successfully',
+        logoUrl
+      });
+    } catch (error: any) {
+      console.error('URL update error:', error);
+      res.status(500).json({ 
+        message: error.message || 'Error updating logo URL' 
+      });
+    }
+  } else {
+    res.status(405).json({ message: 'Method not allowed' });
   }
 }

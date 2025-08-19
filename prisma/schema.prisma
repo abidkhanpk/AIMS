@@ -62,6 +62,17 @@ enum SubscriptionStatus {
 enum SubscriptionPlan {
   MONTHLY
   YEARLY
+  LIFETIME
+}
+
+enum ClassDay {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
 }
 
 model User {
@@ -75,7 +86,7 @@ model User {
   
   // Additional user details
   mobile    String?
-  dateOfBirth DateTime?
+  dateOfBirth DateTime? // Only for STUDENT and TEACHER
   address   String?
   
   // Teacher specific fields
@@ -108,6 +119,8 @@ model User {
   salaryPayments     Salary[]           @relation("SalaryPayments")
   subscriptions      Subscription[]     @relation("AdminSubscriptions")
   subscriptionPayments Subscription[]   @relation("SubscriptionPayments")
+  studentAssignments2 Assignment[]      @relation("StudentAssignments")
+  teacherAssignments2 Assignment[]      @relation("TeacherAssignments")
 }
 
 model Course {
@@ -122,6 +135,35 @@ model Course {
   admin           User            @relation(fields: [adminId], references: [id])
   studentCourses  StudentCourse[]
   progressRecords Progress[]
+  assignments     Assignment[]
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  studentId   String
+  courseId    String
+  teacherId   String
+  assignmentDate DateTime @default(now())
+  
+  // Class schedule fields
+  startTime   String?  // Format: "HH:MM"
+  duration    Int?     // Duration in minutes
+  classDays   ClassDay[] // Array of days when class is conducted
+  
+  // Fee information
+  monthlyFee  Float?
+  currency    String   @default("USD")
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  student User   @relation("StudentAssignments", fields: [studentId], references: [id])
+  course  Course @relation(fields: [courseId], references: [id])
+  teacher User   @relation("TeacherAssignments", fields: [teacherId], references: [id])
+
+  @@unique([studentId, courseId, teacherId])
 }
 
 model TeacherStudent {
@@ -197,6 +239,7 @@ model ParentRemark {
 model Fee {
   id          String    @id @default(uuid())
   studentId   String
+  courseId    String?   // Link to specific course/subject
   title       String    // Fee title (e.g., "Tuition Fee", "Library Fee")
   description String?   // Optional description
   amount      Float     // Fee amount
@@ -205,6 +248,11 @@ model Fee {
   status      FeeStatus @default(PENDING)
   paidDate    DateTime? // Date when fee was paid
   paidById    String?   // Parent who paid the fee
+  
+  // Monthly fee tracking
+  month       Int?      // Month (1-12)
+  year        Int?      // Year
+  isRecurring Boolean   @default(false) // Is this a recurring monthly fee
   
   // Payment processing fields
   paidAmount     Float?    // Amount actually paid
@@ -232,6 +280,11 @@ model Salary {
   paidDate    DateTime?    // Date when salary was paid
   paidById    String?      // Admin who paid the salary
   
+  // Monthly salary tracking
+  month       Int?         // Month (1-12)
+  year        Int?         // Year
+  isRecurring Boolean      @default(false) // Is this a recurring monthly salary
+  
   // Payment processing fields
   paidAmount     Float?    // Amount actually paid
   paymentDetails String?   // Payment details/remarks
@@ -253,7 +306,7 @@ model Subscription {
   amount      Float
   currency    String             @default("USD")
   startDate   DateTime
-  endDate     DateTime
+  endDate     DateTime?          // Null for lifetime subscriptions
   status      SubscriptionStatus @default(ACTIVE)
   
   // Payment processing fields
@@ -270,6 +323,25 @@ model Subscription {
   // Relations
   admin  User  @relation("AdminSubscriptions", fields: [adminId], references: [id])
   paidBy User? @relation("SubscriptionPayments", fields: [paidById], references: [id])
+}
+
+model SubscriptionPayment {
+  id             String   @id @default(uuid())
+  adminId        String
+  subscriptionId String?  // Link to subscription if applicable
+  amount         Float
+  currency       String   @default("USD")
+  plan           SubscriptionPlan
+  paymentDate    DateTime
+  expiryExtended DateTime // How much expiry was extended
+  
+  // Payment details
+  paymentDetails String?
+  paymentProof   String?
+  processedById  String?  // Developer who processed the payment
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Notification {
@@ -292,9 +364,17 @@ model Settings {
   adminId        String  @unique
   appTitle       String  @default("AIMS")
   headerImg      String  @default("/assets/default-logo.png")
+  headerImgUrl   String? // URL link for logo (alternative to upload)
   tagline        String  @default("Academy Information and Management System")
   enableHomePage Boolean @default(true) // Developer can enable/disable homepage
   defaultCurrency String @default("USD") // Admin's default currency
+  
+  // Subscription settings for this admin
+  subscriptionType SubscriptionPlan @default(MONTHLY)
+  subscriptionAmount Float @default(29.99)
+  subscriptionStartDate DateTime @default(now())
+  subscriptionEndDate DateTime? // Null for lifetime
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -326,6 +406,7 @@ model AppSettings {
   // Subscription settings
   monthlyPrice   Float   @default(29.99)
   yearlyPrice    Float   @default(299.99)
+  lifetimePrice  Float   @default(999.99)
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
