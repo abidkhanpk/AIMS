@@ -53,11 +53,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Check for subscription due date reminders
+    // Check for subscription due date reminders (only for non-lifetime subscriptions)
     const upcomingSubscriptions = await prisma.subscription.findMany({
       where: {
         status: 'ACTIVE',
         endDate: {
+          not: null,
           gte: new Date(),
           lte: oneWeekFromNow,
         },
@@ -69,15 +70,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Send subscription reminders to admins
     for (const subscription of upcomingSubscriptions) {
-      await prisma.notification.create({
-        data: {
-          type: 'SUBSCRIPTION_DUE',
-          title: 'Subscription Renewal Reminder',
-          message: `Reminder: Your ${subscription.plan.toLowerCase()} subscription of ${subscription.currency} ${subscription.amount} expires on ${subscription.endDate.toLocaleDateString()}. Please renew to continue using the service.`,
-          senderId: 'system',
-          receiverId: subscription.adminId,
-        }
-      });
+      // Only send reminder if endDate is not null (lifetime subscriptions have null endDate)
+      if (subscription.endDate) {
+        await prisma.notification.create({
+          data: {
+            type: 'SUBSCRIPTION_DUE',
+            title: 'Subscription Renewal Reminder',
+            message: `Reminder: Your ${subscription.plan.toLowerCase()} subscription of ${subscription.currency} ${subscription.amount} expires on ${subscription.endDate.toLocaleDateString()}. Please renew to continue using the service.`,
+            senderId: 'system',
+            receiverId: subscription.adminId,
+          }
+        });
+      }
     }
 
     res.status(200).json({ 
