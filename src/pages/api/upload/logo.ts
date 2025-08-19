@@ -105,11 +105,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Invalid image file. Please upload a valid image.' });
     }
     
-    if (error.message?.includes('File size too large')) {
+    if (error instanceof Error && error.message.includes('File size too large')) {
       return res.status(400).json({ message: 'File size too large. Please upload images smaller than 5MB.' });
     }
 
-    if (error.message?.includes('Must supply api_key')) {
+    if (error instanceof Error && error.message.includes('Must supply api_key')) {
       return res.status(500).json({ 
         message: 'Cloud storage configuration error. Please contact administrator.',
         fallbackMessage: 'For Vercel deployment, please use URL-based logo uploads or configure Cloudinary.'
