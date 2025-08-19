@@ -32,7 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       // Calculate new expiry date
-      let newExpiryDate = new Date();
+      //let newExpiryDate = new Date();
+      let newExpiryDate: Date | null;
       if (currentSubscription && currentSubscription.endDate) {
         // Extend from current expiry date
         newExpiryDate = new Date(currentSubscription.endDate);
