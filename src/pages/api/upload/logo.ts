@@ -44,10 +44,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const form = formidable({
       maxFileSize: 5 * 1024 * 1024, // 5MB limit
-      filter: ({ mimetype }) => {
+      //filter: ({ mimetype }) => {
+      //  // Allow only image files
+      //  return mimetype && mimetype.includes('image');
+      //},
+      filter: (part: Part) => {
         // Allow only image files
-        return mimetype && mimetype.includes('image');
+        return Boolean(part.mimetype && part.mimetype.includes('image'));
       },
+      
     });
 
     const [fields, files] = await form.parse(req);
