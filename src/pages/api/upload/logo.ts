@@ -97,7 +97,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('Logo upload error:', error);
     
     // Provide helpful error messages
-    if (error.message?.includes('Invalid image file')) {
+    //if (error.message?.includes('Invalid image file')) {
+    //  return res.status(400).json({ message: 'Invalid image file. Please upload a valid image.' });
+    //}
+    // From inside the 'catch' block
+    if (error instanceof Error && error.message.includes('Invalid image file')) {
       return res.status(400).json({ message: 'Invalid image file. Please upload a valid image.' });
     }
     
