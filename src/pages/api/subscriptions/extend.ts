@@ -42,9 +42,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Add extension period
       switch (plan) {
         case 'MONTHLY':
+          newExpiryDate = new Date();
           newExpiryDate.setMonth(newExpiryDate.getMonth() + 1);
           break;
         case 'YEARLY':
+          newExpiryDate = new Date();
           newExpiryDate.setFullYear(newExpiryDate.getFullYear() + 1);
           break;
         case 'LIFETIME':
