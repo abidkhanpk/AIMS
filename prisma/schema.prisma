@@ -75,6 +75,13 @@ enum ClassDay {
   SUNDAY
 }
 
+enum PayType {
+  DAILY
+  WEEKLY
+  FORTNIGHTLY
+  MONTHLY
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -92,7 +99,11 @@ model User {
   // Teacher specific fields
   qualification String?
   payRate      Float?
-  payType      String? // hourly, monthly, etc.
+  payType      PayType? // DAILY, WEEKLY, FORTNIGHTLY, MONTHLY
+  payCurrency  String?  // Currency for teacher pay
+  
+  // Parent specific fields
+  profession   String?  // Parent's profession
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -136,6 +147,7 @@ model Course {
   studentCourses  StudentCourse[]
   progressRecords Progress[]
   assignments     Assignment[]
+  fees            Fee[]
 }
 
 model Assignment {
@@ -149,6 +161,7 @@ model Assignment {
   startTime   String?  // Format: "HH:MM"
   duration    Int?     // Duration in minutes
   classDays   ClassDay[] // Array of days when class is conducted
+  timezone    String   @default("UTC") // Timezone for the class
   
   // Fee information
   monthlyFee  Float?
@@ -264,8 +277,9 @@ model Fee {
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  student User  @relation("StudentFees", fields: [studentId], references: [id])
-  paidBy  User? @relation("FeePayments", fields: [paidById], references: [id])
+  student User    @relation("StudentFees", fields: [studentId], references: [id])
+  course  Course? @relation(fields: [courseId], references: [id])
+  paidBy  User?   @relation("FeePayments", fields: [paidById], references: [id])
 }
 
 model Salary {
@@ -280,10 +294,13 @@ model Salary {
   paidDate    DateTime?    // Date when salary was paid
   paidById    String?      // Admin who paid the salary
   
-  // Monthly salary tracking
+  // Periodic salary tracking
   month       Int?         // Month (1-12)
   year        Int?         // Year
-  isRecurring Boolean      @default(false) // Is this a recurring monthly salary
+  week        Int?         // Week number for weekly salaries
+  day         DateTime?    // Specific day for daily salaries
+  payType     PayType      @default(MONTHLY) // DAILY, WEEKLY, FORTNIGHTLY, MONTHLY
+  isRecurring Boolean      @default(true)    // Most salaries are recurring
   
   // Payment processing fields
   paidAmount     Float?    // Amount actually paid
@@ -388,6 +405,11 @@ model UserSettings {
   enableNotifications   Boolean @default(true)
   emailNotifications    Boolean @default(true)
   parentRemarkNotifications Boolean @default(true)
+  timezone              String  @default("UTC")
+  secretQuestion1       String?
+  secretAnswer1         String?
+  secretQuestion2       String?
+  secretAnswer2         String?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 

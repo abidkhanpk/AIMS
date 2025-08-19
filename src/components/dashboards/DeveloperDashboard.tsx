@@ -84,8 +84,8 @@ function AdminManagementTab() {
   // Subscription fields
   const [subscriptionType, setSubscriptionType] = useState('MONTHLY');
   const [subscriptionAmount, setSubscriptionAmount] = useState(29.99);
+  const [subscriptionCurrency, setSubscriptionCurrency] = useState('USD');
   const [subscriptionStartDate, setSubscriptionStartDate] = useState('');
-  const [subscriptionEndDate, setSubscriptionEndDate] = useState('');
 
   // Edit form states
   const [editName, setEditName] = useState('');
@@ -112,6 +112,27 @@ function AdminManagementTab() {
     fetchAdmins();
   }, []);
 
+  // Calculate subscription end date automatically
+  const calculateEndDate = (startDate: string, type: string) => {
+    if (!startDate || type === 'LIFETIME') return null;
+    
+    const start = new Date(startDate);
+    const end = new Date(start);
+    
+    switch (type) {
+      case 'MONTHLY':
+        end.setMonth(end.getMonth() + 1);
+        break;
+      case 'YEARLY':
+        end.setFullYear(end.getFullYear() + 1);
+        break;
+      default:
+        return null;
+    }
+    
+    return end.toISOString().split('T')[0];
+  };
+
   const fetchAdmins = async () => {
     try {
       setLoading(true);
@@ -136,6 +157,8 @@ function AdminManagementTab() {
     setSuccess('');
 
     try {
+      const endDate = calculateEndDate(subscriptionStartDate, subscriptionType);
+      
       const res = await fetch('/api/users/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,8 +171,9 @@ function AdminManagementTab() {
           address: address || null,
           subscriptionType,
           subscriptionAmount,
+          subscriptionCurrency,
           subscriptionStartDate: subscriptionStartDate || new Date().toISOString(),
-          subscriptionEndDate: subscriptionEndDate || null
+          subscriptionEndDate: endDate
         }),
       });
 
@@ -163,8 +187,8 @@ function AdminManagementTab() {
         setAddress('');
         setSubscriptionType('MONTHLY');
         setSubscriptionAmount(29.99);
+        setSubscriptionCurrency('USD');
         setSubscriptionStartDate('');
-        setSubscriptionEndDate('');
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create admin');
@@ -260,8 +284,8 @@ function AdminManagementTab() {
     setDefaultCurrency(admin.settings?.defaultCurrency || 'USD');
     setSubscriptionType(admin.settings?.subscriptionType || 'MONTHLY');
     setSubscriptionAmount(admin.settings?.subscriptionAmount || 29.99);
+    setSubscriptionCurrency(admin.settings?.subscriptionType === 'LIFETIME' ? 'USD' : 'USD'); // Default currency for subscription
     setSubscriptionStartDate(admin.settings?.subscriptionStartDate ? admin.settings.subscriptionStartDate.split('T')[0] : '');
-    setSubscriptionEndDate(admin.settings?.subscriptionEndDate ? admin.settings.subscriptionEndDate.split('T')[0] : '');
     setShowSettingsModal(true);
   };
 
@@ -319,6 +343,8 @@ function AdminManagementTab() {
 
     setUpdatingSettings(true);
     try {
+      const endDate = calculateEndDate(subscriptionStartDate, subscriptionType);
+      
       const res = await fetch('/api/settings/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -332,8 +358,9 @@ function AdminManagementTab() {
           defaultCurrency,
           subscriptionType,
           subscriptionAmount,
+          subscriptionCurrency,
           subscriptionStartDate: subscriptionStartDate ? new Date(subscriptionStartDate).toISOString() : null,
-          subscriptionEndDate: subscriptionEndDate ? new Date(subscriptionEndDate).toISOString() : null
+          subscriptionEndDate: endDate ? new Date(endDate).toISOString() : null
         }),
       });
 
@@ -441,6 +468,23 @@ function AdminManagementTab() {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
+                      <Form.Label>Currency</Form.Label>
+                      <Form.Select 
+                        value={subscriptionCurrency} 
+                        onChange={(e) => setSubscriptionCurrency(e.target.value)}
+                      >
+                        {currencies.map((currency) => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.symbol} {currency.code}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
                       <Form.Label>Amount</Form.Label>
                       <Form.Control 
                         type="number" 
@@ -451,8 +495,6 @@ function AdminManagementTab() {
                       />
                     </Form.Group>
                   </Col>
-                </Row>
-                <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>Start Date</Form.Label>
@@ -463,23 +505,25 @@ function AdminManagementTab() {
                       />
                     </Form.Group>
                   </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>End Date</Form.Label>
-                      <Form.Control 
-                        type="date" 
-                        value={subscriptionEndDate} 
-                        onChange={(e) => setSubscriptionEndDate(e.target.value)}
-                        disabled={subscriptionType === 'LIFETIME'}
-                      />
-                      {subscriptionType === 'LIFETIME' && (
-                        <Form.Text className="text-muted">
-                          No expiry for lifetime subscriptions
-                        </Form.Text>
-                      )}
-                    </Form.Group>
-                  </Col>
                 </Row>
+                {subscriptionStartDate && subscriptionType !== 'LIFETIME' && (
+                  <Row>
+                    <Col md={12}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>End Date (Auto-calculated)</Form.Label>
+                        <Form.Control 
+                          type="text" 
+                          value={calculateEndDate(subscriptionStartDate, subscriptionType) || 'N/A'}
+                          disabled
+                          className="bg-light"
+                        />
+                        <Form.Text className="text-muted">
+                          End date is automatically calculated based on subscription type
+                        </Form.Text>
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                )}
                 
                 <Button 
                   variant="primary" 
@@ -835,7 +879,7 @@ function AdminManagementTab() {
             <Tab eventKey="subscription" title="Subscription">
               <Form>
                 <Row>
-                  <Col md={6}>
+                  <Col md={4}>
                     <Form.Group className="mb-3">
                       <Form.Label>Subscription Type</Form.Label>
                       <Form.Select 
@@ -848,7 +892,22 @@ function AdminManagementTab() {
                       </Form.Select>
                     </Form.Group>
                   </Col>
-                  <Col md={6}>
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Currency</Form.Label>
+                      <Form.Select 
+                        value={subscriptionCurrency} 
+                        onChange={(e) => setSubscriptionCurrency(e.target.value)}
+                      >
+                        {currencies.map((currency) => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.symbol} {currency.code}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={4}>
                     <Form.Group className="mb-3">
                       <Form.Label>Amount</Form.Label>
                       <Form.Control 
@@ -874,18 +933,19 @@ function AdminManagementTab() {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>End Date</Form.Label>
+                      <Form.Label>End Date (Auto-calculated)</Form.Label>
                       <Form.Control 
-                        type="date" 
-                        value={subscriptionEndDate} 
-                        onChange={(e) => setSubscriptionEndDate(e.target.value)}
-                        disabled={subscriptionType === 'LIFETIME'}
+                        type="text" 
+                        value={subscriptionStartDate && subscriptionType !== 'LIFETIME' 
+                          ? calculateEndDate(subscriptionStartDate, subscriptionType) || 'N/A'
+                          : subscriptionType === 'LIFETIME' ? 'Lifetime - No Expiry' : 'N/A'
+                        }
+                        disabled
+                        className="bg-light"
                       />
-                      {subscriptionType === 'LIFETIME' && (
-                        <Form.Text className="text-muted">
-                          No expiry for lifetime subscriptions
-                        </Form.Text>
-                      )}
+                      <Form.Text className="text-muted">
+                        End date is automatically calculated based on subscription type and start date
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>
@@ -930,22 +990,8 @@ function GlobalSettingsTab() {
   const [appLogo, setAppLogo] = useState('');
   const [tagline, setTagline] = useState('');
   const [enableHomePage, setEnableHomePage] = useState(true);
-  const [defaultCurrency, setDefaultCurrency] = useState('USD');
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const currencies = [
-    { code: 'USD', symbol: '$', name: 'US Dollar' },
-    { code: 'EUR', symbol: '€', name: 'Euro' },
-    { code: 'GBP', symbol: '£', name: 'British Pound' },
-    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
-    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-  ];
 
   useEffect(() => {
     fetchGlobalSettings();
@@ -962,7 +1008,6 @@ function GlobalSettingsTab() {
         setAppLogo(data.appLogo || '/assets/app-logo.png');
         setTagline(data.tagline || 'Academy Information and Management System');
         setEnableHomePage(data.enableHomePage ?? true);
-        setDefaultCurrency(data.defaultCurrency || 'USD');
       } else {
         setError('Failed to fetch global settings');
       }
@@ -1034,8 +1079,7 @@ function GlobalSettingsTab() {
           appName, 
           appLogo,
           tagline,
-          enableHomePage,
-          defaultCurrency
+          enableHomePage
         }),
       });
 
@@ -1088,23 +1132,6 @@ function GlobalSettingsTab() {
               </Form.Group>
             </Col>
             <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Default Currency</Form.Label>
-                <Form.Select 
-                  value={defaultCurrency} 
-                  onChange={(e) => setDefaultCurrency(e.target.value)}
-                >
-                  {currencies.map((currency) => (
-                    <option key={currency.code} value={currency.code}>
-                      {currency.symbol} {currency.name} ({currency.code})
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={12}>
               <Form.Group className="mb-3">
                 <Form.Label>Application Tagline</Form.Label>
                 <Form.Control 

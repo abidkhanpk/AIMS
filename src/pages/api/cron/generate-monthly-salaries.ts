@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/prisma';
+import { PayType } from '@prisma/client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -34,6 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         name: true,
         payRate: true,
         payType: true,
+        payCurrency: true,
         adminId: true,
         admin: {
           select: {
@@ -62,8 +64,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         });
 
-        if (!existingSalary && teacher.payRate && teacher.payType === 'monthly') {
-          const currency = teacher.admin?.settings?.defaultCurrency || 'USD';
+        if (!existingSalary && teacher.payRate && teacher.payType === PayType.MONTHLY) {
+          const currency = teacher.payCurrency || teacher.admin?.settings?.defaultCurrency || 'USD';
 
           // Create monthly salary
           await prisma.salary.create({
@@ -76,6 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               dueDate: new Date(currentYear, currentMonth - 1, 25), // Due on 25th of current month
               month: currentMonth,
               year: currentYear,
+              payType: PayType.MONTHLY,
               isRecurring: true,
               status: 'PENDING',
             }

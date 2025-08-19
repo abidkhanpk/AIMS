@@ -1,43 +1,17 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import { prisma } from '../../../lib/prisma';
-import multer from 'multer';
-import path from 'path';
+import formidable from 'formidable';
+import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'public/assets');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, `logo-${uniqueSuffix}${ext}`);
-  }
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.'));
-    }
-  }
-});
-
-// Disable Next.js body parsing for this route
 export const config = {
   api: {
     bodyParser: false,
@@ -45,108 +19,96 @@ export const config = {
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).json({ message: 'Unauthorized' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  // Only developers and admins can upload logos
-  if (!['DEVELOPER', 'ADMIN'].includes(session.user.role)) {
-    return res.status(403).json({ message: 'Insufficient permissions' });
-  }
+  try {
+    const session = await getServerSession(req, res, authOptions);
+    if (!session?.user?.id) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
-  if (req.method === 'POST') {
+    // Only developers and admins can upload logos
+    if (!['DEVELOPER', 'ADMIN'].includes(session.user.role)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // Check if Cloudinary is configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      return res.status(500).json({ 
+        message: 'Cloud storage not configured. Please set up Cloudinary credentials in environment variables.',
+        fallbackMessage: 'For Vercel deployment, file uploads require cloud storage. Please configure Cloudinary or use URL-based logo uploads.'
+      });
+    }
+
+    const form = formidable({
+      maxFileSize: 5 * 1024 * 1024, // 5MB limit
+      filter: ({ mimetype }) => {
+        // Allow only image files
+        return mimetype && mimetype.includes('image');
+      },
+    });
+
+    const [fields, files] = await form.parse(req);
+    const file = Array.isArray(files.logo) ? files.logo[0] : files.logo;
+
+    if (!file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.mimetype || '')) {
+      return res.status(400).json({ message: 'Invalid file type. Please upload JPEG, PNG, GIF, or WebP images only.' });
+    }
+
+    // Upload to Cloudinary
+    const uploadResult = await cloudinary.uploader.upload(file.filepath, {
+      folder: 'aims-logos',
+      public_id: `logo-${Date.now()}`,
+      transformation: [
+        { width: 500, height: 300, crop: 'limit' },
+        { quality: 'auto' },
+        { format: 'auto' }
+      ]
+    });
+
+    // Clean up temporary file
     try {
-      await new Promise<void>((resolve, reject) => {
-        upload.single('logo')(req as any, res as any, (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve();
-          }
-        });
-      });
-
-      const file = (req as any).file;
-      if (!file) {
-        return res.status(400).json({ message: 'No file uploaded' });
-      }
-
-      const logoUrl = `/assets/${file.filename}`;
-      
-      // Update settings with the new logo URL
-      const adminId = session.user.role === 'ADMIN' ? session.user.id : session.user.adminId;
-      if (adminId) {
-        await prisma.settings.upsert({
-          where: { adminId },
-          update: { 
-            headerImg: logoUrl,
-            headerImgUrl: logoUrl // Also update the URL field
-          },
-          create: {
-            adminId,
-            headerImg: logoUrl,
-            headerImgUrl: logoUrl,
-            appTitle: 'AIMS',
-          }
-        });
-      }
-      
-      res.status(200).json({
-        message: 'Logo uploaded successfully',
-        logoUrl,
-        filename: file.filename
-      });
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      res.status(500).json({ 
-        message: error.message || 'Error uploading file' 
-      });
-    }
-  } else if (req.method === 'PUT') {
-    // Handle URL-based logo update
-    const { logoUrl } = req.body;
-
-    if (!logoUrl) {
-      return res.status(400).json({ message: 'Logo URL is required' });
+      fs.unlinkSync(file.filepath);
+    } catch (cleanupError) {
+      console.warn('Failed to cleanup temporary file:', cleanupError);
     }
 
-    try {
-      // Validate URL format (basic validation)
-      const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-      if (!urlPattern.test(logoUrl)) {
-        return res.status(400).json({ message: 'Invalid URL format' });
-      }
+    res.status(200).json({
+      message: 'Logo uploaded successfully',
+      logoUrl: uploadResult.secure_url,
+      publicId: uploadResult.public_id
+    });
 
-      // Update settings with the new logo URL
-      const adminId = session.user.role === 'ADMIN' ? session.user.id : session.user.adminId;
-      if (adminId) {
-        await prisma.settings.upsert({
-          where: { adminId },
-          update: { 
-            headerImg: logoUrl,
-            headerImgUrl: logoUrl
-          },
-          create: {
-            adminId,
-            headerImg: logoUrl,
-            headerImgUrl: logoUrl,
-            appTitle: 'AIMS',
-          }
-        });
-      }
+  } catch (error) {
+    console.error('Logo upload error:', error);
+    
+    // Provide helpful error messages
+    if (error.message?.includes('Invalid image file')) {
+      return res.status(400).json({ message: 'Invalid image file. Please upload a valid image.' });
+    }
+    
+    if (error.message?.includes('File size too large')) {
+      return res.status(400).json({ message: 'File size too large. Please upload images smaller than 5MB.' });
+    }
 
-      res.status(200).json({
-        message: 'Logo URL updated successfully',
-        logoUrl
-      });
-    } catch (error: any) {
-      console.error('URL update error:', error);
-      res.status(500).json({ 
-        message: error.message || 'Error updating logo URL' 
+    if (error.message?.includes('Must supply api_key')) {
+      return res.status(500).json({ 
+        message: 'Cloud storage configuration error. Please contact administrator.',
+        fallbackMessage: 'For Vercel deployment, please use URL-based logo uploads or configure Cloudinary.'
       });
     }
-  } else {
-    res.status(405).json({ message: 'Method not allowed' });
+
+    res.status(500).json({ 
+      message: 'Failed to upload logo. Please try again or use URL-based upload.',
+      fallbackMessage: 'If you\'re on Vercel, consider using URL-based logo uploads instead.'
+    });
   }
 }

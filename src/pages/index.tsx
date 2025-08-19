@@ -29,14 +29,18 @@ const Home: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    // If homepage is disabled and user is not authenticated, redirect to signin
-    if (!loading && !appSettings.enableHomePage && status === 'unauthenticated') {
-      router.push('/auth/signin');
-      return;
-    }
+    // Wait for both settings and session to load
+    if (loading || status === 'loading') return;
+
     // If user is authenticated, redirect to dashboard
     if (status === 'authenticated') {
       router.push('/dashboard');
+      return;
+    }
+
+    // If homepage is disabled and user is not authenticated, redirect to signin
+    if (!appSettings.enableHomePage && status === 'unauthenticated') {
+      router.push('/auth/signin');
       return;
     }
   }, [appSettings.enableHomePage, status, loading, router]);
@@ -60,8 +64,8 @@ const Home: NextPage = () => {
     }
   };
 
-  // Show loading while checking settings
-  if (loading) {
+  // Show loading while checking settings and authentication
+  if (loading || status === 'loading') {
     return (
       <div className="min-vh-100 d-flex align-items-center justify-content-center">
         <div className="text-center">
@@ -74,9 +78,10 @@ const Home: NextPage = () => {
     );
   }
 
-  // If homepage is disabled, don't render the homepage content
-  if (!appSettings.enableHomePage) {
-    return null; // Router will handle redirect
+  // If homepage is disabled or user is authenticated, don't render homepage content
+  // (Router will handle redirects)
+  if (!appSettings.enableHomePage || status === 'authenticated') {
+    return null;
   }
 
   return (
@@ -106,16 +111,6 @@ const Home: NextPage = () => {
                       <Button variant="light" size="lg" className="px-4">
                         <i className="bi bi-box-arrow-in-right me-2"></i>
                         Sign In
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-                {status === 'authenticated' && (
-                  <div className="d-flex gap-3 flex-wrap">
-                    <Link href="/dashboard" passHref>
-                      <Button variant="light" size="lg" className="px-4">
-                        <i className="bi bi-speedometer2 me-2"></i>
-                        Go to Dashboard
                       </Button>
                     </Link>
                   </div>
