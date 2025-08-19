@@ -48,7 +48,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       //  // Allow only image files
       //  return mimetype && mimetype.includes('image');
       //},
-      filter: (part: Part) => {
+      filter: (part) => {
+        
         // Allow only image files
         return Boolean(part.mimetype && part.mimetype.includes('image'));
       },
