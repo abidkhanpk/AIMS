@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
+import { SubscriptionStatus } from '@prisma/client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -30,6 +31,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: {
         id: subscriptionId,
         adminId: session.user.id
+      },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          }
+        }
       }
     });
 
@@ -37,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Subscription not found or access denied' });
     }
 
-    if (subscription.status === 'PAID') {
+    if (subscription.status === SubscriptionStatus.ACTIVE && subscription.paidAmount) {
       return res.status(400).json({ message: 'Subscription is already paid' });
     }
 
@@ -50,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         paymentDetails: paymentDetails || null,
         paymentProof: paymentProof || null,
         paidById: session.user.id,
-        status: 'PROCESSING',
+        status: SubscriptionStatus.PROCESSING,
       },
       include: {
         admin: {
