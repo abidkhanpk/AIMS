@@ -122,36 +122,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // If creating an admin, also create default settings and subscription
     if (role === 'ADMIN') {
-      // Get app settings for default subscription prices
-      const appSettings = await prisma.appSettings.findFirst();
-      const defaultMonthlyPrice = appSettings?.monthlyPrice || 29.99;
-      const defaultYearlyPrice = appSettings?.yearlyPrice || 299.99;
-      const defaultLifetimePrice = appSettings?.lifetimePrice || 999.99;
-
       // Determine subscription details
       let subType = subscriptionType || 'MONTHLY';
-      let subAmount = subscriptionAmount;
+      let subAmount = subscriptionAmount || 29.99;
       let subStartDate = subscriptionStartDate ? new Date(subscriptionStartDate) : new Date();
       let subEndDate = null;
 
-      if (!subAmount) {
-        switch (subType) {
-          case 'MONTHLY':
-            subAmount = defaultMonthlyPrice;
-            break;
-          case 'YEARLY':
-            subAmount = defaultYearlyPrice;
-            break;
-          case 'LIFETIME':
-            subAmount = defaultLifetimePrice;
-            break;
-          default:
-            subAmount = defaultMonthlyPrice;
-        }
-      }
-
       // Calculate end date for non-lifetime subscriptions
-      if (subType !== 'LIFETIME') {
+      if (subscriptionEndDate) {
+        subEndDate = new Date(subscriptionEndDate);
+      } else if (subType !== 'LIFETIME') {
         subEndDate = new Date(subStartDate);
         if (subType === 'MONTHLY') {
           subEndDate.setMonth(subEndDate.getMonth() + 1);
@@ -181,7 +161,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           amount: subAmount,
           startDate: subStartDate,
           endDate: subEndDate,
-          status: subscriptionEndDate ? 'ACTIVE' : 'EXPIRED', // If no end date provided, mark as expired initially
+          status: subEndDate && subEndDate > new Date() ? 'ACTIVE' : 'EXPIRED',
         }
       });
     }

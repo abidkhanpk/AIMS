@@ -23,8 +23,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         appSettings = await prisma.appSettings.create({
           data: {
             appLogo: '/assets/app-logo.png',
-            appName: 'LMS Academy',
+            appName: 'AIMS',
+            tagline: 'Academy Information and Management System',
             enableHomePage: true,
+            defaultCurrency: 'USD',
           }
         });
       }
@@ -35,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(500).json({ message: 'Internal server error' });
     }
   } else if (req.method === 'POST') {
-    const { enableHomePage, appName, appLogo } = req.body;
+    const { enableHomePage, appName, appLogo, tagline, defaultCurrency } = req.body;
 
     try {
       // Get existing settings or create new ones
@@ -49,6 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ...(enableHomePage !== undefined && { enableHomePage }),
             ...(appName && { appName }),
             ...(appLogo && { appLogo }),
+            ...(tagline && { tagline }),
+            ...(defaultCurrency && { defaultCurrency }),
           }
         });
       } else {
@@ -56,8 +60,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         appSettings = await prisma.appSettings.create({
           data: {
             appLogo: appLogo || '/assets/app-logo.png',
-            appName: appName || 'LMS Academy',
+            appName: appName || 'AIMS',
+            tagline: tagline || 'Academy Information and Management System',
             enableHomePage: enableHomePage !== undefined ? enableHomePage : true,
+            defaultCurrency: defaultCurrency || 'USD',
           }
         });
       }

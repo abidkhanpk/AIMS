@@ -6,9 +6,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  // Simple API key check for cron job security
-  const apiKey = req.headers['x-api-key'];
-  if (apiKey !== process.env.CRON_API_KEY) {
+  // Verify cron job authorization (you can add API key verification here)
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
@@ -16,13 +16,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
-    
+
     // Get all active assignments with monthly fees
     const assignments = await prisma.assignment.findMany({
       where: {
         isActive: true,
         monthlyFee: {
           gt: 0
+        },
+        student: {
+          isActive: true,
+          admin: {
+            isActive: true
+          }
         }
       },
       include: {
@@ -43,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     let feesCreated = 0;
-    let errors = 0;
+    let errors = [];
 
     for (const assignment of assignments) {
       try {
@@ -60,22 +66,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         if (!existingFee) {
           // Create monthly fee
-          const dueDate = new Date(currentYear, currentMonth - 1, 5); // Due on 5th of each month
-          
           await prisma.fee.create({
             data: {
               studentId: assignment.studentId,
               courseId: assignment.courseId,
               title: `${assignment.course.name} - Monthly Fee`,
-              description: `Monthly fee for ${assignment.course.name} subject - ${currentMonth}/${currentYear}`,
+              description: `Monthly fee for ${assignment.course.name} subject for ${currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
               amount: assignment.monthlyFee!,
               currency: assignment.currency,
-              dueDate,
+              dueDate: new Date(currentYear, currentMonth - 1, 5), // Due on 5th of current month
               month: currentMonth,
               year: currentYear,
               isRecurring: true,
+              status: 'PENDING',
             }
           });
+
+          feesCreated++;
 
           // Create notification for parents
           const parentStudents = await prisma.parentStudent.findMany({
@@ -87,30 +94,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             await prisma.notification.create({
               data: {
                 type: 'FEE_DUE',
-                title: 'Monthly Fee Generated',
-                message: `Monthly fee of ${assignment.currency} ${assignment.monthlyFee} for ${assignment.course.name} has been generated for ${assignment.student.name}. Due date: ${dueDate.toLocaleDateString()}`,
+                title: 'Monthly Fee Due',
+                message: `Monthly fee for ${assignment.course.name} (${assignment.currency} ${assignment.monthlyFee}) is due for ${assignment.student.name}`,
                 senderId: assignment.student.adminId!,
                 receiverId: parentStudent.parent.id,
               }
             });
           }
-
-          feesCreated++;
         }
       } catch (error) {
         console.error(`Error creating fee for assignment ${assignment.id}:`, error);
-        errors++;
+        errors.push({
+          assignmentId: assignment.id,
+          studentName: assignment.student.name,
+          courseName: assignment.course.name,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
     }
 
     res.status(200).json({
-      message: 'Monthly fee generation completed',
+      message: 'Monthly fees generation completed',
       feesCreated,
-      errors,
       totalAssignments: assignments.length,
+      errors: errors.length > 0 ? errors : undefined,
+      processedAt: new Date().toISOString(),
     });
+
   } catch (error) {
-    console.error('Error in monthly fee generation:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error in monthly fees generation:', error);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }

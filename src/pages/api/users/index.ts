@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let users;
 
     if (userRole === 'DEVELOPER') {
-      // Developers can see all admins
+      // Developers can see all admins with full settings and subscription data
       if (role === 'ADMIN') {
         users = await prisma.user.findMany({
           where: { role: 'ADMIN' },
@@ -30,12 +30,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             name: true,
             email: true,
             role: true,
+            isActive: true,
+            mobile: true,
+            address: true,
             createdAt: true,
             settings: {
               select: {
                 appTitle: true,
                 headerImg: true,
+                tagline: true,
+                enableHomePage: true,
+                defaultCurrency: true,
+                subscriptionType: true,
+                subscriptionAmount: true,
+                subscriptionStartDate: true,
+                subscriptionEndDate: true,
               }
+            },
+            subscriptions: {
+              select: {
+                id: true,
+                plan: true,
+                amount: true,
+                currency: true,
+                startDate: true,
+                endDate: true,
+                status: true,
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 5 // Get latest 5 subscriptions
             }
           },
           orderBy: { createdAt: 'desc' }
@@ -48,6 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             name: true,
             email: true,
             role: true,
+            isActive: true,
             createdAt: true,
           },
           orderBy: { createdAt: 'desc' }
@@ -65,6 +89,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           name: true,
           email: true,
           role: true,
+          isActive: true,
+          mobile: true,
+          dateOfBirth: true,
+          address: true,
+          qualification: true,
+          payRate: true,
+          payType: true,
           createdAt: true,
         },
         orderBy: { createdAt: 'desc' }

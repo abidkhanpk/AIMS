@@ -6,9 +6,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  // Simple API key check for cron job security
-  const apiKey = req.headers['x-api-key'];
-  if (apiKey !== process.env.CRON_API_KEY) {
+  // Verify cron job authorization (you can add API key verification here)
+  const authHeader = req.headers.authorization;
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
-    
+
     // Get all active teachers with pay rates
     const teachers = await prisma.user.findMany({
       where: {
@@ -25,13 +25,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         payRate: {
           gt: 0
         },
-        payType: 'monthly' // Only for monthly paid teachers
+        admin: {
+          isActive: true
+        }
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        payRate: true,
+        payType: true,
+        adminId: true,
         admin: {
           select: {
-            id: true,
-            name: true,
             settings: {
               select: {
                 defaultCurrency: true
@@ -43,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     let salariesCreated = 0;
-    let errors = 0;
+    let errors = [];
 
     for (const teacher of teachers) {
       try {
@@ -57,63 +62,63 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           }
         });
 
-        if (!existingSalary && teacher.admin) {
+        if (!existingSalary && teacher.payRate && teacher.payType === 'monthly') {
+          const currency = teacher.admin?.settings?.defaultCurrency || 'USD';
+
           // Create monthly salary
-          const dueDate = new Date(currentYear, currentMonth - 1, 25); // Due on 25th of each month
-          const currency = teacher.admin.settings?.defaultCurrency || 'USD';
-          
           await prisma.salary.create({
             data: {
               teacherId: teacher.id,
-              title: `Monthly Salary - ${currentMonth}/${currentYear}`,
-              description: `Monthly salary for ${teacher.name} - ${currentMonth}/${currentYear}`,
-              amount: teacher.payRate!,
-              currency,
-              dueDate,
+              title: 'Monthly Salary',
+              description: `Monthly salary for ${currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+              amount: teacher.payRate,
+              currency: currency,
+              dueDate: new Date(currentYear, currentMonth - 1, 25), // Due on 25th of current month
               month: currentMonth,
               year: currentYear,
               isRecurring: true,
-            }
-          });
-
-          // Create notification for admin
-          await prisma.notification.create({
-            data: {
-              type: 'SALARY_PAID',
-              title: 'Monthly Salary Generated',
-              message: `Monthly salary of ${currency} ${teacher.payRate} has been generated for ${teacher.name}. Due date: ${dueDate.toLocaleDateString()}`,
-              senderId: teacher.admin.id,
-              receiverId: teacher.admin.id,
-            }
-          });
-
-          // Create notification for teacher
-          await prisma.notification.create({
-            data: {
-              type: 'SALARY_PAID',
-              title: 'Salary Due',
-              message: `Your monthly salary of ${currency} ${teacher.payRate} is due on ${dueDate.toLocaleDateString()}`,
-              senderId: teacher.admin.id,
-              receiverId: teacher.id,
+              status: 'PENDING',
             }
           });
 
           salariesCreated++;
+
+          // Create notification for admin
+          if (teacher.adminId) {
+            await prisma.notification.create({
+              data: {
+                type: 'SALARY_PAID',
+                title: 'Monthly Salary Due',
+                message: `Monthly salary (${currency} ${teacher.payRate}) is due for teacher ${teacher.name}`,
+                senderId: teacher.adminId,
+                receiverId: teacher.adminId,
+              }
+            });
+          }
         }
       } catch (error) {
         console.error(`Error creating salary for teacher ${teacher.id}:`, error);
-        errors++;
+        errors.push({
+          teacherId: teacher.id,
+          teacherName: teacher.name,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
       }
     }
 
     res.status(200).json({
-      message: 'Monthly salary generation completed',
+      message: 'Monthly salaries generation completed',
       salariesCreated,
-      errors,
       totalTeachers: teachers.length,
+      errors: errors.length > 0 ? errors : undefined,
+      processedAt: new Date().toISOString(),
     });
+
   } catch (error) {
-    console.error('Error in monthly salary generation:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error in monthly salaries generation:', error);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 }

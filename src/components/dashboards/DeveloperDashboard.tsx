@@ -8,7 +8,6 @@ interface Admin {
   role: string;
   isActive: boolean;
   mobile?: string;
-  dateOfBirth?: string;
   address?: string;
   createdAt: string;
   settings?: {
@@ -17,7 +16,20 @@ interface Admin {
     tagline: string;
     enableHomePage: boolean;
     defaultCurrency: string;
+    subscriptionType: string;
+    subscriptionAmount: number;
+    subscriptionStartDate: string;
+    subscriptionEndDate?: string;
   };
+  subscriptions?: Array<{
+    id: string;
+    plan: string;
+    amount: number;
+    currency: string;
+    startDate: string;
+    endDate?: string;
+    status: string;
+  }>;
 }
 
 interface AppSettings {
@@ -27,8 +39,6 @@ interface AppSettings {
   tagline: string;
   enableHomePage: boolean;
   defaultCurrency: string;
-  monthlyPrice: number;
-  yearlyPrice: number;
 }
 
 interface Subscription {
@@ -54,7 +64,6 @@ function AdminManagementTab() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mobile, setMobile] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -64,6 +73,7 @@ function AdminManagementTab() {
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [appTitle, setAppTitle] = useState('');
   const [headerImage, setHeaderImage] = useState('');
+  const [headerImageUrl, setHeaderImageUrl] = useState('');
   const [tagline, setTagline] = useState('');
   const [enableHomePage, setEnableHomePage] = useState(true);
   const [defaultCurrency, setDefaultCurrency] = useState('USD');
@@ -71,11 +81,16 @@ function AdminManagementTab() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Subscription fields
+  const [subscriptionType, setSubscriptionType] = useState('MONTHLY');
+  const [subscriptionAmount, setSubscriptionAmount] = useState(29.99);
+  const [subscriptionStartDate, setSubscriptionStartDate] = useState('');
+  const [subscriptionEndDate, setSubscriptionEndDate] = useState('');
+
   // Edit form states
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editMobile, setEditMobile] = useState('');
-  const [editDateOfBirth, setEditDateOfBirth] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -130,8 +145,11 @@ function AdminManagementTab() {
           password, 
           role: 'ADMIN',
           mobile: mobile || null,
-          dateOfBirth: dateOfBirth || null,
-          address: address || null
+          address: address || null,
+          subscriptionType,
+          subscriptionAmount,
+          subscriptionStartDate: subscriptionStartDate || new Date().toISOString(),
+          subscriptionEndDate: subscriptionEndDate || null
         }),
       });
 
@@ -142,8 +160,11 @@ function AdminManagementTab() {
         setEmail('');
         setPassword('');
         setMobile('');
-        setDateOfBirth('');
         setAddress('');
+        setSubscriptionType('MONTHLY');
+        setSubscriptionAmount(29.99);
+        setSubscriptionStartDate('');
+        setSubscriptionEndDate('');
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create admin');
@@ -160,7 +181,6 @@ function AdminManagementTab() {
     setEditName(admin.name);
     setEditEmail(admin.email);
     setEditMobile(admin.mobile || '');
-    setEditDateOfBirth(admin.dateOfBirth ? admin.dateOfBirth.split('T')[0] : '');
     setEditAddress(admin.address || '');
     setEditPassword('');
     setShowEditModal(true);
@@ -179,7 +199,6 @@ function AdminManagementTab() {
         name: editName,
         email: editEmail,
         mobile: editMobile || null,
-        dateOfBirth: editDateOfBirth || null,
         address: editAddress || null,
       };
 
@@ -210,12 +229,12 @@ function AdminManagementTab() {
 
   const handleToggleAdminStatus = async (adminId: string, currentStatus: boolean) => {
     try {
-      const res = await fetch('/api/users/update', {
-        method: 'PUT',
+      const res = await fetch('/api/users/enable-admin', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          id: adminId, 
-          isActive: !currentStatus 
+          adminId,
+          enable: !currentStatus 
         }),
       });
 
@@ -235,9 +254,14 @@ function AdminManagementTab() {
     setSelectedAdmin(admin);
     setAppTitle(admin.settings?.appTitle || 'AIMS');
     setHeaderImage(admin.settings?.headerImg || '/assets/default-logo.png');
+    setHeaderImageUrl('');
     setTagline(admin.settings?.tagline || 'Academy Information and Management System');
     setEnableHomePage(admin.settings?.enableHomePage ?? true);
     setDefaultCurrency(admin.settings?.defaultCurrency || 'USD');
+    setSubscriptionType(admin.settings?.subscriptionType || 'MONTHLY');
+    setSubscriptionAmount(admin.settings?.subscriptionAmount || 29.99);
+    setSubscriptionStartDate(admin.settings?.subscriptionStartDate ? admin.settings.subscriptionStartDate.split('T')[0] : '');
+    setSubscriptionEndDate(admin.settings?.subscriptionEndDate ? admin.settings.subscriptionEndDate.split('T')[0] : '');
     setShowSettingsModal(true);
   };
 
@@ -273,6 +297,7 @@ function AdminManagementTab() {
       if (res.ok) {
         const data = await res.json();
         setHeaderImage(data.logoUrl);
+        setHeaderImageUrl(data.logoUrl);
         setSuccess('Logo uploaded successfully!');
       } else {
         const errorData = await res.json();
@@ -300,10 +325,15 @@ function AdminManagementTab() {
         body: JSON.stringify({ 
           adminId: selectedAdmin.id, 
           appTitle, 
-          headerImg: headerImage,
+          headerImg: headerImageUrl || headerImage,
+          headerImgUrl: headerImageUrl,
           tagline,
           enableHomePage,
-          defaultCurrency
+          defaultCurrency,
+          subscriptionType,
+          subscriptionAmount,
+          subscriptionStartDate: subscriptionStartDate ? new Date(subscriptionStartDate).toISOString() : null,
+          subscriptionEndDate: subscriptionEndDate ? new Date(subscriptionEndDate).toISOString() : null
         }),
       });
 
@@ -382,14 +412,6 @@ function AdminManagementTab() {
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Date of Birth</Form.Label>
-                  <Form.Control 
-                    type="date" 
-                    value={dateOfBirth} 
-                    onChange={(e) => setDateOfBirth(e.target.value)} 
-                  />
-                </Form.Group>
-                <Form.Group className="mb-4">
                   <Form.Label>Address</Form.Label>
                   <Form.Control 
                     as="textarea"
@@ -399,6 +421,66 @@ function AdminManagementTab() {
                     placeholder="Enter address"
                   />
                 </Form.Group>
+                
+                {/* Subscription Settings */}
+                <hr />
+                <h6 className="text-muted mb-3">Subscription Settings</h6>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Subscription Type</Form.Label>
+                      <Form.Select 
+                        value={subscriptionType} 
+                        onChange={(e) => setSubscriptionType(e.target.value)}
+                      >
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="YEARLY">Yearly</option>
+                        <option value="LIFETIME">Lifetime</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Amount</Form.Label>
+                      <Form.Control 
+                        type="number" 
+                        step="0.01"
+                        value={subscriptionAmount} 
+                        onChange={(e) => setSubscriptionAmount(parseFloat(e.target.value))} 
+                        placeholder="0.00"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Start Date</Form.Label>
+                      <Form.Control 
+                        type="date" 
+                        value={subscriptionStartDate} 
+                        onChange={(e) => setSubscriptionStartDate(e.target.value)} 
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>End Date</Form.Label>
+                      <Form.Control 
+                        type="date" 
+                        value={subscriptionEndDate} 
+                        onChange={(e) => setSubscriptionEndDate(e.target.value)}
+                        disabled={subscriptionType === 'LIFETIME'}
+                      />
+                      {subscriptionType === 'LIFETIME' && (
+                        <Form.Text className="text-muted">
+                          No expiry for lifetime subscriptions
+                        </Form.Text>
+                      )}
+                    </Form.Group>
+                  </Col>
+                </Row>
+                
                 <Button 
                   variant="primary" 
                   type="submit" 
@@ -452,6 +534,7 @@ function AdminManagementTab() {
                         <th>Name</th>
                         <th>Email</th>
                         <th>Status</th>
+                        <th>Subscription</th>
                         <th>App Title</th>
                         <th>Currency</th>
                         <th>Created</th>
@@ -466,6 +549,11 @@ function AdminManagementTab() {
                           <td>
                             <Badge bg={admin.isActive ? 'success' : 'danger'}>
                               {admin.isActive ? 'Active' : 'Disabled'}
+                            </Badge>
+                          </td>
+                          <td>
+                            <Badge bg="warning" className="text-dark">
+                              {admin.settings?.subscriptionType || 'MONTHLY'}
                             </Badge>
                           </td>
                           <td>
@@ -495,7 +583,7 @@ function AdminManagementTab() {
                                 variant="outline-secondary" 
                                 size="sm" 
                                 onClick={() => handleShowSettings(admin)}
-                                title="Settings"
+                                title="Settings & Subscription"
                               >
                                 <i className="bi bi-gear"></i>
                               </Button>
@@ -565,16 +653,6 @@ function AdminManagementTab() {
                   />
                 </Form.Group>
               </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Date of Birth</Form.Label>
-                  <Form.Control 
-                    type="date" 
-                    value={editDateOfBirth} 
-                    onChange={(e) => setEditDateOfBirth(e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
             </Row>
             <Form.Group className="mb-3">
               <Form.Label>Address</Form.Label>
@@ -625,113 +703,195 @@ function AdminManagementTab() {
       </Modal>
 
       {/* Settings Modal */}
-      <Modal show={showSettingsModal} onHide={() => setShowSettingsModal(false)} size="lg">
+      <Modal show={showSettingsModal} onHide={() => setShowSettingsModal(false)} size="xl">
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-gear me-2"></i>
-            Settings for {selectedAdmin?.name}
+            Settings & Subscription for {selectedAdmin?.name}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>App Title</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    value={appTitle} 
-                    onChange={(e) => setAppTitle(e.target.value)}
-                    placeholder="Enter app title"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Default Currency</Form.Label>
-                  <Form.Select 
-                    value={defaultCurrency} 
-                    onChange={(e) => setDefaultCurrency(e.target.value)}
-                  >
-                    {currencies.map((currency) => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.symbol} {currency.name} ({currency.code})
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Tagline</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    value={tagline} 
-                    onChange={(e) => setTagline(e.target.value)}
-                    placeholder="Enter tagline"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Header Logo</Form.Label>
-                  <div className="d-flex gap-2">
-                    <Form.Control 
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleLogoUpload}
-                      accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-                      disabled={uploadingLogo}
-                    />
-                    {uploadingLogo && (
-                      <Spinner animation="border" size="sm" />
-                    )}
-                  </div>
-                  <Form.Text className="text-muted">
-                    Upload JPEG, PNG, GIF, or WebP (max 5MB)
-                  </Form.Text>
-                </Form.Group>
-              </Col>
-            </Row>
+          <Tabs defaultActiveKey="app-settings" className="mb-3">
+            <Tab eventKey="app-settings" title="App Settings">
+              <Form>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>App Title</Form.Label>
+                      <Form.Control 
+                        type="text" 
+                        value={appTitle} 
+                        onChange={(e) => setAppTitle(e.target.value)}
+                        placeholder="Enter app title"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Default Currency</Form.Label>
+                      <Form.Select 
+                        value={defaultCurrency} 
+                        onChange={(e) => setDefaultCurrency(e.target.value)}
+                      >
+                        {currencies.map((currency) => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.symbol} {currency.name} ({currency.code})
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Tagline</Form.Label>
+                      <Form.Control 
+                        type="text" 
+                        value={tagline} 
+                        onChange={(e) => setTagline(e.target.value)}
+                        placeholder="Enter tagline"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Header Logo (Upload)</Form.Label>
+                      <div className="d-flex gap-2">
+                        <Form.Control 
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleLogoUpload}
+                          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                          disabled={uploadingLogo}
+                        />
+                        {uploadingLogo && (
+                          <Spinner animation="border" size="sm" />
+                        )}
+                      </div>
+                      <Form.Text className="text-muted">
+                        Upload JPEG, PNG, GIF, or WebP (max 5MB)
+                      </Form.Text>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Header Logo (URL)</Form.Label>
+                      <Form.Control 
+                        type="url" 
+                        value={headerImageUrl} 
+                        onChange={(e) => {
+                          setHeaderImageUrl(e.target.value);
+                          if (e.target.value) {
+                            setHeaderImage(e.target.value);
+                          }
+                        }}
+                        placeholder="Enter logo URL"
+                      />
+                      <Form.Text className="text-muted">
+                        Alternative to file upload
+                      </Form.Text>
+                    </Form.Group>
+                  </Col>
+                </Row>
 
-            <Row>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Check
-                    type="switch"
-                    id="enable-homepage"
-                    label="Enable Homepage"
-                    checked={enableHomePage}
-                    onChange={(e) => setEnableHomePage(e.target.checked)}
-                  />
-                  <Form.Text className="text-muted">
-                    When disabled, users will be redirected directly to dashboard after login
-                  </Form.Text>
-                </Form.Group>
-              </Col>
-            </Row>
-            
-            {headerImage && (
-              <div className="mb-3">
-                <Form.Label>Current Logo Preview</Form.Label>
-                <div className="border rounded p-3 bg-light text-center">
-                  <img 
-                    src={headerImage} 
-                    alt="Header preview" 
-                    style={{ maxHeight: '80px', maxWidth: '200px' }}
-                    className="rounded"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/assets/default-logo.png';
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </Form>
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="mb-3">
+                      <Form.Check
+                        type="switch"
+                        id="enable-homepage"
+                        label="Enable Homepage"
+                        checked={enableHomePage}
+                        onChange={(e) => setEnableHomePage(e.target.checked)}
+                      />
+                      <Form.Text className="text-muted">
+                        When disabled, users will be redirected directly to dashboard after login
+                      </Form.Text>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                
+                {headerImage && (
+                  <div className="mb-3">
+                    <Form.Label>Current Logo Preview</Form.Label>
+                    <div className="border rounded p-3 bg-light text-center">
+                      <img 
+                        src={headerImage} 
+                        alt="Header preview" 
+                        style={{ maxHeight: '80px', maxWidth: '200px' }}
+                        className="rounded"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/assets/default-logo.png';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </Form>
+            </Tab>
+            <Tab eventKey="subscription" title="Subscription">
+              <Form>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Subscription Type</Form.Label>
+                      <Form.Select 
+                        value={subscriptionType} 
+                        onChange={(e) => setSubscriptionType(e.target.value)}
+                      >
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="YEARLY">Yearly</option>
+                        <option value="LIFETIME">Lifetime</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Amount</Form.Label>
+                      <Form.Control 
+                        type="number" 
+                        step="0.01"
+                        value={subscriptionAmount} 
+                        onChange={(e) => setSubscriptionAmount(parseFloat(e.target.value))} 
+                        placeholder="0.00"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Start Date</Form.Label>
+                      <Form.Control 
+                        type="date" 
+                        value={subscriptionStartDate} 
+                        onChange={(e) => setSubscriptionStartDate(e.target.value)} 
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>End Date</Form.Label>
+                      <Form.Control 
+                        type="date" 
+                        value={subscriptionEndDate} 
+                        onChange={(e) => setSubscriptionEndDate(e.target.value)}
+                        disabled={subscriptionType === 'LIFETIME'}
+                      />
+                      {subscriptionType === 'LIFETIME' && (
+                        <Form.Text className="text-muted">
+                          No expiry for lifetime subscriptions
+                        </Form.Text>
+                      )}
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Form>
+            </Tab>
+          </Tabs>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowSettingsModal(false)}>
@@ -771,8 +931,6 @@ function GlobalSettingsTab() {
   const [tagline, setTagline] = useState('');
   const [enableHomePage, setEnableHomePage] = useState(true);
   const [defaultCurrency, setDefaultCurrency] = useState('USD');
-  const [monthlyPrice, setMonthlyPrice] = useState(29.99);
-  const [yearlyPrice, setYearlyPrice] = useState(299.99);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -805,8 +963,6 @@ function GlobalSettingsTab() {
         setTagline(data.tagline || 'Academy Information and Management System');
         setEnableHomePage(data.enableHomePage ?? true);
         setDefaultCurrency(data.defaultCurrency || 'USD');
-        setMonthlyPrice(data.monthlyPrice || 29.99);
-        setYearlyPrice(data.yearlyPrice || 299.99);
       } else {
         setError('Failed to fetch global settings');
       }
@@ -879,9 +1035,7 @@ function GlobalSettingsTab() {
           appLogo,
           tagline,
           enableHomePage,
-          defaultCurrency,
-          monthlyPrice: parseFloat(monthlyPrice.toString()),
-          yearlyPrice: parseFloat(yearlyPrice.toString())
+          defaultCurrency
         }),
       });
 
@@ -958,32 +1112,6 @@ function GlobalSettingsTab() {
                   value={tagline} 
                   onChange={(e) => setTagline(e.target.value)}
                   placeholder="Enter application tagline"
-                />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Monthly Subscription Price</Form.Label>
-                <Form.Control 
-                  type="number" 
-                  step="0.01"
-                  value={monthlyPrice} 
-                  onChange={(e) => setMonthlyPrice(parseFloat(e.target.value))}
-                  placeholder="Enter monthly price"
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Yearly Subscription Price</Form.Label>
-                <Form.Control 
-                  type="number" 
-                  step="0.01"
-                  value={yearlyPrice} 
-                  onChange={(e) => setYearlyPrice(parseFloat(e.target.value))}
-                  placeholder="Enter yearly price"
                 />
               </Form.Group>
             </Col>
@@ -1071,142 +1199,6 @@ function GlobalSettingsTab() {
   );
 }
 
-function SubscriptionManagementTab() {
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  useEffect(() => {
-    fetchSubscriptions();
-  }, []);
-
-  const fetchSubscriptions = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/subscriptions');
-      if (res.ok) {
-        const data = await res.json();
-        setSubscriptions(data);
-      } else {
-        setError('Failed to fetch subscriptions');
-      }
-    } catch (error) {
-      setError('Error fetching subscriptions');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyPayment = async (subscriptionId: string) => {
-    try {
-      const res = await fetch('/api/subscriptions/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subscriptionId }),
-      });
-
-      if (res.ok) {
-        setSuccess('Subscription payment verified successfully!');
-        fetchSubscriptions();
-      } else {
-        const errorData = await res.json();
-        setError(errorData.message || 'Failed to verify payment');
-      }
-    } catch (error) {
-      setError('Error verifying payment');
-    }
-  };
-
-  return (
-    <div>
-      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
-      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
-
-      <Card className="shadow-sm">
-        <Card.Header className="bg-warning text-dark">
-          <h5 className="mb-0">
-            <i className="bi bi-credit-card me-2"></i>
-            Subscription Management
-          </h5>
-        </Card.Header>
-        <Card.Body className="p-0">
-          {loading ? (
-            <div className="text-center py-5">
-              <Spinner animation="border" />
-              <p className="mt-2 text-muted">Loading subscriptions...</p>
-            </div>
-          ) : subscriptions.length === 0 ? (
-            <div className="text-center py-5">
-              <i className="bi bi-credit-card display-4 text-muted"></i>
-              <p className="mt-2 text-muted">No subscriptions found</p>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <Table hover className="mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>Admin</th>
-                    <th>Plan</th>
-                    <th>Amount</th>
-                    <th>Period</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subscriptions.map((subscription) => (
-                    <tr key={subscription.id}>
-                      <td>
-                        <div>
-                          <div className="fw-medium">{subscription.admin.name}</div>
-                          <small className="text-muted">{subscription.admin.email}</small>
-                        </div>
-                      </td>
-                      <td>
-                        <Badge bg="info">
-                          {subscription.plan}
-                        </Badge>
-                      </td>
-                      <td className="fw-medium">
-                        {subscription.currency} {subscription.amount}
-                      </td>
-                      <td className="text-muted small">
-                        {new Date(subscription.startDate).toLocaleDateString()} - {new Date(subscription.endDate).toLocaleDateString()}
-                      </td>
-                      <td>
-                        <Badge bg={
-                          subscription.status === 'ACTIVE' ? 'success' :
-                          subscription.status === 'PROCESSING' ? 'warning' :
-                          subscription.status === 'EXPIRED' ? 'danger' : 'secondary'
-                        }>
-                          {subscription.status}
-                        </Badge>
-                      </td>
-                      <td>
-                        {subscription.status === 'PROCESSING' && (
-                          <Button 
-                            variant="outline-success" 
-                            size="sm" 
-                            onClick={() => handleVerifyPayment(subscription.id)}
-                          >
-                            <i className="bi bi-check-circle me-1"></i>
-                            Verify
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
-    </div>
-  );
-}
-
 export default function DeveloperDashboard() {
   return (
     <div className="container-fluid">
@@ -1216,7 +1208,7 @@ export default function DeveloperDashboard() {
             <i className="bi bi-code-slash me-2 text-secondary"></i>
             Developer Dashboard
           </h1>
-          <p className="text-muted">Manage system administrators, global settings, and subscriptions</p>
+          <p className="text-muted">Manage system administrators and global settings</p>
         </div>
       </div>
 
@@ -1243,18 +1235,13 @@ export default function DeveloperDashboard() {
         >
           <AdminManagementTab />
         </Tab>
-        <Tab 
-          eventKey="subscriptions" 
-          title={
-            <span>
-              <i className="bi bi-credit-card me-2"></i>
-              Subscriptions
-            </span>
-          }
-        >
-          <SubscriptionManagementTab />
-        </Tab>
       </Tabs>
+      
+      <div className="text-center mt-5 pt-4 border-top">
+        <small className="text-muted">
+          © {new Date().getFullYear()} AIMS - Academy Information and Management System. All rights reserved.
+        </small>
+      </div>
     </div>
   );
 }

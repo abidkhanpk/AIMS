@@ -845,19 +845,50 @@ function AssignmentsTab() {
   const [students, setStudents] = useState<User[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [subjects, setSubjects] = useState<Course[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Subject assignment states
-  const [selectedStudentForSubject, setSelectedStudentForSubject] = useState('');
+  // Unified assignment form states
+  const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
-  const [assigningSubject, setAssigningSubject] = useState(false);
-
-  // Teacher assignment states
-  const [selectedStudentForTeacher, setSelectedStudentForTeacher] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState('');
-  const [assigningTeacher, setAssigningTeacher] = useState(false);
+  const [assignmentDate, setAssignmentDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [duration, setDuration] = useState('');
+  const [classDays, setClassDays] = useState<string[]>([]);
+  const [monthlyFee, setMonthlyFee] = useState('');
+  const [currency, setCurrency] = useState('USD');
+
+  // Edit assignment modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<any>(null);
+  const [updating, setUpdating] = useState(false);
+
+  const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
+  ];
+
+  const daysOfWeek = [
+    { value: 'MONDAY', label: 'Monday' },
+    { value: 'TUESDAY', label: 'Tuesday' },
+    { value: 'WEDNESDAY', label: 'Wednesday' },
+    { value: 'THURSDAY', label: 'Thursday' },
+    { value: 'FRIDAY', label: 'Friday' },
+    { value: 'SATURDAY', label: 'Saturday' },
+    { value: 'SUNDAY', label: 'Sunday' },
+  ];
 
   useEffect(() => {
     fetchData();
@@ -866,15 +897,17 @@ function AssignmentsTab() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [studentsRes, teachersRes, subjectsRes] = await Promise.all([
+      const [studentsRes, teachersRes, subjectsRes, assignmentsRes] = await Promise.all([
         fetch('/api/users?role=STUDENT'),
         fetch('/api/users?role=TEACHER'),
         fetch('/api/subjects'),
+        fetch('/api/assignments'),
       ]);
       
       if (studentsRes.ok) setStudents(await studentsRes.json());
       if (teachersRes.ok) setTeachers(await teachersRes.json());
       if (subjectsRes.ok) setSubjects(await subjectsRes.json());
+      if (assignmentsRes.ok) setAssignments(await assignmentsRes.json());
     } catch (error) {
       setError('Error fetching data');
     } finally {
@@ -882,66 +915,141 @@ function AssignmentsTab() {
     }
   };
 
-  const handleAssignSubject = async (e: React.FormEvent) => {
+  const handleCreateAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAssigningSubject(true);
+    setCreating(true);
     setError('');
     setSuccess('');
 
     try {
-      const res = await fetch('/api/assignments/assign-subject', {
+      const res = await fetch('/api/assignments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          studentId: selectedStudentForSubject, 
-          courseId: selectedSubject 
+        body: JSON.stringify({
+          studentId: selectedStudent,
+          courseId: selectedSubject,
+          teacherId: selectedTeacher,
+          assignmentDate: assignmentDate || new Date().toISOString(),
+          startTime,
+          duration: duration ? parseInt(duration) : null,
+          classDays,
+          monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
+          currency,
         }),
       });
 
       if (res.ok) {
-        setSuccess('Subject assigned successfully!');
-        setSelectedStudentForSubject('');
-        setSelectedSubject('');
+        setSuccess('Assignment created successfully!');
+        fetchData();
+        resetForm();
       } else {
         const errorData = await res.json();
-        setError(errorData.message || 'Failed to assign subject');
+        setError(errorData.message || 'Failed to create assignment');
       }
     } catch (error) {
-      setError('Error assigning subject');
+      setError('Error creating assignment');
     } finally {
-      setAssigningSubject(false);
+      setCreating(false);
     }
   };
 
-  const handleAssignTeacher = async (e: React.FormEvent) => {
+  const resetForm = () => {
+    setSelectedStudent('');
+    setSelectedSubject('');
+    setSelectedTeacher('');
+    setAssignmentDate('');
+    setStartTime('');
+    setDuration('');
+    setClassDays([]);
+    setMonthlyFee('');
+    setCurrency('USD');
+  };
+
+  const handleEditAssignment = (assignment: any) => {
+    setEditingAssignment(assignment);
+    setSelectedStudent(assignment.studentId);
+    setSelectedSubject(assignment.courseId);
+    setSelectedTeacher(assignment.teacherId);
+    setAssignmentDate(assignment.assignmentDate ? assignment.assignmentDate.split('T')[0] : '');
+    setStartTime(assignment.startTime || '');
+    setDuration(assignment.duration?.toString() || '');
+    setClassDays(assignment.classDays || []);
+    setMonthlyFee(assignment.monthlyFee?.toString() || '');
+    setCurrency(assignment.currency || 'USD');
+    setShowEditModal(true);
+  };
+
+  const handleUpdateAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
-    setAssigningTeacher(true);
+    if (!editingAssignment) return;
+
+    setUpdating(true);
     setError('');
     setSuccess('');
 
     try {
-      const res = await fetch('/api/assignments/assign-teacher', {
-        method: 'POST',
+      const res = await fetch('/api/assignments', {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          studentId: selectedStudentForTeacher, 
-          teacherId: selectedTeacher 
+        body: JSON.stringify({
+          id: editingAssignment.id,
+          startTime,
+          duration: duration ? parseInt(duration) : null,
+          classDays,
+          monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
+          currency,
         }),
       });
 
       if (res.ok) {
-        setSuccess('Teacher assigned successfully!');
-        setSelectedStudentForTeacher('');
-        setSelectedTeacher('');
+        setSuccess('Assignment updated successfully!');
+        fetchData();
+        setShowEditModal(false);
+        setEditingAssignment(null);
       } else {
         const errorData = await res.json();
-        setError(errorData.message || 'Failed to assign teacher');
+        setError(errorData.message || 'Failed to update assignment');
       }
     } catch (error) {
-      setError('Error assigning teacher');
+      setError('Error updating assignment');
     } finally {
-      setAssigningTeacher(false);
+      setUpdating(false);
     }
+  };
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    if (!confirm('Are you sure you want to delete this assignment?')) return;
+
+    try {
+      const res = await fetch('/api/assignments', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: assignmentId }),
+      });
+
+      if (res.ok) {
+        setSuccess('Assignment deleted successfully!');
+        fetchData();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to delete assignment');
+      }
+    } catch (error) {
+      setError('Error deleting assignment');
+    }
+  };
+
+  const handleDayToggle = (day: string) => {
+    setClassDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+
+  const getCurrencySymbol = (currencyCode: string) => {
+    const currency = currencies.find(c => c.code === currencyCode);
+    return currency ? currency.symbol : currencyCode;
   };
 
   if (loading) {
@@ -959,21 +1067,21 @@ function AssignmentsTab() {
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
       <Row className="g-4">
-        <Col lg={6}>
+        <Col lg={5}>
           <Card className="shadow-sm">
-            <Card.Header className="bg-info text-white">
+            <Card.Header className="bg-primary text-white">
               <h6 className="mb-0">
-                <i className="bi bi-book-half me-2"></i>
-                Assign Subject to Student
+                <i className="bi bi-plus-circle me-2"></i>
+                Create New Assignment
               </h6>
             </Card.Header>
             <Card.Body>
-              <Form onSubmit={handleAssignSubject}>
+              <Form onSubmit={handleCreateAssignment}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Select Student</Form.Label>
+                  <Form.Label>Select Student *</Form.Label>
                   <Form.Select 
-                    onChange={(e) => setSelectedStudentForSubject(e.target.value)} 
-                    value={selectedStudentForSubject}
+                    value={selectedStudent}
+                    onChange={(e) => setSelectedStudent(e.target.value)}
                     required
                     size="sm"
                   >
@@ -983,11 +1091,12 @@ function AssignmentsTab() {
                     ))}
                   </Form.Select>
                 </Form.Group>
-                <Form.Group className="mb-4">
-                  <Form.Label>Select Subject</Form.Label>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Select Subject *</Form.Label>
                   <Form.Select 
-                    onChange={(e) => setSelectedSubject(e.target.value)} 
                     value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
                     required
                     size="sm"
                   >
@@ -997,59 +1106,12 @@ function AssignmentsTab() {
                     ))}
                   </Form.Select>
                 </Form.Group>
-                <Button 
-                  type="submit" 
-                  variant="info" 
-                  disabled={assigningSubject}
-                  className="w-100"
-                  size="sm"
-                >
-                  {assigningSubject ? (
-                    <>
-                      <Spinner animation="border" size="sm" className="me-2" />
-                      Assigning...
-                    </>
-                  ) : (
-                    <>
-                      <i className="bi bi-link me-2"></i>
-                      Assign Subject
-                    </>
-                  )}
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
 
-        <Col lg={6}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-success text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-person-workspace me-2"></i>
-                Assign Teacher to Student
-              </h6>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleAssignTeacher}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Select Student</Form.Label>
+                  <Form.Label>Select Teacher *</Form.Label>
                   <Form.Select 
-                    onChange={(e) => setSelectedStudentForTeacher(e.target.value)} 
-                    value={selectedStudentForTeacher}
-                    required
-                    size="sm"
-                  >
-                    <option value="">Choose a student...</option>
-                    {students.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="mb-4">
-                  <Form.Label>Select Teacher</Form.Label>
-                  <Form.Select 
-                    onChange={(e) => setSelectedTeacher(e.target.value)} 
                     value={selectedTeacher}
+                    onChange={(e) => setSelectedTeacher(e.target.value)}
                     required
                     size="sm"
                   >
@@ -1059,22 +1121,108 @@ function AssignmentsTab() {
                     ))}
                   </Form.Select>
                 </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Assignment Date</Form.Label>
+                  <Form.Control 
+                    type="date"
+                    value={assignmentDate}
+                    onChange={(e) => setAssignmentDate(e.target.value)}
+                    size="sm"
+                  />
+                </Form.Group>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Start Time</Form.Label>
+                      <Form.Control 
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Duration (minutes)</Form.Label>
+                      <Form.Control 
+                        type="number"
+                        value={duration}
+                        onChange={(e) => setDuration(e.target.value)}
+                        placeholder="60"
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Class Days</Form.Label>
+                  <div className="d-flex flex-wrap gap-2">
+                    {daysOfWeek.map(day => (
+                      <Form.Check
+                        key={day.value}
+                        type="checkbox"
+                        id={`day-${day.value}`}
+                        label={day.label}
+                        checked={classDays.includes(day.value)}
+                        onChange={() => handleDayToggle(day.value)}
+                        className="me-3"
+                      />
+                    ))}
+                  </div>
+                </Form.Group>
+
+                <Row>
+                  <Col md={8}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Monthly Fee</Form.Label>
+                      <Form.Control 
+                        type="number"
+                        step="0.01"
+                        value={monthlyFee}
+                        onChange={(e) => setMonthlyFee(e.target.value)}
+                        placeholder="0.00"
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Currency</Form.Label>
+                      <Form.Select 
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        size="sm"
+                      >
+                        {currencies.map(curr => (
+                          <option key={curr.code} value={curr.code}>
+                            {curr.code}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+
                 <Button 
+                  variant="primary" 
                   type="submit" 
-                  variant="success" 
-                  disabled={assigningTeacher}
+                  disabled={creating}
                   className="w-100"
                   size="sm"
                 >
-                  {assigningTeacher ? (
+                  {creating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Assigning...
+                      Creating...
                     </>
                   ) : (
                     <>
-                      <i className="bi bi-link me-2"></i>
-                      Assign Teacher
+                      <i className="bi bi-plus-circle me-2"></i>
+                      Create Assignment
                     </>
                   )}
                 </Button>
@@ -1082,7 +1230,202 @@ function AssignmentsTab() {
             </Card.Body>
           </Card>
         </Col>
+
+        <Col lg={7}>
+          <Card className="shadow-sm">
+            <Card.Header className="bg-light">
+              <div className="d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">
+                  <i className="bi bi-list-task me-2"></i>
+                  Current Assignments
+                </h6>
+                <Badge bg="primary">{assignments.length} Total</Badge>
+              </div>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {assignments.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className="bi bi-list-task display-6 text-muted"></i>
+                  <p className="mt-2 text-muted small">No assignments found</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover size="sm" className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Schedule</th>
+                        <th>Fee</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assignments.map((assignment) => (
+                        <tr key={assignment.id}>
+                          <td className="fw-medium">{assignment.student?.name}</td>
+                          <td>{assignment.course?.name}</td>
+                          <td className="text-muted">{assignment.teacher?.name}</td>
+                          <td className="small">
+                            {assignment.startTime && (
+                              <div>{assignment.startTime}</div>
+                            )}
+                            {assignment.duration && (
+                              <div className="text-muted">{assignment.duration}min</div>
+                            )}
+                            {assignment.classDays && assignment.classDays.length > 0 && (
+                              <div className="text-muted">
+                                {assignment.classDays.join(', ')}
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {assignment.monthlyFee ? (
+                              <Badge bg="success">
+                                {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="d-flex gap-1">
+                              <Button
+                                variant="outline-warning"
+                                size="sm"
+                                onClick={() => handleEditAssignment(assignment)}
+                                title="Edit Assignment"
+                              >
+                                <i className="bi bi-pencil"></i>
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() => handleDeleteAssignment(assignment.id)}
+                                title="Delete Assignment"
+                              >
+                                <i className="bi bi-trash"></i>
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
       </Row>
+
+      {/* Edit Assignment Modal */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-pencil me-2"></i>
+            Edit Assignment
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleUpdateAssignment}>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Start Time</Form.Label>
+                  <Form.Control 
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Duration (minutes)</Form.Label>
+                  <Form.Control 
+                    type="number"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    placeholder="60"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Class Days</Form.Label>
+              <div className="d-flex flex-wrap gap-2">
+                {daysOfWeek.map(day => (
+                  <Form.Check
+                    key={day.value}
+                    type="checkbox"
+                    id={`edit-day-${day.value}`}
+                    label={day.label}
+                    checked={classDays.includes(day.value)}
+                    onChange={() => handleDayToggle(day.value)}
+                    className="me-3"
+                  />
+                ))}
+              </div>
+            </Form.Group>
+
+            <Row>
+              <Col md={8}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Monthly Fee</Form.Label>
+                  <Form.Control 
+                    type="number"
+                    step="0.01"
+                    value={monthlyFee}
+                    onChange={(e) => setMonthlyFee(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Currency</Form.Label>
+                  <Form.Select 
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                  >
+                    {currencies.map(curr => (
+                      <option key={curr.code} value={curr.code}>
+                        {curr.code}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <div className="d-flex justify-content-end gap-2">
+              <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={updating}
+              >
+                {updating ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-check-circle me-2"></i>
+                    Update Assignment
+                  </>
+                )}
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
@@ -1100,7 +1443,21 @@ function FeeManagementTab() {
   const [feeTitle, setFeeTitle] = useState('');
   const [feeDescription, setFeeDescription] = useState('');
   const [feeAmount, setFeeAmount] = useState('');
+  const [feeCurrency, setFeeCurrency] = useState('USD');
   const [feeDueDate, setFeeDueDate] = useState('');
+
+  const currencies = [
+    { code: 'USD', symbol: '$', name: 'US Dollar' },
+    { code: 'EUR', symbol: '€', name: 'Euro' },
+    { code: 'GBP', symbol: '£', name: 'British Pound' },
+    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
+  ];
 
   useEffect(() => {
     fetchData();
@@ -1114,8 +1471,17 @@ function FeeManagementTab() {
         fetch('/api/users?role=STUDENT'),
       ]);
       
-      if (feesRes.ok) setFees(await feesRes.json());
-      if (studentsRes.ok) setStudents(await studentsRes.json());
+      if (feesRes.ok) {
+        const salariesData = await feesRes.json();
+        setFees(salariesData);
+      } else {
+        setError('Failed to fetch salary data');
+      }
+
+      if (studentsRes.ok) {
+        const teachersData = await studentsRes.json();
+        setStudents(teachersData);
+      }
     } catch (error) {
       setError('Error fetching data');
     } finally {
@@ -1138,6 +1504,7 @@ function FeeManagementTab() {
           title: feeTitle,
           description: feeDescription,
           amount: parseFloat(feeAmount),
+          currency: feeCurrency,
           dueDate: feeDueDate,
         }),
       });
@@ -1149,6 +1516,7 @@ function FeeManagementTab() {
         setFeeTitle('');
         setFeeDescription('');
         setFeeAmount('');
+        setFeeCurrency('USD');
         setFeeDueDate('');
       } else {
         const errorData = await res.json();
@@ -1174,6 +1542,11 @@ function FeeManagementTab() {
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
+  };
+
+  const getCurrencySymbol = (currencyCode: string) => {
+    const currency = currencies.find(c => c.code === currencyCode);
+    return currency ? currency.symbol : currencyCode;
   };
 
   return (
@@ -1228,18 +1601,38 @@ function FeeManagementTab() {
                     size="sm"
                   />
                 </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Amount ($)</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    step="0.01"
-                    value={feeAmount} 
-                    onChange={(e) => setFeeAmount(e.target.value)} 
-                    required 
-                    placeholder="0.00"
-                    size="sm"
-                  />
-                </Form.Group>
+                <Row>
+                  <Col xs={8}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Amount</Form.Label>
+                      <Form.Control 
+                        type="number" 
+                        step="0.01"
+                        value={feeAmount} 
+                        onChange={(e) => setFeeAmount(e.target.value)} 
+                        required 
+                        placeholder="0.00"
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col xs={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Currency</Form.Label>
+                      <Form.Select 
+                        value={feeCurrency}
+                        onChange={(e) => setFeeCurrency(e.target.value)}
+                        size="sm"
+                      >
+                        {currencies.map(currency => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.code}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
                 <Form.Group className="mb-4">
                   <Form.Label>Due Date</Form.Label>
                   <Form.Control 
@@ -1314,7 +1707,9 @@ function FeeManagementTab() {
                         <tr key={fee.id}>
                           <td className="fw-medium">{fee.student.name}</td>
                           <td>{fee.title}</td>
-                          <td className="fw-bold text-success">${fee.amount.toFixed(2)}</td>
+                          <td className="fw-bold text-success">
+                            {getCurrencySymbol(fee.currency)}{fee.amount.toFixed(2)}
+                          </td>
                           <td className="text-muted small">
                             {new Date(fee.dueDate).toLocaleDateString()}
                           </td>
@@ -1743,6 +2138,7 @@ function SalaryManagementTab() {
                     onChange={(e) => setSalaryAmount(e.target.value)} 
                     required 
                     placeholder="0.00"
+                    size="sm"
                   />
                 </Form.Group>
               </Col>
@@ -1752,6 +2148,7 @@ function SalaryManagementTab() {
                   <Form.Select 
                     value={salaryCurrency}
                     onChange={(e) => setSalaryCurrency(e.target.value)}
+                    size="sm"
                   >
                     {currencies.map(currency => (
                       <option key={currency.code} value={currency.code}>
@@ -1769,6 +2166,7 @@ function SalaryManagementTab() {
                 value={salaryDueDate} 
                 onChange={(e) => setSalaryDueDate(e.target.value)} 
                 required 
+                size="sm"
               />
             </Form.Group>
             <div className="d-flex justify-content-end gap-2">

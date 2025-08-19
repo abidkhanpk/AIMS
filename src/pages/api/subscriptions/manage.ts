@@ -71,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ message: 'Only developers can manage subscriptions' });
     }
 
-    const { adminId, action, plan } = req.body;
+    const { adminId, action, plan, amount } = req.body;
 
     if (!adminId || !action) {
       return res.status(400).json({ message: 'Admin ID and action are required' });
@@ -108,20 +108,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(400).json({ message: 'Subscription plan is required' });
         }
 
-        // Get app settings for pricing
-        const appSettings = await prisma.appSettings.findFirst();
-        let amount = 0;
-        
-        switch (plan) {
-          case 'MONTHLY':
-            amount = appSettings?.monthlyPrice || 29.99;
-            break;
-          case 'YEARLY':
-            amount = appSettings?.yearlyPrice || 299.99;
-            break;
-          case 'LIFETIME':
-            amount = appSettings?.lifetimePrice || 999.99;
-            break;
+        // Use provided amount or default values
+        let subscriptionAmount = amount;
+        if (!subscriptionAmount) {
+          switch (plan) {
+            case 'MONTHLY':
+              subscriptionAmount = 29.99;
+              break;
+            case 'YEARLY':
+              subscriptionAmount = 299.99;
+              break;
+            case 'LIFETIME':
+              subscriptionAmount = 999.99;
+              break;
+            default:
+              subscriptionAmount = 29.99;
+          }
         }
 
         // Calculate new dates
@@ -148,7 +150,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: {
             adminId,
             plan,
-            amount,
+            amount: subscriptionAmount,
             startDate,
             endDate,
             status: 'ACTIVE',
@@ -166,7 +168,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           where: { adminId },
           data: {
             subscriptionType: plan,
-            subscriptionAmount: amount,
+            subscriptionAmount: subscriptionAmount,
             subscriptionStartDate: startDate,
             subscriptionEndDate: endDate,
           }
@@ -177,7 +179,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: {
             adminId,
             subscriptionId: newSubscription.id,
-            amount,
+            amount: subscriptionAmount,
             plan,
             paymentDate: currentDate,
             expiryExtended: endDate || new Date('2099-12-31'), // Far future for lifetime
