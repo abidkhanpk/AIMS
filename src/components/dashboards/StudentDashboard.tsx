@@ -33,27 +33,70 @@ interface StudentData {
   }[];
 }
 
+interface Assignment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  teacherId: string;
+  assignmentDate: string;
+  startTime?: string;
+  duration?: number;
+  classDays: string[];
+  timezone: string;
+  monthlyFee?: number;
+  currency: string;
+  isActive: boolean;
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  course: {
+    id: string;
+    name: string;
+    description?: string;
+  };
+  teacher: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
 export default function StudentDashboard() {
   const [studentData, setStudentData] = useState<StudentData | null>(null);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchStudentProgress();
+    fetchStudentData();
   }, []);
 
-  const fetchStudentProgress = async () => {
+  const fetchStudentData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/progress/my-progress');
-      if (res.ok) {
-        const data = await res.json();
-        setStudentData(data);
+      
+      // Fetch student progress data
+      const progressRes = await fetch('/api/progress/my-progress');
+      if (progressRes.ok) {
+        const progressData = await progressRes.json();
+        setStudentData(progressData);
       } else {
         setError('Failed to fetch progress data');
       }
+
+      // Fetch student assignments
+      const assignmentsRes = await fetch('/api/assignments');
+      if (assignmentsRes.ok) {
+        const assignmentsData = await assignmentsRes.json();
+        setAssignments(assignmentsData);
+      } else {
+        console.warn('Failed to fetch assignments data');
+        setAssignments([]);
+      }
     } catch (error) {
-      setError('Error fetching progress data');
+      setError('Error fetching student data');
     } finally {
       setLoading(false);
     }
@@ -106,6 +149,23 @@ export default function StudentDashboard() {
       default:
         return <Badge bg="secondary" className="small">Unknown</Badge>;
     }
+  };
+
+  const getCurrencySymbol = (currencyCode: string) => {
+    const currencies = [
+      { code: 'USD', symbol: '$' },
+      { code: 'EUR', symbol: '€' },
+      { code: 'GBP', symbol: '£' },
+      { code: 'JPY', symbol: '¥' },
+      { code: 'CAD', symbol: 'C$' },
+      { code: 'AUD', symbol: 'A$' },
+      { code: 'CHF', symbol: 'CHF' },
+      { code: 'CNY', symbol: '¥' },
+      { code: 'INR', symbol: '₹' },
+      { code: 'PKR', symbol: '₨' },
+    ];
+    const currency = currencies.find(c => c.code === currencyCode);
+    return currency ? currency.symbol : currencyCode;
   };
 
   if (loading) {
@@ -167,6 +227,80 @@ export default function StudentDashboard() {
                   )}
                 </Col>
               </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Current Assignments */}
+      <Row className="mb-4">
+        <Col>
+          <Card className="shadow-sm">
+            <Card.Header className="bg-primary text-white">
+              <div className="d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">
+                  <i className="bi bi-list-task me-2"></i>
+                  Current Assignments
+                </h6>
+                <Badge bg="light" text="dark">{assignments.length}</Badge>
+              </div>
+            </Card.Header>
+            <Card.Body>
+              {assignments.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className="bi bi-list-task display-6 text-muted"></i>
+                  <h5 className="mt-3 text-muted">No Assignments Found</h5>
+                  <p className="text-muted">You don&apos;t have any assignments yet. Please contact your administrator to get assigned to subjects and teachers.</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Schedule</th>
+                        <th>Class Days</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assignments.map((assignment) => (
+                        <tr key={assignment.id}>
+                          <td className="fw-medium">{assignment.course?.name}</td>
+                          <td className="text-muted">{assignment.teacher?.name}</td>
+                          <td className="small">
+                            {assignment.startTime && (
+                              <div><strong>Time:</strong> {assignment.startTime}</div>
+                            )}
+                            {assignment.duration && (
+                              <div><strong>Duration:</strong> {assignment.duration} minutes</div>
+                            )}
+                          </td>
+                          <td className="small">
+                            {assignment.classDays && assignment.classDays.length > 0 ? (
+                              <div className="d-flex flex-wrap gap-1">
+                                {assignment.classDays.map(day => (
+                                  <Badge key={day} bg="secondary" className="small">
+                                    {day.substring(0, 3)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-muted">Not specified</span>
+                            )}
+                          </td>
+                          <td>
+                            <Badge bg={assignment.isActive ? 'success' : 'secondary'}>
+                              {assignment.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
@@ -326,19 +460,25 @@ export default function StudentDashboard() {
               </Card.Header>
               <Card.Body>
                 <div className="row">
-                  <div className="col-md-4 text-center">
+                  <div className="col-md-3 text-center">
                     <div className="border-end">
-                      <h4 className="text-primary mb-0">{studentData.studentCourses?.length || 0}</h4>
+                      <h4 className="text-primary mb-0">{assignments.length}</h4>
+                      <small className="text-muted">Active Assignments</small>
+                    </div>
+                  </div>
+                  <div className="col-md-3 text-center">
+                    <div className="border-end">
+                      <h4 className="text-info mb-0">{studentData.studentCourses?.length || 0}</h4>
                       <small className="text-muted">Enrolled Subjects</small>
                     </div>
                   </div>
-                  <div className="col-md-4 text-center">
+                  <div className="col-md-3 text-center">
                     <div className="border-end">
                       <h4 className="text-success mb-0">{studentData.progressRecords?.length || 0}</h4>
                       <small className="text-muted">Progress Updates</small>
                     </div>
                   </div>
-                  <div className="col-md-4 text-center">
+                  <div className="col-md-3 text-center">
                     <h4 className={`mb-0 text-${overallProgress ? getProgressVariant(overallProgress) : 'muted'}`}>
                       {overallProgress || 0}%
                     </h4>

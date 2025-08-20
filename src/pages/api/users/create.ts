@@ -27,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     qualification,
     payRate,
     payType,
+    payCurrency,
     // Admin subscription fields
     subscriptionType,
     subscriptionAmount,
@@ -53,6 +54,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Validate date of birth - only for STUDENT and TEACHER
   if (dateOfBirth && !['STUDENT', 'TEACHER'].includes(role)) {
     return res.status(400).json({ message: 'Date of birth is only applicable for students and teachers' });
+  }
+
+  // Validate pay-related fields - only for TEACHER
+  if ((payRate || payType || payCurrency) && role !== 'TEACHER') {
+    return res.status(400).json({ message: 'Pay-related fields are only applicable for teachers' });
   }
 
   try {
@@ -95,11 +101,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       userData.dateOfBirth = new Date(dateOfBirth);
     }
 
-    // Add teacher specific fields
+    // Add teacher specific fields ONLY for teachers
     if (role === 'TEACHER') {
       if (qualification) userData.qualification = qualification;
       if (payRate) userData.payRate = parseFloat(payRate);
       if (payType) userData.payType = payType;
+      if (payCurrency) userData.payCurrency = payCurrency;
     }
 
     // Create user
@@ -116,6 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         qualification: true,
         payRate: true,
         payType: true,
+        payCurrency: true,
         createdAt: true,
       }
     });

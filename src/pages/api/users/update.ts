@@ -26,6 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     qualification,
     payRate,
     payType,
+    payCurrency,
     // Admin status update (only for developers)
     isActive
   } = req.body;
@@ -59,6 +60,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'User not found or access denied' });
     }
 
+    // Validate pay-related fields - only for TEACHER
+    if ((payRate !== undefined || payType !== undefined || payCurrency !== undefined) && existingUser.role !== 'TEACHER') {
+      return res.status(400).json({ message: 'Pay-related fields are only applicable for teachers' });
+    }
+
     // Check if email is already taken by another user
     const emailExists = await prisma.user.findFirst({
       where: {
@@ -87,11 +93,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (dateOfBirth) updateData.dateOfBirth = new Date(dateOfBirth);
     if (address !== undefined) updateData.address = address;
 
-    // Add teacher specific fields
+    // Add teacher specific fields ONLY for teachers
     if (existingUser.role === 'TEACHER') {
       if (qualification !== undefined) updateData.qualification = qualification;
       if (payRate !== undefined) updateData.payRate = payRate ? parseFloat(payRate) : null;
       if (payType !== undefined) updateData.payType = payType;
+      if (payCurrency !== undefined) updateData.payCurrency = payCurrency;
     }
 
     // Only developers can update isActive status
@@ -121,6 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         qualification: true,
         payRate: true,
         payType: true,
+        payCurrency: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,

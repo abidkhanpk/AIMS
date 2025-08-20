@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, Modal, InputGroup } from 'react-bootstrap';
-import { Role, FeeStatus, AttendanceStatus, SalaryStatus } from '@prisma/client';
+import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType } from '@prisma/client';
+import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timezones';
 
 interface User {
   id: string;
@@ -8,6 +9,13 @@ interface User {
   email: string;
   role: Role;
   createdAt: string;
+  mobile?: string;
+  dateOfBirth?: string;
+  address?: string;
+  qualification?: string;
+  payRate?: number;
+  payType?: PayType;
+  payCurrency?: string;
 }
 
 interface Course {
@@ -17,6 +25,36 @@ interface Course {
   createdAt: string;
   _count?: {
     studentCourses: number;
+  };
+}
+
+interface Assignment {
+  id: string;
+  studentId: string;
+  courseId: string;
+  teacherId: string;
+  assignmentDate: string;
+  startTime?: string;
+  duration?: number;
+  classDays: ClassDay[];
+  timezone: string;
+  monthlyFee?: number;
+  currency: string;
+  isActive: boolean;
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  course: {
+    id: string;
+    name: string;
+    description?: string;
+  };
+  teacher: {
+    id: string;
+    name: string;
+    email: string;
   };
 }
 
@@ -38,6 +76,10 @@ interface Fee {
     id: string;
     name: string;
     email: string;
+  };
+  course?: {
+    id: string;
+    name: string;
   };
 }
 
@@ -115,6 +157,669 @@ const roleConfig = {
   ADMIN: { icon: 'bi-gear-fill', color: 'primary', title: 'Admins' }
 } as const;
 
+const daysOfWeek = [
+  { value: 'MONDAY', label: 'Monday' },
+  { value: 'TUESDAY', label: 'Tuesday' },
+  { value: 'WEDNESDAY', label: 'Wednesday' },
+  { value: 'THURSDAY', label: 'Thursday' },
+  { value: 'FRIDAY', label: 'Friday' },
+  { value: 'SATURDAY', label: 'Saturday' },
+  { value: 'SUNDAY', label: 'Sunday' },
+];
+
+// Assignment Subform Component
+function AssignmentSubform({ 
+  studentId, 
+  assignments, 
+  onAssignmentChange 
+}: { 
+  studentId: string;
+  assignments: Assignment[];
+  onAssignmentChange: () => void;
+}) {
+  const [teachers, setTeachers] = useState<User[]>([]);
+  const [subjects, setSubjects] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Assignment form states
+  const [selectedSubject, setSelectedSubject] = useState('');
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [assignmentDate, setAssignmentDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [duration, setDuration] = useState('');
+  const [classDays, setClassDays] = useState<string[]>([]);
+  const [timezone, setTimezone] = useState('UTC');
+  const [monthlyFee, setMonthlyFee] = useState('');
+  const [currency, setCurrency] = useState('USD');
+
+  const timezonesByRegion = getTimezonesByRegion();
+
+  useEffect(() => {
+    if (studentId) {
+      fetchData();
+    }
+  }, [studentId]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [teachersRes, subjectsRes] = await Promise.all([
+        fetch('/api/users?role=TEACHER'),
+        fetch('/api/subjects'),
+      ]);
+      
+      if (teachersRes.ok) setTeachers(await teachersRes.json());
+      if (subjectsRes.ok) setSubjects(await subjectsRes.json());
+    } catch (error) {
+      setError('Error fetching data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          courseId: selectedSubject,
+          teacherId: selectedTeacher,
+          assignmentDate: assignmentDate || new Date().toISOString(),
+          startTime,
+          duration: duration ? parseInt(duration) : null,
+          classDays,
+          timezone,
+          monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
+          currency,
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess('Assignment created successfully!');
+        onAssignmentChange();
+        resetForm();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to create assignment');
+      }
+    } catch (error) {
+      setError('Error creating assignment');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const resetForm = () => {
+    setSelectedSubject('');
+    setSelectedTeacher('');
+    setAssignmentDate('');
+    setStartTime('');
+    setDuration('');
+    setClassDays([]);
+    setTimezone('UTC');
+    setMonthlyFee('');
+    setCurrency('USD');
+  };
+
+  const handleDayToggle = (day: string) => {
+    setClassDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
+  };
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    if (!confirm('Are you sure you want to delete this assignment?')) return;
+
+    try {
+      const res = await fetch('/api/assignments', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: assignmentId }),
+      });
+
+      if (res.ok) {
+        setSuccess('Assignment deleted successfully!');
+        onAssignmentChange();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to delete assignment');
+      }
+    } catch (error) {
+      setError('Error deleting assignment');
+    }
+  };
+
+  const getCurrencySymbol = (currencyCode: string) => {
+    const currency = currencies.find(c => c.code === currencyCode);
+    return currency ? currency.symbol : currencyCode;
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center py-3">
+        <Spinner animation="border" size="sm" />
+        <p className="mt-2 text-muted small">Loading assignment data...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+
+      <Row className="g-3">
+        <Col lg={6}>
+          <Card className="h-100">
+            <Card.Header className="bg-primary text-white">
+              <h6 className="mb-0">
+                <i className="bi bi-plus-circle me-2"></i>
+                Create Assignment
+              </h6>
+            </Card.Header>
+            <Card.Body>
+              <Form onSubmit={handleCreateAssignment}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Subject *</Form.Label>
+                  <Form.Select 
+                    value={selectedSubject}
+                    onChange={(e) => setSelectedSubject(e.target.value)}
+                    required
+                    size="sm"
+                  >
+                    <option value="">Choose a subject...</option>
+                    {subjects.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Teacher *</Form.Label>
+                  <Form.Select 
+                    value={selectedTeacher}
+                    onChange={(e) => setSelectedTeacher(e.target.value)}
+                    required
+                    size="sm"
+                  >
+                    <option value="">Choose a teacher...</option>
+                    {teachers.map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Assignment Date</Form.Label>
+                  <Form.Control 
+                    type="date"
+                    value={assignmentDate}
+                    onChange={(e) => setAssignmentDate(e.target.value)}
+                    size="sm"
+                  />
+                </Form.Group>
+
+                <Row>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Start Time</Form.Label>
+                      <Form.Control 
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Duration (minutes)</Form.Label>
+                      <Form.Control 
+                        type="number"
+                        value={duration}
+                        onChange={(e) => setDuration(e.target.value)}
+                        placeholder="60"
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Timezone</Form.Label>
+                  <Form.Select 
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    size="sm"
+                  >
+                    {Object.entries(timezonesByRegion).map(([region, tzList]) => (
+                      <optgroup key={region} label={region}>
+                        {tzList.map(tz => (
+                          <option key={tz.value} value={tz.value}>
+                            {tz.label} ({tz.offset})
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+
+                <Form.Group className="mb-3">
+                  <Form.Label>Class Days</Form.Label>
+                  <div className="d-flex flex-wrap gap-2">
+                    {daysOfWeek.map(day => (
+                      <Form.Check
+                        key={day.value}
+                        type="checkbox"
+                        id={`day-${day.value}`}
+                        label={day.label}
+                        checked={classDays.includes(day.value)}
+                        onChange={() => handleDayToggle(day.value)}
+                        className="me-2"
+                      />
+                    ))}
+                  </div>
+                </Form.Group>
+
+                <Row>
+                  <Col md={8}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Monthly Fee</Form.Label>
+                      <Form.Control 
+                        type="number"
+                        step="0.01"
+                        value={monthlyFee}
+                        onChange={(e) => setMonthlyFee(e.target.value)}
+                        placeholder="0.00"
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Currency</Form.Label>
+                      <Form.Select 
+                        value={currency}
+                        onChange={(e) => setCurrency(e.target.value)}
+                        size="sm"
+                      >
+                        {currencies.map(curr => (
+                          <option key={curr.code} value={curr.code}>
+                            {curr.code}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+
+                <Button 
+                  variant="primary" 
+                  type="submit" 
+                  disabled={creating}
+                  className="w-100"
+                  size="sm"
+                >
+                  {creating ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-plus-circle me-2"></i>
+                      Create Assignment
+                    </>
+                  )}
+                </Button>
+              </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={6}>
+          <Card className="h-100">
+            <Card.Header className="bg-light">
+              <div className="d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">
+                  <i className="bi bi-list-task me-2"></i>
+                  Current Assignments
+                </h6>
+                <Badge bg="primary">{assignments.length}</Badge>
+              </div>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {assignments.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className="bi bi-list-task display-6 text-muted"></i>
+                  <p className="mt-2 text-muted small">No assignments found</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover size="sm" className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Subject</th>
+                        <th>Teacher</th>
+                        <th>Schedule</th>
+                        <th>Fee</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assignments.map((assignment) => (
+                        <tr key={assignment.id}>
+                          <td className="fw-medium">{assignment.course?.name}</td>
+                          <td className="text-muted">{assignment.teacher?.name}</td>
+                          <td className="small">
+                            {assignment.startTime && (
+                              <div>{assignment.startTime}</div>
+                            )}
+                            {assignment.duration && (
+                              <div className="text-muted">{assignment.duration}min</div>
+                            )}
+                            {assignment.classDays && assignment.classDays.length > 0 && (
+                              <div className="text-muted">
+                                {assignment.classDays.join(', ')}
+                              </div>
+                            )}
+                            {assignment.timezone && (
+                              <div className="text-muted small">
+                                {findTimezone(assignment.timezone)?.label || assignment.timezone}
+                              </div>
+                            )}
+                          </td>
+                          <td>
+                            {assignment.monthlyFee ? (
+                              <Badge bg="success">
+                                {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted">-</span>
+                            )}
+                          </td>
+                          <td>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => handleDeleteAssignment(assignment.id)}
+                              title="Delete Assignment"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+}
+
+// Fee History Subform Component
+function FeeHistorySubform({ 
+  studentId, 
+  fees, 
+  onFeeChange 
+}: { 
+  studentId: string;
+  fees: Fee[];
+  onFeeChange: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Fee creation states
+  const [feeTitle, setFeeTitle] = useState('');
+  const [feeDescription, setFeeDescription] = useState('');
+  const [feeAmount, setFeeAmount] = useState('');
+  const [feeCurrency, setFeeCurrency] = useState('USD');
+  const [feeDueDate, setFeeDueDate] = useState('');
+
+  const handleCreateFee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/fees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId,
+          title: feeTitle,
+          description: feeDescription,
+          amount: parseFloat(feeAmount),
+          currency: feeCurrency,
+          dueDate: feeDueDate,
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess('Fee created successfully!');
+        onFeeChange();
+        setFeeTitle('');
+        setFeeDescription('');
+        setFeeAmount('');
+        setFeeCurrency('USD');
+        setFeeDueDate('');
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to create fee');
+      }
+    } catch (error) {
+      setError('Error creating fee');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const getStatusBadge = (status: FeeStatus) => {
+    switch (status) {
+      case 'PAID':
+        return <Badge bg="success">Paid</Badge>;
+      case 'PENDING':
+        return <Badge bg="warning">Pending</Badge>;
+      case 'OVERDUE':
+        return <Badge bg="danger">Overdue</Badge>;
+      case 'CANCELLED':
+        return <Badge bg="secondary">Cancelled</Badge>;
+      default:
+        return <Badge bg="secondary">{status}</Badge>;
+    }
+  };
+
+  const getCurrencySymbol = (currencyCode: string) => {
+    const currency = currencies.find(c => c.code === currencyCode);
+    return currency ? currency.symbol : currencyCode;
+  };
+
+  return (
+    <div>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+
+      <Row className="g-3">
+        <Col lg={4}>
+          <Card className="h-100">
+            <Card.Header className="bg-warning text-dark">
+              <h6 className="mb-0">
+                <i className="bi bi-cash-coin me-2"></i>
+                Create Fee
+              </h6>
+            </Card.Header>
+            <Card.Body>
+              <Form onSubmit={handleCreateFee}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Fee Title</Form.Label>
+                  <Form.Control 
+                    type="text" 
+                    value={feeTitle} 
+                    onChange={(e) => setFeeTitle(e.target.value)} 
+                    required 
+                    placeholder="e.g., Tuition Fee"
+                    size="sm"
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control 
+                    as="textarea" 
+                    rows={2} 
+                    value={feeDescription} 
+                    onChange={(e) => setFeeDescription(e.target.value)}
+                    placeholder="Optional description"
+                    size="sm"
+                  />
+                </Form.Group>
+                <Row>
+                  <Col xs={8}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Amount</Form.Label>
+                      <Form.Control 
+                        type="number" 
+                        step="0.01"
+                        value={feeAmount} 
+                        onChange={(e) => setFeeAmount(e.target.value)} 
+                        required 
+                        placeholder="0.00"
+                        size="sm"
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col xs={4}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Currency</Form.Label>
+                      <Form.Select 
+                        value={feeCurrency}
+                        onChange={(e) => setFeeCurrency(e.target.value)}
+                        size="sm"
+                      >
+                        {currencies.map(currency => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.code}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Form.Group className="mb-4">
+                  <Form.Label>Due Date</Form.Label>
+                  <Form.Control 
+                    type="date" 
+                    value={feeDueDate} 
+                    onChange={(e) => setFeeDueDate(e.target.value)} 
+                    required 
+                    size="sm"
+                  />
+                </Form.Group>
+                <Button 
+                  variant="warning" 
+                  type="submit" 
+                  disabled={creating}
+                  className="w-100"
+                  size="sm"
+                >
+                  {creating ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-plus-circle me-2"></i>
+                      Create Fee
+                    </>
+                  )}
+                </Button>
+              </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={8}>
+          <Card className="h-100">
+            <Card.Header className="bg-light">
+              <div className="d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">
+                  <i className="bi bi-cash-coin me-2"></i>
+                  Fee History
+                </h6>
+                <Badge bg="warning">{fees.length}</Badge>
+              </div>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {fees.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className="bi bi-cash-coin display-6 text-muted"></i>
+                  <p className="mt-2 text-muted small">No fees found</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover size="sm" className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Title</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Paid By</th>
+                        <th>Subject</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fees.map((fee) => (
+                        <tr key={fee.id}>
+                          <td className="fw-medium">{fee.title}</td>
+                          <td className="fw-bold text-success">
+                            {getCurrencySymbol(fee.currency)}{fee.amount.toFixed(2)}
+                          </td>
+                          <td className="text-muted small">
+                            {new Date(fee.dueDate).toLocaleDateString()}
+                          </td>
+                          <td>{getStatusBadge(fee.status)}</td>
+                          <td className="text-muted small">
+                            {fee.paidBy ? fee.paidBy.name : '-'}
+                          </td>
+                          <td className="text-muted small">
+                            {fee.course ? fee.course.name : '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+}
+
 // Detail View Modal Component
 function DetailViewModal({ show, onHide, title, data }: { show: boolean; onHide: () => void; title: string; data: any }) {
   return (
@@ -181,12 +886,27 @@ function UserManagementTab({ role }: { role: Role }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [address, setAddress] = useState('');
+  
+  // Teacher-specific fields
+  const [qualification, setQualification] = useState('');
+  const [payRate, setPayRate] = useState('');
+  const [payType, setPayType] = useState<PayType>('MONTHLY');
+  const [payCurrency, setPayCurrency] = useState('USD');
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailData, setDetailData] = useState<any>(null);
+
+  // Student-specific states
+  const [studentAssignments, setStudentAssignments] = useState<Assignment[]>([]);
+  const [studentFees, setStudentFees] = useState<Fee[]>([]);
+  const [activeTab, setActiveTab] = useState('basic');
 
   const config = roleConfig[role as keyof typeof roleConfig];
 
@@ -220,18 +940,34 @@ function UserManagementTab({ role }: { role: Role }) {
     setSuccess('');
 
     try {
+      const userData: any = { 
+        name, 
+        email, 
+        password, 
+        role,
+        mobile: mobile || undefined,
+        dateOfBirth: dateOfBirth || undefined,
+        address: address || undefined
+      };
+
+      // Only add teacher-specific fields for teachers
+      if (role === 'TEACHER') {
+        userData.qualification = qualification || undefined;
+        userData.payRate = payRate ? parseFloat(payRate) : undefined;
+        userData.payType = payType;
+        userData.payCurrency = payCurrency;
+      }
+
       const res = await fetch('/api/users/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify(userData),
       });
 
       if (res.ok) {
         setSuccess(`${role.toLowerCase()} created successfully!`);
         fetchUsers();
-        setName('');
-        setEmail('');
-        setPassword('');
+        resetForm();
       } else {
         const errorData = await res.json();
         setError(errorData.message || `Failed to create ${role.toLowerCase()}`);
@@ -243,12 +979,66 @@ function UserManagementTab({ role }: { role: Role }) {
     }
   };
 
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setPassword('');
+    setMobile('');
+    setDateOfBirth('');
+    setAddress('');
+    setQualification('');
+    setPayRate('');
+    setPayType('MONTHLY');
+    setPayCurrency('USD');
+    setActiveTab('basic');
+  };
+
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     setName(user.name);
     setEmail(user.email);
     setPassword('');
+    setMobile(user.mobile || '');
+    setDateOfBirth(user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '');
+    setAddress(user.address || '');
+    setQualification(user.qualification || '');
+    setPayRate(user.payRate?.toString() || '');
+    setPayType(user.payType || 'MONTHLY');
+    setPayCurrency(user.payCurrency || 'USD');
+    setActiveTab('basic');
+    
+    if (role === 'STUDENT') {
+      fetchStudentData(user.id);
+    }
+    
     setShowEditModal(true);
+  };
+
+  const fetchStudentData = async (studentId: string) => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/assignments');
+      if (res.ok) {
+        const assignmentsData = await res.json();
+        setStudentAssignments(assignmentsData.filter((a: Assignment) => a.studentId === studentId));
+      } else {
+        setError('Failed to fetch assignments');
+        setStudentAssignments([]);
+      }
+
+      const feesRes = await fetch('/api/fees');
+      if (feesRes.ok) {
+        const feesData = await feesRes.json();
+        setStudentFees(feesData.filter((f: Fee) => f.student.id === studentId));
+      } else {
+        setError('Failed to fetch student data');
+        setStudentFees([]);
+      }
+    } catch (error) {
+      console.error('Error fetching student data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdateUser = async (e: React.FormEvent) => {
@@ -260,15 +1050,28 @@ function UserManagementTab({ role }: { role: Role }) {
     setSuccess('');
 
     try {
+      const updateData: any = { 
+        id: editingUser.id,
+        name, 
+        email, 
+        ...(password && { password }),
+        mobile: mobile || undefined,
+        dateOfBirth: dateOfBirth || undefined,
+        address: address || undefined
+      };
+
+      // Only add teacher-specific fields for teachers
+      if (role === 'TEACHER') {
+        updateData.qualification = qualification || undefined;
+        updateData.payRate = payRate ? parseFloat(payRate) : undefined;
+        updateData.payType = payType;
+        updateData.payCurrency = payCurrency;
+      }
+
       const res = await fetch('/api/users/update', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          id: editingUser.id,
-          name, 
-          email, 
-          ...(password && { password })
-        }),
+        body: JSON.stringify(updateData),
       });
 
       if (res.ok) {
@@ -290,6 +1093,18 @@ function UserManagementTab({ role }: { role: Role }) {
   const handleViewDetails = (user: User) => {
     setDetailData(user);
     setShowDetailModal(true);
+  };
+
+  const handleAssignmentChange = () => {
+    if (editingUser) {
+      fetchStudentData(editingUser.id);
+    }
+  };
+
+  const handleFeeChange = () => {
+    if (editingUser) {
+      fetchStudentData(editingUser.id);
+    }
   };
 
   return (
@@ -330,7 +1145,7 @@ function UserManagementTab({ role }: { role: Role }) {
                     size="sm"
                   />
                 </Form.Group>
-                <Form.Group className="mb-4">
+                <Form.Group className="mb-3">
                   <Form.Label>Password</Form.Label>
                   <Form.Control 
                     type="password" 
@@ -342,6 +1157,99 @@ function UserManagementTab({ role }: { role: Role }) {
                     size="sm"
                   />
                 </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Mobile Number</Form.Label>
+                  <Form.Control 
+                    type="tel" 
+                    value={mobile} 
+                    onChange={(e) => setMobile(e.target.value)} 
+                    placeholder="Enter mobile number"
+                    size="sm"
+                  />
+                </Form.Group>
+                {(role === 'STUDENT' || role === 'TEACHER') && (
+                  <Form.Group className="mb-3">
+                    <Form.Label>Date of Birth</Form.Label>
+                    <Form.Control 
+                      type="date" 
+                      value={dateOfBirth} 
+                      onChange={(e) => setDateOfBirth(e.target.value)} 
+                      size="sm"
+                    />
+                  </Form.Group>
+                )}
+                <Form.Group className="mb-3">
+                  <Form.Label>Address</Form.Label>
+                  <Form.Control 
+                    as="textarea"
+                    rows={2}
+                    value={address} 
+                    onChange={(e) => setAddress(e.target.value)} 
+                    placeholder="Enter address"
+                    size="sm"
+                  />
+                </Form.Group>
+                
+                {/* Teacher-specific fields - only show for teachers */}
+                {role === 'TEACHER' && (
+                  <>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Qualification</Form.Label>
+                      <Form.Control 
+                        type="text" 
+                        value={qualification} 
+                        onChange={(e) => setQualification(e.target.value)} 
+                        placeholder="Enter qualification"
+                        size="sm"
+                      />
+                    </Form.Group>
+                    <Row>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Pay Rate</Form.Label>
+                          <Form.Control 
+                            type="number" 
+                            step="0.01"
+                            value={payRate} 
+                            onChange={(e) => setPayRate(e.target.value)} 
+                            placeholder="0.00"
+                            size="sm"
+                          />
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Pay Type</Form.Label>
+                          <Form.Select 
+                            value={payType}
+                            onChange={(e) => setPayType(e.target.value as PayType)}
+                            size="sm"
+                          >
+                            <option value="DAILY">Daily</option>
+                            <option value="WEEKLY">Weekly</option>
+                            <option value="FORTNIGHTLY">Fortnightly</option>
+                            <option value="MONTHLY">Monthly</option>
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Pay Currency</Form.Label>
+                      <Form.Select 
+                        value={payCurrency}
+                        onChange={(e) => setPayCurrency(e.target.value)}
+                        size="sm"
+                      >
+                        {currencies.map(currency => (
+                          <option key={currency.code} value={currency.code}>
+                            {currency.code} - {currency.name}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </>
+                )}
+                
                 <Button 
                   variant={config.color} 
                   type="submit" 
@@ -395,6 +1303,8 @@ function UserManagementTab({ role }: { role: Role }) {
                       <tr>
                         <th>Name</th>
                         <th>Email</th>
+                        <th>Mobile</th>
+                        {role === 'TEACHER' && <th>Pay Rate</th>}
                         <th>Created</th>
                         <th>Actions</th>
                       </tr>
@@ -404,6 +1314,19 @@ function UserManagementTab({ role }: { role: Role }) {
                         <tr key={user.id}>
                           <td className="fw-medium">{user.name}</td>
                           <td className="text-muted">{user.email}</td>
+                          <td className="text-muted">{user.mobile || '-'}</td>
+                          {role === 'TEACHER' && (
+                            <td className="text-muted">
+                              {user.payRate ? (
+                                <Badge bg="success">
+                                  {getCurrencySymbol(user.payCurrency || 'USD')}{user.payRate}
+                                  <small className="ms-1">/{user.payType?.toLowerCase()}</small>
+                                </Badge>
+                              ) : (
+                                '-'
+                              )}
+                            </td>
+                          )}
                           <td className="text-muted small">
                             {new Date(user.createdAt).toLocaleDateString()}
                           </td>
@@ -438,8 +1361,8 @@ function UserManagementTab({ role }: { role: Role }) {
         </Col>
       </Row>
 
-      {/* Edit User Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+      {/* Enhanced Edit User Modal with Tabs for Students */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size={role === 'STUDENT' ? 'xl' : 'lg'}>
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
@@ -447,63 +1370,293 @@ function UserManagementTab({ role }: { role: Role }) {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onSubmit={handleUpdateUser}>
-            <Form.Group className="mb-3">
-              <Form.Label>Full Name</Form.Label>
-              <Form.Control 
-                type="text" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                required 
-                placeholder="Enter full name"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Email Address</Form.Label>
-              <Form.Control 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                required 
-                placeholder="Enter email address"
-              />
-            </Form.Group>
-            <Form.Group className="mb-4">
-              <Form.Label>Password</Form.Label>
-              <Form.Control 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                placeholder="Leave blank to keep current password"
-                minLength={6}
-              />
-              <Form.Text className="text-muted">
-                Leave blank to keep current password
-              </Form.Text>
-            </Form.Group>
-            <div className="d-flex justify-content-end gap-2">
-              <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="warning"
-                disabled={editing}
-              >
-                {editing ? (
-                  <>
-                    <Spinner animation="border" size="sm" className="me-2" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-check-circle me-2"></i>
-                    Update
-                  </>
+          {role === 'STUDENT' ? (
+            <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
+              <Tab eventKey="basic" title={
+                <span>
+                  <i className="bi bi-person me-2"></i>
+                  Basic Info
+                </span>
+              }>
+                <Form onSubmit={handleUpdateUser}>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Full Name</Form.Label>
+                        <Form.Control 
+                          type="text" 
+                          value={name} 
+                          onChange={(e) => setName(e.target.value)} 
+                          required 
+                          placeholder="Enter full name"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Email Address</Form.Label>
+                        <Form.Control 
+                          type="email" 
+                          value={email} 
+                          onChange={(e) => setEmail(e.target.value)} 
+                          required 
+                          placeholder="Enter email address"
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Control 
+                          type="tel" 
+                          value={mobile} 
+                          onChange={(e) => setMobile(e.target.value)} 
+                          placeholder="Enter mobile number"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Date of Birth</Form.Label>
+                        <Form.Control 
+                          type="date" 
+                          value={dateOfBirth} 
+                          onChange={(e) => setDateOfBirth(e.target.value)} 
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Address</Form.Label>
+                    <Form.Control 
+                      as="textarea"
+                      rows={3}
+                      value={address} 
+                      onChange={(e) => setAddress(e.target.value)} 
+                      placeholder="Enter address"
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-4">
+                    <Form.Label>Password</Form.Label>
+                    <Form.Control 
+                      type="password" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      placeholder="Leave blank to keep current password"
+                      minLength={6}
+                    />
+                    <Form.Text className="text-muted">
+                      Leave blank to keep current password
+                    </Form.Text>
+                  </Form.Group>
+                  <div className="d-flex justify-content-end gap-2">
+                    <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="warning"
+                      disabled={editing}
+                    >
+                      {editing ? (
+                        <>
+                          <Spinner animation="border" size="sm" className="me-2" />
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-check-circle me-2"></i>
+                          Update
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </Form>
+              </Tab>
+              
+              <Tab eventKey="assignments" title={
+                <span>
+                  <i className="bi bi-diagram-3 me-2"></i>
+                  Assignments
+                  {studentAssignments.length > 0 && (
+                    <Badge bg="primary" className="ms-2">{studentAssignments.length}</Badge>
+                  )}
+                </span>
+              }>
+                {editingUser && (
+                  <AssignmentSubform 
+                    studentId={editingUser.id}
+                    assignments={studentAssignments}
+                    onAssignmentChange={handleAssignmentChange}
+                  />
                 )}
-              </Button>
-            </div>
-          </Form>
+              </Tab>
+              
+              <Tab eventKey="fees" title={
+                <span>
+                  <i className="bi bi-cash-coin me-2"></i>
+                  Fee History
+                  {studentFees.length > 0 && (
+                    <Badge bg="warning" className="ms-2">{studentFees.length}</Badge>
+                  )}
+                </span>
+              }>
+                {editingUser && (
+                  <FeeHistorySubform 
+                    studentId={editingUser.id}
+                    fees={studentFees}
+                    onFeeChange={handleFeeChange}
+                  />
+                )}
+              </Tab>
+            </Tabs>
+          ) : (
+            <Form onSubmit={handleUpdateUser}>
+              <Form.Group className="mb-3">
+                <Form.Label>Full Name</Form.Label>
+                <Form.Control 
+                  type="text" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  required 
+                  placeholder="Enter full name"
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Email Address</Form.Label>
+                <Form.Control 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                  placeholder="Enter email address"
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Mobile Number</Form.Label>
+                <Form.Control 
+                  type="tel" 
+                  value={mobile} 
+                  onChange={(e) => setMobile(e.target.value)} 
+                  placeholder="Enter mobile number"
+                />
+              </Form.Group>
+              {(role === 'TEACHER') && (
+                <Form.Group className="mb-3">
+                  <Form.Label>Date of Birth</Form.Label>
+                  <Form.Control 
+                    type="date" 
+                    value={dateOfBirth} 
+                    onChange={(e) => setDateOfBirth(e.target.value)} 
+                  />
+                </Form.Group>
+              )}
+              <Form.Group className="mb-3">
+                <Form.Label>Address</Form.Label>
+                <Form.Control 
+                  as="textarea"
+                  rows={2}
+                  value={address} 
+                  onChange={(e) => setAddress(e.target.value)} 
+                  placeholder="Enter address"
+                />
+              </Form.Group>
+              
+              {/* Teacher-specific fields in edit modal */}
+              {role === 'TEACHER' && (
+                <>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Qualification</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      value={qualification} 
+                      onChange={(e) => setQualification(e.target.value)} 
+                      placeholder="Enter qualification"
+                    />
+                  </Form.Group>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Pay Rate</Form.Label>
+                        <Form.Control 
+                          type="number" 
+                          step="0.01"
+                          value={payRate} 
+                          onChange={(e) => setPayRate(e.target.value)} 
+                          placeholder="0.00"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Pay Type</Form.Label>
+                        <Form.Select 
+                          value={payType}
+                          onChange={(e) => setPayType(e.target.value as PayType)}
+                        >
+                          <option value="DAILY">Daily</option>
+                          <option value="WEEKLY">Weekly</option>
+                          <option value="FORTNIGHTLY">Fortnightly</option>
+                          <option value="MONTHLY">Monthly</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Pay Currency</Form.Label>
+                    <Form.Select 
+                      value={payCurrency}
+                      onChange={(e) => setPayCurrency(e.target.value)}
+                    >
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.code} - {currency.name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </>
+              )}
+              
+              <Form.Group className="mb-4">
+                <Form.Label>Password</Form.Label>
+                <Form.Control 
+                  type="password" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  placeholder="Leave blank to keep current password"
+                  minLength={6}
+                />
+                <Form.Text className="text-muted">
+                  Leave blank to keep current password
+                </Form.Text>
+              </Form.Group>
+              <div className="d-flex justify-content-end gap-2">
+                <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="warning"
+                  disabled={editing}
+                >
+                  {editing ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-check-circle me-2"></i>
+                      Update
+                    </>
+                  )}
+                </Button>
+              </div>
+            </Form>
+          )}
         </Modal.Body>
       </Modal>
 
@@ -845,7 +1998,7 @@ function AssignmentsTab() {
   const [students, setStudents] = useState<User[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [subjects, setSubjects] = useState<Course[]>([]);
-  const [assignments, setAssignments] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
@@ -864,7 +2017,7 @@ function AssignmentsTab() {
 
   // Edit assignment modal
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editingAssignment, setEditingAssignment] = useState<any>(null);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [updating, setUpdating] = useState(false);
 
   const currencies = [
@@ -878,16 +2031,6 @@ function AssignmentsTab() {
     { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
     { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
     { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-  ];
-
-  const daysOfWeek = [
-    { value: 'MONDAY', label: 'Monday' },
-    { value: 'TUESDAY', label: 'Tuesday' },
-    { value: 'WEDNESDAY', label: 'Wednesday' },
-    { value: 'THURSDAY', label: 'Thursday' },
-    { value: 'FRIDAY', label: 'Friday' },
-    { value: 'SATURDAY', label: 'Saturday' },
-    { value: 'SUNDAY', label: 'Sunday' },
   ];
 
   useEffect(() => {
@@ -965,7 +2108,7 @@ function AssignmentsTab() {
     setCurrency('USD');
   };
 
-  const handleEditAssignment = (assignment: any) => {
+  const handleEditAssignment = (assignment: Assignment) => {
     setEditingAssignment(assignment);
     setSelectedStudent(assignment.studentId);
     setSelectedSubject(assignment.courseId);
@@ -1199,7 +2342,7 @@ function AssignmentsTab() {
                       >
                         {currencies.map(curr => (
                           <option key={curr.code} value={curr.code}>
-                            {curr.code}
+                            {curr.code} - {curr.name}
                           </option>
                         ))}
                       </Form.Select>
@@ -1277,6 +2420,11 @@ function AssignmentsTab() {
                             {assignment.classDays && assignment.classDays.length > 0 && (
                               <div className="text-muted">
                                 {assignment.classDays.join(', ')}
+                              </div>
+                            )}
+                            {assignment.timezone && (
+                              <div className="text-muted small">
+                                {findTimezone(assignment.timezone)?.label || assignment.timezone}
                               </div>
                             )}
                           </td>
@@ -1390,10 +2538,11 @@ function AssignmentsTab() {
                   <Form.Select 
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
+                    size="sm"
                   >
                     {currencies.map(curr => (
                       <option key={curr.code} value={curr.code}>
-                        {curr.code}
+                        {curr.code} - {curr.name}
                       </option>
                     ))}
                   </Form.Select>
@@ -1472,15 +2621,15 @@ function FeeManagementTab() {
       ]);
       
       if (feesRes.ok) {
-        const salariesData = await feesRes.json();
-        setFees(salariesData);
+        const feesData = await feesRes.json();
+        setFees(feesData);
       } else {
-        setError('Failed to fetch salary data');
+        setError('Failed to fetch fee data');
       }
 
       if (studentsRes.ok) {
-        const teachersData = await studentsRes.json();
-        setStudents(teachersData);
+        const studentsData = await studentsRes.json();
+        setStudents(studentsData);
       }
     } catch (error) {
       setError('Error fetching data');
@@ -1626,7 +2775,7 @@ function FeeManagementTab() {
                       >
                         {currencies.map(currency => (
                           <option key={currency.code} value={currency.code}>
-                            {currency.code}
+                            {currency.code} - {currency.name}
                           </option>
                         ))}
                       </Form.Select>
@@ -1934,7 +3083,7 @@ function SalaryManagementTab() {
                     value={salaryTitle} 
                     onChange={(e) => setSalaryTitle(e.target.value)} 
                     required 
-                    placeholder="e.g., Monthly Salary"
+                    placeholder="Enter salary title"
                     size="sm"
                   />
                 </Form.Group>
@@ -1974,7 +3123,7 @@ function SalaryManagementTab() {
                       >
                         {currencies.map(currency => (
                           <option key={currency.code} value={currency.code}>
-                            {currency.code}
+                            {currency.code} - {currency.name}
                           </option>
                         ))}
                       </Form.Select>
@@ -2020,7 +3169,7 @@ function SalaryManagementTab() {
             <Card.Header className="bg-light">
               <div className="d-flex justify-content-between align-items-center">
                 <h6 className="mb-0">
-                  <i className="bi bi-wallet2 me-2"></i>
+                  <i className="bi bi-cash-coin me-2"></i>
                   Salary Management
                 </h6>
                 <Badge bg="success">{salaries.length} Total</Badge>
@@ -2048,7 +3197,6 @@ function SalaryManagementTab() {
                         <th>Due Date</th>
                         <th>Status</th>
                         <th>Paid By</th>
-                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2066,26 +3214,6 @@ function SalaryManagementTab() {
                           <td className="text-muted small">
                             {salary.paidBy ? salary.paidBy.name : '-'}
                           </td>
-                          <td>
-                            <div className="d-flex gap-1">
-                              <Button
-                                variant="outline-info"
-                                size="sm"
-                                onClick={() => handleViewDetails(salary)}
-                                title="View Details"
-                              >
-                                <i className="bi bi-eye"></i>
-                              </Button>
-                              <Button
-                                variant="outline-warning"
-                                size="sm"
-                                onClick={() => handleEditSalary(salary)}
-                                title="Edit Salary"
-                              >
-                                <i className="bi bi-pencil"></i>
-                              </Button>
-                            </div>
-                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -2096,418 +3224,6 @@ function SalaryManagementTab() {
           </Card>
         </Col>
       </Row>
-
-      {/* Edit Salary Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="bi bi-pencil me-2"></i>
-            Edit Salary
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleUpdateSalary}>
-            <Form.Group className="mb-3">
-              <Form.Label>Salary Title</Form.Label>
-              <Form.Control 
-                type="text" 
-                value={salaryTitle} 
-                onChange={(e) => setSalaryTitle(e.target.value)} 
-                required 
-                placeholder="e.g., Monthly Salary"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={2} 
-                value={salaryDescription} 
-                onChange={(e) => setSalaryDescription(e.target.value)}
-                placeholder="Optional description"
-              />
-            </Form.Group>
-            <Row>
-              <Col xs={8}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Amount</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    step="0.01"
-                    value={salaryAmount} 
-                    onChange={(e) => setSalaryAmount(e.target.value)} 
-                    required 
-                    placeholder="0.00"
-                    size="sm"
-                  />
-                </Form.Group>
-              </Col>
-              <Col xs={4}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Currency</Form.Label>
-                  <Form.Select 
-                    value={salaryCurrency}
-                    onChange={(e) => setSalaryCurrency(e.target.value)}
-                    size="sm"
-                  >
-                    {currencies.map(currency => (
-                      <option key={currency.code} value={currency.code}>
-                        {currency.code}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
-            <Form.Group className="mb-4">
-              <Form.Label>Due Date</Form.Label>
-              <Form.Control 
-                type="date" 
-                value={salaryDueDate} 
-                onChange={(e) => setSalaryDueDate(e.target.value)} 
-                required 
-                size="sm"
-              />
-            </Form.Group>
-            <div className="d-flex justify-content-end gap-2">
-              <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="warning"
-                disabled={editing}
-              >
-                {editing ? (
-                  <>
-                    <Spinner animation="border" size="sm" className="me-2" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <i className="bi bi-check-circle me-2"></i>
-                    Update
-                  </>
-                )}
-              </Button>
-            </div>
-          </Form>
-        </Modal.Body>
-      </Modal>
-
-      {/* Detail View Modal */}
-      <DetailViewModal
-        show={showDetailModal}
-        onHide={() => setShowDetailModal(false)}
-        title="Salary Details"
-        data={detailData}
-      />
-    </div>
-  );
-}
-
-function ProgressOverviewTab() {
-  const [progress, setProgress] = useState<Progress[]>([]);
-  const [teachers, setTeachers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [selectedTeacher, setSelectedTeacher] = useState('');
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [detailData, setDetailData] = useState<any>(null);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [progressRes, teachersRes] = await Promise.all([
-        fetch('/api/progress'),
-        fetch('/api/users?role=TEACHER'),
-      ]);
-      
-      if (progressRes.ok) {
-        const progressData = await progressRes.json();
-        setProgress(progressData);
-      } else {
-        setError('Failed to fetch progress data');
-      }
-
-      if (teachersRes.ok) {
-        const teachersData = await teachersRes.json();
-        setTeachers(teachersData);
-      }
-    } catch (error) {
-      setError('Error fetching data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTeacherFilter = async (teacherId: string) => {
-    setSelectedTeacher(teacherId);
-    setLoading(true);
-    setError('');
-
-    try {
-      const url = teacherId ? `/api/progress?teacherId=${teacherId}` : '/api/progress';
-      const res = await fetch(url);
-      
-      if (res.ok) {
-        const data = await res.json();
-        setProgress(data);
-      } else {
-        setError('Failed to fetch filtered progress data');
-      }
-    } catch (error) {
-      setError('Error fetching filtered progress data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleViewDetails = (record: Progress) => {
-    setDetailData(record);
-    setShowDetailModal(true);
-  };
-
-  const getAttendanceBadge = (attendance: AttendanceStatus) => {
-    switch (attendance) {
-      case 'PRESENT':
-        return <Badge bg="success">Present</Badge>;
-      case 'ABSENT':
-        return <Badge bg="danger">Absent</Badge>;
-      case 'LATE':
-        return <Badge bg="warning">Late</Badge>;
-      case 'EXCUSED':
-        return <Badge bg="info">Excused</Badge>;
-      default:
-        return <Badge bg="secondary">{attendance}</Badge>;
-    }
-  };
-
-  return (
-    <div>
-      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
-
-      <Card className="shadow-sm">
-        <Card.Header className="bg-light">
-          <div className="d-flex justify-content-between align-items-center">
-            <h6 className="mb-0">
-              <i className="bi bi-graph-up me-2"></i>
-              Student Progress Overview
-            </h6>
-            <div className="d-flex align-items-center gap-3">
-              <div className="d-flex align-items-center gap-2">
-                <Form.Label className="mb-0 small">Filter by Teacher:</Form.Label>
-                <Form.Select
-                  size="sm"
-                  value={selectedTeacher}
-                  onChange={(e) => handleTeacherFilter(e.target.value)}
-                  style={{ width: '200px' }}
-                >
-                  <option value="">All Teachers</option>
-                  {teachers.map(teacher => (
-                    <option key={teacher.id} value={teacher.id}>
-                      {teacher.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </div>
-              <Badge bg="info">{progress.length} Records</Badge>
-            </div>
-          </div>
-        </Card.Header>
-        <Card.Body className="p-0">
-          {loading ? (
-            <div className="text-center py-4">
-              <Spinner animation="border" size="sm" />
-              <p className="mt-2 text-muted small">Loading progress data...</p>
-            </div>
-          ) : progress.length === 0 ? (
-            <div className="text-center py-4">
-              <i className="bi bi-graph-up display-6 text-muted"></i>
-              <p className="mt-2 text-muted small">
-                {selectedTeacher ? 'No progress records found for selected teacher' : 'No progress records found'}
-              </p>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>Date</th>
-                    <th>Student</th>
-                    <th>Course</th>
-                    <th>Teacher</th>
-                    <th>Lesson</th>
-                    <th>Progress</th>
-                    <th>Score</th>
-                    <th>Attendance</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {progress.map((record) => (
-                    <tr key={record.id}>
-                      <td className="text-muted small">
-                        {new Date(record.date).toLocaleDateString()}
-                      </td>
-                      <td className="fw-medium">{record.student.name}</td>
-                      <td>{record.course.name}</td>
-                      <td className="text-muted">{record.teacher.name}</td>
-                      <td>
-                        <ExpandableText text={record.lesson || '-'} maxLength={20} />
-                      </td>
-                      <td>
-                        {record.lessonProgress ? (
-                          <Badge bg="primary">{record.lessonProgress}%</Badge>
-                        ) : (
-                          '-'
-                        )}
-                      </td>
-                      <td>
-                        {record.score ? (
-                          <Badge bg="success">{record.score}</Badge>
-                        ) : (
-                          '-'
-                        )}
-                      </td>
-                      <td>{getAttendanceBadge(record.attendance)}</td>
-                      <td>
-                        <Button
-                          variant="outline-info"
-                          size="sm"
-                          onClick={() => handleViewDetails(record)}
-                          title="View Details"
-                        >
-                          <i className="bi bi-eye"></i>
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
-
-      {/* Detail View Modal */}
-      <DetailViewModal
-        show={showDetailModal}
-        onHide={() => setShowDetailModal(false)}
-        title="Progress Record Details"
-        data={detailData}
-      />
-    </div>
-  );
-}
-
-export default function AdminDashboard() {
-  return (
-    <div className="container-fluid">
-      <div className="row mb-4">
-        <div className="col-12">
-          <h1 className="h2 mb-0">
-            <i className="bi bi-speedometer2 me-2 text-primary"></i>
-            Admin Dashboard
-          </h1>
-          <p className="text-muted">Manage users, subjects, assignments, fees, salaries, and monitor progress</p>
-        </div>
-      </div>
-
-      <Tabs defaultActiveKey="teachers" id="admin-dashboard-tabs" className="mb-4">
-        <Tab 
-          eventKey="teachers" 
-          title={
-            <span>
-              <i className="bi bi-person-workspace me-2"></i>
-              Teachers
-            </span>
-          }
-        >
-          <UserManagementTab role={Role.TEACHER} />
-        </Tab>
-        <Tab 
-          eventKey="parents" 
-          title={
-            <span>
-              <i className="bi bi-people me-2"></i>
-              Parents
-            </span>
-          }
-        >
-          <UserManagementTab role={Role.PARENT} />
-        </Tab>
-        <Tab 
-          eventKey="students" 
-          title={
-            <span>
-              <i className="bi bi-mortarboard me-2"></i>
-              Students
-            </span>
-          }
-        >
-          <UserManagementTab role={Role.STUDENT} />
-        </Tab>
-        <Tab 
-          eventKey="subjects" 
-          title={
-            <span>
-              <i className="bi bi-book me-2"></i>
-              Subjects
-            </span>
-          }
-        >
-          <SubjectManagementTab />
-        </Tab>
-        <Tab 
-          eventKey="assignments" 
-          title={
-            <span>
-              <i className="bi bi-diagram-3 me-2"></i>
-              Assignments
-            </span>
-          }
-        >
-          <AssignmentsTab />
-        </Tab>
-        <Tab 
-          eventKey="fees" 
-          title={
-            <span>
-              <i className="bi bi-cash-coin me-2"></i>
-              Fees
-            </span>
-          }
-        >
-          <FeeManagementTab />
-        </Tab>
-        <Tab 
-          eventKey="salaries" 
-          title={
-            <span>
-              <i className="bi bi-wallet2 me-2"></i>
-              Salaries
-            </span>
-          }
-        >
-          <SalaryManagementTab />
-        </Tab>
-        <Tab 
-          eventKey="progress" 
-          title={
-            <span>
-              <i className="bi bi-graph-up me-2"></i>
-              Progress
-            </span>
-          }
-        >
-          <ProgressOverviewTab />
-        </Tab>
-      </Tabs>
     </div>
   );
 }
