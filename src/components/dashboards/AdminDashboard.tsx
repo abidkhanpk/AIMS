@@ -167,6 +167,12 @@ const daysOfWeek = [
   { value: 'SUNDAY', label: 'Sunday' },
 ];
 
+// Global getCurrencySymbol function for the main component
+const getCurrencySymbol = (currencyCode: string) => {
+  const currency = currencies.find(c => c.code === currencyCode);
+  return currency ? currency.symbol : currencyCode;
+};
+
 // Assignment Subform Component
 function AssignmentSubform({ 
   studentId, 
@@ -299,11 +305,6 @@ function AssignmentSubform({
     } catch (error) {
       setError('Error deleting assignment');
     }
-  };
-
-  const getCurrencySymbol = (currencyCode: string) => {
-    const currency = currencies.find(c => c.code === currencyCode);
-    return currency ? currency.symbol : currencyCode;
   };
 
   if (loading) {
@@ -3224,6 +3225,295 @@ function SalaryManagementTab() {
           </Card>
         </Col>
       </Row>
+    </div>
+  );
+}
+
+function ProgressTab() {
+  const [progress, setProgress] = useState<Progress[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailData, setDetailData] = useState<any>(null);
+
+  useEffect(() => {
+    fetchProgress();
+  }, []);
+
+  const fetchProgress = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/progress');
+      if (res.ok) {
+        const data = await res.json();
+        setProgress(data);
+      } else {
+        setError('Failed to fetch progress data');
+      }
+    } catch (error) {
+      setError('Error fetching progress data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAttendanceBadge = (status: AttendanceStatus) => {
+    switch (status) {
+      case 'PRESENT':
+        return <Badge bg="success">Present</Badge>;
+      case 'ABSENT':
+        return <Badge bg="danger">Absent</Badge>;
+      case 'LATE':
+        return <Badge bg="warning">Late</Badge>;
+      case 'EXCUSED':
+        return <Badge bg="info">Excused</Badge>;
+      default:
+        return <Badge bg="secondary">{status}</Badge>;
+    }
+  };
+
+  const handleViewDetails = (progressItem: Progress) => {
+    setDetailData(progressItem);
+    setShowDetailModal(true);
+  };
+
+  return (
+    <div>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">
+              <i className="bi bi-graph-up me-2"></i>
+              Student Progress Overview
+            </h6>
+            <Badge bg="info">{progress.length} Records</Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" size="sm" />
+              <p className="mt-2 text-muted small">Loading progress data...</p>
+            </div>
+          ) : progress.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-graph-up display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">No progress records found</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Subject</th>
+                    <th>Teacher</th>
+                    <th>Lesson</th>
+                    <th>Progress</th>
+                    <th>Score</th>
+                    <th>Attendance</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {progress.map((item) => (
+                    <tr key={item.id}>
+                      <td className="text-muted small">
+                        {new Date(item.date).toLocaleDateString()}
+                      </td>
+                      <td className="fw-medium">{item.student.name}</td>
+                      <td>{item.course.name}</td>
+                      <td className="text-muted">{item.teacher.name}</td>
+                      <td className="text-muted">
+                        <ExpandableText text={item.lesson || 'No lesson'} maxLength={30} />
+                      </td>
+                      <td>
+                        {item.lessonProgress !== null ? (
+                          <div className="d-flex align-items-center">
+                            <div className="progress me-2" style={{ width: '60px', height: '8px' }}>
+                              <div 
+                                className="progress-bar bg-success" 
+                                style={{ width: `${item.lessonProgress}%` }}
+                              ></div>
+                            </div>
+                            <small className="text-muted">{item.lessonProgress}%</small>
+                          </div>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
+                      <td>
+                        {item.score !== null ? (
+                          <Badge bg="primary">{item.score}%</Badge>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
+                      <td>{getAttendanceBadge(item.attendance)}</td>
+                      <td>
+                        <Button
+                          variant="outline-info"
+                          size="sm"
+                          onClick={() => handleViewDetails(item)}
+                          title="View Details"
+                        >
+                          <i className="bi bi-eye"></i>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
+
+      {/* Detail View Modal */}
+      <DetailViewModal
+        show={showDetailModal}
+        onHide={() => setShowDetailModal(false)}
+        title="Progress Details"
+        data={detailData}
+      />
+    </div>
+  );
+}
+
+export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('teachers');
+
+  return (
+    <div className="container-fluid py-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 className="h4 mb-1">
+            <i className="bi bi-gear-fill me-2 text-primary"></i>
+            Admin Dashboard
+          </h2>
+          <p className="text-muted mb-0">Manage users, subjects, assignments, and more</p>
+        </div>
+      </div>
+
+      <Tabs 
+        activeKey={activeTab} 
+        onSelect={(k) => setActiveTab(k || 'teachers')} 
+        className="mb-4"
+        variant="pills"
+      >
+        <Tab 
+          eventKey="teachers" 
+          title={
+            <span>
+              <i className="bi bi-person-workspace me-2"></i>
+              Teachers
+            </span>
+          }
+        >
+          <UserManagementTab role="TEACHER" />
+        </Tab>
+        
+        <Tab 
+          eventKey="parents" 
+          title={
+            <span>
+              <i className="bi bi-people me-2"></i>
+              Parents
+            </span>
+          }
+        >
+          <UserManagementTab role="PARENT" />
+        </Tab>
+        
+        <Tab 
+          eventKey="students" 
+          title={
+            <span>
+              <i className="bi bi-mortarboard me-2"></i>
+              Students
+            </span>
+          }
+        >
+          <UserManagementTab role="STUDENT" />
+        </Tab>
+        
+        <Tab 
+          eventKey="admins" 
+          title={
+            <span>
+              <i className="bi bi-gear-fill me-2"></i>
+              Admins
+            </span>
+          }
+        >
+          <UserManagementTab role="ADMIN" />
+        </Tab>
+        
+        <Tab 
+          eventKey="subjects" 
+          title={
+            <span>
+              <i className="bi bi-book me-2"></i>
+              Subjects
+            </span>
+          }
+        >
+          <SubjectManagementTab />
+        </Tab>
+        
+        <Tab 
+          eventKey="assignments" 
+          title={
+            <span>
+              <i className="bi bi-diagram-3 me-2"></i>
+              Assignments
+            </span>
+          }
+        >
+          <AssignmentsTab />
+        </Tab>
+        
+        <Tab 
+          eventKey="fees" 
+          title={
+            <span>
+              <i className="bi bi-cash-coin me-2"></i>
+              Fees
+            </span>
+          }
+        >
+          <FeeManagementTab />
+        </Tab>
+        
+        <Tab 
+          eventKey="salaries" 
+          title={
+            <span>
+              <i className="bi bi-wallet2 me-2"></i>
+              Salaries
+            </span>
+          }
+        >
+          <SalaryManagementTab />
+        </Tab>
+        
+        <Tab 
+          eventKey="progress" 
+          title={
+            <span>
+              <i className="bi bi-graph-up me-2"></i>
+              Progress
+            </span>
+          }
+        >
+          <ProgressTab />
+        </Tab>
+      </Tabs>
     </div>
   );
 }
