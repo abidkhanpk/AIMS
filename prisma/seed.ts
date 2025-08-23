@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ClassDay, NotificationType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -57,6 +57,13 @@ async function main() {
       password: bcrypt.hashSync('teacher123', 10),
       role: 'TEACHER',
       adminId: admin.id,
+      mobile: '+1234567890',
+      dateOfBirth: new Date('1985-03-15'),
+      address: '123 Teacher Street, Education City',
+      qualification: 'Master of Science in Mathematics',
+      payRate: 50.0,
+      payType: 'MONTHLY',
+      payCurrency: 'USD',
     },
   });
 
@@ -69,6 +76,13 @@ async function main() {
       password: bcrypt.hashSync('teacher123', 10),
       role: 'TEACHER',
       adminId: admin.id,
+      mobile: '+1234567891',
+      dateOfBirth: new Date('1988-07-22'),
+      address: '456 Science Avenue, Knowledge Town',
+      qualification: 'Master of Science in Physics',
+      payRate: 55.0,
+      payType: 'MONTHLY',
+      payCurrency: 'USD',
     },
   });
 
@@ -84,6 +98,9 @@ async function main() {
       password: bcrypt.hashSync('parent123', 10),
       role: 'PARENT',
       adminId: admin.id,
+      mobile: '+1234567892',
+      address: '789 Family Lane, Parent City',
+      profession: 'Software Engineer',
     },
   });
 
@@ -96,6 +113,9 @@ async function main() {
       password: bcrypt.hashSync('parent123', 10),
       role: 'PARENT',
       adminId: admin.id,
+      mobile: '+1234567893',
+      address: '321 Guardian Street, Family Town',
+      profession: 'Marketing Manager',
     },
   });
 
@@ -111,6 +131,9 @@ async function main() {
       password: bcrypt.hashSync('student123', 10),
       role: 'STUDENT',
       adminId: admin.id,
+      mobile: '+1234567894',
+      dateOfBirth: new Date('2008-05-10'),
+      address: '789 Family Lane, Parent City',
     },
   });
 
@@ -123,6 +146,9 @@ async function main() {
       password: bcrypt.hashSync('student123', 10),
       role: 'STUDENT',
       adminId: admin.id,
+      mobile: '+1234567895',
+      dateOfBirth: new Date('2009-02-18'),
+      address: '321 Guardian Street, Family Town',
     },
   });
 
@@ -135,6 +161,9 @@ async function main() {
       password: bcrypt.hashSync('student123', 10),
       role: 'STUDENT',
       adminId: admin.id,
+      mobile: '+1234567896',
+      dateOfBirth: new Date('2008-11-25'),
+      address: '654 Student Boulevard, Learning District',
     },
   });
 
@@ -256,6 +285,93 @@ async function main() {
 
   console.log('✅ Student-Course assignments created');
 
+  // Create Assignment records (new model in schema)
+  await prisma.assignment.create({
+    data: {
+      studentId: student1.id,
+      courseId: mathCourse.id,
+      teacherId: teacher1.id,
+      startTime: '09:00',
+      duration: 60,
+      classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY, ClassDay.FRIDAY],
+      timezone: 'UTC',
+      monthlyFee: 150.0,
+      currency: 'USD',
+    },
+  });
+
+  await prisma.assignment.create({
+    data: {
+      studentId: student1.id,
+      courseId: scienceCourse.id,
+      teacherId: teacher2.id,
+      startTime: '10:30',
+      duration: 60,
+      classDays: [ClassDay.TUESDAY, ClassDay.THURSDAY],
+      timezone: 'UTC',
+      monthlyFee: 140.0,
+      currency: 'USD',
+    },
+  });
+
+  await prisma.assignment.create({
+    data: {
+      studentId: student2.id,
+      courseId: mathCourse.id,
+      teacherId: teacher1.id,
+      startTime: '11:00',
+      duration: 60,
+      classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY, ClassDay.FRIDAY],
+      timezone: 'UTC',
+      monthlyFee: 150.0,
+      currency: 'USD',
+    },
+  });
+
+  await prisma.assignment.create({
+    data: {
+      studentId: student2.id,
+      courseId: englishCourse.id,
+      teacherId: teacher2.id,
+      startTime: '14:00',
+      duration: 60,
+      classDays: [ClassDay.TUESDAY, ClassDay.THURSDAY],
+      timezone: 'UTC',
+      monthlyFee: 130.0,
+      currency: 'USD',
+    },
+  });
+
+  await prisma.assignment.create({
+    data: {
+      studentId: student3.id,
+      courseId: scienceCourse.id,
+      teacherId: teacher2.id,
+      startTime: '15:30',
+      duration: 60,
+      classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY],
+      timezone: 'UTC',
+      monthlyFee: 140.0,
+      currency: 'USD',
+    },
+  });
+
+  await prisma.assignment.create({
+    data: {
+      studentId: student3.id,
+      courseId: englishCourse.id,
+      teacherId: teacher2.id,
+      startTime: '16:30',
+      duration: 60,
+      classDays: [ClassDay.TUESDAY, ClassDay.FRIDAY],
+      timezone: 'UTC',
+      monthlyFee: 130.0,
+      currency: 'USD',
+    },
+  });
+
+  console.log('✅ Assignment records created');
+
   // Create sample progress records with correct field names and enum values
   const progressRecords = [
     {
@@ -327,37 +443,74 @@ async function main() {
   const fees = [
     {
       studentId: student1.id,
-      title: 'Tuition Fee - Semester 1',
-      description: 'Tuition fee for the first semester',
-      amount: 1500.00,
+      courseId: mathCourse.id,
+      title: 'Tuition Fee - Mathematics',
+      description: 'Monthly tuition fee for mathematics course',
+      amount: 150.00,
+      currency: 'USD',
       dueDate: new Date('2024-09-15'),
       status: 'PENDING' as const,
+      month: 9,
+      year: 2024,
+      isRecurring: true,
     },
     {
       studentId: student1.id,
-      title: 'Library Fee',
-      description: 'Annual library access fee',
-      amount: 50.00,
-      dueDate: new Date('2024-08-30'),
+      courseId: scienceCourse.id,
+      title: 'Tuition Fee - Science',
+      description: 'Monthly tuition fee for science course',
+      amount: 140.00,
+      currency: 'USD',
+      dueDate: new Date('2024-09-15'),
       status: 'PAID' as const,
-      paidDate: new Date('2024-08-25'),
+      paidDate: new Date('2024-09-10'),
       paidById: parent1.id,
+      paidAmount: 140.00,
+      month: 9,
+      year: 2024,
+      isRecurring: true,
     },
     {
       studentId: student2.id,
-      title: 'Tuition Fee - Semester 1',
-      description: 'Tuition fee for the first semester',
-      amount: 1500.00,
+      courseId: mathCourse.id,
+      title: 'Tuition Fee - Mathematics',
+      description: 'Monthly tuition fee for mathematics course',
+      amount: 150.00,
+      currency: 'USD',
       dueDate: new Date('2024-09-15'),
       status: 'PENDING' as const,
+      month: 9,
+      year: 2024,
+      isRecurring: true,
+    },
+    {
+      studentId: student2.id,
+      courseId: englishCourse.id,
+      title: 'Tuition Fee - English',
+      description: 'Monthly tuition fee for English literature course',
+      amount: 130.00,
+      currency: 'USD',
+      dueDate: new Date('2024-09-15'),
+      status: 'PROCESSING' as const,
+      paidDate: new Date('2024-09-12'),
+      paidById: parent2.id,
+      paidAmount: 130.00,
+      month: 9,
+      year: 2024,
+      isRecurring: true,
     },
     {
       studentId: student3.id,
-      title: 'Lab Fee',
-      description: 'Science laboratory equipment fee',
-      amount: 100.00,
-      dueDate: new Date('2024-09-01'),
+      courseId: scienceCourse.id,
+      title: 'Lab Fee - Science',
+      description: 'Science laboratory equipment and materials fee',
+      amount: 50.00,
+      currency: 'USD',
+      dueDate: new Date('2024-08-30'),
       status: 'OVERDUE' as const,
+      month: 8,
+      year: 2024,
+      isRecurring: false,
     },
   ];
 
@@ -368,6 +521,146 @@ async function main() {
   }
 
   console.log('✅ Sample fees created');
+
+  // Create sample salaries for teachers
+  const salaries = [
+    {
+      teacherId: teacher1.id,
+      title: 'Monthly Salary - September 2024',
+      description: 'Monthly salary for teaching mathematics',
+      amount: 3000.00,
+      currency: 'USD',
+      dueDate: new Date('2024-09-30'),
+      status: 'PENDING' as const,
+      month: 9,
+      year: 2024,
+      payType: 'MONTHLY' as const,
+      isRecurring: true,
+    },
+    {
+      teacherId: teacher2.id,
+      title: 'Monthly Salary - September 2024',
+      description: 'Monthly salary for teaching science and English',
+      amount: 3200.00,
+      currency: 'USD',
+      dueDate: new Date('2024-09-30'),
+      status: 'PAID' as const,
+      paidDate: new Date('2024-09-28'),
+      paidById: admin.id,
+      paidAmount: 3200.00,
+      month: 9,
+      year: 2024,
+      payType: 'MONTHLY' as const,
+      isRecurring: true,
+    },
+  ];
+
+  for (const salary of salaries) {
+    await prisma.salary.create({
+      data: salary,
+    });
+  }
+
+  console.log('✅ Sample salaries created');
+
+  // Create sample subscription for admin
+  const subscription = await prisma.subscription.create({
+    data: {
+      adminId: admin.id,
+      plan: 'MONTHLY',
+      amount: 29.99,
+      currency: 'USD',
+      startDate: new Date('2024-08-01'),
+      endDate: new Date('2024-09-01'),
+      status: 'ACTIVE',
+      paidAmount: 29.99,
+      paidDate: new Date('2024-07-30'),
+      paidById: admin.id,
+    },
+  });
+
+  console.log('✅ Sample subscription created');
+
+  // Create sample notifications
+  await prisma.notification.create({
+    data: {
+      type: NotificationType.FEE_DUE,
+      title: 'Fee Payment Due',
+      message: 'Mathematics tuition fee is due on September 15, 2024',
+      senderId: admin.id,
+      receiverId: parent1.id,
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      type: NotificationType.PROGRESS_UPDATE,
+      title: 'Progress Update',
+      message: 'Emma has completed her algebra fundamentals lesson with excellent performance',
+      senderId: teacher1.id,
+      receiverId: parent1.id,
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      type: NotificationType.SALARY_PAID,
+      title: 'Salary Payment Processed',
+      message: 'Your September 2024 salary has been processed and paid',
+      senderId: admin.id,
+      receiverId: teacher2.id,
+      isRead: true,
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      type: NotificationType.SUBSCRIPTION_DUE,
+      title: 'Subscription Renewal Due',
+      message: 'Your monthly subscription will expire on October 1, 2024. Please renew to continue using the system.',
+      senderId: developer.id,
+      receiverId: admin.id,
+    },
+  });
+
+  console.log('✅ Sample notifications created');
+
+  // Create user settings for some users
+  const userSettingsData = [
+    {
+      userId: admin.id,
+      enableNotifications: true,
+      emailNotifications: true,
+      parentRemarkNotifications: true,
+      timezone: 'America/New_York',
+      secretQuestion1: 'What is your favorite color?',
+      secretAnswer1: 'Blue',
+      secretQuestion2: 'What was your first pet\'s name?',
+      secretAnswer2: 'Buddy',
+    },
+    {
+      userId: parent1.id,
+      enableNotifications: true,
+      emailNotifications: true,
+      parentRemarkNotifications: true,
+      timezone: 'America/New_York',
+    },
+    {
+      userId: teacher1.id,
+      enableNotifications: true,
+      emailNotifications: false,
+      parentRemarkNotifications: true,
+      timezone: 'America/New_York',
+    },
+  ];
+
+  for (const userSetting of userSettingsData) {
+    await prisma.userSettings.create({
+      data: userSetting,
+    });
+  }
+
+  console.log('✅ Sample user settings created');
 
   console.log('🎉 Database seeding completed successfully!');
   console.log('\n📋 Login Credentials:');
