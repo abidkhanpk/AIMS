@@ -63,7 +63,6 @@ async function main() {
       qualification: 'Master of Science in Mathematics',
       payRate: 50.0,
       payType: 'MONTHLY',
-      payCurrency: 'USD',
     },
   });
 
@@ -82,7 +81,6 @@ async function main() {
       qualification: 'Master of Science in Physics',
       payRate: 55.0,
       payType: 'MONTHLY',
-      payCurrency: 'USD',
     },
   });
 

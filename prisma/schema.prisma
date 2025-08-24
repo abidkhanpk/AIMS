@@ -26,6 +26,8 @@ enum NotificationType {
   SUBSCRIPTION_PAID
   PAYMENT_PROCESSING
   PAYMENT_VERIFIED
+  SALARY_ADVANCE_APPROVED
+  SALARY_ADVANCE_REPAID
 }
 
 enum AttendanceStatus {
@@ -82,6 +84,35 @@ enum PayType {
   MONTHLY
 }
 
+enum FeeType {
+  ONCE
+  MONTHLY
+  BIMONTHLY
+  QUARTERLY
+  HALF_YEARLY
+  YEARLY
+}
+
+enum RelationType {
+  FATHER
+  MOTHER
+  GUARDIAN
+  UNCLE
+  AUNT
+  GRANDFATHER
+  GRANDMOTHER
+  BROTHER
+  SISTER
+  OTHER
+}
+
+enum SalaryAdvanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REPAID
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -132,6 +163,11 @@ model User {
   subscriptionPayments Subscription[]   @relation("SubscriptionPayments")
   studentAssignments2 Assignment[]      @relation("StudentAssignments")
   teacherAssignments2 Assignment[]      @relation("TeacherAssignments")
+  salaryAdvances     SalaryAdvance[]    @relation("TeacherAdvances")
+  approvedAdvances   SalaryAdvance[]    @relation("AdminApprovals")
+  feeDefinitions     FeeDefinition[]    @relation("StudentFeeDefinitions")
+  subscriptionRenewals SubscriptionRenewal[] @relation("AdminRenewals")
+  processedRenewals  SubscriptionRenewal[] @relation("DeveloperProcessed")
 }
 
 model Course {
@@ -148,6 +184,7 @@ model Course {
   progressRecords Progress[]
   assignments     Assignment[]
   fees            Fee[]
+  feeDefinitions  FeeDefinition[]
 }
 
 model Assignment {
@@ -192,9 +229,13 @@ model TeacherStudent {
 }
 
 model ParentStudent {
-  id        String @id @default(uuid())
-  parentId  String
-  studentId String
+  id           String       @id @default(uuid())
+  parentId     String
+  studentId    String
+  relationType RelationType @default(GUARDIAN) // Relation type (father, mother, guardian, etc.)
+  isPrimary    Boolean      @default(false)    // Primary contact for notifications
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   // Relations
   parent  User @relation("Parent", fields: [parentId], references: [id])
@@ -249,71 +290,157 @@ model ParentRemark {
   parent   User     @relation("ParentRemarks", fields: [parentId], references: [id])
 }
 
-model Fee {
-  id          String    @id @default(uuid())
-  studentId   String
-  courseId    String?   // Link to specific course/subject
-  title       String    // Fee title (e.g., "Tuition Fee", "Library Fee")
-  description String?   // Optional description
-  amount      Float     // Fee amount
-  currency    String    @default("USD") // Currency symbol/code
-  dueDate     DateTime  // Due date for payment
-  status      FeeStatus @default(PENDING)
-  paidDate    DateTime? // Date when fee was paid
-  paidById    String?   // Parent who paid the fee
+model FeeDefinition {
+  id              String    @id @default(uuid())
+  studentId       String
+  courseId        String?   // Link to specific course/subject
+  title           String    // Fee title (e.g., "Tuition Fee", "Library Fee")
+  description     String?   // Optional description
+  amount          Float     // Fee amount
+  currency        String    @default("USD") // Currency symbol/code
+  feeType         FeeType   @default(MONTHLY) // ONCE, MONTHLY, BIMONTHLY, QUARTERLY, HALF_YEARLY, YEARLY
+  generationDay   Int       @default(1) // Day of the month fee is generated (1-31)
+  startDate       DateTime  // Start date for calculating recurring cycles
+  endDate         DateTime? // Optional end date for fee definition
+  isActive        Boolean   @default(true) // Whether this fee definition is active
   
-  // Monthly fee tracking
-  month       Int?      // Month (1-12)
-  year        Int?      // Year
-  isRecurring Boolean   @default(false) // Is this a recurring monthly fee
-  
-  // Payment processing fields
-  paidAmount     Float?    // Amount actually paid
-  paymentDetails String?   // Payment details/remarks
-  paymentProof   String?   // Screenshot/proof file path
-  processedDate  DateTime? // Date when payment was processed by admin
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
-  student User    @relation("StudentFees", fields: [studentId], references: [id])
+  student User    @relation("StudentFeeDefinitions", fields: [studentId], references: [id])
   course  Course? @relation(fields: [courseId], references: [id])
-  paidBy  User?   @relation("FeePayments", fields: [paidById], references: [id])
+  fees    Fee[]   // Generated fees from this definition
+}
+
+model Fee {
+  id              String        @id @default(uuid())
+  studentId       String
+  courseId        String?       // Link to specific course/subject
+  feeDefinitionId String?       // Link to fee definition if generated from one
+  title           String        // Fee title (e.g., "Tuition Fee", "Library Fee")
+  description     String?       // Optional description
+  amount          Float         // Fee amount
+  currency        String        @default("USD") // Currency symbol/code
+  dueDate         DateTime      // Due date for payment
+  status          FeeStatus     @default(PENDING)
+  paidDate        DateTime?     // Date when fee was paid
+  paidById        String?       // Parent who paid the fee
+  
+  // Monthly fee tracking
+  month           Int?          // Month (1-12)
+  year            Int?          // Year
+  isRecurring     Boolean       @default(false) // Is this a recurring monthly fee
+  
+  // Payment processing fields
+  paidAmount      Float?        // Amount actually paid
+  paymentDetails  String?       // Payment details/remarks
+  paymentProof    String?       // Screenshot/proof file path
+  processedDate   DateTime?     // Date when payment was processed by admin
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  student       User           @relation("StudentFees", fields: [studentId], references: [id])
+  course        Course?        @relation(fields: [courseId], references: [id])
+  paidBy        User?          @relation("FeePayments", fields: [paidById], references: [id])
+  feeDefinition FeeDefinition? @relation(fields: [feeDefinitionId], references: [id])
+}
+
+model SalaryAdvance {
+  id              String              @id @default(uuid())
+  teacherId       String
+  requestedAmount Float               // Amount requested by teacher
+  approvedAmount  Float?              // Amount approved by admin (can be different)
+  reason          String              // Reason for advance request
+  repaymentMonths Int                 @default(1) // Number of months to repay
+  monthlyDeduction Float?             // Monthly deduction amount
+  status          SalaryAdvanceStatus @default(PENDING)
+  
+  // Approval details
+  approvedById    String?
+  approvedDate    DateTime?
+  rejectionReason String?
+  
+  // Repayment tracking
+  totalRepaid     Float               @default(0)
+  remainingAmount Float?              // Calculated field
+  isFullyRepaid   Boolean             @default(false)
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // Relations
+  teacher     User  @relation("TeacherAdvances", fields: [teacherId], references: [id])
+  approvedBy  User? @relation("AdminApprovals", fields: [approvedById], references: [id])
 }
 
 model Salary {
-  id          String       @id @default(uuid())
-  teacherId   String
-  title       String       // Salary title (e.g., "Monthly Salary", "Bonus")
-  description String?      // Optional description
-  amount      Float        // Salary amount
-  currency    String       @default("USD") // Currency symbol/code
-  dueDate     DateTime     // Due date for payment
-  status      SalaryStatus @default(PENDING)
-  paidDate    DateTime?    // Date when salary was paid
-  paidById    String?      // Admin who paid the salary
+  id              String       @id @default(uuid())
+  teacherId       String
+  title           String       // Salary title (e.g., "Monthly Salary", "Bonus")
+  description     String?      // Optional description
+  amount          Float        // Salary amount
+  currency        String       @default("USD") // Currency symbol/code
+  dueDate         DateTime     // Due date for payment
+  status          SalaryStatus @default(PENDING)
+  paidDate        DateTime?    // Date when salary was paid
+  paidById        String?      // Admin who paid the salary
   
   // Periodic salary tracking
-  month       Int?         // Month (1-12)
-  year        Int?         // Year
-  week        Int?         // Week number for weekly salaries
-  day         DateTime?    // Specific day for daily salaries
-  payType     PayType      @default(MONTHLY) // DAILY, WEEKLY, FORTNIGHTLY, MONTHLY
-  isRecurring Boolean      @default(true)    // Most salaries are recurring
+  month           Int?         // Month (1-12)
+  year            Int?         // Year
+  week            Int?         // Week number for weekly salaries
+  day             DateTime?    // Specific day for daily salaries
+  payType         PayType      @default(MONTHLY) // DAILY, WEEKLY, FORTNIGHTLY, MONTHLY
+  isRecurring     Boolean      @default(true)    // Most salaries are recurring
   
   // Payment processing fields
-  paidAmount     Float?    // Amount actually paid
-  paymentDetails String?   // Payment details/remarks
-  paymentProof   String?   // Screenshot/proof file path
-  processedDate  DateTime? // Date when payment was processed
+  paidAmount      Float?       // Amount actually paid
+  paymentDetails  String?      // Payment details/remarks
+  paymentProof    String?      // Screenshot/proof file path
+  processedDate   DateTime?    // Date when payment was processed
   
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  // Advance deduction tracking
+  advanceDeduction Float?      // Amount deducted for advance repayment
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   // Relations
   teacher User  @relation("TeacherSalaries", fields: [teacherId], references: [id])
   paidBy  User? @relation("SalaryPayments", fields: [paidById], references: [id])
+}
+
+model SubscriptionRenewal {
+  id              String             @id @default(uuid())
+  adminId         String
+  subscriptionId  String?            // Link to current subscription
+  plan            SubscriptionPlan
+  amount          Float
+  currency        String             @default("USD")
+  
+  // Payment processing fields
+  paidAmount      Float?             // Amount actually paid
+  paidDate        DateTime?          // Date when subscription was paid
+  paymentDetails  String?            // Payment details/remarks
+  paymentProof    String?            // Screenshot/proof file path
+  processedDate   DateTime?          // Date when payment was processed by developer
+  processedById   String?            // Developer who processed the payment
+  
+  // Extension details
+  extensionMonths Int?               // How many months/years to extend
+  newExpiryDate   DateTime?          // New expiry date after processing
+  
+  status          SubscriptionStatus @default(PENDING)
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  // Relations
+  admin       User  @relation("AdminRenewals", fields: [adminId], references: [id])
+  processedBy User? @relation("DeveloperProcessed", fields: [processedById], references: [id])
 }
 
 model Subscription {
@@ -333,6 +460,10 @@ model Subscription {
   paymentProof   String?   // Screenshot/proof file path
   processedDate  DateTime? // Date when payment was processed by developer
   paidById       String?   // Admin who paid the subscription
+  
+  // Disable tracking
+  wasDisabledDueToNonPayment Boolean @default(false) // Track if admin was disabled due to non-payment
+  wasManuallyDisabled        Boolean @default(false) // Track if admin was manually disabled
   
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt

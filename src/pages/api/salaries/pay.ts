@@ -18,10 +18,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ message: 'Only admins can pay salaries' });
   }
 
-  const { salaryId } = req.body;
+  const { salaryId, paidAmount, paymentDetails, paymentProof, advanceDeduction } = req.body;
 
-  if (!salaryId) {
-    return res.status(400).json({ message: 'Salary ID is required' });
+  if (!salaryId || !paidAmount) {
+    return res.status(400).json({ message: 'Salary ID and paid amount are required' });
   }
 
   try {
@@ -31,6 +31,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: salaryId,
         teacher: {
           adminId: session.user.id
+        },
+        status: {
+          in: ['PENDING', 'OVERDUE']
         }
       },
       include: {
@@ -45,24 +48,72 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!salary) {
-      return res.status(404).json({ message: 'Salary not found or access denied' });
+      return res.status(404).json({ message: 'Salary not found or not eligible for payment' });
     }
 
-    if (salary.status === 'PAID') {
-      return res.status(400).json({ message: 'Salary is already paid' });
+    // Handle advance deduction if provided
+    let finalPaidAmount = parseFloat(paidAmount);
+    let deductionAmount = 0;
+
+    if (advanceDeduction && parseFloat(advanceDeduction) > 0) {
+      deductionAmount = parseFloat(advanceDeduction);
+      finalPaidAmount = Math.max(0, finalPaidAmount - deductionAmount);
+
+      // Update advance repayment
+      const activeAdvance = await prisma.salaryAdvance.findFirst({
+        where: {
+          teacherId: salary.teacherId,
+          status: 'APPROVED',
+          isFullyRepaid: false,
+        },
+        orderBy: {
+          createdAt: 'asc'
+        }
+      });
+
+      if (activeAdvance && activeAdvance.remainingAmount && activeAdvance.remainingAmount > 0) {
+        const repaymentAmount = Math.min(deductionAmount, activeAdvance.remainingAmount);
+        const newTotalRepaid = activeAdvance.totalRepaid + repaymentAmount;
+        const newRemainingAmount = (activeAdvance.approvedAmount || 0) - newTotalRepaid;
+        const isFullyRepaid = newRemainingAmount <= 0;
+
+        await prisma.salaryAdvance.update({
+          where: { id: activeAdvance.id },
+          data: {
+            totalRepaid: newTotalRepaid,
+            remainingAmount: Math.max(0, newRemainingAmount),
+            isFullyRepaid,
+            status: isFullyRepaid ? 'REPAID' : 'APPROVED',
+          }
+        });
+
+        // Create notification for teacher if advance is fully repaid
+        if (isFullyRepaid) {
+          await prisma.notification.create({
+            data: {
+              type: 'SALARY_ADVANCE_REPAID',
+              title: 'Salary Advance Fully Repaid',
+              message: `Your salary advance has been fully repaid through salary deductions. Total amount: ${activeAdvance.approvedAmount}`,
+              senderId: session.user.id,
+              receiverId: salary.teacherId,
+            }
+          });
+        }
+      }
     }
 
-    if (salary.status === 'CANCELLED') {
-      return res.status(400).json({ message: 'Cannot pay a cancelled salary' });
-    }
-
-    // Update salary status to paid
+    // Update salary with payment information
     const updatedSalary = await prisma.salary.update({
       where: { id: salaryId },
       data: {
-        status: 'PAID',
-        paidDate: new Date(),
+        paidAmount: finalPaidAmount,
+        paymentDetails: paymentDetails || null,
+        paymentProof: paymentProof || null,
         paidById: session.user.id,
+        paidDate: new Date(),
+        processedDate: new Date(),
+        status: 'PAID',
+        advanceDeduction: deductionAmount > 0 ? deductionAmount : null,
       },
       include: {
         teacher: {
@@ -83,17 +134,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Create notification for teacher
+    let notificationMessage = `Your salary "${salary.title}" of ${salary.currency} ${finalPaidAmount} has been paid.`;
+    if (deductionAmount > 0) {
+      notificationMessage += ` (${salary.currency} ${deductionAmount} was deducted for advance repayment)`;
+    }
+
     await prisma.notification.create({
       data: {
         type: 'SALARY_PAID',
-        title: 'Salary Paid',
-        message: `Your salary "${salary.title}" of ${salary.currency} ${salary.amount} has been paid.`,
+        title: 'Salary Payment Processed',
+        message: notificationMessage,
         senderId: session.user.id,
-        receiverId: salary.teacher.id,
+        receiverId: salary.teacherId,
       }
     });
 
-    res.status(200).json(updatedSalary);
+    res.status(200).json({
+      message: 'Salary payment processed successfully',
+      salary: updatedSalary,
+      advanceDeduction: deductionAmount
+    });
   } catch (error) {
     console.error('Error processing salary payment:', error);
     res.status(500).json({ message: 'Internal server error' });

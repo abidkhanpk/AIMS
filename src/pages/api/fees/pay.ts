@@ -13,60 +13,89 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const { 
-    feeId, 
-    paidAmount, 
-    paymentDetails, 
-    paymentProof 
-  } = req.body;
+  const { feeId, paidAmount, paymentDetails, paymentProof } = req.body;
 
   if (!feeId || !paidAmount) {
     return res.status(400).json({ message: 'Fee ID and paid amount are required' });
   }
 
   try {
-    // Verify the fee exists and user has permission to pay it
-    const fee = await prisma.fee.findUnique({
-      where: { id: feeId },
-      include: {
-        student: {
-          include: {
-            studentParents: {
-              include: {
-                parent: true
-              }
+    // Verify fee exists and user has permission to pay it
+    let fee;
+    
+    if (session.user.role === 'PARENT') {
+      // Parent can pay fees for their children
+      const parentStudents = await prisma.parentStudent.findMany({
+        where: { parentId: session.user.id },
+        select: { studentId: true }
+      });
+
+      const studentIds = parentStudents.map(ps => ps.studentId);
+
+      fee = await prisma.fee.findFirst({
+        where: {
+          id: feeId,
+          studentId: {
+            in: studentIds
+          },
+          status: {
+            in: ['PENDING', 'OVERDUE']
+          }
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              adminId: true,
             }
           }
         }
-      }
-    });
+      });
+    } else if (session.user.role === 'STUDENT') {
+      // Student can pay their own fees
+      fee = await prisma.fee.findFirst({
+        where: {
+          id: feeId,
+          studentId: session.user.id,
+          status: {
+            in: ['PENDING', 'OVERDUE']
+          }
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              adminId: true,
+            }
+          }
+        }
+      });
+    } else {
+      return res.status(403).json({ message: 'Only parents and students can pay fees' });
+    }
 
     if (!fee) {
-      return res.status(404).json({ message: 'Fee not found' });
+      return res.status(404).json({ message: 'Fee not found or not eligible for payment' });
     }
 
-    // Check if user is a parent of the student or the student themselves
-    let hasPermission = false;
-    if (session.user.role === 'PARENT') {
-      hasPermission = fee.student.studentParents.some(sp => sp.parent.id === session.user.id);
-    } else if (session.user.role === 'STUDENT') {
-      hasPermission = fee.studentId === session.user.id;
-    }
-
-    if (!hasPermission) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!fee.student.adminId) {
+      return res.status(400).json({ message: 'Student has no assigned admin' });
     }
 
     // Update fee with payment information and set status to PROCESSING
     const updatedFee = await prisma.fee.update({
       where: { id: feeId },
       data: {
-        status: 'PROCESSING',
         paidAmount: parseFloat(paidAmount),
         paymentDetails: paymentDetails || null,
         paymentProof: paymentProof || null,
-        paidDate: new Date(),
         paidById: session.user.id,
+        paidDate: new Date(),
+        status: 'PROCESSING',
       },
       include: {
         student: {
@@ -74,7 +103,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             id: true,
             name: true,
             email: true,
-            adminId: true,
           }
         },
         paidBy: {
@@ -87,20 +115,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    // Create notification for admin about payment submission
-    if (fee.student.adminId) {
-      await prisma.notification.create({
-        data: {
-          type: 'PAYMENT_PROCESSING',
-          title: 'Fee Payment Submitted',
-          message: `Payment for "${fee.title}" (${fee.currency} ${paidAmount}) has been submitted by ${session.user.name} and is awaiting verification`,
-          senderId: session.user.id,
-          receiverId: fee.student.adminId,
-        }
-      });
+    // Create notification for admin about payment processing
+    await prisma.notification.create({
+      data: {
+        type: 'PAYMENT_PROCESSING',
+        title: 'Fee Payment Submitted',
+        message: `Payment of ${fee.currency} ${paidAmount} has been submitted for fee "${fee.title}" by ${session.user.name} for student ${fee.student.name}. Please review and confirm.`,
+        senderId: session.user.id,
+        receiverId: fee.student.adminId,
+      }
+    });
+
+    // Create notification for all linked parents about payment processing
+    const parentStudents = await prisma.parentStudent.findMany({
+      where: { studentId: fee.studentId },
+      include: { parent: true }
+    });
+
+    for (const parentStudent of parentStudents) {
+      // Don't notify the parent who made the payment
+      if (parentStudent.parent.id !== session.user.id) {
+        await prisma.notification.create({
+          data: {
+            type: 'PAYMENT_PROCESSING',
+            title: 'Fee Payment Processing',
+            message: `Payment for fee "${fee.title}" of ${fee.currency} ${paidAmount} is being processed for ${fee.student.name}.`,
+            senderId: session.user.id,
+            receiverId: parentStudent.parent.id,
+          }
+        });
+      }
     }
 
-    res.status(200).json(updatedFee);
+    res.status(200).json({
+      message: 'Payment submitted successfully and is being processed',
+      fee: updatedFee
+    });
   } catch (error) {
     console.error('Error processing fee payment:', error);
     res.status(500).json({ message: 'Internal server error' });
