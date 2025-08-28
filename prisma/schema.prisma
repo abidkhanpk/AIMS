@@ -82,6 +82,21 @@ enum PayType {
   MONTHLY
 }
 
+enum RelationType {
+  FATHER
+  MOTHER
+  GUARDIAN
+  STEPFATHER
+  STEPMOTHER
+  GRANDFATHER
+  GRANDMOTHER
+  UNCLE
+  AUNT
+  SIBLING
+  COUSIN
+  OTHER
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -192,9 +207,12 @@ model TeacherStudent {
 }
 
 model ParentStudent {
-  id        String @id @default(uuid())
-  parentId  String
-  studentId String
+  id           String       @id @default(uuid())
+  parentId     String
+  studentId    String
+  relationType RelationType @default(GUARDIAN)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   // Relations
   parent  User @relation("Parent", fields: [parentId], references: [id])

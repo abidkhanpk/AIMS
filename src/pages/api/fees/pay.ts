@@ -100,6 +100,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
+    // Notify all associated parents about the payment
+    const parentStudents = await prisma.parentStudent.findMany({
+      where: { studentId: fee.studentId },
+      include: { parent: true },
+    });
+
+    for (const parentStudent of parentStudents) {
+      // Don't send a notification to the parent who made the payment
+      if (parentStudent.parentId === session.user.id) continue;
+
+      await prisma.notification.create({
+        data: {
+          type: 'FEE_PAID',
+          title: 'Fee Payment Made',
+          message: `A payment of ${fee.currency} ${paidAmount} for "${fee.title}" has been made by ${session.user.name} for ${fee.student.name}`,
+          senderId: session.user.id,
+          receiverId: parentStudent.parentId,
+        },
+      });
+    }
+
     res.status(200).json(updatedFee);
   } catch (error) {
     console.error('Error processing fee payment:', error);

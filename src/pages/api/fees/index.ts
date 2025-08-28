@@ -35,6 +35,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 name: true,
                 email: true,
               }
+            },
+            course: {
+              select: {
+                id: true,
+                name: true,
+              }
             }
           },
           orderBy: {
@@ -70,6 +76,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 name: true,
                 email: true,
               }
+            },
+            course: {
+              select: {
+                id: true,
+                name: true,
+              }
             }
           },
           orderBy: {
@@ -95,6 +107,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 id: true,
                 name: true,
                 email: true,
+              }
+            },
+            course: {
+              select: {
+                id: true,
+                name: true,
               }
             }
           },
@@ -182,12 +200,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       });
 
-      // Create notification for parents
+      // Create notifications for ALL associated parents
       const parentStudents = await prisma.parentStudent.findMany({
         where: { studentId },
-        include: { parent: true }
+        include: { 
+          parent: {
+            select: {
+              id: true,
+              name: true,
+            }
+          }
+        }
       });
 
+      // Send notification to each associated parent
       for (const parentStudent of parentStudents) {
         await prisma.notification.create({
           data: {

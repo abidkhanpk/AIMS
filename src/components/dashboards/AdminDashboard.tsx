@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import ParentAssociationSubform from '../ParentAssociationSubform';
 import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, Modal, InputGroup } from 'react-bootstrap';
 import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType } from '@prisma/client';
 import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timezones';
@@ -907,6 +908,7 @@ function UserManagementTab({ role }: { role: Role }) {
   // Student-specific states
   const [studentAssignments, setStudentAssignments] = useState<Assignment[]>([]);
   const [studentFees, setStudentFees] = useState<Fee[]>([]);
+  const [parentAssociations, setParentAssociations] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState('basic');
 
   const config = roleConfig[role as keyof typeof roleConfig];
@@ -1018,22 +1020,34 @@ function UserManagementTab({ role }: { role: Role }) {
   const fetchStudentData = async (studentId: string) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/assignments');
-      if (res.ok) {
-        const assignmentsData = await res.json();
+      const [assignmentsRes, feesRes, associationsRes] = await Promise.all([
+        fetch('/api/assignments'),
+        fetch('/api/fees'),
+        fetch(`/api/users/parent-associations?studentId=${studentId}`),
+      ]);
+
+      if (assignmentsRes.ok) {
+        const assignmentsData = await assignmentsRes.json();
         setStudentAssignments(assignmentsData.filter((a: Assignment) => a.studentId === studentId));
       } else {
         setError('Failed to fetch assignments');
         setStudentAssignments([]);
       }
 
-      const feesRes = await fetch('/api/fees');
       if (feesRes.ok) {
         const feesData = await feesRes.json();
         setStudentFees(feesData.filter((f: Fee) => f.student.id === studentId));
       } else {
         setError('Failed to fetch student data');
         setStudentFees([]);
+      }
+
+      if (associationsRes.ok) {
+        const associationsData = await associationsRes.json();
+        setParentAssociations(associationsData);
+      } else {
+        setError('Failed to fetch parent associations');
+        setParentAssociations([]);
       }
     } catch (error) {
       console.error('Error fetching student data:', error);
@@ -1103,6 +1117,12 @@ function UserManagementTab({ role }: { role: Role }) {
   };
 
   const handleFeeChange = () => {
+    if (editingUser) {
+      fetchStudentData(editingUser.id);
+    }
+  };
+
+  const handleAssociationChange = () => {
     if (editingUser) {
       fetchStudentData(editingUser.id);
     }
@@ -1509,6 +1529,23 @@ function UserManagementTab({ role }: { role: Role }) {
                     studentId={editingUser.id}
                     fees={studentFees}
                     onFeeChange={handleFeeChange}
+                  />
+                )}
+              </Tab>
+
+              <Tab eventKey="parents" title={
+                <span>
+                  <i className="bi bi-people me-2"></i>
+                  Parent Associations
+                  {parentAssociations.length > 0 && (
+                    <Badge bg="info" className="ms-2">{parentAssociations.length}</Badge>
+                  )}
+                </span>
+              }>
+                {editingUser && (
+                  <ParentAssociationSubform 
+                    studentId={editingUser.id}
+                    onAssociationChange={handleAssociationChange}
                   />
                 )}
               </Tab>

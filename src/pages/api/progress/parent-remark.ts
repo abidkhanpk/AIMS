@@ -86,6 +86,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       notificationRecipients.push(progress.student.adminId);
     }
 
+    // Also notify all associated parents (except the one who made the remark)
+    const parentStudents = await prisma.parentStudent.findMany({
+      where: { studentId: progress.studentId },
+      select: { parentId: true },
+    });
+
+    for (const parentStudent of parentStudents) {
+      if (parentStudent.parentId !== session.user.id) {
+        notificationRecipients.push(parentStudent.parentId);
+      }
+    }
+
     for (const recipientId of notificationRecipients) {
       await prisma.notification.create({
         data: {
