@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const feeDefinitions = await prisma.feeDefinition.findMany();
+    const feeDefinitions: any[] = await (prisma as any).feeDefinition.findMany();
     const today = new Date();
 
     for (const fd of feeDefinitions) {
