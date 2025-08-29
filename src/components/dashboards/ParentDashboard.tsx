@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Alert, Spinner, Accordion, Button, Modal, Form, Tabs, Tab } from 'react-bootstrap';
 import { FeeStatus, AttendanceStatus } from '@prisma/client';
+import FeePaymentModal from './FeePaymentModal';
 
 interface Child {
   id: string;
@@ -77,7 +78,8 @@ export default function ParentDashboard() {
   const [addingRemark, setAddingRemark] = useState(false);
 
   // Fee payment states
-  const [payingFee, setPayingFee] = useState<string | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
 
   useEffect(() => {
     fetchChildren();
@@ -161,8 +163,12 @@ export default function ParentDashboard() {
     }
   };
 
-  const handlePayFee = async (feeId: string) => {
-    setPayingFee(feeId);
+  const handlePayFeeClick = (fee: Fee) => {
+    setSelectedFee(fee);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentDetails: any) => {
     setError('');
     setSuccess('');
 
@@ -170,20 +176,18 @@ export default function ParentDashboard() {
       const res = await fetch('/api/fees/pay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feeId }),
+        body: JSON.stringify(paymentDetails),
       });
 
       if (res.ok) {
-        setSuccess('Fee payment processed successfully!');
+        setSuccess('Fee payment submitted successfully! Awaiting admin verification.');
         fetchFees(); // Refresh fees data
       } else {
         const errorData = await res.json();
-        setError(errorData.message || 'Failed to process payment');
+        setError(errorData.message || 'Failed to submit payment');
       }
     } catch (error) {
-      setError('Error processing payment');
-    } finally {
-      setPayingFee(null);
+      setError('Error submitting payment');
     }
   };
 
@@ -221,6 +225,8 @@ export default function ParentDashboard() {
         return <Badge bg="success">Paid</Badge>;
       case 'PENDING':
         return <Badge bg="warning">Pending</Badge>;
+      case 'PROCESSING':
+        return <Badge bg="info">Processing</Badge>;
       case 'OVERDUE':
         return <Badge bg="danger">Overdue</Badge>;
       case 'CANCELLED':
@@ -549,32 +555,15 @@ export default function ParentDashboard() {
                             </td>
                             <td>{getStatusBadge(fee.status)}</td>
                             <td>
-                              {fee.status === 'PENDING' || fee.status === 'OVERDUE' ? (
+                              {(fee.status === 'PENDING' || fee.status === 'OVERDUE') && (
                                 <Button
                                   variant="success"
                                   size="sm"
-                                  onClick={() => handlePayFee(fee.id)}
-                                  disabled={payingFee === fee.id}
+                                  onClick={() => handlePayFeeClick(fee)}
                                 >
-                                  {payingFee === fee.id ? (
-                                    <>
-                                      <Spinner animation="border" size="sm" className="me-1" />
-                                      Processing...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <i className="bi bi-credit-card me-1"></i>
-                                      Pay Now
-                                    </>
-                                  )}
+                                  <i className="bi bi-credit-card me-1"></i>
+                                  Pay Now
                                 </Button>
-                              ) : fee.status === 'PAID' ? (
-                                <Badge bg="success">
-                                  <i className="bi bi-check-circle me-1"></i>
-                                  Paid
-                                </Badge>
-                              ) : (
-                                <Badge bg="secondary">{fee.status}</Badge>
                               )}
                             </td>
                           </tr>
@@ -650,6 +639,15 @@ export default function ParentDashboard() {
           </Form>
         </Modal.Body>
       </Modal>
+
+      {selectedFee && (
+        <FeePaymentModal
+          show={showPaymentModal}
+          onHide={() => setShowPaymentModal(false)}
+          fee={selectedFee}
+          onPaymentSubmit={handlePaymentSubmit}
+        />
+      )}
     </div>
   );
 }

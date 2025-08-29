@@ -35,6 +35,15 @@ enum AttendanceStatus {
   EXCUSED
 }
 
+enum FeeType {
+  ONCE
+  MONTHLY
+  BIMONTHLY
+  QUARTERLY
+  HALFYEARLY
+  YEARLY
+}
+
 enum FeeStatus {
   PENDING
   PROCESSING

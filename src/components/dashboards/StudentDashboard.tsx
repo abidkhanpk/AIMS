@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Table, Badge, Alert, Spinner, ProgressBar } from 'react-bootstrap';
+import { Card, Row, Col, Table, Badge, Alert, Spinner, ProgressBar, Tabs, Tab, Button } from 'react-bootstrap';
+import FeePaymentModal from './FeePaymentModal';
+import { FeeStatus } from '@prisma/client';
 
 interface StudentData {
   id: string;
@@ -63,14 +65,45 @@ interface Assignment {
   };
 }
 
+interface Fee {
+  id: string;
+  dueDate: string;
+  status: FeeStatus;
+  paidDate?: string;
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  paidBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  feeDefinition: {
+    title: string;
+    description?: string;
+    amount: number;
+    currency: string;
+  };
+}
+
 export default function StudentDashboard() {
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [fees, setFees] = useState<Fee[]>([]);
   const [loading, setLoading] = useState(true);
+  const [feesLoading, setFeesLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Fee payment states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedFee, setSelectedFee] = useState<Fee | null>(null);
 
   useEffect(() => {
     fetchStudentData();
+    fetchFees();
   }, []);
 
   const fetchStudentData = async () => {
@@ -99,6 +132,53 @@ export default function StudentDashboard() {
       setError('Error fetching student data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFees = async () => {
+    try {
+      setFeesLoading(true);
+      const res = await fetch('/api/fees');
+      if (res.ok) {
+        const data = await res.json();
+        setFees(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch fees');
+        setFees([]);
+      }
+    } catch (error) {
+      console.error('Error fetching fees');
+      setFees([]);
+    } finally {
+      setFeesLoading(false);
+    }
+  };
+
+  const handlePayFeeClick = (fee: Fee) => {
+    setSelectedFee(fee);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentDetails: any) => {
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/fees/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentDetails),
+      });
+
+      if (res.ok) {
+        setSuccess('Fee payment submitted successfully! Awaiting admin verification.');
+        fetchFees(); // Refresh fees data
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to submit payment');
+      }
+    } catch (error) {
+      setError('Error submitting payment');
     }
   };
 
@@ -151,6 +231,23 @@ export default function StudentDashboard() {
     }
   };
 
+  const getStatusBadge = (status: FeeStatus) => {
+    switch (status) {
+      case 'PAID':
+        return <Badge bg="success">Paid</Badge>;
+      case 'PENDING':
+        return <Badge bg="warning">Pending</Badge>;
+      case 'PROCESSING':
+        return <Badge bg="info">Processing</Badge>;
+      case 'OVERDUE':
+        return <Badge bg="danger">Overdue</Badge>;
+      case 'CANCELLED':
+        return <Badge bg="secondary">Cancelled</Badge>;
+      default:
+        return <Badge bg="secondary">{status}</Badge>;
+    }
+  };
+
   const getCurrencySymbol = (currencyCode: string) => {
     const currencies = [
       { code: 'USD', symbol: '$' },
@@ -200,100 +297,314 @@ export default function StudentDashboard() {
       </div>
 
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      {/* Overall Progress Card */}
-      <Row className="mb-4">
-        <Col>
-          <Card className="shadow-sm">
-            <Card.Body>
-              <Row className="align-items-center">
-                <Col md={8}>
-                  <h5 className="mb-1">Welcome back, {studentData.name}!</h5>
-                  <p className="text-muted mb-0">Here&apos;s your overall academic progress</p>
-                </Col>
-                <Col md={4} className="text-md-end">
-                  {overallProgress !== null ? (
-                    <div>
-                      <h3 className={`mb-0 text-${getProgressVariant(overallProgress)}`}>
-                        {overallProgress}%
-                      </h3>
-                      <small className="text-muted">Overall Progress</small>
+      <Tabs defaultActiveKey="progress" id="student-dashboard-tabs" className="mb-4">
+        <Tab eventKey="progress" title="Progress">
+          {/* Overall Progress Card */}
+          <Row className="mb-4">
+            <Col>
+              <Card className="shadow-sm">
+                <Card.Body>
+                  <Row className="align-items-center">
+                    <Col md={8}>
+                      <h5 className="mb-1">Welcome back, {studentData.name}!</h5>
+                      <p className="text-muted mb-0">Here&apos;s your overall academic progress</p>
+                    </Col>
+                    <Col md={4} className="text-md-end">
+                      {overallProgress !== null ? (
+                        <div>
+                          <h3 className={`mb-0 text-${getProgressVariant(overallProgress)}`}>
+                            {overallProgress}%
+                          </h3>
+                          <small className="text-muted">Overall Progress</small>
+                        </div>
+                      ) : (
+                        <div>
+                          <h5 className="mb-0 text-muted">No Data</h5>
+                          <small className="text-muted">No progress recorded yet</small>
+                        </div>
+                      )}
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+
+          {/* Current Assignments */}
+          <Row className="mb-4">
+            <Col>
+              <Card className="shadow-sm">
+                <Card.Header className="bg-primary text-white">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <h6 className="mb-0">
+                      <i className="bi bi-list-task me-2"></i>
+                      Current Assignments
+                    </h6>
+                    <Badge bg="light" text="dark">{assignments.length}</Badge>
+                  </div>
+                </Card.Header>
+                <Card.Body>
+                  {assignments.length === 0 ? (
+                    <div className="text-center py-4">
+                      <i className="bi bi-list-task display-6 text-muted"></i>
+                      <h5 className="mt-3 text-muted">No Assignments Found</h5>
+                      <p className="text-muted">You don&apos;t have any assignments yet. Please contact your administrator to get assigned to subjects and teachers.</p>
                     </div>
                   ) : (
-                    <div>
-                      <h5 className="mb-0 text-muted">No Data</h5>
-                      <small className="text-muted">No progress recorded yet</small>
+                    <div className="table-responsive">
+                      <Table hover className="mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Subject</th>
+                            <th>Teacher</th>
+                            <th>Schedule</th>
+                            <th>Class Days</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {assignments.map((assignment) => (
+                            <tr key={assignment.id}>
+                              <td className="fw-medium">{assignment.course?.name}</td>
+                              <td className="text-muted">{assignment.teacher?.name}</td>
+                              <td className="small">
+                                {assignment.startTime && (
+                                  <div><strong>Time:</strong> {assignment.startTime}</div>
+                                )}
+                                {assignment.duration && (
+                                  <div><strong>Duration:</strong> {assignment.duration} minutes</div>
+                                )}
+                              </td>
+                              <td className="small">
+                                {assignment.classDays && assignment.classDays.length > 0 ? (
+                                  <div className="d-flex flex-wrap gap-1">
+                                    {assignment.classDays.map(day => (
+                                      <Badge key={day} bg="secondary" className="small">
+                                        {day.substring(0, 3)}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted">Not specified</span>
+                                )}
+                              </td>
+                              <td>
+                                <Badge bg={assignment.isActive ? 'success' : 'secondary'}>
+                                  {assignment.isActive ? 'Active' : 'Inactive'}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
                     </div>
                   )}
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
 
-      {/* Current Assignments */}
-      <Row className="mb-4">
-        <Col>
+          {/* Subjects Progress */}
+          {!studentData.studentCourses || studentData.studentCourses.length === 0 ? (
+            <Card className="text-center py-5">
+              <Card.Body>
+                <i className="bi bi-book display-4 text-muted"></i>
+                <h4 className="mt-3 text-muted">No Subjects Assigned</h4>
+                <p className="text-muted">You don&apos;t have any subjects assigned yet. Please contact your administrator.</p>
+              </Card.Body>
+            </Card>
+          ) : (
+            <Row className="g-4">
+              {studentData.studentCourses.map(({ course }) => {
+                const latestProgress = getLatestProgress(course.id);
+                const allProgress = getProgressForCourse(course.id);
+                
+                return (
+                  <Col key={course.id} lg={6}>
+                    <Card className="h-100 shadow-sm">
+                      <Card.Header className="bg-light">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <h6 className="mb-0 fw-bold">{course.name}</h6>
+                            {course.description && (
+                              <small className="text-muted">{course.description}</small>
+                            )}
+                          </div>
+                          <div className="text-end">
+                            {latestProgress && latestProgress.lessonProgress !== null ? (
+                              <div>
+                                <Badge bg={getProgressVariant(latestProgress.lessonProgress)} className="fs-6">
+                                  {latestProgress.lessonProgress}%
+                                </Badge>
+                                <div className="small text-muted mt-1">Current Progress</div>
+                              </div>
+                            ) : (
+                              <Badge bg="secondary">No Progress</Badge>
+                            )}
+                          </div>
+                        </div>
+                        {latestProgress && latestProgress.lessonProgress !== null && (
+                          <div className="mt-2">
+                            <ProgressBar 
+                              now={latestProgress.lessonProgress} 
+                              variant={getProgressVariant(latestProgress.lessonProgress)}
+                              style={{ height: '8px' }}
+                            />
+                          </div>
+                        )}
+                      </Card.Header>
+                      <Card.Body>
+                        {allProgress.length === 0 ? (
+                          <div className="text-center py-3">
+                            <i className="bi bi-graph-up display-6 text-muted"></i>
+                            <p className="mt-2 text-muted">No progress updates yet</p>
+                            <small className="text-muted">Your teacher will update your progress soon</small>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                              <h6 className="mb-0">Progress History</h6>
+                              <Badge bg="info">{allProgress.length} Updates</Badge>
+                            </div>
+                            <div className="table-responsive">
+                              <Table size="sm" className="mb-0">
+                                <thead className="table-light">
+                                  <tr>
+                                    <th>Date</th>
+                                    <th>Teacher</th>
+                                    <th>Lesson</th>
+                                    <th>Progress</th>
+                                    <th>Score</th>
+                                    <th>Attendance</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {allProgress.slice(0, 5).map((progress) => (
+                                    <tr key={progress.id}>
+                                      <td className="text-muted small">
+                                        {new Date(progress.date).toLocaleDateString()}
+                                      </td>
+                                      <td className="fw-medium small">
+                                        {progress.teacher.name}
+                                      </td>
+                                      <td className="small">
+                                        {progress.lesson ? (
+                                          <span className="text-muted">
+                                            {progress.lesson.length > 20 
+                                              ? progress.lesson.substring(0, 20) + '...'
+                                              : progress.lesson
+                                            }
+                                          </span>
+                                        ) : (
+                                          <span className="text-muted">-</span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        {progress.lessonProgress !== null ? (
+                                          <Badge 
+                                            bg={getProgressVariant(progress.lessonProgress)}
+                                            className="small"
+                                          >
+                                            {progress.lessonProgress}%
+                                          </Badge>
+                                        ) : (
+                                          <span className="text-muted small">-</span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        {progress.score !== null ? (
+                                          <Badge bg="success" className="small">
+                                            {progress.score}
+                                          </Badge>
+                                        ) : (
+                                          <span className="text-muted small">-</span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        {getAttendanceBadge(progress.attendance)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </Table>
+                              {allProgress.length > 5 && (
+                                <div className="text-center mt-2">
+                                  <small className="text-muted">
+                                    Showing latest 5 of {allProgress.length} updates
+                                  </small>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+          )}
+        </Tab>
+        <Tab eventKey="fees" title="Fees">
           <Card className="shadow-sm">
-            <Card.Header className="bg-primary text-white">
+            <Card.Header className="bg-light">
               <div className="d-flex justify-content-between align-items-center">
                 <h6 className="mb-0">
-                  <i className="bi bi-list-task me-2"></i>
-                  Current Assignments
+                  <i className="bi bi-cash-coin me-2"></i>
+                  Fee Management
                 </h6>
-                <Badge bg="light" text="dark">{assignments.length}</Badge>
+                <Badge bg="warning">{fees.length} Total</Badge>
               </div>
             </Card.Header>
-            <Card.Body>
-              {assignments.length === 0 ? (
+            <Card.Body className="p-0">
+              {feesLoading ? (
                 <div className="text-center py-4">
-                  <i className="bi bi-list-task display-6 text-muted"></i>
-                  <h5 className="mt-3 text-muted">No Assignments Found</h5>
-                  <p className="text-muted">You don&apos;t have any assignments yet. Please contact your administrator to get assigned to subjects and teachers.</p>
+                  <Spinner animation="border" size="sm" />
+                  <p className="mt-2 text-muted small">Loading fees...</p>
+                </div>
+              ) : fees.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className="bi bi-cash-coin display-6 text-muted"></i>
+                  <p className="mt-2 text-muted small">No fees found</p>
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <Table hover className="mb-0">
+                  <Table hover size="sm" className="mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Subject</th>
-                        <th>Teacher</th>
-                        <th>Schedule</th>
-                        <th>Class Days</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
                         <th>Status</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {assignments.map((assignment) => (
-                        <tr key={assignment.id}>
-                          <td className="fw-medium">{assignment.course?.name}</td>
-                          <td className="text-muted">{assignment.teacher?.name}</td>
-                          <td className="small">
-                            {assignment.startTime && (
-                              <div><strong>Time:</strong> {assignment.startTime}</div>
-                            )}
-                            {assignment.duration && (
-                              <div><strong>Duration:</strong> {assignment.duration} minutes</div>
-                            )}
+                      {fees.map((fee) => (
+                        <tr key={fee.id}>
+                          <td>{fee.feeDefinition.title}</td>
+                          <td className="text-muted small">
+                            {fee.feeDefinition.description || '-'}
                           </td>
-                          <td className="small">
-                            {assignment.classDays && assignment.classDays.length > 0 ? (
-                              <div className="d-flex flex-wrap gap-1">
-                                {assignment.classDays.map(day => (
-                                  <Badge key={day} bg="secondary" className="small">
-                                    {day.substring(0, 3)}
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-muted">Not specified</span>
-                            )}
+                          <td className="fw-bold text-success">{getCurrencySymbol(fee.feeDefinition.currency)}{fee.feeDefinition.amount.toFixed(2)}</td>
+                          <td className="text-muted small">
+                            {new Date(fee.dueDate).toLocaleDateString()}
                           </td>
+                          <td>{getStatusBadge(fee.status)}</td>
                           <td>
-                            <Badge bg={assignment.isActive ? 'success' : 'secondary'}>
-                              {assignment.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
+                            {(fee.status === 'PENDING' || fee.status === 'OVERDUE') && (
+                              <Button
+                                variant="success"
+                                size="sm"
+                                onClick={() => handlePayFeeClick(fee)}
+                              >
+                                <i className="bi bi-credit-card me-1"></i>
+                                Pay Now
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -303,149 +614,8 @@ export default function StudentDashboard() {
               )}
             </Card.Body>
           </Card>
-        </Col>
-      </Row>
-
-      {/* Subjects Progress */}
-      {!studentData.studentCourses || studentData.studentCourses.length === 0 ? (
-        <Card className="text-center py-5">
-          <Card.Body>
-            <i className="bi bi-book display-4 text-muted"></i>
-            <h4 className="mt-3 text-muted">No Subjects Assigned</h4>
-            <p className="text-muted">You don&apos;t have any subjects assigned yet. Please contact your administrator.</p>
-          </Card.Body>
-        </Card>
-      ) : (
-        <Row className="g-4">
-          {studentData.studentCourses.map(({ course }) => {
-            const latestProgress = getLatestProgress(course.id);
-            const allProgress = getProgressForCourse(course.id);
-            
-            return (
-              <Col key={course.id} lg={6}>
-                <Card className="h-100 shadow-sm">
-                  <Card.Header className="bg-light">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <h6 className="mb-0 fw-bold">{course.name}</h6>
-                        {course.description && (
-                          <small className="text-muted">{course.description}</small>
-                        )}
-                      </div>
-                      <div className="text-end">
-                        {latestProgress && latestProgress.lessonProgress !== null ? (
-                          <div>
-                            <Badge bg={getProgressVariant(latestProgress.lessonProgress)} className="fs-6">
-                              {latestProgress.lessonProgress}%
-                            </Badge>
-                            <div className="small text-muted mt-1">Current Progress</div>
-                          </div>
-                        ) : (
-                          <Badge bg="secondary">No Progress</Badge>
-                        )}
-                      </div>
-                    </div>
-                    {latestProgress && latestProgress.lessonProgress !== null && (
-                      <div className="mt-2">
-                        <ProgressBar 
-                          now={latestProgress.lessonProgress} 
-                          variant={getProgressVariant(latestProgress.lessonProgress)}
-                          style={{ height: '8px' }}
-                        />
-                      </div>
-                    )}
-                  </Card.Header>
-                  <Card.Body>
-                    {allProgress.length === 0 ? (
-                      <div className="text-center py-3">
-                        <i className="bi bi-graph-up display-6 text-muted"></i>
-                        <p className="mt-2 text-muted">No progress updates yet</p>
-                        <small className="text-muted">Your teacher will update your progress soon</small>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <h6 className="mb-0">Progress History</h6>
-                          <Badge bg="info">{allProgress.length} Updates</Badge>
-                        </div>
-                        <div className="table-responsive">
-                          <Table size="sm" className="mb-0">
-                            <thead className="table-light">
-                              <tr>
-                                <th>Date</th>
-                                <th>Teacher</th>
-                                <th>Lesson</th>
-                                <th>Progress</th>
-                                <th>Score</th>
-                                <th>Attendance</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {allProgress.slice(0, 5).map((progress) => (
-                                <tr key={progress.id}>
-                                  <td className="text-muted small">
-                                    {new Date(progress.date).toLocaleDateString()}
-                                  </td>
-                                  <td className="fw-medium small">
-                                    {progress.teacher.name}
-                                  </td>
-                                  <td className="small">
-                                    {progress.lesson ? (
-                                      <span className="text-muted">
-                                        {progress.lesson.length > 20 
-                                          ? progress.lesson.substring(0, 20) + '...'
-                                          : progress.lesson
-                                        }
-                                      </span>
-                                    ) : (
-                                      <span className="text-muted">-</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    {progress.lessonProgress !== null ? (
-                                      <Badge 
-                                        bg={getProgressVariant(progress.lessonProgress)}
-                                        className="small"
-                                      >
-                                        {progress.lessonProgress}%
-                                      </Badge>
-                                    ) : (
-                                      <span className="text-muted small">-</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    {progress.score !== null ? (
-                                      <Badge bg="success" className="small">
-                                        {progress.score}
-                                      </Badge>
-                                    ) : (
-                                      <span className="text-muted small">-</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    {getAttendanceBadge(progress.attendance)}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </Table>
-                          {allProgress.length > 5 && (
-                            <div className="text-center mt-2">
-                              <small className="text-muted">
-                                Showing latest 5 of {allProgress.length} updates
-                              </small>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </Card.Body>
-                </Card>
-              </Col>
-            );
-          })}
-        </Row>
-      )}
+        </Tab>
+      </Tabs>
 
       {/* Recent Activity Summary */}
       {studentData.progressRecords && studentData.progressRecords.length > 0 && (
@@ -489,6 +659,15 @@ export default function StudentDashboard() {
             </Card>
           </Col>
         </Row>
+      )}
+
+      {selectedFee && (
+        <FeePaymentModal
+          show={showPaymentModal}
+          onHide={() => setShowPaymentModal(false)}
+          fee={selectedFee}
+          onPaymentSubmit={handlePaymentSubmit}
+        />
       )}
     </div>
   );

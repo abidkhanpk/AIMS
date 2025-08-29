@@ -1,129 +1,73 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]';
-import { prisma } from '../../../lib/prisma';
+import { getSession } from 'next-auth/react';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
+  const session = await getSession({ req });
 
-  const session = await getServerSession(req, res, authOptions);
   if (!session) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const { 
-    feeId, 
-    paidAmount, 
-    paymentDetails, 
-    paymentProof 
-  } = req.body;
-
-  if (!feeId || !paidAmount) {
-    return res.status(400).json({ message: 'Fee ID and paid amount are required' });
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).end('Method Not Allowed');
   }
 
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+  });
+
+  if (!user) {
+    return res.status(403).json({ message: 'Forbidden' });
+  }
+
+  const { feeId, amount, paidDate, paymentDetails, paymentProof } = req.body;
+
   try {
-    // Verify the fee exists and user has permission to pay it
     const fee = await prisma.fee.findUnique({
       where: { id: feeId },
-      include: {
-        student: {
-          include: {
-            studentParents: {
-              include: {
-                parent: true
-              }
-            }
-          }
-        }
-      }
+      include: { feeDefinition: true },
     });
 
-    if (!fee) {
+    if (!fee || (fee.studentId !== user.id && user.role !== 'PARENT')) {
       return res.status(404).json({ message: 'Fee not found' });
     }
 
-    // Check if user is a parent of the student or the student themselves
-    let hasPermission = false;
-    if (session.user.role === 'PARENT') {
-      hasPermission = fee.student.studentParents.some(sp => sp.parent.id === session.user.id);
-    } else if (session.user.role === 'STUDENT') {
-      hasPermission = fee.studentId === session.user.id;
-    }
-
-    if (!hasPermission) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    // Update fee with payment information and set status to PROCESSING
     const updatedFee = await prisma.fee.update({
       where: { id: feeId },
       data: {
+        paidAmount: parseFloat(amount),
+        paidDate: new Date(paidDate),
+        paymentDetails,
+        paymentProof,
         status: 'PROCESSING',
-        paidAmount: parseFloat(paidAmount),
-        paymentDetails: paymentDetails || null,
-        paymentProof: paymentProof || null,
-        paidDate: new Date(),
-        paidById: session.user.id,
+        paidById: user.id,
       },
-      include: {
-        student: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            adminId: true,
-          }
-        },
-        paidBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
-        }
-      }
     });
 
-    // Create notification for admin about payment submission
-    if (fee.student.adminId) {
-      await prisma.notification.create({
-        data: {
-          type: 'PAYMENT_PROCESSING',
-          title: 'Fee Payment Submitted',
-          message: `Payment for "${fee.title}" (${fee.currency} ${paidAmount}) has been submitted by ${session.user.name} and is awaiting verification`,
-          senderId: session.user.id,
-          receiverId: fee.student.adminId,
-        }
-      });
-    }
-
-    // Notify all associated parents about the payment
-    const parentStudents = await prisma.parentStudent.findMany({
-      where: { studentId: fee.studentId },
-      include: { parent: true },
+    // Notify admin
+    const admin = await prisma.user.findUnique({
+        where: { id: fee.feeDefinition.adminId },
     });
 
-    for (const parentStudent of parentStudents) {
-      // Don't send a notification to the parent who made the payment
-      if (parentStudent.parentId === session.user.id) continue;
-
-      await prisma.notification.create({
-        data: {
-          type: 'FEE_PAID',
-          title: 'Fee Payment Made',
-          message: `A payment of ${fee.currency} ${paidAmount} for "${fee.title}" has been made by ${session.user.name} for ${fee.student.name}`,
-          senderId: session.user.id,
-          receiverId: parentStudent.parentId,
-        },
-      });
+    if (admin) {
+        await prisma.notification.create({
+            data: {
+                type: 'PAYMENT_PROCESSING',
+                title: 'Fee Payment Submitted',
+                message: `A fee payment for ${fee.feeDefinition.title} has been submitted by ${user.name}.`,
+                senderId: user.id,
+                receiverId: admin.id,
+            },
+        });
     }
 
-    res.status(200).json(updatedFee);
+    return res.status(200).json(updatedFee);
   } catch (error) {
     console.error('Error processing fee payment:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 }
