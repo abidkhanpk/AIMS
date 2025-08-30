@@ -9,25 +9,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).end('Method Not Allowed');
   }
 
-  // Add a secret to protect the endpoint
   const { secret } = req.body;
   if (secret !== process.env.CRON_SECRET) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
   try {
-    const feeDefinitions: any[] = await (prisma as any).feeDefinition.findMany();
+    const studentFeeDefinitions = await prisma.studentFeeDefinition.findMany({
+      include: {
+        student: true,
+        feeDefinition: true,
+      },
+    });
+
     const today = new Date();
 
-    for (const fd of feeDefinitions) {
-      const generationDay = fd.generationDay;
-      const startDate = new Date(fd.startDate);
+    for (const sfd of studentFeeDefinitions) {
+      const { student, feeDefinition } = sfd;
+      if (!feeDefinition) continue;
+
+      const { generationDay, startDate, type, title, amount, currency, id: feeDefinitionId } = feeDefinition;
 
       if (today.getDate() === generationDay) {
         let shouldGenerate = false;
         let dueDate = new Date();
 
-        switch (fd.type) {
+        switch (type) {
           case 'ONCE':
             if (
               startDate.getFullYear() === today.getFullYear() &&
@@ -69,10 +76,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         if (shouldGenerate) {
-          // Check if a fee has already been generated for this period
           const existingFee = await prisma.fee.findFirst({
             where: {
-              feeDefinitionId: fd.id,
+              feeDefinitionId: feeDefinitionId,
+              studentId: student.id,
               dueDate: {
                 gte: new Date(today.getFullYear(), today.getMonth(), 1),
                 lt: new Date(today.getFullYear(), today.getMonth() + 1, 1),
@@ -83,9 +90,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (!existingFee) {
             await prisma.fee.create({
               data: {
-                studentId: fd.studentId,
-                feeDefinitionId: fd.id,
-                dueDate,
+                studentId: student.id,
+                feeDefinitionId: feeDefinitionId,
+                title: title,
+                amount: amount,
+                currency: currency,
+                dueDate: dueDate,
                 status: 'PENDING',
               },
             });

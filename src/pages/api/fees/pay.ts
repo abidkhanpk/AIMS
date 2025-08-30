@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getSession({ req });
 
-  if (!session) {
+  if (!session || !session.user || !session.user.email) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
@@ -48,21 +48,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    // Notify admin
-    const admin = await prisma.user.findUnique({
-        where: { id: fee.feeDefinition.adminId },
-    });
-
-    if (admin) {
-        await prisma.notification.create({
-            data: {
-                type: 'PAYMENT_PROCESSING',
-                title: 'Fee Payment Submitted',
-                message: `A fee payment for ${fee.feeDefinition.title} has been submitted by ${user.name}.`,
-                senderId: user.id,
-                receiverId: admin.id,
-            },
+    if (fee.feeDefinition) {
+        const admin = await prisma.user.findUnique({
+            where: { id: fee.feeDefinition.adminId },
         });
+
+        if (admin) {
+            await prisma.notification.create({
+                data: {
+                    type: 'PAYMENT_PROCESSING',
+                    title: 'Fee Payment Submitted',
+                    message: `A fee payment for ${fee.title} has been submitted by ${user.name}.`,
+                    senderId: user.id,
+                    receiverId: admin.id,
+                },
+            });
+        }
     }
 
     return res.status(200).json(updatedFee);

@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getSession({ req });
 
-  if (!session) {
+  if (!session || !session.user || !session.user.email) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       include: { feeDefinition: true, student: true },
     });
 
-    if (!fee || fee.feeDefinition.adminId !== (user.role === 'ADMIN' ? user.id : user.adminId)) {
+    if (!fee || !fee.feeDefinition || fee.feeDefinition.adminId !== (user.role === 'ADMIN' ? user.id : user.adminId)) {
       return res.status(404).json({ message: 'Fee not found' });
     }
 
@@ -50,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             data: {
                 type: 'PAYMENT_VERIFIED',
                 title: 'Fee Payment Verified',
-                message: `Your fee payment for ${fee.feeDefinition.title} has been verified.`,
+                message: `Your fee payment for ${fee.title} has been verified.`,
                 senderId: user.id,
                 receiverId: fee.paidById,
             },

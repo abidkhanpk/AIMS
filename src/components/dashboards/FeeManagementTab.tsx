@@ -12,14 +12,7 @@ interface FeeDefinition {
   type: FeeType;
   generationDay: number;
   startDate: string;
-  student: {
-    id: string;
-    name: string;
-  };
-  course?: {
-    id: string;
-    name: string;
-  };
+  studentFeeDefinitions: { student: { id: string; name: string; } }[];
 }
 
 interface Student {
@@ -52,8 +45,7 @@ const FeeManagementTab = () => {
   const [type, setType] = useState<FeeType>('MONTHLY');
   const [generationDay, setGenerationDay] = useState('1');
   const [startDate, setStartDate] = useState('');
-  const [studentId, setStudentId] = useState('');
-  const [courseId, setCourseId] = useState('');
+  const [studentIds, setStudentIds] = useState<string[]>([]);
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingFeeDefinition, setEditingFeeDefinition] = useState<FeeDefinition | null>(null);
@@ -113,8 +105,7 @@ const FeeManagementTab = () => {
           type,
           generationDay: parseInt(generationDay),
           startDate,
-          studentId,
-          courseId: courseId || null,
+          studentIds,
         }),
       });
 
@@ -142,8 +133,7 @@ const FeeManagementTab = () => {
     setType(feeDefinition.type);
     setGenerationDay(feeDefinition.generationDay.toString());
     setStartDate(new Date(feeDefinition.startDate).toISOString().split('T')[0]);
-    setStudentId(feeDefinition.student.id);
-    setCourseId(feeDefinition.course?.id || '');
+    setStudentIds(feeDefinition.studentFeeDefinitions.map(sfd => sfd.student.id));
     setShowEditModal(true);
   };
 
@@ -167,8 +157,7 @@ const FeeManagementTab = () => {
           type,
           generationDay: parseInt(generationDay),
           startDate,
-          studentId,
-          courseId: courseId || null,
+          studentIds,
         }),
       });
 
@@ -216,8 +205,7 @@ const FeeManagementTab = () => {
     setType('MONTHLY');
     setGenerationDay('1');
     setStartDate('');
-    setStudentId('');
-    setCourseId('');
+    setStudentIds([]);
   };
 
   const renderForm = (handleSubmit: (e: React.FormEvent) => void, isEditing = false) => (
@@ -267,22 +255,18 @@ const FeeManagementTab = () => {
         </Col>
       </Row>
       <Form.Group className="mb-3">
-        <Form.Label>Student</Form.Label>
-        <Form.Select value={studentId} onChange={(e) => setStudentId(e.target.value)} required>
-          <option value="">Select a student</option>
+        <Form.Label>Students</Form.Label>
+        <Form.Control
+          as="select"
+          multiple
+          value={studentIds}
+                    onChange={(e) => setStudentIds(Array.from((e.target as unknown as HTMLSelectElement).selectedOptions, option => option.value))}
+          required
+        >
           {students.map((student) => (
             <option key={student.id} value={student.id}>{student.name}</option>
           ))}
-        </Form.Select>
-      </Form.Group>
-      <Form.Group className="mb-3">
-        <Form.Label>Course (optional)</Form.Label>
-        <Form.Select value={courseId} onChange={(e) => setCourseId(e.target.value)}>
-          <option value="">Select a course</option>
-          {courses.map((course) => (
-            <option key={course.id} value={course.id}>{course.name}</option>
-          ))}
-        </Form.Select>
+        </Form.Control>
       </Form.Group>
       <Button variant="primary" type="submit" disabled={isEditing ? editing : creating} className="w-100">
         {isEditing ? (editing ? 'Updating...' : 'Update Fee Definition') : (creating ? 'Creating...' : 'Create Fee Definition')}
@@ -343,7 +327,11 @@ const FeeManagementTab = () => {
                     {feeDefinitions.map((fd) => (
                       <tr key={fd.id}>
                         <td>{fd.title}</td>
-                        <td>{fd.student.name}</td>
+                        <td>
+                          {fd.studentFeeDefinitions.map(sfd => (
+                            <Badge key={sfd.student.id} bg="info" className="me-1">{sfd.student.name}</Badge>
+                          ))}
+                        </td>
                         <td>{fd.amount} {fd.currency}</td>
                         <td>{fd.type}</td>
                         <td>

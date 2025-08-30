@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getSession({ req });
 
-  if (!session) {
+  if (!session || !session.user || !session.user.email) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
@@ -28,9 +28,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       type,
       generationDay,
       startDate,
-      studentId,
-      courseId,
+      studentIds, // This is the array of student to associate with
     } = req.body;
+
+    let adminId: string | null = null;
+    if (user.role === 'ADMIN') {
+        adminId = user.id;
+    } else if (user.adminId) {
+        adminId = user.adminId;
+    }
+
+    if (!adminId) {
+        return res.status(400).json({ message: 'Could not determine admin context.' });
+    }
 
     try {
       const feeDefinition = await prisma.feeDefinition.create({
@@ -42,11 +52,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           type,
           generationDay,
           startDate: new Date(startDate),
-          adminId: user.role === 'ADMIN' ? user.id : user.adminId,
-          studentId,
-          courseId,
+          adminId: adminId,
         },
       });
+
+      if (studentIds && studentIds.length > 0) {
+        for (const studentId of studentIds) {
+          await prisma.studentFeeDefinition.create({
+              data: {
+                  studentId: studentId,
+                  feeDefinitionId: feeDefinition.id,
+              }
+          })
+        }
+      }
+
       return res.status(201).json(feeDefinition);
     } catch (error) {
       console.error('Error creating fee definition:', error);
@@ -55,14 +75,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'GET') {
+    let adminId: string | null = null;
+    if (user.role === 'ADMIN') {
+        adminId = user.id;
+    } else if (user.adminId) {
+        adminId = user.adminId;
+    }
+
+    if (!adminId) {
+        return res.status(400).json({ message: 'Could not determine admin context.' });
+    }
+
     try {
       const feeDefinitions = await prisma.feeDefinition.findMany({
         where: {
-          adminId: user.role === 'ADMIN' ? user.id : user.adminId,
+          adminId: adminId,
         },
         include: {
-          student: true,
-          course: true,
+          studentFeeDefinitions: { // Changed from student
+              include: {
+                  student: true
+              }
+          }
         },
       });
       return res.status(200).json(feeDefinitions);

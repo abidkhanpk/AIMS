@@ -156,6 +156,8 @@ model User {
   subscriptionPayments Subscription[]   @relation("SubscriptionPayments")
   studentAssignments2 Assignment[]      @relation("StudentAssignments")
   teacherAssignments2 Assignment[]      @relation("TeacherAssignments")
+  studentFeeDefinitions StudentFeeDefinition[]
+  feeDefinitions     FeeDefinition[]
 }
 
 model Course {
@@ -165,7 +167,6 @@ model Course {
   adminId     String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
   // Relations
   admin           User            @relation(fields: [adminId], references: [id])
   studentCourses  StudentCourse[]
@@ -277,17 +278,18 @@ model ParentRemark {
 }
 
 model Fee {
-  id          String    @id @default(uuid())
-  studentId   String
-  courseId    String?   // Link to specific course/subject
-  title       String    // Fee title (e.g., "Tuition Fee", "Library Fee")
-  description String?   // Optional description
-  amount      Float     // Fee amount
-  currency    String    @default("USD") // Currency symbol/code
-  dueDate     DateTime  // Due date for payment
-  status      FeeStatus @default(PENDING)
-  paidDate    DateTime? // Date when fee was paid
-  paidById    String?   // Parent who paid the fee
+  id              String    @id @default(uuid())
+  studentId       String
+  courseId        String?   // Link to specific course/subject
+  feeDefinitionId String?
+  title           String    // Fee title (e.g., "Tuition Fee", "Library Fee")
+  description     String?   // Optional description
+  amount          Float     // Fee amount
+  currency        String    @default("USD") // Currency symbol/code
+  dueDate         DateTime  // Due date for payment
+  status          FeeStatus @default(PENDING)
+  paidDate        DateTime? // Date when fee was paid
+  paidById        String?   // Parent who paid the fee
   
   // Monthly fee tracking
   month       Int?      // Month (1-12)
@@ -304,9 +306,41 @@ model Fee {
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  student User    @relation("StudentFees", fields: [studentId], references: [id])
-  course  Course? @relation(fields: [courseId], references: [id])
-  paidBy  User?   @relation("FeePayments", fields: [paidById], references: [id])
+  student         User    @relation("StudentFees", fields: [studentId], references: [id])
+  course          Course? @relation(fields: [courseId], references: [id])
+  paidBy          User?   @relation("FeePayments", fields: [paidById], references: [id])
+  feeDefinition   FeeDefinition? @relation(fields: [feeDefinitionId], references: [id])
+}
+
+model FeeDefinition {
+  id            String   @id @default(uuid())
+  adminId       String
+  title         String
+  description   String?
+  amount        Float
+  currency      String
+  type          FeeType
+  generationDay Int      // Day of the month (1-31)
+  startDate     DateTime
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  admin   User   @relation(fields: [adminId], references: [id])
+  fees    Fee[]
+  studentFeeDefinitions StudentFeeDefinition[]
+}
+
+model StudentFeeDefinition {
+  id              String   @id @default(uuid())
+  studentId       String
+  feeDefinitionId String
+  createdAt       DateTime @default(now())
+
+  student       User          @relation(fields: [studentId], references: [id])
+  feeDefinition FeeDefinition @relation(fields: [feeDefinitionId], references: [id])
+
+  @@unique([studentId, feeDefinitionId])
 }
 
 model Salary {
