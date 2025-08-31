@@ -110,9 +110,9 @@ const FeeVerificationTab = () => {
                 {pendingFees.map((fee: any) => (
                   <tr key={fee.id}>
                     <td>{fee.student.name}</td>
-                    <td>{fee.feeDefinition.title}</td>
-                    <td>{fee.paidAmount} {fee.feeDefinition.currency}</td>
-                    <td>{new Date(fee.paidDate).toLocaleDateString()}</td>
+                    <td>{fee.title || fee.feeDefinition?.title || 'N/A'}</td>
+                    <td>{fee.paidAmount} {fee.feeDefinition?.currency || fee.currency || 'USD'}</td>
+                    <td>{fee.paidDate ? new Date(fee.paidDate).toLocaleDateString() : '-'}</td>
                     <td>{fee.paymentDetails}</td>
                     <td>
                       {fee.paymentProof ? (
