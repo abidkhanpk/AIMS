@@ -1,4 +1,5 @@
 import FeeVerificationTab from './FeeVerificationTab';
+import FeeSubform from './FeeSubform';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ParentAssociationSubform from '../ParentAssociationSubform';
 import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, Modal, InputGroup } from 'react-bootstrap';
@@ -1253,6 +1254,22 @@ function UserManagementTab({ role }: { role: Role }) {
                 </Form>
               </Tab>
               
+              <Tab eventKey="parents" title={
+                <span>
+                  <i className="bi bi-people me-2"></i>
+                  Parent Associations
+                  {parentAssociations.length > 0 && (
+                    <Badge bg="info" className="ms-2">{parentAssociations.length}</Badge>
+                  )}
+                </span>
+              }>
+                {editingUser && (
+                  <ParentAssociationSubform 
+                    studentId={editingUser.id}
+                    onAssociationChange={handleAssociationChange}
+                  />
+                )}
+              </Tab>              
               <Tab eventKey="assignments" title={
                 <span>
                   <i className="bi bi-diagram-3 me-2"></i>
@@ -1271,19 +1288,19 @@ function UserManagementTab({ role }: { role: Role }) {
                 )}
               </Tab>
               
-              <Tab eventKey="parents" title={
+              <Tab eventKey="fees" title={
                 <span>
-                  <i className="bi bi-people me-2"></i>
-                  Parent Associations
-                  {parentAssociations.length > 0 && (
-                    <Badge bg="info" className="ms-2">{parentAssociations.length}</Badge>
+                  <i className="bi bi-cash-stack me-2"></i>
+                  Fees
+                  {studentFees.length > 0 && (
+                    <Badge bg="success" className="ms-2">{studentFees.length}</Badge>
                   )}
                 </span>
               }>
                 {editingUser && (
-                  <ParentAssociationSubform 
+                  <FeeSubform
                     studentId={editingUser.id}
-                    onAssociationChange={handleAssociationChange}
+                    onFeeChange={handleFeeChange}
                   />
                 )}
               </Tab>
