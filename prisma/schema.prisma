@@ -322,6 +322,7 @@ model FeeDefinition {
   type          FeeType
   generationDay Int      // Day of the month (1-31)
   startDate     DateTime
+  dueAfterDays    Int      @default(7) // number of days after generation day when due
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
