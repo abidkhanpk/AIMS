@@ -1,7 +1,9 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { Form, Button, Table, Card, Row, Col, Alert, Spinner, Badge } from 'react-bootstrap';
+import { Form, Button, Table, Card, Row, Col, Alert, Spinner, Badge, Modal } from 'react-bootstrap';
 import { FeeType } from '@prisma/client';
+
+interface StudentRef { id: string; name?: string }
+interface StudentFeeDefinitionRef { student: StudentRef }
 
 interface FeeDefinition {
   id: string;
@@ -11,7 +13,9 @@ interface FeeDefinition {
   currency: string;
   type: FeeType;
   generationDay: number;
-  startDate: string;
+  startDate: string; // ISO string
+  dueAfterDays?: number;
+  studentFeeDefinitions?: StudentFeeDefinitionRef[];
 }
 
 const feeTypes = Object.values(FeeType);
@@ -20,10 +24,11 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
   const [feeDefinitions, setFeeDefinitions] = useState<FeeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Form state
+  // Form state (used for both create and edit)
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
@@ -31,33 +36,54 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
   const [type, setType] = useState<FeeType>('MONTHLY');
   const [generationDay, setGenerationDay] = useState('1');
   const [startDate, setStartDate] = useState('');
+  const [dueAfterDays, setDueAfterDays] = useState('7');
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<FeeDefinition | null>(null);
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingFeeDefinition, setEditingFeeDefinition] = useState<FeeDefinition | null>(null);
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setAmount('');
+    setCurrency('USD');
+    setType('MONTHLY');
+    setGenerationDay('1');
+    setStartDate('');
+    setDueAfterDays('7');
+    setEditingFeeDefinition(null);
+  };
 
   const fetchFees = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/fees?studentId=${studentId}`);
+      setError('');
+      const res = await fetch(`/api/fees/definitions?studentId=${studentId}`);
       if (res.ok) {
-        const data = await res.json();
-        setFeeDefinitions(Array.isArray(data) ? data : []);
+        const data: FeeDefinition[] = await res.json();
+        const filtered = (Array.isArray(data) ? data : []).filter(fd =>
+          (fd.studentFeeDefinitions || []).some(sfd => sfd.student.id === studentId)
+        );
+        setFeeDefinitions(filtered);
       } else {
-        setError('Failed to fetch student fees');
+        setError('Failed to fetch fee definitions');
         setFeeDefinitions([]);
       }
     } catch (error) {
-      setError('Error fetching student fees');
+      setError('Error fetching fee definitions');
       setFeeDefinitions([]);
     } finally {
       setLoading(false);
     }
   }, [studentId]);
 
-
   useEffect(() => {
     if (studentId) {
       fetchFees();
     }
   }, [studentId, fetchFees]);
-
 
   const handleCreateFeeDefinition = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,25 +92,27 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
     setSuccess('');
 
     try {
-      const res = await fetch('/api/fees', {
+      const res = await fetch('/api/fees/definitions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        studentId,
-        title,
-        description,
-        amount: parseFloat(amount),
-        currency,
-        dueDate: startDate || new Date().toISOString().split("T")[0], // map startDate → dueDate
-      }),
-
+        body: JSON.stringify({
+          title,
+          description,
+          amount: parseFloat(amount),
+          currency,
+          type,
+          generationDay: parseInt(generationDay, 10),
+          startDate,
+          dueAfterDays: parseInt(dueAfterDays, 10),
+          studentIds: [studentId],
+        }),
       });
 
-    if (res.ok) {
-      setSuccess('Fee definition deleted successfully!');
-      fetchFees();       // ✅ changed
-      onFeeChange();
-
+      if (res.ok) {
+        setSuccess('Fee definition created successfully!');
+        resetForm();
+        fetchFees();
+        onFeeChange();
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create fee definition');
@@ -96,37 +124,146 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
     }
   };
 
-  const handleDeleteFeeDefinition = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this fee definition?')) return;
+  const askDeleteFeeDefinition = (fd: FeeDefinition) => {
+    setDeleteTarget(fd);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteFeeDefinition = async () => {
+    if (!deleteTarget) return;
+    setError('');
+    setSuccess('');
 
     try {
-      const res = await fetch(`/api/fees/definitions/${id}`, {
+      const res = await fetch(`/api/fees/definitions/${deleteTarget.id}`, {
         method: 'DELETE',
       });
 
-      if (res.ok) {
-        setSuccess('Fee deleted successfully!');
+      if (res.ok || res.status === 204) {
+        setSuccess('Fee definition deleted successfully!');
+        setShowDeleteModal(false);
+        setDeleteTarget(null);
         fetchFees();
         onFeeChange();
       } else {
         const errorData = await res.json();
-        setError(errorData.message || 'Failed to delete fee');
+        setError(errorData.message || 'Failed to delete fee definition');
       }
-
     } catch (error) {
       setError('Error deleting fee definition');
     }
   };
 
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setAmount('');
-    setCurrency('USD');
-    setType('MONTHLY');
-    setGenerationDay('1');
-    setStartDate('');
+  const handleEditFeeDefinition = (fd: FeeDefinition) => {
+    setEditingFeeDefinition(fd);
+    setTitle(fd.title);
+    setDescription(fd.description || '');
+    setAmount(fd.amount.toString());
+    setCurrency(fd.currency);
+    setType(fd.type);
+    setGenerationDay(fd.generationDay.toString());
+    setStartDate(new Date(fd.startDate).toISOString().split('T')[0]);
+    setDueAfterDays((fd.dueAfterDays ?? 7).toString());
+    setShowEditModal(true);
   };
+
+  const handleUpdateFeeDefinition = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFeeDefinition) return;
+
+    setEditing(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch(`/api/fees/definitions/${editingFeeDefinition.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          amount: parseFloat(amount),
+          currency,
+          type,
+          generationDay: parseInt(generationDay, 10),
+          startDate,
+          dueAfterDays: parseInt(dueAfterDays, 10),
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess('Fee definition updated successfully!');
+        setShowEditModal(false);
+        setEditingFeeDefinition(null);
+        fetchFees();
+        onFeeChange();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to update fee definition');
+      }
+    } catch (error) {
+      setError('Error updating fee definition');
+    } finally {
+      setEditing(false);
+    }
+  };
+
+  const renderForm = (handleSubmit: (e: React.FormEvent) => void, isEditing = false) => (
+    <Form onSubmit={handleSubmit}>
+      <Form.Group className="mb-3">
+        <Form.Label>Title</Form.Label>
+        <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Description</Form.Label>
+        <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+      </Form.Group>
+      <Row>
+        <Col>
+          <Form.Group className="mb-3">
+            <Form.Label>Amount</Form.Label>
+            <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+          </Form.Group>
+        </Col>
+        <Col>
+          <Form.Group className="mb-3">
+            <Form.Label>Currency</Form.Label>
+            <Form.Control type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} required />
+          </Form.Group>
+        </Col>
+      </Row>
+      <Form.Group className="mb-3">
+        <Form.Label>Type</Form.Label>
+        <Form.Select value={type} onChange={(e) => setType(e.target.value as FeeType)} required>
+          {feeTypes.map((feeType) => (
+            <option key={feeType} value={feeType}>{feeType}</option>
+          ))}
+        </Form.Select>
+      </Form.Group>
+      <Row>
+        <Col>
+          <Form.Group className="mb-3">
+            <Form.Label>Generation Day</Form.Label>
+            <Form.Control type="number" value={generationDay} onChange={(e) => setGenerationDay(e.target.value)} required />
+          </Form.Group>
+        </Col>
+        <Col>
+          <Form.Group className="mb-3">
+            <Form.Label>Start Date</Form.Label>
+            <Form.Control type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+          </Form.Group>
+        </Col>
+      </Row>
+      <Form.Group className="mb-3">
+        <Form.Label>Due After (Days)</Form.Label>
+        <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
+        <Form.Text className="text-muted">Number of days after generation day when the fee becomes due.</Form.Text>
+      </Form.Group>
+      <Button variant="primary" type="submit" disabled={isEditing ? editing : creating} className="w-100">
+        {isEditing ? (editing ? 'Updating...' : 'Update Fee Definition') : (creating ? 'Creating...' : 'Create Fee Definition')}
+      </Button>
+    </Form>
+  );
 
   return (
     <div>
@@ -143,55 +280,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
               </h6>
             </Card.Header>
             <Card.Body>
-              <Form onSubmit={handleCreateFeeDefinition}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Title</Form.Label>
-                  <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-                </Form.Group>
-                <Row>
-                  <Col>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Amount</Form.Label>
-                      <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
-                    </Form.Group>
-                  </Col>
-                  <Col>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Currency</Form.Label>
-                      <Form.Control type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} required />
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Form.Group className="mb-3">
-                  <Form.Label>Type</Form.Label>
-                  <Form.Select value={type} onChange={(e) => setType(e.target.value as FeeType)} required>
-                    {feeTypes.map((feeType) => (
-                      <option key={feeType} value={feeType}>{feeType}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Row>
-                  <Col>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Generation Day</Form.Label>
-                      <Form.Control type="number" value={generationDay} onChange={(e) => setGenerationDay(e.target.value)} required />
-                    </Form.Group>
-                  </Col>
-                  <Col>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Start Date</Form.Label>
-                      <Form.Control type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Button variant="primary" type="submit" disabled={creating} className="w-100">
-                  {creating ? 'Creating...' : 'Create Fee Definition'}
-                </Button>
-              </Form>
+              {renderForm(handleCreateFeeDefinition)}
             </Card.Body>
           </Card>
         </Col>
@@ -237,9 +326,18 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                           <td>{fd.type}</td>
                           <td>
                             <Button
+                              variant="outline-warning"
+                              size="sm"
+                              onClick={() => handleEditFeeDefinition(fd)}
+                              title="Edit Fee Definition"
+                              className="me-2"
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </Button>
+                            <Button
                               variant="outline-danger"
                               size="sm"
-                              onClick={() => handleDeleteFeeDefinition(fd.id)}
+                              onClick={() => askDeleteFeeDefinition(fd)}
                               title="Delete Fee Definition"
                             >
                               <i className="bi bi-trash"></i>
@@ -255,6 +353,36 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
           </Card>
         </Col>
       </Row>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete Fee Definition?</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="text-center">
+            <i className="bi bi-exclamation-triangle text-danger" style={{ fontSize: '2rem' }}></i>
+            <p className="mt-3">
+              This will permanently remove <strong>{deleteTarget?.title}</strong> for this student.
+            </p>
+            <p className="text-muted small mb-0">This action cannot be undone.</p>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+          <Button variant="danger" onClick={confirmDeleteFeeDefinition}>Delete</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Fee Definition</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {renderForm(handleUpdateFeeDefinition, true)}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

@@ -1,11 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../auth/[...nextauth]';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getSession({ req });
+  const session = await getServerSession(req, res, authOptions);
 
   if (!session) {
     return res.status(401).json({ message: 'Unauthorized' });
@@ -30,12 +31,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'PUT') {
-    const { ...data } = req.body;
+    const { title, description, amount, currency, type, generationDay, startDate, dueAfterDays } = req.body as any;
 
     try {
       const updatedFeeDefinition = await prisma.feeDefinition.update({
         where: { id: String(id) },
-        data,
+        data: {
+          title,
+          description,
+          amount,
+          currency,
+          type,
+          generationDay,
+          startDate: new Date(startDate),
+          dueAfterDays: typeof dueAfterDays === 'number' ? dueAfterDays : undefined,
+        },
       });
       return res.status(200).json(updatedFeeDefinition);
     } catch (error) {

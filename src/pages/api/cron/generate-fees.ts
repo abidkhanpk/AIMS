@@ -28,51 +28,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { student, feeDefinition } = sfd;
       if (!feeDefinition) continue;
 
-      const { generationDay, startDate, type, title, amount, currency, id: feeDefinitionId } = feeDefinition;
+      const { generationDay, startDate, type, title, amount, currency, id: feeDefinitionId, dueAfterDays } = feeDefinition as any;
 
       if (today.getDate() === generationDay) {
         let shouldGenerate = false;
         let dueDate = new Date();
+
+        const refYear = startDate.getFullYear();
+        const refMonth = startDate.getMonth();
+        const monthsDiff = (today.getFullYear() - refYear) * 12 + (today.getMonth() - refMonth);
 
         switch (type) {
           case 'ONCE':
             if (
               startDate.getFullYear() === today.getFullYear() &&
               startDate.getMonth() === today.getMonth() &&
-              startDate.getDate() === today.getDate()
+              today.getDate() === generationDay
             ) {
               shouldGenerate = true;
-              dueDate = new Date(today.getFullYear(), today.getMonth(), generationDay + 15);
             }
             break;
           case 'MONTHLY':
-            shouldGenerate = true;
-            dueDate = new Date(today.getFullYear(), today.getMonth(), generationDay + 15);
+            shouldGenerate = true; // generation day gate already applied above
             break;
           case 'BIMONTHLY':
-            if ((today.getMonth() - startDate.getMonth()) % 2 === 0) {
+            if (monthsDiff % 2 === 0) {
               shouldGenerate = true;
-              dueDate = new Date(today.getFullYear(), today.getMonth(), generationDay + 15);
             }
             break;
           case 'QUARTERLY':
-            if ((today.getMonth() - startDate.getMonth()) % 3 === 0) {
+            if (monthsDiff % 3 === 0) {
               shouldGenerate = true;
-              dueDate = new Date(today.getFullYear(), today.getMonth(), generationDay + 15);
             }
             break;
           case 'HALFYEARLY':
-            if ((today.getMonth() - startDate.getMonth()) % 6 === 0) {
+            if (monthsDiff % 6 === 0) {
               shouldGenerate = true;
-              dueDate = new Date(today.getFullYear(), today.getMonth(), generationDay + 15);
             }
             break;
           case 'YEARLY':
             if (today.getMonth() === startDate.getMonth()) {
               shouldGenerate = true;
-              dueDate = new Date(today.getFullYear(), today.getMonth(), generationDay + 15);
             }
             break;
+        }
+
+        if (shouldGenerate) {
+          const dueDays = typeof dueAfterDays === 'number' && !Number.isNaN(dueAfterDays) ? dueAfterDays : 7;
+          dueDate = new Date(today.getFullYear(), today.getMonth(), generationDay + dueDays);
         }
 
         if (shouldGenerate) {

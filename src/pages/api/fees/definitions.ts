@@ -1,11 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getSession({ req });
+  const session = await getServerSession(req, res, authOptions);
 
   if (!session || !session.user || !session.user.email) {
     return res.status(401).json({ message: 'Unauthorized' });
@@ -28,6 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       type,
       generationDay,
       startDate,
+      dueAfterDays,
       studentIds, // This is the array of student to associate with
     } = req.body;
 
@@ -52,6 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           type,
           generationDay,
           startDate: new Date(startDate),
+          dueAfterDays: typeof dueAfterDays === 'number' ? dueAfterDays : 7,
           adminId: adminId,
         },
       });
@@ -86,13 +89,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ message: 'Could not determine admin context.' });
     }
 
+    const { studentId } = req.query;
+
     try {
       const feeDefinitions = await prisma.feeDefinition.findMany({
         where: {
           adminId: adminId,
+          ...(studentId ? {
+            studentFeeDefinitions: {
+              some: { studentId: String(studentId) }
+            }
+          } : {})
         },
         include: {
-          studentFeeDefinitions: { // Changed from student
+          studentFeeDefinitions: {
               include: {
                   student: true
               }

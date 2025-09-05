@@ -12,6 +12,7 @@ interface FeeDefinition {
   type: FeeType;
   generationDay: number;
   startDate: string;
+  dueAfterDays?: number;
   studentFeeDefinitions: { student: { id: string; name: string; } }[];
 }
 
@@ -45,6 +46,7 @@ const FeeManagementTab = () => {
   const [type, setType] = useState<FeeType>('MONTHLY');
   const [generationDay, setGenerationDay] = useState('1');
   const [startDate, setStartDate] = useState('');
+  const [dueAfterDays, setDueAfterDays] = useState('7');
   const [studentIds, setStudentIds] = useState<string[]>([]);
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -105,6 +107,7 @@ const FeeManagementTab = () => {
           type,
           generationDay: parseInt(generationDay),
           startDate,
+          dueAfterDays: parseInt(dueAfterDays),
           studentIds,
         }),
       });
@@ -133,6 +136,7 @@ const FeeManagementTab = () => {
     setType(feeDefinition.type);
     setGenerationDay(feeDefinition.generationDay.toString());
     setStartDate(new Date(feeDefinition.startDate).toISOString().split('T')[0]);
+    setDueAfterDays((feeDefinition.dueAfterDays ?? 7).toString());
     setStudentIds(feeDefinition.studentFeeDefinitions.map(sfd => sfd.student.id));
     setShowEditModal(true);
   };
@@ -157,6 +161,7 @@ const FeeManagementTab = () => {
           type,
           generationDay: parseInt(generationDay),
           startDate,
+          dueAfterDays: parseInt(dueAfterDays),
           studentIds,
         }),
       });
@@ -205,6 +210,7 @@ const FeeManagementTab = () => {
     setType('MONTHLY');
     setGenerationDay('1');
     setStartDate('');
+    setDueAfterDays('7');
     setStudentIds([]);
   };
 
@@ -254,6 +260,11 @@ const FeeManagementTab = () => {
           </Form.Group>
         </Col>
       </Row>
+      <Form.Group className="mb-3">
+        <Form.Label>Due After (Days)</Form.Label>
+        <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
+        <Form.Text className="text-muted">Number of days after generation day when the fee becomes due.</Form.Text>
+      </Form.Group>
       <Form.Group className="mb-3">
         <Form.Label>Students</Form.Label>
         <Form.Control
