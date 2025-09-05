@@ -4,20 +4,11 @@ import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session) {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
-
-  if (session.user.role !== 'DEVELOPER') {
-    return res.status(403).json({ message: 'Only developers can access this endpoint' });
-  }
-
+  // Public GET: anyone (even unauthenticated) can read app settings
   if (req.method === 'GET') {
     try {
-      // Get global app settings
       let appSettings = await prisma.appSettings.findFirst();
-      
+
       if (!appSettings) {
         // Create default app settings if none exist
         appSettings = await prisma.appSettings.create({
@@ -31,18 +22,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      res.status(200).json(appSettings);
+      return res.status(200).json(appSettings);
     } catch (error) {
       console.error('Error fetching developer settings:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      return res.status(500).json({ message: 'Internal server error' });
     }
-  } else if (req.method === 'POST') {
+  }
+
+  // All non-GET methods require an authenticated DEVELOPER
+  const session = await getServerSession(req, res, authOptions);
+  if (!session) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  if (session.user.role !== 'DEVELOPER') {
+    return res.status(403).json({ message: 'Only developers can access this endpoint' });
+  }
+
+  if (req.method === 'POST') {
     const { enableHomePage, appName, appLogo, tagline, defaultCurrency } = req.body;
 
     try {
       // Get existing settings or create new ones
       let appSettings = await prisma.appSettings.findFirst();
-      
+
       if (appSettings) {
         // Update existing settings
         appSettings = await prisma.appSettings.update({
@@ -68,12 +71,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
-      res.status(200).json(appSettings);
+      return res.status(200).json(appSettings);
     } catch (error) {
       console.error('Error updating developer settings:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      return res.status(500).json({ message: 'Internal server error' });
     }
   } else {
-    res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 }

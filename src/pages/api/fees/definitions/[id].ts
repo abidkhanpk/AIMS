@@ -56,6 +56,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'DELETE') {
     try {
+      // Remove student associations first to satisfy FK constraints
+      await prisma.studentFeeDefinition.deleteMany({
+        where: { feeDefinitionId: String(id) },
+      });
+
+      // Fees table references FeeDefinition with ON DELETE SET NULL (per migration), so safe to delete
       await prisma.feeDefinition.delete({
         where: { id: String(id) },
       });
