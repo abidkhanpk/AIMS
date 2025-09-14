@@ -3256,8 +3256,7 @@ export default function AdminDashboard() {
             </span>
           }
         >
-          <UserManagementTab role="ADMIN" />
-        </Tab>
+          </Tab>
         
         <Tab 
           eventKey="subjects" 
