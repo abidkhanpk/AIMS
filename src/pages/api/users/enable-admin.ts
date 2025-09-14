@@ -62,7 +62,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Enable admin and all sub-users
         await tx.user.update({
           where: { id: adminId },
-          data: { isActive: true }
+          data: { isActive: true, disabledByDeveloper: false }
         });
 
         await tx.user.updateMany({
@@ -119,12 +119,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
     } else {
-      // Disabling admin
+      // Disabling admin manually by developer
       await prisma.$transaction(async (tx) => {
         // Disable admin and all sub-users
         await tx.user.update({
           where: { id: adminId },
-          data: { isActive: false }
+          data: { isActive: false, disabledByDeveloper: true }
         });
 
         await tx.user.updateMany({

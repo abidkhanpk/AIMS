@@ -68,6 +68,12 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
+enum AdvanceStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
 enum SubscriptionPlan {
   MONTHLY
   YEARLY
@@ -114,6 +120,7 @@ model User {
   role      Role
   adminId   String?  // All users except DEVELOPER belong to an admin
   isActive  Boolean  @default(true) // For disabling users
+  disabledByDeveloper Boolean @default(false) // Track manual disable by developer
   
   // Additional user details
   mobile    String?
@@ -158,6 +165,11 @@ model User {
   teacherAssignments2 Assignment[]      @relation("TeacherAssignments")
   studentFeeDefinitions StudentFeeDefinition[]
   feeDefinitions     FeeDefinition[]
+  // New Relations for salary payments and advances
+  teacherSalaryPayments SalaryPayment[] @relation("TeacherSalaryPayments")
+  adminSalaryPayments   SalaryPayment[] @relation("AdminSalaryPayments")
+  salaryAdvances       SalaryAdvance[]  @relation("AdvanceAdmin")
+  salaryAdvancesAsTeacher SalaryAdvance[] @relation("AdvanceTeacher")
 }
 
 model Course {
@@ -376,6 +388,7 @@ model Salary {
   // Relations
   teacher User  @relation("TeacherSalaries", fields: [teacherId], references: [id])
   paidBy  User? @relation("SalaryPayments", fields: [paidById], references: [id])
+  payments SalaryPayment[]
 }
 
 model Subscription {
@@ -421,6 +434,57 @@ model SubscriptionPayment {
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model SalaryPayment {
+  id             String   @id @default(uuid())
+  teacherId      String
+  adminId        String
+  salaryId       String?
+  amount         Float
+  currency       String   @default("USD")
+  paidDate       DateTime @default(now())
+  paymentDetails String?
+  paymentProof   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  teacher User   @relation("TeacherSalaryPayments", fields: [teacherId], references: [id])
+  admin   User   @relation("AdminSalaryPayments", fields: [adminId], references: [id])
+  salary  Salary? @relation(fields: [salaryId], references: [id])
+}
+
+model SalaryAdvance {
+  id               String        @id @default(uuid())
+  teacherId        String
+  adminId          String
+  principal        Float
+  currency         String        @default("USD")
+  issuedDate       DateTime      @default(now())
+  balance          Float
+  installments     Int
+  installmentAmount Float
+  payType          PayType       @default(MONTHLY)
+  status           AdvanceStatus @default(ACTIVE)
+  details          String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  teacher User @relation("AdvanceTeacher", fields: [teacherId], references: [id])
+  admin   User @relation("AdvanceAdmin", fields: [adminId], references: [id])
+  repayments SalaryAdvanceRepayment[]
+}
+
+model SalaryAdvanceRepayment {
+  id              String   @id @default(uuid())
+  advanceId       String
+  amount          Float
+  date            DateTime @default(now())
+  salaryPaymentId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  advance         SalaryAdvance @relation(fields: [advanceId], references: [id])
 }
 
 model Notification {
