@@ -234,7 +234,18 @@ const FeeManagementTab = () => {
         <Col>
           <Form.Group className="mb-3">
             <Form.Label>Currency</Form.Label>
-            <Form.Control type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} required />
+            <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
+              <option value="USD">$ US Dollar (USD)</option>
+              <option value="EUR">€ Euro (EUR)</option>
+              <option value="GBP">£ British Pound (GBP)</option>
+              <option value="JPY">¥ Japanese Yen (JPY)</option>
+              <option value="CAD">C$ Canadian Dollar (CAD)</option>
+              <option value="AUD">A$ Australian Dollar (AUD)</option>
+              <option value="CHF">CHF Swiss Franc (CHF)</option>
+              <option value="CNY">¥ Chinese Yuan (CNY)</option>
+              <option value="INR">₹ Indian Rupee (INR)</option>
+              <option value="PKR">₨ Pakistani Rupee (PKR)</option>
+            </Form.Select>
           </Form.Group>
         </Col>
       </Row>
