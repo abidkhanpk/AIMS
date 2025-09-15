@@ -7,12 +7,13 @@ const FeeVerificationTab = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'PROCESSING' | 'PENDING' | 'PAID'>('PROCESSING');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PROCESSING' | 'PENDING' | 'PAID'>('PROCESSING');
 
   const fetchFees = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/fees?status=${statusFilter}`);
+      const url = statusFilter === 'ALL' ? '/api/fees' : `/api/fees?status=${statusFilter}`;
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setFees(Array.isArray(data) ? data : []);
@@ -66,6 +67,7 @@ const FeeVerificationTab = () => {
       });
       if (res.ok) {
         setSuccess('Fee reverted to pending.');
+        setStatusFilter('PENDING');
         fetchFees();
       } else {
         const errorData = await res.json();
@@ -110,8 +112,9 @@ const FeeVerificationTab = () => {
               className="form-select form-select-sm"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
-              style={{ width: 160 }}
+              style={{ width: 180 }}
             >
+              <option value="ALL">All</option>
               <option value="PROCESSING">Processing</option>
               <option value="PENDING">Pending</option>
               <option value="PAID">Paid</option>
@@ -148,7 +151,7 @@ const FeeVerificationTab = () => {
                   <tr key={fee.id}>
                     <td>{fee.student?.name || '-'}</td>
                     <td>{fee.title || fee.feeDefinition?.title || 'N/A'}</td>
-                    <td>{fee.status}</td>
+                    <td>{getStatusBadge(fee.status)}</td>
                     <td>{(fee.amount || fee.feeDefinition?.amount)} {(fee.currency || fee.feeDefinition?.currency) || 'USD'}</td>
                     <td>{fee.paidAmount ?? '-'}</td>
                     <td>{fee.paidDate ? new Date(fee.paidDate).toLocaleDateString() : '-'}</td>

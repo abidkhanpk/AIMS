@@ -20,6 +20,19 @@ interface FeeDefinition {
 
 const feeTypes = Object.values(FeeType);
 
+const currencies = [
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+  { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+  { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
+];
+
 function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange: () => void; }) {
   const [feeDefinitions, setFeeDefinitions] = useState<FeeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -228,7 +241,13 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         <Col>
           <Form.Group className="mb-3">
             <Form.Label>Currency</Form.Label>
-            <Form.Control type="text" value={currency} onChange={(e) => setCurrency(e.target.value)} required />
+            <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
+              {currencies.map(curr => (
+                <option key={curr.code} value={curr.code}>
+                  {curr.symbol} {curr.name} ({curr.code})
+                </option>
+              ))}
+            </Form.Select>
           </Form.Group>
         </Col>
       </Row>

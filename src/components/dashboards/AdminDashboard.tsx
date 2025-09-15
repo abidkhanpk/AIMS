@@ -3247,16 +3247,7 @@ export default function AdminDashboard() {
           <UserManagementTab role="STUDENT" />
         </Tab>
         
-        <Tab 
-          eventKey="admins" 
-          title={
-            <span>
-              <i className="bi bi-gear-fill me-2"></i>
-              Admins
-            </span>
-          }
-        >
-          </Tab>
+        
         
         <Tab 
           eventKey="subjects" 
