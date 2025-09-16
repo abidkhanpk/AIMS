@@ -327,7 +327,7 @@ const FeeVerificationTab = () => {
                     ))}
                   </Form.Select>
                 </Form.Group>
-              </Col}
+              </Col>
             </Row>
             <Form.Group className="mb-3">
               <Form.Label>Due Date</Form.Label>
