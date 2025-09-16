@@ -12,6 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') {
     try {
       let fees;
+      const statusFilter = typeof req.query.status === 'string' ? req.query.status : undefined;
 
       if (session.user.role === 'ADMIN') {
         // Admin can see all fees for their students
@@ -19,7 +20,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           where: {
             student: {
               adminId: session.user.id
-            }
+            },
+            ...(statusFilter ? { status: statusFilter as any } : {}),
           },
           include: {
             student: {
@@ -40,6 +42,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               select: {
                 id: true,
                 name: true,
+              }
+            },
+            feeDefinition: {
+              select: {
+                id: true,
+                title: true,
+                currency: true,
               }
             }
           },
@@ -60,7 +69,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           where: {
             studentId: {
               in: studentIds
-            }
+            },
+            ...(statusFilter ? { status: statusFilter as any } : {}),
           },
           include: {
             student: {
@@ -81,6 +91,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               select: {
                 id: true,
                 name: true,
+              }
+            },
+            feeDefinition: {
+              select: {
+                id: true,
+                title: true,
+                currency: true,
               }
             }
           },
@@ -92,7 +109,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // Student can see their own fees
         fees = await prisma.fee.findMany({
           where: {
-            studentId: session.user.id
+            studentId: session.user.id,
+            ...(statusFilter ? { status: statusFilter as any } : {}),
           },
           include: {
             student: {
@@ -113,6 +131,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               select: {
                 id: true,
                 name: true,
+              }
+            },
+            feeDefinition: {
+              select: {
+                id: true,
+                title: true,
+                currency: true,
               }
             }
           },

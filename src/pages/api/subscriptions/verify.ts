@@ -47,28 +47,72 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const newStatus = approved ? 'ACTIVE' : 'PENDING';
-    const updatedSubscription = await prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: {
-        status: newStatus,
-        processedDate: new Date(),
-      },
-      include: {
-        admin: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          }
+
+    // On approval, extend expiry and optionally re-enable admin/sub-roles if disabled due to non-payment
+    const updatedSubscription = await prisma.$transaction(async (tx) => {
+      const update = await tx.subscription.update({
+        where: { id: subscriptionId },
+        data: {
+          status: newStatus,
+          processedDate: new Date(),
         },
-        paidBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+        include: {
+          admin: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              isActive: true,
+              disabledByDeveloper: true,
+            }
+          },
+          paidBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            }
           }
         }
+      });
+
+      if (approved) {
+        // Extend expiry according to plan
+        let newEndDate: Date | null = null;
+        if (update.plan === 'MONTHLY') {
+          newEndDate = new Date();
+          newEndDate.setMonth(newEndDate.getMonth() + 1);
+        } else if (update.plan === 'YEARLY') {
+          newEndDate = new Date();
+          newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+        } else if (update.plan === 'LIFETIME') {
+          newEndDate = null;
+        }
+
+        await tx.subscription.update({
+          where: { id: update.id },
+          data: { endDate: newEndDate }
+        });
+
+        // Update settings as well
+        await tx.settings.update({
+          where: { adminId: update.adminId },
+          data: {
+            subscriptionType: update.plan,
+            subscriptionAmount: update.amount,
+            subscriptionEndDate: newEndDate
+          }
+        });
+
+        // Re-enable admin and sub-users if they were disabled due to non-payment and not manually disabled by developer
+        const admin = await tx.user.findUnique({ where: { id: update.adminId } });
+        if (admin && !admin.isActive && !admin.disabledByDeveloper) {
+          await tx.user.update({ where: { id: admin.id }, data: { isActive: true } });
+          await tx.user.updateMany({ where: { adminId: admin.id }, data: { isActive: true } });
+        }
       }
+
+      return update;
     });
 
     // Create notification for admin

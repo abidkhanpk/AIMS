@@ -3,6 +3,7 @@ import { Table, Spinner, Alert, Badge, Button, Modal, Form, Row, Col } from 'rea
 
 interface SubscriptionHistoryProps {
   adminId: string;
+  allowVerify?: boolean; // when true (developer context), show verify actions
 }
 
 interface SubscriptionRecord {
@@ -32,7 +33,7 @@ interface PaymentRecord {
   createdAt: string;
 }
 
-export default function SubscriptionHistoryTab({ adminId }: SubscriptionHistoryProps) {
+export default function SubscriptionHistoryTab({ adminId, allowVerify = false }: SubscriptionHistoryProps) {
   const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,7 @@ export default function SubscriptionHistoryTab({ adminId }: SubscriptionHistoryP
   const [success, setSuccess] = useState('');
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [extending, setExtending] = useState(false);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   // Extension form states
   const [extensionType, setExtensionType] = useState('MONTHLY');
@@ -183,6 +185,7 @@ export default function SubscriptionHistoryTab({ adminId }: SubscriptionHistoryP
                   <th>End Date</th>
                   <th>Status</th>
                   <th>Paid Date</th>
+                  {allowVerify && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -204,6 +207,76 @@ export default function SubscriptionHistoryTab({ adminId }: SubscriptionHistoryP
                     <td className="small">
                       {sub.paidDate ? new Date(sub.paidDate).toLocaleDateString() : '-'}
                     </td>
+                    {allowVerify && (
+                      <td>
+                        {sub.status === 'PROCESSING' ? (
+                          <div className="d-flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline-success"
+                              disabled={verifyingId === sub.id}
+                              onClick={async () => {
+                                setVerifyingId(sub.id);
+                                setError('');
+                                setSuccess('');
+                                try {
+                                  const res = await fetch('/api/subscriptions/verify', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ subscriptionId: sub.id, approved: true })
+                                  });
+                                  if (res.ok) {
+                                    setSuccess('Subscription payment approved');
+                                    fetchSubscriptionHistory();
+                                  } else {
+                                    const err = await res.json();
+                                    setError(err.message || 'Failed to approve');
+                                  }
+                                } catch (e) {
+                                  setError('Error approving payment');
+                                } finally {
+                                  setVerifyingId(null);
+                                }
+                              }}
+                            >
+                              <i className="bi bi-check-lg"></i>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline-danger"
+                              disabled={verifyingId === sub.id}
+                              onClick={async () => {
+                                setVerifyingId(sub.id);
+                                setError('');
+                                setSuccess('');
+                                try {
+                                  const res = await fetch('/api/subscriptions/verify', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ subscriptionId: sub.id, approved: false })
+                                  });
+                                  if (res.ok) {
+                                    setSuccess('Subscription payment rejected');
+                                    fetchSubscriptionHistory();
+                                  } else {
+                                    const err = await res.json();
+                                    setError(err.message || 'Failed to reject');
+                                  }
+                                } catch (e) {
+                                  setError('Error rejecting payment');
+                                } finally {
+                                  setVerifyingId(null);
+                                }
+                              }}
+                            >
+                              <i className="bi bi-x-lg"></i>
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

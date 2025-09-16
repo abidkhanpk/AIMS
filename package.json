@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build", 
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate"
@@ -13,7 +13,7 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.14.0",
+    "@prisma/client": "^6.16.1",
     "@prisma/extension-accelerate": "latest",
     "bcryptjs": "^3.0.2",
     "bootstrap": "^5.3.3",
@@ -27,16 +27,16 @@
     "react": "^19.1.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",
-    "typescript": "^5.9.2",
-    "prisma": "^6.14.0"
+    "typescript": "^5.9.2"
   },
   "devDependencies": {
-    "ts-node": "^10.9.2",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/formidable": "^3.4.5",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/multer": "^2.0.0",
-    "@types/formidable": "^3.4.5"
+    "prisma": "^6.16.1",
+    "ts-node": "^10.9.2"
   }
 }

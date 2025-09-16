@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ message: 'Only admins can pay subscriptions' });
   }
 
-  const { subscriptionId, paidAmount, paymentDetails, paymentProof } = req.body;
+  const { subscriptionId, paidAmount, paymentDetails, paymentProof, paidDate } = req.body;
 
   if (!subscriptionId || !paidAmount) {
     return res.status(400).json({ message: 'Subscription ID and paid amount are required' });
@@ -56,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: subscriptionId },
       data: {
         paidAmount: parseFloat(paidAmount),
-        paidDate: new Date(),
+        paidDate: paidDate ? new Date(paidDate) : new Date(),
         paymentDetails: paymentDetails || null,
         paymentProof: paymentProof || null,
         paidById: session.user.id,

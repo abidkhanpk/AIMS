@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Form, Button, Table, Card, Row, Col, Modal, Alert, Spinner, Badge, Tabs, Tab } from 'react-bootstrap';
+import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
 
 interface Admin {
   id: string;
@@ -635,7 +636,7 @@ function AdminManagementTab() {
                                 variant={admin.isActive ? "outline-danger" : "outline-success"}
                                 size="sm" 
                                 onClick={() => handleToggleAdminStatus(admin.id, admin.isActive)}
-                                title={admin.isActive ? "Disable Admin" : "Enable Admin"}
+                                title={admin.isActive ? "Disable Admin (Manual)" : "Enable Admin"}
                               >
                                 <i className={`bi bi-${admin.isActive ? 'x-circle' : 'check-circle'}`}></i>
                               </Button>
@@ -879,7 +880,7 @@ function AdminManagementTab() {
             <Tab eventKey="subscription" title="Subscription">
               <Form>
                 <Row>
-                  <Col md={4}>
+                  <Col md={8}>
                     <Form.Group className="mb-3">
                       <Form.Label>Subscription Type</Form.Label>
                       <Form.Select 
@@ -950,6 +951,11 @@ function AdminManagementTab() {
                   </Col>
                 </Row>
               </Form>
+              {selectedAdmin && (
+                <div className="mt-4">
+                  <SubscriptionHistoryTab adminId={selectedAdmin.id} allowVerify />
+                </div>
+              )}
             </Tab>
           </Tabs>
         </Modal.Body>

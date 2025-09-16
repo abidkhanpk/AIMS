@@ -654,6 +654,20 @@ function UserManagementTab({ role }: { role: Role }) {
   const [payRate, setPayRate] = useState('');
   const [payType, setPayType] = useState<PayType>('MONTHLY');
   const [payCurrency, setPayCurrency] = useState('USD');
+
+  // Salary management states for teacher edit
+  const [teacherPayments, setTeacherPayments] = useState<any[]>([]);
+  const [teacherAdvances, setTeacherAdvances] = useState<any[]>([]);
+  const [recordingPayment, setRecordingPayment] = useState(false);
+  const [creatingAdvance, setCreatingAdvance] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentDate, setPaymentDate] = useState('');
+  const [paymentDetails, setPaymentDetails] = useState('');
+  const [advancePrincipal, setAdvancePrincipal] = useState('');
+  const [advanceInstallments, setAdvanceInstallments] = useState('');
+  const [advancePayType, setAdvancePayType] = useState<PayType>('MONTHLY');
+  const [advanceCurrency, setAdvanceCurrency] = useState('USD');
+  const [advanceDetails, setAdvanceDetails] = useState('');
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -770,6 +784,9 @@ function UserManagementTab({ role }: { role: Role }) {
     if (role === 'STUDENT') {
       fetchStudentData(user.id);
     }
+    if (role === 'TEACHER') {
+      fetchTeacherSalaryData(user.id);
+    }
     
     setShowEditModal(true);
   };
@@ -810,6 +827,87 @@ function UserManagementTab({ role }: { role: Role }) {
       console.error('Error fetching student data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTeacherSalaryData = async (teacherId: string) => {
+    try {
+      const res = await fetch(`/api/salaries/payments?teacherId=${teacherId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTeacherPayments(data.payments || []);
+        setTeacherAdvances(data.advances || []);
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const handleRecordPayment = async () => {
+    if (!editingUser) return;
+    setRecordingPayment(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/salaries/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teacherId: editingUser.id,
+          amount: parseFloat(paymentAmount),
+          paidDate: paymentDate || undefined,
+          paymentDetails: paymentDetails || undefined
+        })
+      });
+      if (res.ok) {
+        setSuccess('Salary payment recorded');
+        setPaymentAmount('');
+        setPaymentDate('');
+        setPaymentDetails('');
+        fetchTeacherSalaryData(editingUser.id);
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to record payment');
+      }
+    } catch (error) {
+      setError('Error recording payment');
+    } finally {
+      setRecordingPayment(false);
+    }
+  };
+
+  const handleCreateAdvance = async () => {
+    if (!editingUser) return;
+    setCreatingAdvance(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/salaries/advance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teacherId: editingUser.id,
+          principal: parseFloat(advancePrincipal),
+          installments: parseInt(advanceInstallments || '1', 10),
+          payType: advancePayType,
+          currency: advanceCurrency,
+          details: advanceDetails || undefined
+        })
+      });
+      if (res.ok) {
+        setSuccess('Salary advance created');
+        setAdvancePrincipal('');
+        setAdvanceInstallments('');
+        setAdvanceDetails('');
+        fetchTeacherSalaryData(editingUser.id);
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to create salary advance');
+      }
+    } catch (error) {
+      setError('Error creating salary advance');
+    } finally {
+      setCreatingAdvance(false);
     }
   };
 
@@ -997,7 +1095,7 @@ function UserManagementTab({ role }: { role: Role }) {
                       </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label>Pay Type</Form.Label>
+                          <Form.Label>Salary Type</Form.Label>
                           <Form.Select 
                             value={payType}
                             onChange={(e) => setPayType(e.target.value as PayType)}
@@ -1139,7 +1237,7 @@ function UserManagementTab({ role }: { role: Role }) {
         </Col>
       </Row>
 
-      {/* Enhanced Edit User Modal with Tabs for Students */}
+      {/* Enhanced Edit User Modal with Tabs for Students and salary subform for teachers */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size={role === 'STUDENT' ? 'xl' : 'lg'}>
         <Modal.Header closeButton>
           <Modal.Title>
@@ -1305,6 +1403,285 @@ function UserManagementTab({ role }: { role: Role }) {
                 )}
               </Tab>
             </Tabs>
+          ) : role === 'TEACHER' ? (
+            <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
+              <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>
+                <Form onSubmit={handleUpdateUser}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Full Name</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      value={name} 
+                      onChange={(e) => setName(e.target.value)} 
+                      required 
+                      placeholder="Enter full name"
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Email Address</Form.Label>
+                    <Form.Control 
+                      type="email" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)} 
+                      required 
+                      placeholder="Enter email address"
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Mobile Number</Form.Label>
+                    <Form.Control 
+                      type="tel" 
+                      value={mobile} 
+                      onChange={(e) => setMobile(e.target.value)} 
+                      placeholder="Enter mobile number"
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Date of Birth</Form.Label>
+                    <Form.Control 
+                      type="date" 
+                      value={dateOfBirth} 
+                      onChange={(e) => setDateOfBirth(e.target.value)} 
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Address</Form.Label>
+                    <Form.Control 
+                      as="textarea"
+                      rows={2}
+                      value={address} 
+                      onChange={(e) => setAddress(e.target.value)} 
+                      placeholder="Enter address"
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Qualification</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      value={qualification} 
+                      onChange={(e) => setQualification(e.target.value)} 
+                      placeholder="Enter qualification"
+                    />
+                  </Form.Group>
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Pay Rate</Form.Label>
+                        <Form.Control 
+                          type="number" 
+                          step="0.01"
+                          value={payRate} 
+                          onChange={(e) => setPayRate(e.target.value)} 
+                          placeholder="0.00"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Salary Type</Form.Label>
+                        <Form.Select 
+                          value={payType}
+                          onChange={(e) => setPayType(e.target.value as PayType)}
+                        >
+                          <option value="DAILY">Daily</option>
+                          <option value="WEEKLY">Weekly</option>
+                          <option value="FORTNIGHTLY">Fortnightly</option>
+                          <option value="MONTHLY">Monthly</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Pay Currency</Form.Label>
+                    <Form.Select 
+                      value={payCurrency}
+                      onChange={(e) => setPayCurrency(e.target.value)}
+                    >
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.code} - {currency.name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                  <Form.Group className="mb-4">
+                    <Form.Label>Password</Form.Label>
+                    <Form.Control 
+                      type="password" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      placeholder="Leave blank to keep current password"
+                      minLength={6}
+                    />
+                    <Form.Text className="text-muted">
+                      Leave blank to keep current password
+                    </Form.Text>
+                  </Form.Group>
+                  <div className="d-flex justify-content-end gap-2">
+                    <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" variant="warning" disabled={editing}>
+                      {editing ? (
+                        <><Spinner animation="border" size="sm" className="me-2" />Updating...</>
+                      ) : (
+                        <><i className="bi bi-check-circle me-2"></i>Update</>
+                      )}
+                    </Button>
+                  </div>
+                </Form>
+              </Tab>
+              <Tab eventKey="salaries" title={<span><i className="bi bi-cash-stack me-2"></i>Salary</span>}>
+                <Row className="g-3">
+                  <Col md={6}>
+                    <Card>
+                      <Card.Header className="bg-light"><strong>Record Salary Payment</strong></Card.Header>
+                      <Card.Body>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Amount</Form.Label>
+                              <Form.Control type="number" step="0.01" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Paid Date</Form.Label>
+                              <Form.Control type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Payment Details/Remarks</Form.Label>
+                          <Form.Control as="textarea" rows={2} value={paymentDetails} onChange={(e) => setPaymentDetails(e.target.value)} />
+                        </Form.Group>
+                        <div className="d-flex justify-content-end">
+                          <Button variant="primary" size="sm" onClick={handleRecordPayment} disabled={recordingPayment}>
+                            {recordingPayment ? 'Recording...' : 'Record Payment'}
+                          </Button>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                  <Col md={6}>
+                    <Card>
+                      <Card.Header className="bg-light"><strong>Create Salary Advance/Loan</strong></Card.Header>
+                      <Card.Body>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Principal</Form.Label>
+                              <Form.Control type="number" step="0.01" value={advancePrincipal} onChange={(e) => setAdvancePrincipal(e.target.value)} />
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Installments</Form.Label>
+                              <Form.Control type="number" value={advanceInstallments} onChange={(e) => setAdvanceInstallments(e.target.value)} />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                        <Row>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Repayment Frequency</Form.Label>
+                              <Form.Select value={advancePayType} onChange={(e) => setAdvancePayType(e.target.value as PayType)}>
+                                <option value="DAILY">Daily</option>
+                                <option value="WEEKLY">Weekly</option>
+                                <option value="FORTNIGHTLY">Fortnightly</option>
+                                <option value="MONTHLY">Monthly</option>
+                              </Form.Select>
+                            </Form.Group>
+                          </Col>
+                          <Col md={6}>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Currency</Form.Label>
+                              <Form.Select value={advanceCurrency} onChange={(e) => setAdvanceCurrency(e.target.value)}>
+                                {currencies.map(currency => (
+                                  <option key={currency.code} value={currency.code}>{currency.code}</option>
+                                ))}
+                              </Form.Select>
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                        <Form.Group className="mb-3">
+                          <Form.Label>Details/Remarks</Form.Label>
+                          <Form.Control as="textarea" rows={2} value={advanceDetails} onChange={(e) => setAdvanceDetails(e.target.value)} />
+                        </Form.Group>
+                        <div className="d-flex justify-content-end">
+                          <Button variant="warning" size="sm" onClick={handleCreateAdvance} disabled={creatingAdvance}>
+                            {creatingAdvance ? 'Creating...' : 'Create Advance'}
+                          </Button>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+
+                <Row className="g-3 mt-2">
+                  <Col md={6}>
+                    <Card>
+                      <Card.Header className="bg-light"><strong>Payment History</strong></Card.Header>
+                      <Card.Body className="p-0">
+                        <div className="table-responsive">
+                          <Table size="sm" className="mb-0">
+                            <thead className="table-light">
+                              <tr>
+                                <th>Amount</th>
+                                <th>Date</th>
+                                <th>Details</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {teacherPayments.length === 0 ? (
+                                <tr><td colSpan={3} className="text-center text-muted small py-3">No records</td></tr>
+                              ) : teacherPayments.map((p) => (
+                                <tr key={p.id}>
+                                  <td className="fw-bold text-success">{getCurrencySymbol(p.currency)}{p.amount.toFixed(2)}</td>
+                                  <td className="small">{new Date(p.paidDate).toLocaleDateString()}</td>
+                                  <td className="small">{p.paymentDetails || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                  <Col md={6}>
+                    <Card>
+                      <Card.Header className="bg-light"><strong>Advances/Loans</strong></Card.Header>
+                      <Card.Body className="p-0">
+                        <div className="table-responsive">
+                          <Table size="sm" className="mb-0">
+                            <thead className="table-light">
+                              <tr>
+                                <th>Principal</th>
+                                <th>Balance</th>
+                                <th>Installments</th>
+                                <th>Status</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {teacherAdvances.length === 0 ? (
+                                <tr><td colSpan={4} className="text-center text-muted small py-3">No records</td></tr>
+                              ) : teacherAdvances.map((a) => (
+                                <tr key={a.id}>
+                                  <td className="fw-bold">{getCurrencySymbol(a.currency)}{a.principal.toFixed(2)}</td>
+                                  <td>{getCurrencySymbol(a.currency)}{a.balance.toFixed(2)}</td>
+                                  <td>{a.installments} x {a.installmentAmount}</td>
+                                  <td><Badge bg={a.status === 'ACTIVE' ? 'warning' : a.status === 'COMPLETED' ? 'success' : 'secondary'}>{a.status}</Badge></td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              </Tab>
+            </Tabs>
           ) : (
             <Form onSubmit={handleUpdateUser}>
               <Form.Group className="mb-3">
@@ -1336,17 +1713,7 @@ function UserManagementTab({ role }: { role: Role }) {
                   placeholder="Enter mobile number"
                 />
               </Form.Group>
-              {(role === 'TEACHER') && (
-                <Form.Group className="mb-3">
-                  <Form.Label>Date of Birth</Form.Label>
-                  <Form.Control 
-                    type="date" 
-                    value={dateOfBirth} 
-                    onChange={(e) => setDateOfBirth(e.target.value)} 
-                  />
-                </Form.Group>
-              )}
-              <Form.Group className="mb-3">
+                            <Form.Group className="mb-3">
                 <Form.Label>Address</Form.Label>
                 <Form.Control 
                   as="textarea"
@@ -1357,62 +1724,7 @@ function UserManagementTab({ role }: { role: Role }) {
                 />
               </Form.Group>
               
-              {/* Teacher-specific fields in edit modal */}
-              {role === 'TEACHER' && (
-                <>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Qualification</Form.Label>
-                    <Form.Control 
-                      type="text" 
-                      value={qualification} 
-                      onChange={(e) => setQualification(e.target.value)} 
-                      placeholder="Enter qualification"
-                    />
-                  </Form.Group>
-                  <Row>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Pay Rate</Form.Label>
-                        <Form.Control 
-                          type="number" 
-                          step="0.01"
-                          value={payRate} 
-                          onChange={(e) => setPayRate(e.target.value)} 
-                          placeholder="0.00"
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Pay Type</Form.Label>
-                        <Form.Select 
-                          value={payType}
-                          onChange={(e) => setPayType(e.target.value as PayType)}
-                        >
-                          <option value="DAILY">Daily</option>
-                          <option value="WEEKLY">Weekly</option>
-                          <option value="FORTNIGHTLY">Fortnightly</option>
-                          <option value="MONTHLY">Monthly</option>
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Pay Currency</Form.Label>
-                    <Form.Select 
-                      value={payCurrency}
-                      onChange={(e) => setPayCurrency(e.target.value)}
-                    >
-                      {currencies.map(currency => (
-                        <option key={currency.code} value={currency.code}>
-                          {currency.code} - {currency.name}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </>
-              )}
-              
+                            
               <Form.Group className="mb-4">
                 <Form.Label>Password</Form.Label>
                 <Form.Control 
@@ -2935,17 +3247,7 @@ export default function AdminDashboard() {
           <UserManagementTab role="STUDENT" />
         </Tab>
         
-        <Tab 
-          eventKey="admins" 
-          title={
-            <span>
-              <i className="bi bi-gear-fill me-2"></i>
-              Admins
-            </span>
-          }
-        >
-          <UserManagementTab role="ADMIN" />
-        </Tab>
+        
         
         <Tab 
           eventKey="subjects" 
