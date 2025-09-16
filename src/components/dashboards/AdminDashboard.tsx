@@ -6,6 +6,7 @@ import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, 
 import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType } from '@prisma/client';
 import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timezones';
 import FeeManagementTab from './FeeManagementTab';
+import AdminSubscriptionTab from './AdminSubscriptionTab';
 
 interface User {
   id: string;
@@ -1401,6 +1402,14 @@ function UserManagementTab({ role }: { role: Role }) {
                     onFeeChange={handleFeeChange}
                   />
                 )}
+              </Tab>
+              <Tab eventKey="subscriptions" title={
+                <span>
+                  <i className="bi bi-wallet2 me-2"></i>
+                  Subscriptions
+                </span>
+              }>
+                <AdminSubscriptionTab />
               </Tab>
             </Tabs>
           ) : role === 'TEACHER' ? (
