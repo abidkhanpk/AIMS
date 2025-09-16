@@ -953,7 +953,7 @@ function AdminManagementTab() {
               </Form>
               {selectedAdmin && (
                 <div className="mt-4">
-                  <SubscriptionHistoryTab adminId={selectedAdmin.id} />
+                  <SubscriptionHistoryTab adminId={selectedAdmin.id} allowVerify />
                 </div>
               )}
             </Tab>
