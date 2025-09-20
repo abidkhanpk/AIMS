@@ -69,6 +69,7 @@ function AdminManagementTab() {
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -262,6 +263,31 @@ function AdminManagementTab() {
       }
     } catch (error) {
       setError('Error updating admin status');
+    }
+  };
+
+  const handleDeleteAdmin = async (adminId: string) => {
+    if (!confirm('Delete this admin account and all related records? This action cannot be undone.')) return;
+    setDeletingAdminId(adminId);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/users/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: adminId }),
+      });
+      if (res.ok) {
+        setSuccess('Admin deleted successfully');
+        fetchAdmins();
+      } else {
+        const err = await res.json();
+        setError(err.message || 'Failed to delete admin');
+      }
+    } catch {
+      setError('Error deleting admin');
+    } finally {
+      setDeletingAdminId(null);
     }
   };
 
@@ -629,6 +655,15 @@ function AdminManagementTab() {
                                 title={admin.isActive ? "Disable Admin (Manual)" : "Enable Admin"}
                               >
                                 <i className={`bi bi-${admin.isActive ? 'x-circle' : 'check-circle'}`}></i>
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() => handleDeleteAdmin(admin.id)}
+                                title="Delete Admin"
+                                disabled={deletingAdminId === admin.id}
+                              >
+                                <i className="bi bi-trash"></i>
                               </Button>
                             </div>
                           </td>
