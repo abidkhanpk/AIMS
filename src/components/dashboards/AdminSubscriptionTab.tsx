@@ -168,9 +168,9 @@ const AdminSubscriptionTab: React.FC = () => {
                     ) : 'N/A'}
                   </td>
                   <td>
-                    {s.status !== 'ACTIVE' && (
-                      <Button size="sm" variant="outline-primary" className="me-2" onClick={() => { setSelectedSub(s); setShowPaymentModal(true); }}>
-                        <i className="bi bi-cash"></i>
+                    {(s.status === 'PENDING' || s.status === 'EXPIRED') && (
+                      <Button size="sm" variant="primary" className="me-2" onClick={() => { setSelectedSub(s); setShowPaymentModal(true); }}>
+                        <i className="bi bi-cash me-1"></i> Mark Paid
                       </Button>
                     )}
                   </td>

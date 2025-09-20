@@ -1403,15 +1403,7 @@ function UserManagementTab({ role }: { role: Role }) {
                   />
                 )}
               </Tab>
-              <Tab eventKey="subscriptions" title={
-                <span>
-                  <i className="bi bi-wallet2 me-2"></i>
-                  Subscriptions
-                </span>
-              }>
-                <AdminSubscriptionTab />
-              </Tab>
-            </Tabs>
+                          </Tabs>
           ) : role === 'TEACHER' ? (
             <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
               <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>
