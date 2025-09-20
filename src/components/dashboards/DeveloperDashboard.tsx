@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Form, Button, Table, Card, Row, Col, Modal, Alert, Spinner, Badge, Tabs, Tab } from 'react-bootstrap';
 import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
+import { currencies } from '../../utils/currencies';
 
 interface Admin {
   id: string;
@@ -96,18 +97,7 @@ function AdminManagementTab() {
   const [editPassword, setEditPassword] = useState('');
   const [updating, setUpdating] = useState(false);
 
-  const currencies = [
-    { code: 'USD', symbol: '$', name: 'US Dollar' },
-    { code: 'EUR', symbol: '€', name: 'Euro' },
-    { code: 'GBP', symbol: '£', name: 'British Pound' },
-    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
-    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-  ];
+  // currencies imported from utils/currencies
 
   useEffect(() => {
     fetchAdmins();
@@ -842,22 +832,7 @@ function AdminManagementTab() {
                   </Col>
                 </Row>
 
-                <Row>
-                  <Col md={12}>
-                    <Form.Group className="mb-3">
-                      <Form.Check
-                        type="switch"
-                        id="enable-homepage"
-                        label="Enable Homepage"
-                        checked={enableHomePage}
-                        onChange={(e) => setEnableHomePage(e.target.checked)}
-                      />
-                      <Form.Text className="text-muted">
-                        When disabled, users will be redirected directly to dashboard after login
-                      </Form.Text>
-                    </Form.Group>
-                  </Col>
-                </Row>
+                {/* Enable Homepage toggle removed from admin settings. This is controlled globally in Global Settings. */}
                 
                 {headerImage && (
                   <div className="mb-3">

@@ -6,6 +6,7 @@ import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, 
 import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType } from '@prisma/client';
 import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timezones';
 import FeeManagementTab from './FeeManagementTab';
+import AdminSubscriptionTab from './AdminSubscriptionTab';
 
 interface User {
   id: string;
@@ -1402,7 +1403,7 @@ function UserManagementTab({ role }: { role: Role }) {
                   />
                 )}
               </Tab>
-            </Tabs>
+                          </Tabs>
           ) : role === 'TEACHER' ? (
             <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
               <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>

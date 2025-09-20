@@ -33,6 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             id: true,
             name: true,
             email: true,
+            isActive: true,
+            disabledByDeveloper: true,
           }
         }
       }
@@ -77,13 +79,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       if (approved) {
+        // Determine base date for extension: from current endDate if in the future, else from now
+        const now = new Date();
+        const baseDate = update.endDate && update.endDate > now ? new Date(update.endDate) : now;
+
         // Extend expiry according to plan
         let newEndDate: Date | null = null;
         if (update.plan === 'MONTHLY') {
-          newEndDate = new Date();
+          newEndDate = new Date(baseDate);
           newEndDate.setMonth(newEndDate.getMonth() + 1);
         } else if (update.plan === 'YEARLY') {
-          newEndDate = new Date();
+          newEndDate = new Date(baseDate);
           newEndDate.setFullYear(newEndDate.getFullYear() + 1);
         } else if (update.plan === 'LIFETIME') {
           newEndDate = null;
@@ -91,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         await tx.subscription.update({
           where: { id: update.id },
-          data: { endDate: newEndDate }
+          data: { endDate: newEndDate, status: 'ACTIVE' }
         });
 
         // Update settings as well
@@ -101,6 +107,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             subscriptionType: update.plan,
             subscriptionAmount: update.amount,
             subscriptionEndDate: newEndDate
+          }
+        });
+
+        // Record subscription payment history
+        await tx.subscriptionPayment.create({
+          data: {
+            adminId: update.adminId,
+            subscriptionId: update.id,
+            amount: update.paidAmount || update.amount,
+            currency: update.currency,
+            plan: update.plan,
+            paymentDate: update.paidDate || now,
+            expiryExtended: newEndDate || new Date('2099-12-31'),
+            paymentDetails: update.paymentDetails || undefined,
+            paymentProof: update.paymentProof || undefined,
+            processedById: session.user.id,
           }
         });
 
