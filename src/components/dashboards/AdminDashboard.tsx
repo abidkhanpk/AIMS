@@ -596,11 +596,22 @@ function DetailViewModal({ show, onHide, title, data }: { show: boolean; onHide:
             <div key={key} className="col-md-6 mb-3">
               <strong className="text-capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</strong>
               <div className="mt-1">
-                {typeof value === 'object' && value !== null ? (
-                  JSON.stringify(value, null, 2)
-                ) : (
-                  String(value || '-')
-                )}
+                {(() => {
+                  if (value && typeof value === 'object') {
+                    if (Array.isArray(value)) {
+                      return `${value.length} item(s)`;
+                    }
+                    // Show human-friendly info for common nested objects (e.g., student, teacher, course)
+                    // Prefer name and optional email when available; fallback to pretty JSON for other objects
+                    // @ts-ignore
+                    const v: any = value;
+                    if (v.name) {
+                      return <span>{v.name}{v.email ? ` (${v.email})` : ''}</span>;
+                    }
+                    return <pre className="mb-0 small bg-light p-2 rounded">{JSON.stringify(value, null, 2)}</pre>;
+                  }
+                  return String(value ?? '-');
+                })()}
               </div>
             </div>
           ))}
@@ -963,7 +974,14 @@ function UserManagementTab({ role }: { role: Role }) {
   };
 
   const handleViewDetails = (user: User) => {
-    setDetailData(user);
+    // Hide teacher-only fields from Student and Parent detail views
+    const data: any = { ...user };
+    if (role !== 'TEACHER') {
+      delete data.qualification;
+      delete data.payRate;
+      delete data.payType;
+    }
+    setDetailData(data);
     setShowDetailModal(true);
   };
 

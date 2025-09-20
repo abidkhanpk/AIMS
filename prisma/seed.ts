@@ -20,7 +20,7 @@ async function main() {
 
   console.log('✅ Developer created:', developer.email);
 
-  // Create Admin
+  /*/ Create Admin
   const admin = await prisma.user.upsert({
     where: { email: 'admin@school.com' },
     update: {},
@@ -673,7 +673,8 @@ async function main() {
   console.log('Student 1: emma.student@school.com / student123');
   console.log('Student 2: alex.student@school.com / student123');
   console.log('Student 3: sophia.student@school.com / student123');
-}
+*/
+  } 
 
 main()
   .catch((e) => {
