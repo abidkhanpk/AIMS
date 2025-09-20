@@ -672,6 +672,7 @@ function UserManagementTab({ role }: { role: Role }) {
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -984,6 +985,35 @@ function UserManagementTab({ role }: { role: Role }) {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Delete this user and related records? This cannot be undone.')) return;
+    setDeletingId(userId);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/users/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: userId }),
+      });
+      if (res.ok) {
+        setSuccess('User deleted successfully');
+        fetchUsers();
+        if (editingUser && editingUser.id === userId) {
+          setShowEditModal(false);
+          setEditingUser(null);
+        }
+      } else {
+        const err = await res.json();
+        setError(err.message || 'Failed to delete user');
+      }
+    } catch (e) {
+      setError('Error deleting user');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div>
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
@@ -1224,6 +1254,15 @@ function UserManagementTab({ role }: { role: Role }) {
                                 title="Edit User"
                               >
                                 <i className="bi bi-pencil"></i>
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() => handleDeleteUser(user.id)}
+                                title="Delete User"
+                                disabled={deletingId === user.id}
+                              >
+                                <i className="bi bi-trash"></i>
                               </Button>
                             </div>
                           </td>
