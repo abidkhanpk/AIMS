@@ -20,7 +20,7 @@ async function main() {
 
   console.log('✅ Developer created:', developer.email);
 
-  /*/ Create Admin
+  // Create Admin
   const admin = await prisma.user.upsert({
     where: { email: 'admin@school.com' },
     update: {},
@@ -47,8 +47,8 @@ async function main() {
 
   console.log('✅ Admin settings created');
 
-  // Create Teachers
-  const teacher1 = await prisma.user.upsert({
+  // Create a single teacher
+  const teacher = await prisma.user.upsert({
     where: { email: 'john.teacher@school.com' },
     update: {},
     create: {
@@ -67,28 +67,9 @@ async function main() {
     },
   });
 
-  const teacher2 = await prisma.user.upsert({
-    where: { email: 'sarah.teacher@school.com' },
-    update: {},
-    create: {
-      name: 'Sarah Johnson',
-      email: 'sarah.teacher@school.com',
-      password: bcrypt.hashSync('teacher123', 10),
-      role: 'TEACHER',
-      adminId: admin.id,
-      mobile: '+1234567891',
-      dateOfBirth: new Date('1988-07-22'),
-      address: '456 Science Avenue, Knowledge Town',
-      qualification: 'Master of Science in Physics',
-      payRate: 55.0,
-      payType: 'MONTHLY',
-      payCurrency: 'USD',
-    },
-  });
+  console.log('✅ Teacher created:', teacher.email);
 
-  console.log('✅ Teachers created:', teacher1.email, teacher2.email);
-
-  // Create Parents
+  // Create two parents
   const parent1 = await prisma.user.upsert({
     where: { email: 'mike.parent@email.com' },
     update: {},
@@ -121,7 +102,7 @@ async function main() {
 
   console.log('✅ Parents created:', parent1.email, parent2.email);
 
-  // Create Students
+  // Create two students
   const student1 = await prisma.user.upsert({
     where: { email: 'emma.student@school.com' },
     update: {},
@@ -152,22 +133,7 @@ async function main() {
     },
   });
 
-  const student3 = await prisma.user.upsert({
-    where: { email: 'sophia.student@school.com' },
-    update: {},
-    create: {
-      name: 'Sophia Davis',
-      email: 'sophia.student@school.com',
-      password: bcrypt.hashSync('student123', 10),
-      role: 'STUDENT',
-      adminId: admin.id,
-      mobile: '+1234567896',
-      dateOfBirth: new Date('2008-11-25'),
-      address: '654 Student Boulevard, Learning District',
-    },
-  });
-
-  console.log('✅ Students created:', student1.email, student2.email, student3.email);
+  console.log('✅ Students created:', student1.email, student2.email);
 
   // Create Courses
   const mathCourse = await prisma.course.upsert({
@@ -192,20 +158,9 @@ async function main() {
     },
   });
 
-  const englishCourse = await prisma.course.upsert({
-    where: { id: 'english-course-id' },
-    update: {},
-    create: {
-      id: 'english-course-id',
-      name: 'English Literature',
-      description: 'English language arts and literature studies',
-      adminId: admin.id,
-    },
-  });
+  console.log('✅ Courses created:', mathCourse.name, scienceCourse.name);
 
-  console.log('✅ Courses created:', mathCourse.name, scienceCourse.name, englishCourse.name);
-
-  // Create Parent-Student relationships
+  // Parent-Student relationships (each student has a parent)
   await prisma.parentStudent.upsert({
     where: { parentId_studentId: { parentId: parent1.id, studentId: student1.id } },
     update: {},
@@ -226,53 +181,33 @@ async function main() {
 
   console.log('✅ Parent-Student relationships created');
 
-  // Create Teacher-Student assignments
+  // Teacher-Student assignments
   await prisma.teacherStudent.upsert({
-    where: { teacherId_studentId: { teacherId: teacher1.id, studentId: student1.id } },
+    where: { teacherId_studentId: { teacherId: teacher.id, studentId: student1.id } },
     update: {},
     create: {
-      teacherId: teacher1.id,
+      teacherId: teacher.id,
       studentId: student1.id,
     },
   });
 
   await prisma.teacherStudent.upsert({
-    where: { teacherId_studentId: { teacherId: teacher1.id, studentId: student2.id } },
+    where: { teacherId_studentId: { teacherId: teacher.id, studentId: student2.id } },
     update: {},
     create: {
-      teacherId: teacher1.id,
+      teacherId: teacher.id,
       studentId: student2.id,
-    },
-  });
-
-  await prisma.teacherStudent.upsert({
-    where: { teacherId_studentId: { teacherId: teacher2.id, studentId: student2.id } },
-    update: {},
-    create: {
-      teacherId: teacher2.id,
-      studentId: student2.id,
-    },
-  });
-
-  await prisma.teacherStudent.upsert({
-    where: { teacherId_studentId: { teacherId: teacher2.id, studentId: student3.id } },
-    update: {},
-    create: {
-      teacherId: teacher2.id,
-      studentId: student3.id,
     },
   });
 
   console.log('✅ Teacher-Student assignments created');
 
-  // Create Student-Course assignments
+  // Student-Course assignments
   const studentCourses = [
     { studentId: student1.id, courseId: mathCourse.id },
     { studentId: student1.id, courseId: scienceCourse.id },
     { studentId: student2.id, courseId: mathCourse.id },
-    { studentId: student2.id, courseId: englishCourse.id },
-    { studentId: student3.id, courseId: scienceCourse.id },
-    { studentId: student3.id, courseId: englishCourse.id },
+    { studentId: student2.id, courseId: scienceCourse.id },
   ];
 
   for (const sc of studentCourses) {
@@ -285,12 +220,14 @@ async function main() {
 
   console.log('✅ Student-Course assignments created');
 
-  // Create Assignment records (new model in schema)
-  await prisma.assignment.create({
-    data: {
+  // Detailed class assignments (schedule + fees)
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student1.id, courseId: mathCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
       studentId: student1.id,
       courseId: mathCourse.id,
-      teacherId: teacher1.id,
+      teacherId: teacher.id,
       startTime: '09:00',
       duration: 60,
       classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY, ClassDay.FRIDAY],
@@ -300,12 +237,14 @@ async function main() {
     },
   });
 
-  await prisma.assignment.create({
-    data: {
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student1.id, courseId: scienceCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
       studentId: student1.id,
       courseId: scienceCourse.id,
-      teacherId: teacher2.id,
-      startTime: '10:30',
+      teacherId: teacher.id,
+      startTime: '11:00',
       duration: 60,
       classDays: [ClassDay.TUESDAY, ClassDay.THURSDAY],
       timezone: 'UTC',
@@ -314,119 +253,84 @@ async function main() {
     },
   });
 
-  await prisma.assignment.create({
-    data: {
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student2.id, courseId: mathCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
       studentId: student2.id,
       courseId: mathCourse.id,
-      teacherId: teacher1.id,
-      startTime: '11:00',
+      teacherId: teacher.id,
+      startTime: '14:00',
       duration: 60,
-      classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY, ClassDay.FRIDAY],
+      classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY],
       timezone: 'UTC',
       monthlyFee: 150.0,
       currency: 'USD',
     },
   });
 
-  await prisma.assignment.create({
-    data: {
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student2.id, courseId: scienceCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
       studentId: student2.id,
-      courseId: englishCourse.id,
-      teacherId: teacher2.id,
-      startTime: '14:00',
-      duration: 60,
-      classDays: [ClassDay.TUESDAY, ClassDay.THURSDAY],
-      timezone: 'UTC',
-      monthlyFee: 130.0,
-      currency: 'USD',
-    },
-  });
-
-  await prisma.assignment.create({
-    data: {
-      studentId: student3.id,
       courseId: scienceCourse.id,
-      teacherId: teacher2.id,
+      teacherId: teacher.id,
       startTime: '15:30',
       duration: 60,
-      classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY],
+      classDays: [ClassDay.TUESDAY, ClassDay.FRIDAY],
       timezone: 'UTC',
       monthlyFee: 140.0,
       currency: 'USD',
     },
   });
 
-  await prisma.assignment.create({
-    data: {
-      studentId: student3.id,
-      courseId: englishCourse.id,
-      teacherId: teacher2.id,
-      startTime: '16:30',
-      duration: 60,
-      classDays: [ClassDay.TUESDAY, ClassDay.FRIDAY],
-      timezone: 'UTC',
-      monthlyFee: 130.0,
-      currency: 'USD',
-    },
-  });
+  console.log('✅ Class assignments created');
 
-  console.log('✅ Assignment records created');
-
-  // Create sample progress records with correct field names and enum values
+  // Progress records
   const progressRecords = [
     {
       studentId: student1.id,
       courseId: mathCourse.id,
-      teacherId: teacher1.id,
+      teacherId: teacher.id,
       lesson: 'Algebra Fundamentals',
       homework: 'Complete exercises 1-10 on page 45',
-      lessonProgress: 92.5,
-      score: 95.0,
-      remarks: 'Excellent work on algebra problems. Shows strong understanding of concepts.',
+      lessonProgress: 90,
+      score: 95,
+      remarks: 'Excellent work on algebra problems.',
       attendance: 'PRESENT' as const,
     },
     {
       studentId: student1.id,
       courseId: scienceCourse.id,
-      teacherId: teacher2.id,
+      teacherId: teacher.id,
       lesson: 'Physics - Motion and Forces',
       homework: 'Read chapter 3 and solve practice problems',
-      lessonProgress: 78.0,
-      score: 82.0,
-      remarks: 'Good progress in physics. Needs more practice with problem-solving.',
+      lessonProgress: 80,
+      score: 84,
+      remarks: 'Needs more practice with calculations.',
       attendance: 'PRESENT' as const,
     },
     {
       studentId: student2.id,
       courseId: mathCourse.id,
-      teacherId: teacher1.id,
+      teacherId: teacher.id,
       lesson: 'Geometry - Triangles',
       homework: 'Draw and calculate areas of different triangles',
-      lessonProgress: 85.0,
-      score: 88.0,
-      remarks: 'Improving steadily. Keep up the good work with geometry.',
+      lessonProgress: 82,
+      score: 85,
+      remarks: 'Improving steadily.',
       attendance: 'LATE' as const,
     },
     {
       studentId: student2.id,
-      courseId: englishCourse.id,
-      teacherId: teacher2.id,
-      lesson: 'Creative Writing - Essay Structure',
-      homework: 'Write a 500-word essay on your favorite book',
-      lessonProgress: 94.0,
-      score: 96.0,
-      remarks: 'Outstanding essay writing skills. Creative and well-structured work.',
-      attendance: 'PRESENT' as const,
-    },
-    {
-      studentId: student3.id,
       courseId: scienceCourse.id,
-      teacherId: teacher2.id,
-      lesson: 'Biology - Cell Structure',
-      homework: 'Study cell diagrams and prepare for quiz',
-      lessonProgress: 88.5,
-      score: 90.0,
-      remarks: 'Shows great interest in biology. Participates actively in class.',
+      teacherId: teacher.id,
+      lesson: 'Chemistry - Elements and Compounds',
+      homework: 'Memorize first 20 elements of the periodic table',
+      lessonProgress: 75,
+      score: 78,
+      remarks: 'Review chemical symbols.',
       attendance: 'PRESENT' as const,
     },
   ];
@@ -437,16 +341,16 @@ async function main() {
     });
   }
 
-  console.log('✅ Sample progress records created');
+  console.log('✅ Progress records created');
 
-  // Create sample fees
+  // Fees for each student/course
   const fees = [
     {
       studentId: student1.id,
       courseId: mathCourse.id,
       title: 'Tuition Fee - Mathematics',
       description: 'Monthly tuition fee for mathematics course',
-      amount: 150.00,
+      amount: 150.0,
       currency: 'USD',
       dueDate: new Date('2024-09-15'),
       status: 'PENDING' as const,
@@ -459,13 +363,13 @@ async function main() {
       courseId: scienceCourse.id,
       title: 'Tuition Fee - Science',
       description: 'Monthly tuition fee for science course',
-      amount: 140.00,
+      amount: 140.0,
       currency: 'USD',
       dueDate: new Date('2024-09-15'),
       status: 'PAID' as const,
       paidDate: new Date('2024-09-10'),
       paidById: parent1.id,
-      paidAmount: 140.00,
+      paidAmount: 140.0,
       month: 9,
       year: 2024,
       isRecurring: true,
@@ -475,36 +379,23 @@ async function main() {
       courseId: mathCourse.id,
       title: 'Tuition Fee - Mathematics',
       description: 'Monthly tuition fee for mathematics course',
-      amount: 150.00,
+      amount: 150.0,
       currency: 'USD',
       dueDate: new Date('2024-09-15'),
-      status: 'PENDING' as const,
+      status: 'PROCESSING' as const,
+      paidDate: new Date('2024-09-12'),
+      paidById: parent2.id,
+      paidAmount: 150.0,
       month: 9,
       year: 2024,
       isRecurring: true,
     },
     {
       studentId: student2.id,
-      courseId: englishCourse.id,
-      title: 'Tuition Fee - English',
-      description: 'Monthly tuition fee for English literature course',
-      amount: 130.00,
-      currency: 'USD',
-      dueDate: new Date('2024-09-15'),
-      status: 'PROCESSING' as const,
-      paidDate: new Date('2024-09-12'),
-      paidById: parent2.id,
-      paidAmount: 130.00,
-      month: 9,
-      year: 2024,
-      isRecurring: true,
-    },
-    {
-      studentId: student3.id,
       courseId: scienceCourse.id,
       title: 'Lab Fee - Science',
       description: 'Science laboratory equipment and materials fee',
-      amount: 50.00,
+      amount: 50.0,
       currency: 'USD',
       dueDate: new Date('2024-08-30'),
       status: 'OVERDUE' as const,
@@ -520,51 +411,29 @@ async function main() {
     });
   }
 
-  console.log('✅ Sample fees created');
+  console.log('✅ Fees created');
 
-  // Create sample salaries for teachers
-  const salaries = [
-    {
-      teacherId: teacher1.id,
+  // Salary for the single teacher
+  await prisma.salary.create({
+    data: {
+      teacherId: teacher.id,
       title: 'Monthly Salary - September 2024',
-      description: 'Monthly salary for teaching mathematics',
-      amount: 3000.00,
+      description: 'Monthly salary for teaching mathematics and science',
+      amount: 3000.0,
       currency: 'USD',
       dueDate: new Date('2024-09-30'),
-      status: 'PENDING' as const,
+      status: 'PENDING',
       month: 9,
       year: 2024,
-      payType: 'MONTHLY' as const,
+      payType: 'MONTHLY',
       isRecurring: true,
     },
-    {
-      teacherId: teacher2.id,
-      title: 'Monthly Salary - September 2024',
-      description: 'Monthly salary for teaching science and English',
-      amount: 3200.00,
-      currency: 'USD',
-      dueDate: new Date('2024-09-30'),
-      status: 'PAID' as const,
-      paidDate: new Date('2024-09-28'),
-      paidById: admin.id,
-      paidAmount: 3200.00,
-      month: 9,
-      year: 2024,
-      payType: 'MONTHLY' as const,
-      isRecurring: true,
-    },
-  ];
+  });
 
-  for (const salary of salaries) {
-    await prisma.salary.create({
-      data: salary,
-    });
-  }
+  console.log('✅ Salary record created');
 
-  console.log('✅ Sample salaries created');
-
-  // Create sample subscription for admin
-  const subscription = await prisma.subscription.create({
+  // Admin subscription
+  await prisma.subscription.create({
     data: {
       adminId: admin.id,
       plan: 'MONTHLY',
@@ -579,53 +448,38 @@ async function main() {
     },
   });
 
-  console.log('✅ Sample subscription created');
+  console.log('✅ Subscription created');
 
-  // Create sample notifications
-  await prisma.notification.create({
-    data: {
-      type: NotificationType.FEE_DUE,
-      title: 'Fee Payment Due',
-      message: 'Mathematics tuition fee is due on September 15, 2024',
-      senderId: admin.id,
-      receiverId: parent1.id,
-    },
+  // Notifications
+  await prisma.notification.createMany({
+    data: [
+      {
+        type: NotificationType.FEE_DUE,
+        title: 'Fee Payment Due',
+        message: 'Mathematics tuition fee is due on September 15, 2024',
+        senderId: admin.id,
+        receiverId: parent1.id,
+      },
+      {
+        type: NotificationType.PROGRESS_UPDATE,
+        title: 'Progress Update',
+        message: 'Emma has completed her algebra fundamentals lesson with excellent performance',
+        senderId: teacher.id,
+        receiverId: parent1.id,
+      },
+      {
+        type: NotificationType.SUBSCRIPTION_DUE,
+        title: 'Subscription Renewal Due',
+        message: 'Your monthly subscription will expire on October 1, 2024. Please renew to continue using the system.',
+        senderId: developer.id,
+        receiverId: admin.id,
+      },
+    ],
   });
 
-  await prisma.notification.create({
-    data: {
-      type: NotificationType.PROGRESS_UPDATE,
-      title: 'Progress Update',
-      message: 'Emma has completed her algebra fundamentals lesson with excellent performance',
-      senderId: teacher1.id,
-      receiverId: parent1.id,
-    },
-  });
+  console.log('✅ Notifications created');
 
-  await prisma.notification.create({
-    data: {
-      type: NotificationType.SALARY_PAID,
-      title: 'Salary Payment Processed',
-      message: 'Your September 2024 salary has been processed and paid',
-      senderId: admin.id,
-      receiverId: teacher2.id,
-      isRead: true,
-    },
-  });
-
-  await prisma.notification.create({
-    data: {
-      type: NotificationType.SUBSCRIPTION_DUE,
-      title: 'Subscription Renewal Due',
-      message: 'Your monthly subscription will expire on October 1, 2024. Please renew to continue using the system.',
-      senderId: developer.id,
-      receiverId: admin.id,
-    },
-  });
-
-  console.log('✅ Sample notifications created');
-
-  // Create user settings for some users
+  // User settings
   const userSettingsData = [
     {
       userId: admin.id,
@@ -646,7 +500,7 @@ async function main() {
       timezone: 'America/New_York',
     },
     {
-      userId: teacher1.id,
+      userId: teacher.id,
       enableNotifications: true,
       emailNotifications: false,
       parentRemarkNotifications: true,
@@ -660,21 +514,18 @@ async function main() {
     });
   }
 
-  console.log('✅ Sample user settings created');
+  console.log('✅ User settings created');
 
   console.log('🎉 Database seeding completed successfully!');
   console.log('\n📋 Login Credentials:');
   console.log('Developer: info@mmsurdu.pk / developer123');
   console.log('Admin: admin@school.com / admin123');
-  console.log('Teacher 1: john.teacher@school.com / teacher123');
-  console.log('Teacher 2: sarah.teacher@school.com / teacher123');
+  console.log('Teacher: john.teacher@school.com / teacher123');
   console.log('Parent 1: mike.parent@email.com / parent123');
   console.log('Parent 2: lisa.parent@email.com / parent123');
   console.log('Student 1: emma.student@school.com / student123');
   console.log('Student 2: alex.student@school.com / student123');
-  console.log('Student 3: sophia.student@school.com / student123');
-*/
-  } 
+  }
 
 main()
   .catch((e) => {
