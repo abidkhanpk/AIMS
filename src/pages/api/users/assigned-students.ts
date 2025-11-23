@@ -58,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               },
               orderBy: { createdAt: 'desc' }
             },
-            testRecords: {
+            studentTestRecords: {
               include: {
                 course: {
                   select: {
@@ -81,7 +81,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     });
 
-    const students = teacherAssignments.map(assignment => assignment.student);
+    const students = teacherAssignments.map(({ student }) => {
+      const { studentTestRecords, ...rest } = student as any;
+      return {
+        ...rest,
+        testRecords: studentTestRecords || [],
+      };
+    });
 
     res.status(200).json(students);
   } catch (error) {
