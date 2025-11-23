@@ -23,14 +23,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     obtainedMarks,
     performanceNote,
     remarks,
-    examTemplateId,
   } = req.body;
 
   if (!id) {
     return res.status(400).json({ message: 'Test record ID is required' });
   }
 
-  const validTypes: AssessmentType[] = ['TEST', 'EXAM'];
+  const validTypes: AssessmentType[] = ['QUIZ', 'EXAM', 'HOMEWORK', 'OTHER'];
   if (type && !validTypes.includes(type)) {
     return res.status(400).json({ message: 'Invalid assessment type' });
   }
@@ -61,22 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let resolvedType: AssessmentType = (type as AssessmentType) || existing.type;
     let resolvedMax = maxMarks !== undefined ? parseFloat(maxMarks) : existing.maxMarks;
     let resolvedObtained = obtainedMarks !== undefined ? parseFloat(obtainedMarks) : existing.obtainedMarks;
-    let resolvedTemplateId = examTemplateId !== undefined ? examTemplateId : existing.examTemplateId;
-
-    if (resolvedTemplateId) {
-      const template = await prisma.examTemplate.findFirst({
-        where: { id: resolvedTemplateId, adminId: existing.student.adminId || undefined },
-      });
-      if (!template) {
-        return res.status(404).json({ message: 'Exam/Test template not found' });
-      }
-      if (template.courseId && template.courseId !== existing.courseId) {
-        return res.status(400).json({ message: 'Template subject does not match this record' });
-      }
-      resolvedTitle = template.title;
-      resolvedType = template.type;
-      resolvedMax = template.maxMarks;
-    }
+    const resolvedTemplateId = null; // templates removed
 
     if (!resolvedTitle) {
       return res.status(400).json({ message: 'Title is required' });
@@ -101,7 +85,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         percentage: parseFloat(percentage.toFixed(2)),
         performanceNote: performanceNote ?? existing.performanceNote,
         remarks: remarks ?? existing.remarks,
-        examTemplateId: resolvedTemplateId || null,
       },
     });
 

@@ -35,7 +35,7 @@ CREATE TYPE "public"."PayType" AS ENUM ('DAILY', 'WEEKLY', 'FORTNIGHTLY', 'MONTH
 CREATE TYPE "public"."RelationType" AS ENUM ('FATHER', 'MOTHER', 'GUARDIAN', 'STEPFATHER', 'STEPMOTHER', 'GRANDFATHER', 'GRANDMOTHER', 'UNCLE', 'AUNT', 'SIBLING', 'COUSIN', 'OTHER');
 
 -- CreateEnum
-CREATE TYPE "public"."AssessmentType" AS ENUM ('TEST', 'EXAM');
+CREATE TYPE "public"."AssessmentType" AS ENUM ('QUIZ', 'EXAM', 'HOMEWORK', 'OTHER');
 
 -- CreateTable
 CREATE TABLE "public"."User" (
@@ -133,7 +133,6 @@ CREATE TABLE "public"."Progress" (
     "lesson" TEXT,
     "homework" TEXT,
     "lessonProgress" DOUBLE PRECISION,
-    "score" DOUBLE PRECISION,
     "remarks" TEXT,
     "attendance" "public"."AttendanceStatus" NOT NULL DEFAULT 'PRESENT',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -329,31 +328,13 @@ CREATE TABLE "public"."SalaryAdvanceRepayment" (
 );
 
 -- CreateTable
-CREATE TABLE "public"."ExamTemplate" (
-    "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT,
-    "type" "public"."AssessmentType" NOT NULL DEFAULT 'TEST',
-    "courseId" TEXT,
-    "maxMarks" DOUBLE PRECISION NOT NULL,
-    "scheduledDate" TIMESTAMP(3),
-    "adminId" TEXT NOT NULL,
-    "createdById" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "ExamTemplate_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "public"."TestRecord" (
     "id" TEXT NOT NULL,
     "studentId" TEXT NOT NULL,
     "courseId" TEXT NOT NULL,
     "teacherId" TEXT NOT NULL,
-    "examTemplateId" TEXT,
     "title" TEXT NOT NULL,
-    "type" "public"."AssessmentType" NOT NULL DEFAULT 'TEST',
+    "type" "public"."AssessmentType" NOT NULL DEFAULT 'QUIZ',
     "performedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "maxMarks" DOUBLE PRECISION NOT NULL,
     "obtainedMarks" DOUBLE PRECISION NOT NULL,
@@ -556,15 +537,6 @@ ALTER TABLE "public"."SalaryAdvance" ADD CONSTRAINT "SalaryAdvance_adminId_fkey"
 ALTER TABLE "public"."SalaryAdvanceRepayment" ADD CONSTRAINT "SalaryAdvanceRepayment_advanceId_fkey" FOREIGN KEY ("advanceId") REFERENCES "public"."SalaryAdvance"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."ExamTemplate" ADD CONSTRAINT "ExamTemplate_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "public"."Course"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."ExamTemplate" ADD CONSTRAINT "ExamTemplate_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."ExamTemplate" ADD CONSTRAINT "ExamTemplate_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "public"."TestRecord" ADD CONSTRAINT "TestRecord_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -572,9 +544,6 @@ ALTER TABLE "public"."TestRecord" ADD CONSTRAINT "TestRecord_courseId_fkey" FORE
 
 -- AddForeignKey
 ALTER TABLE "public"."TestRecord" ADD CONSTRAINT "TestRecord_teacherId_fkey" FOREIGN KEY ("teacherId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "public"."TestRecord" ADD CONSTRAINT "TestRecord_examTemplateId_fkey" FOREIGN KEY ("examTemplateId") REFERENCES "public"."ExamTemplate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."Notification" ADD CONSTRAINT "Notification_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

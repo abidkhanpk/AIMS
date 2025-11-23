@@ -8,7 +8,6 @@ const includeCommon = {
   student: { select: { id: true, name: true, email: true } },
   course: { select: { id: true, name: true } },
   teacher: { select: { id: true, name: true } },
-  examTemplate: true,
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -78,9 +77,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const {
       studentId,
       courseId,
-      examTemplateId,
       title,
-      type = 'TEST',
+      type = 'QUIZ',
       performedAt,
       maxMarks,
       obtainedMarks,
@@ -92,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Student and course are required' });
     }
 
-    const validTypes: AssessmentType[] = ['TEST', 'EXAM'];
+    const validTypes: AssessmentType[] = ['QUIZ', 'EXAM', 'HOMEWORK', 'OTHER'];
     if (!validTypes.includes(type)) {
       return res.status(400).json({ message: 'Invalid assessment type' });
     }
@@ -115,30 +113,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(404).json({ message: 'Student is not enrolled in this course' });
       }
 
-      let templateTitle = title;
-      let templateType: AssessmentType = type;
-      let templateMax = parsedMax;
-
-      if (examTemplateId) {
-        const template = await prisma.examTemplate.findFirst({
-          where: { id: examTemplateId, adminId: session.user.adminId || undefined },
-        });
-        if (!template) {
-          return res.status(404).json({ message: 'Exam/Test template not found' });
-        }
-        if (template.courseId && template.courseId !== courseId) {
-          return res.status(400).json({ message: 'Selected template is for a different subject' });
-        }
-        templateTitle = template.title;
-        templateType = template.type;
-        templateMax = template.maxMarks;
-      }
-
-      if (!templateTitle) {
+      if (!title) {
         return res.status(400).json({ message: 'Please provide a test/exam title' });
       }
 
-      if (Number.isNaN(templateMax) || templateMax <= 0) {
+      if (Number.isNaN(parsedMax) || parsedMax <= 0) {
         return res.status(400).json({ message: 'Please provide a valid maximum mark' });
       }
 
@@ -146,18 +125,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ message: 'Please provide obtained marks' });
       }
 
-      const percentage = Math.max(0, Math.min(100, (parsedObtained / templateMax) * 100));
+      const percentage = Math.max(0, Math.min(100, (parsedObtained / parsedMax) * 100));
 
       const record = await prisma.testRecord.create({
         data: {
           studentId,
           courseId,
           teacherId: session.user.id,
-          examTemplateId: examTemplateId || null,
-          title: templateTitle,
-          type: templateType,
+          title,
+          type,
           performedAt: performedAt ? new Date(performedAt) : new Date(),
-          maxMarks: templateMax,
+          maxMarks: parsedMax,
           obtainedMarks: parsedObtained,
           percentage: parseFloat(percentage.toFixed(2)),
           performanceNote: performanceNote || null,

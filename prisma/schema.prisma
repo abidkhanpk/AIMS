@@ -113,8 +113,10 @@ enum RelationType {
 }
 
 enum AssessmentType {
-  TEST
+  QUIZ
   EXAM
+  HOMEWORK
+  OTHER
 }
 
 model User {
@@ -177,8 +179,6 @@ model User {
   salaryAdvancesAsTeacher SalaryAdvance[] @relation("AdvanceTeacher")
   studentTestRecords   TestRecord[]     @relation("StudentTestRecords")
   teacherTestRecords   TestRecord[]     @relation("TeacherTestRecords")
-  createdExamTemplates ExamTemplate[]   @relation("ExamTemplateCreator")
-  adminExamTemplates   ExamTemplate[]   @relation("ExamTemplateAdmin")
 }
 
 model Course {
@@ -194,7 +194,6 @@ model Course {
   progressRecords Progress[]
   assignments     Assignment[]
   fees            Fee[]
-  examTemplates   ExamTemplate[]
   testRecords     TestRecord[]
 }
 
@@ -275,7 +274,6 @@ model Progress {
   lesson         String?          // Manually typed by teacher
   homework       String?          // Homework description
   lessonProgress Float?           // Lesson progress percentage
-  score          Float?           // Score/marks assigned by teacher
   remarks        String?          // Teacher remarks
   attendance     AttendanceStatus @default(PRESENT) // Attendance status
   createdAt      DateTime         @default(now())
@@ -498,33 +496,13 @@ model SalaryAdvanceRepayment {
   advance         SalaryAdvance @relation(fields: [advanceId], references: [id])
 }
 
-model ExamTemplate {
-  id            String          @id @default(uuid())
-  title         String
-  description   String?
-  type          AssessmentType  @default(TEST)
-  courseId      String?
-  maxMarks      Float
-  scheduledDate DateTime?
-  adminId       String
-  createdById   String
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-
-  course    Course? @relation(fields: [courseId], references: [id])
-  admin     User    @relation("ExamTemplateAdmin", fields: [adminId], references: [id])
-  createdBy User    @relation("ExamTemplateCreator", fields: [createdById], references: [id])
-  testRecords TestRecord[]
-}
-
 model TestRecord {
   id             String         @id @default(uuid())
   studentId      String
   courseId       String
   teacherId      String
-  examTemplateId String?
   title          String
-  type           AssessmentType @default(TEST)
+  type           AssessmentType @default(QUIZ)
   performedAt    DateTime       @default(now())
   maxMarks       Float
   obtainedMarks  Float
@@ -537,7 +515,6 @@ model TestRecord {
   student      User         @relation("StudentTestRecords", fields: [studentId], references: [id])
   course       Course       @relation(fields: [courseId], references: [id])
   teacher      User         @relation("TeacherTestRecords", fields: [teacherId], references: [id])
-  examTemplate ExamTemplate? @relation(fields: [examTemplateId], references: [id])
 }
 
 model Notification {

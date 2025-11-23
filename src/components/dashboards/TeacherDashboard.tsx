@@ -19,7 +19,6 @@ interface Student {
     lesson: string;
     homework: string;
     lessonProgress: number;
-    score: number;
     remarks: string;
     attendance: AttendanceStatus;
     createdAt: string;
@@ -57,12 +56,6 @@ interface TestRecord {
     id: string;
     name: string;
   };
-  examTemplate?: {
-    id: string;
-    title: string;
-    type: AssessmentType;
-    maxMarks: number;
-  } | null;
 }
 
 // Expandable Text Component
@@ -150,7 +143,6 @@ export default function TeacherDashboard() {
   const [lesson, setLesson] = useState('');
   const [homework, setHomework] = useState('');
   const [lessonProgress, setLessonProgress] = useState('');
-  const [score, setScore] = useState('');
   const [remarks, setRemarks] = useState('');
   const [attendance, setAttendance] = useState<AttendanceStatus>('PRESENT');
   const [updatingProgress, setUpdatingProgress] = useState(false);
@@ -164,22 +156,18 @@ export default function TeacherDashboard() {
   const [showTestModal, setShowTestModal] = useState(false);
   const [selectedTestStudent, setSelectedTestStudent] = useState<Student | null>(null);
   const [selectedTestCourse, setSelectedTestCourse] = useState('');
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [testTitle, setTestTitle] = useState('');
-  const [testType, setTestType] = useState<AssessmentType>('TEST');
+  const [testType, setTestType] = useState<AssessmentType>('QUIZ');
   const [performedAt, setPerformedAt] = useState(new Date().toISOString().split('T')[0]);
   const [maxMarks, setMaxMarks] = useState('');
   const [obtainedMarks, setObtainedMarks] = useState('');
   const [performanceNote, setPerformanceNote] = useState('');
   const [testRemarks, setTestRemarks] = useState('');
   const [savingTest, setSavingTest] = useState(false);
-  const [testTemplates, setTestTemplates] = useState<any[]>([]);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAssignedStudents();
-    fetchTestTemplates();
   }, []);
 
   const fetchAssignedStudents = async () => {
@@ -201,23 +189,6 @@ export default function TeacherDashboard() {
     }
   };
 
-  const fetchTestTemplates = async () => {
-    try {
-      setLoadingTemplates(true);
-      const res = await fetch('/api/tests/templates');
-      if (res.ok) {
-        const data = await res.json();
-        setTestTemplates(Array.isArray(data) ? data : []);
-      } else {
-        setTestTemplates([]);
-      }
-    } catch (error) {
-      setTestTemplates([]);
-    } finally {
-      setLoadingTemplates(false);
-    }
-  };
-
   const handleUpdateProgress = (student: Student) => {
     setSelectedStudent(student);
     setSelectedCourse('');
@@ -225,7 +196,6 @@ export default function TeacherDashboard() {
     setLesson('');
     setHomework('');
     setLessonProgress('');
-    setScore('');
     setRemarks('');
     setAttendance('PRESENT');
     setEditingProgressId(null);
@@ -239,7 +209,6 @@ export default function TeacherDashboard() {
     setLesson(progress.lesson || '');
     setHomework(progress.homework || '');
     setLessonProgress(progress.lessonProgress !== null && progress.lessonProgress !== undefined ? String(progress.lessonProgress) : '');
-    setScore(progress.score !== null && progress.score !== undefined ? String(progress.score) : '');
     setRemarks(progress.remarks || '');
     setAttendance(progress.attendance || 'PRESENT');
     setEditingProgressId(progress.id);
@@ -249,9 +218,8 @@ export default function TeacherDashboard() {
   const handleAddTest = (student: Student) => {
     setSelectedTestStudent(student);
     setSelectedTestCourse('');
-    setSelectedTemplateId('');
     setTestTitle('');
-    setTestType('TEST');
+    setTestType('QUIZ');
     setPerformedAt(new Date().toISOString().split('T')[0]);
     setMaxMarks('');
     setObtainedMarks('');
@@ -276,7 +244,6 @@ export default function TeacherDashboard() {
       lesson: lesson || null,
       homework: homework || null,
       lessonProgress: lessonProgress ? parseFloat(lessonProgress) : null,
-      score: score ? parseFloat(score) : null,
       remarks: remarks || null,
       attendance: attendance,
     };
@@ -308,23 +275,6 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleTemplateChange = (templateId: string) => {
-    setSelectedTemplateId(templateId);
-    if (!templateId) {
-      setTestTitle('');
-      setTestType('TEST');
-      setMaxMarks('');
-      return;
-    }
-
-    const template = testTemplates.find((tpl) => tpl.id === templateId);
-    if (template) {
-      setTestTitle(template.title);
-      setTestType(template.type);
-      setMaxMarks(template.maxMarks?.toString() || '');
-    }
-  };
-
   const computedPercentage = () => {
     const max = parseFloat(maxMarks);
     const obtained = parseFloat(obtainedMarks);
@@ -348,7 +298,6 @@ export default function TeacherDashboard() {
           id: editingTestId || undefined,
           studentId: selectedTestStudent.id,
           courseId: selectedTestCourse,
-          examTemplateId: selectedTemplateId || null,
           title: testTitle,
           type: testType,
           performedAt,
@@ -378,7 +327,6 @@ export default function TeacherDashboard() {
   const handleEditTest = (student: Student, test: TestRecord) => {
     setSelectedTestStudent(student);
     setSelectedTestCourse(test.course.id);
-    setSelectedTemplateId(test.examTemplate?.id || '');
     setTestTitle(test.title);
     setTestType(test.type);
     setPerformedAt(test.performedAt ? test.performedAt.split('T')[0] : new Date().toISOString().split('T')[0]);
@@ -407,6 +355,19 @@ export default function TeacherDashboard() {
         return <Badge bg="info">Excused</Badge>;
       default:
         return <Badge bg="secondary">{attendance}</Badge>;
+    }
+  };
+
+  const formatTestType = (type: AssessmentType) => {
+    switch (type) {
+      case 'EXAM':
+        return { label: 'Exam', variant: 'danger' as const };
+      case 'HOMEWORK':
+        return { label: 'Homework', variant: 'secondary' as const };
+      case 'OTHER':
+        return { label: 'Other', variant: 'info' as const };
+      default:
+        return { label: 'Quiz', variant: 'info' as const };
     }
   };
 
@@ -489,7 +450,6 @@ export default function TeacherDashboard() {
                                 <th>Lesson</th>
                             <th>Homework</th>
                             <th>Progress %</th>
-                            <th>Score</th>
                             <th>Remarks</th>
                             <th>Parent Remarks</th>
                             <th>Actions</th>
@@ -498,7 +458,7 @@ export default function TeacherDashboard() {
                         <tbody>
                           {!student.progressRecords || student.progressRecords.length === 0 ? (
                             <tr>
-                              <td colSpan={10} className="text-center py-3 text-muted">
+                              <td colSpan={9} className="text-center py-3 text-muted">
                                 No progress records yet
                               </td>
                             </tr>
@@ -529,18 +489,9 @@ export default function TeacherDashboard() {
                                         <span className="text-muted small">-</span>
                                       )}
                                     </td>
-                                    <td>
-                                      {progress.score !== null ? (
-                                        <Badge bg="success">
-                                          {progress.score}
-                                        </Badge>
-                                      ) : (
-                                        <span className="text-muted small">-</span>
-                                      )}
-                                    </td>
-                                    <td className="small">
-                                      <ExpandableText text={progress.remarks} maxLength={30} />
-                                    </td>
+                                <td className="small">
+                                  <ExpandableText text={progress.remarks} maxLength={30} />
+                                </td>
                                     <td className="small">
                                       {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                         <div>
@@ -660,17 +611,15 @@ export default function TeacherDashboard() {
                                     <td className="fw-medium small">
                                       {test.course.name}
                                     </td>
-                                    <td className="small">
-                                      <strong>{test.title}</strong>
-                                      {test.examTemplate && (
-                                        <div className="text-muted small">Template</div>
-                                      )}
-                                    </td>
-                                    <td>
-                                      <Badge bg={test.type === 'EXAM' ? 'danger' : 'info'}>
-                                        {test.type === 'EXAM' ? 'Exam' : 'Test'}
-                                      </Badge>
-                                    </td>
+                                  <td className="small">
+                                    <strong>{test.title}</strong>
+                                  </td>
+                                  <td>
+                                    {(() => {
+                                      const t = formatTestType(test.type);
+                                      return <Badge bg={t.variant}>{t.label}</Badge>;
+                                    })()}
+                                  </td>
                                     <td>
                                       <Badge bg="dark">
                                         {test.obtainedMarks}/{test.maxMarks}
@@ -820,27 +769,6 @@ export default function TeacherDashboard() {
               </Col>
             </Row>
 
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Score/Marks</Form.Label>
-                  <Form.Control
-                    type="number"
-                    step="0.1"
-                    value={score}
-                    onChange={(e) => setScore(e.target.value)}
-                    placeholder="Enter score or marks"
-                    disabled={attendance === 'ABSENT'}
-                  />
-                  {attendance === 'ABSENT' && (
-                    <Form.Text className="text-muted">
-                      Score cannot be recorded for absent students
-                    </Form.Text>
-                  )}
-                </Form.Group>
-              </Col>
-            </Row>
-
             <Form.Group className="mb-4">
               <Form.Label>Remarks</Form.Label>
               <Form.Control
@@ -927,34 +855,12 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Test/Exam Template</Form.Label>
-                  <Form.Select
-                    value={selectedTemplateId}
-                    onChange={(e) => handleTemplateChange(e.target.value)}
-                    disabled={loadingTemplates}
-                  >
-                    <option value="">-- Optional: pick a template --</option>
-                    {testTemplates.map((template) => (
-                      <option key={template.id} value={template.id}>
-                        {template.title} {template.type === 'EXAM' ? '(Exam)' : '(Test)'} {template.course ? `- ${template.course.name}` : ''}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  {loadingTemplates && (
-                    <Form.Text className="text-muted">
-                      Loading templates...
-                    </Form.Text>
-                  )}
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
                   <Form.Label>Title *</Form.Label>
                   <Form.Control
                     type="text"
                     value={testTitle}
                     onChange={(e) => setTestTitle(e.target.value)}
-                    placeholder="Mid-term exam, Weekly test, etc."
+                    placeholder="Quiz 1, Mid-term exam, Homework check..."
                     required
                   />
                 </Form.Group>
@@ -969,8 +875,10 @@ export default function TeacherDashboard() {
                     value={testType}
                     onChange={(e) => setTestType(e.target.value as AssessmentType)}
                   >
-                    <option value="TEST">Test</option>
+                    <option value="QUIZ">Quiz</option>
                     <option value="EXAM">Exam</option>
+                    <option value="HOMEWORK">Homework</option>
+                    <option value="OTHER">Other</option>
                   </Form.Select>
                 </Form.Group>
               </Col>

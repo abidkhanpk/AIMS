@@ -296,7 +296,6 @@ async function main() {
       lesson: 'Algebra Fundamentals',
       homework: 'Complete exercises 1-10 on page 45',
       lessonProgress: 90,
-      score: 95,
       remarks: 'Excellent work on algebra problems.',
       attendance: 'PRESENT' as const,
     },
@@ -307,7 +306,6 @@ async function main() {
       lesson: 'Physics - Motion and Forces',
       homework: 'Read chapter 3 and solve practice problems',
       lessonProgress: 80,
-      score: 84,
       remarks: 'Needs more practice with calculations.',
       attendance: 'PRESENT' as const,
     },
@@ -318,7 +316,6 @@ async function main() {
       lesson: 'Geometry - Triangles',
       homework: 'Draw and calculate areas of different triangles',
       lessonProgress: 82,
-      score: 85,
       remarks: 'Improving steadily.',
       attendance: 'LATE' as const,
     },
@@ -329,7 +326,6 @@ async function main() {
       lesson: 'Chemistry - Elements and Compounds',
       homework: 'Memorize first 20 elements of the periodic table',
       lessonProgress: 75,
-      score: 78,
       remarks: 'Review chemical symbols.',
       attendance: 'PRESENT' as const,
     },
@@ -343,46 +339,13 @@ async function main() {
 
   console.log('✅ Progress records created');
 
-  // Exam/Test templates
-  const examTemplates = [
-    {
-      title: 'Mathematics Midterm Exam',
-      description: 'Covers algebra fundamentals and geometry basics',
-      type: AssessmentType.EXAM,
-      courseId: mathCourse.id,
-      maxMarks: 100,
-      scheduledDate: new Date('2024-09-20'),
-      adminId: admin.id,
-      createdById: admin.id,
-    },
-    {
-      title: 'Science Weekly Test',
-      description: 'Short assessment on motion and forces',
-      type: AssessmentType.TEST,
-      courseId: scienceCourse.id,
-      maxMarks: 50,
-      scheduledDate: new Date('2024-09-05'),
-      adminId: admin.id,
-      createdById: admin.id,
-    },
-  ];
-
-  const createdTemplates = [];
-  for (const template of examTemplates) {
-    const created = await prisma.examTemplate.create({ data: template });
-    createdTemplates.push(created);
-  }
-
-  console.log('✅ Exam/Test templates created');
-
   // Test records
   const testRecords = [
     {
       studentId: student1.id,
       courseId: mathCourse.id,
       teacherId: teacher.id,
-      examTemplateId: createdTemplates[0]?.id,
-      title: createdTemplates[0]?.title || 'Mathematics Midterm Exam',
+      title: 'Mathematics Midterm Exam',
       type: AssessmentType.EXAM,
       performedAt: new Date('2024-09-21'),
       maxMarks: 100,
@@ -395,9 +358,8 @@ async function main() {
       studentId: student1.id,
       courseId: scienceCourse.id,
       teacherId: teacher.id,
-      examTemplateId: createdTemplates[1]?.id,
-      title: createdTemplates[1]?.title || 'Science Weekly Test',
-      type: AssessmentType.TEST,
+      title: 'Science Weekly Quiz',
+      type: AssessmentType.EXAM,
       performedAt: new Date('2024-09-06'),
       maxMarks: 50,
       obtainedMarks: 40,
@@ -409,8 +371,7 @@ async function main() {
       studentId: student2.id,
       courseId: mathCourse.id,
       teacherId: teacher.id,
-      examTemplateId: createdTemplates[0]?.id,
-      title: createdTemplates[0]?.title || 'Mathematics Midterm Exam',
+      title: 'Mathematics Midterm Exam',
       type: AssessmentType.EXAM,
       performedAt: new Date('2024-09-21'),
       maxMarks: 100,
@@ -522,14 +483,14 @@ async function main() {
   await prisma.subscription.create({
     data: {
       adminId: admin.id,
-      plan: 'MONTHLY',
-      amount: 29.99,
+      plan: 'YEARLY',
+      amount: 299.99,
       currency: 'USD',
-      startDate: new Date('2024-08-01'),
-      endDate: new Date('2024-09-01'),
+      startDate: new Date(),
+      endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       status: 'ACTIVE',
-      paidAmount: 29.99,
-      paidDate: new Date('2024-07-30'),
+      paidAmount: 299.99,
+      paidDate: new Date(),
       paidById: admin.id,
     },
   });

@@ -20,7 +20,6 @@ interface StudentData {
     lesson: string;
     homework: string;
     lessonProgress: number;
-    score: number;
     remarks: string;
     attendance: string;
     createdAt: string;
@@ -507,7 +506,6 @@ export default function StudentDashboard() {
                                     <th>Teacher</th>
                                     <th>Lesson</th>
                                     <th>Progress</th>
-                                    <th>Score</th>
                                     <th>Attendance</th>
                                   </tr>
                                 </thead>
@@ -539,15 +537,6 @@ export default function StudentDashboard() {
                                             className="small"
                                           >
                                             {progress.lessonProgress}%
-                                          </Badge>
-                                        ) : (
-                                          <span className="text-muted small">-</span>
-                                        )}
-                                      </td>
-                                      <td>
-                                        {progress.score !== null ? (
-                                          <Badge bg="success" className="small">
-                                            {progress.score}
                                           </Badge>
                                         ) : (
                                           <span className="text-muted small">-</span>
@@ -649,8 +638,22 @@ export default function StudentDashboard() {
                           <td className="fw-medium small">{test.course.name}</td>
                           <td className="small">{test.title}</td>
                           <td>
-                            <Badge bg={test.type === 'EXAM' ? 'danger' : 'info'}>
-                              {test.type === 'EXAM' ? 'Exam' : 'Test'}
+                            <Badge bg={
+                              test.type === 'EXAM'
+                                ? 'danger'
+                                : test.type === 'HOMEWORK'
+                                  ? 'secondary'
+                                  : test.type === 'OTHER'
+                                    ? 'info'
+                                    : 'info'
+                            }>
+                              {test.type === 'EXAM'
+                                ? 'Exam'
+                                : test.type === 'HOMEWORK'
+                                  ? 'Homework'
+                                  : test.type === 'OTHER'
+                                    ? 'Other'
+                                    : 'Quiz'}
                             </Badge>
                           </td>
                           <td>

@@ -20,7 +20,6 @@ interface Child {
     lesson: string;
     homework: string;
     lessonProgress: number;
-    score: number;
     remarks: string;
     attendance: AttendanceStatus;
     createdAt: string;
@@ -423,7 +422,6 @@ export default function ParentDashboard() {
                                               <th>Lesson</th>
                                               <th>Homework</th>
                                               <th>Progress</th>
-                                              <th>Score</th>
                                               <th>Remarks</th>
                                               <th>My Remarks</th>
                                               <th>Action</th>
@@ -455,15 +453,6 @@ export default function ParentDashboard() {
                                                       className="small"
                                                     >
                                                       {progress.lessonProgress}%
-                                                    </Badge>
-                                                  ) : (
-                                                    <span className="text-muted small">-</span>
-                                                  )}
-                                                </td>
-                                                <td>
-                                                  {progress.score !== null ? (
-                                                    <Badge bg="success" className="small">
-                                                      {progress.score}
                                                     </Badge>
                                                   ) : (
                                                     <span className="text-muted small">-</span>
@@ -598,8 +587,22 @@ export default function ParentDashboard() {
                                     <td className="fw-medium small">{test.course.name}</td>
                                     <td className="small">{test.title}</td>
                                     <td>
-                                      <Badge bg={test.type === 'EXAM' ? 'danger' : 'info'}>
-                                        {test.type === 'EXAM' ? 'Exam' : 'Test'}
+                                      <Badge bg={
+                                        test.type === 'EXAM'
+                                          ? 'danger'
+                                          : test.type === 'HOMEWORK'
+                                            ? 'secondary'
+                                            : test.type === 'OTHER'
+                                              ? 'info'
+                                              : 'info'
+                                      }>
+                                        {test.type === 'EXAM'
+                                          ? 'Exam'
+                                          : test.type === 'HOMEWORK'
+                                            ? 'Homework'
+                                            : test.type === 'OTHER'
+                                              ? 'Other'
+                                              : 'Quiz'}
                                       </Badge>
                                     </td>
                                     <td>
