@@ -595,8 +595,10 @@ async function main() {
   ];
 
   for (const userSetting of userSettingsData) {
-    await prisma.userSettings.create({
-      data: userSetting,
+    await prisma.userSettings.upsert({
+      where: { userId: userSetting.userId },
+      update: userSetting,
+      create: userSetting,
     });
   }
 
