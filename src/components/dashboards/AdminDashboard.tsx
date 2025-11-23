@@ -3,7 +3,7 @@ import FeeSubform from './FeeSubform';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ParentAssociationSubform from '../ParentAssociationSubform';
 import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, Modal, InputGroup } from 'react-bootstrap';
-import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType } from '@prisma/client';
+import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType, AssessmentType } from '@prisma/client';
 import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timezones';
 import FeeManagementTab from './FeeManagementTab';
 import AdminSubscriptionTab from './AdminSubscriptionTab';
@@ -106,6 +106,50 @@ interface Salary {
     id: string;
     name: string;
     email: string;
+  };
+}
+
+interface ExamTemplate {
+  id: string;
+  title: string;
+  description?: string | null;
+  type: AssessmentType;
+  course?: {
+    id: string;
+    name: string;
+  } | null;
+  maxMarks: number;
+  scheduledDate?: string | null;
+  createdAt: string;
+  createdBy?: {
+    id: string;
+    name: string;
+    role: Role;
+  };
+}
+
+interface AdminTestRecord {
+  id: string;
+  title: string;
+  type: AssessmentType;
+  performedAt: string;
+  maxMarks: number;
+  obtainedMarks: number;
+  percentage: number;
+  performanceNote?: string | null;
+  remarks?: string | null;
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  course: {
+    id: string;
+    name: string;
+  };
+  teacher: {
+    id: string;
+    name: string;
   };
 }
 
@@ -3248,6 +3292,337 @@ function ProgressTab() {
   );
 }
 
+function TestsTab() {
+  const [templates, setTemplates] = useState<ExamTemplate[]>([]);
+  const [records, setRecords] = useState<AdminTestRecord[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [templateTitle, setTemplateTitle] = useState('');
+  const [templateType, setTemplateType] = useState<AssessmentType>('TEST');
+  const [templateCourseId, setTemplateCourseId] = useState('');
+  const [templateMaxMarks, setTemplateMaxMarks] = useState('');
+  const [templateDate, setTemplateDate] = useState('');
+  const [templateDescription, setTemplateDescription] = useState('');
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([loadTemplates(), loadRecords(), loadCourses()]);
+    setLoading(false);
+  };
+
+  const loadTemplates = async () => {
+    try {
+      const res = await fetch('/api/tests/templates');
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Error fetching templates', err);
+    }
+  };
+
+  const loadRecords = async () => {
+    try {
+      const res = await fetch('/api/tests/records');
+      if (res.ok) {
+        const data = await res.json();
+        setRecords(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Error fetching test records', err);
+    }
+  };
+
+  const loadCourses = async () => {
+    try {
+      const res = await fetch('/api/subjects');
+      if (res.ok) {
+        const data = await res.json();
+        setCourses(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Error fetching courses', err);
+    }
+  };
+
+  const handleCreateTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingTemplate(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/tests/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: templateTitle,
+          description: templateDescription,
+          type: templateType,
+          courseId: templateCourseId || null,
+          maxMarks: templateMaxMarks,
+          scheduledDate: templateDate || null,
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess('Template created successfully');
+        setTemplateTitle('');
+        setTemplateDescription('');
+        setTemplateType('TEST');
+        setTemplateCourseId('');
+        setTemplateMaxMarks('');
+        setTemplateDate('');
+        loadTemplates();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to create template');
+      }
+    } catch (err) {
+      setError('Error creating template');
+    } finally {
+      setSavingTemplate(false);
+    }
+  };
+
+  return (
+    <div>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+
+      <Row className="g-4">
+        <Col lg={4}>
+          <Card className="shadow-sm h-100">
+            <Card.Header className="bg-light">
+              <h6 className="mb-0">
+                <i className="bi bi-plus-circle me-2"></i>
+                New Test/Exam Template
+              </h6>
+            </Card.Header>
+            <Card.Body>
+              <Form onSubmit={handleCreateTemplate}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Title</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={templateTitle}
+                    onChange={(e) => setTemplateTitle(e.target.value)}
+                    placeholder="Midterm Exam, Weekly Test..."
+                    required
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Type</Form.Label>
+                  <Form.Select
+                    value={templateType}
+                    onChange={(e) => setTemplateType(e.target.value as AssessmentType)}
+                  >
+                    <option value="TEST">Test</option>
+                    <option value="EXAM">Exam</option>
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Subject (optional)</Form.Label>
+                  <Form.Select
+                    value={templateCourseId}
+                    onChange={(e) => setTemplateCourseId(e.target.value)}
+                  >
+                    <option value="">All subjects</option>
+                    {courses.map((course) => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Maximum Marks</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="1"
+                    step="0.5"
+                    value={templateMaxMarks}
+                    onChange={(e) => setTemplateMaxMarks(e.target.value)}
+                    required
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Scheduled Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={templateDate}
+                    onChange={(e) => setTemplateDate(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-4">
+                  <Form.Label>Description</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    value={templateDescription}
+                    onChange={(e) => setTemplateDescription(e.target.value)}
+                    placeholder="What is covered in this test/exam?"
+                  />
+                </Form.Group>
+                <Button 
+                  type="submit" 
+                  variant="primary" 
+                  className="w-100"
+                  disabled={savingTemplate}
+                >
+                  {savingTemplate ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <i className="bi bi-save me-2"></i>
+                      Save Template
+                    </>
+                  )}
+                </Button>
+              </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={8}>
+          <Card className="shadow-sm mb-4">
+            <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+              <h6 className="mb-0">
+                <i className="bi bi-journal-check me-2"></i>
+                Templates
+              </h6>
+              <Badge bg="info">{templates.length}</Badge>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {loading ? (
+                <div className="text-center py-4">
+                  <Spinner animation="border" size="sm" />
+                  <p className="mt-2 text-muted small">Loading templates...</p>
+                </div>
+              ) : templates.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className="bi bi-journal-check display-6 text-muted"></i>
+                  <p className="mt-2 text-muted small">No templates yet</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover size="sm" className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Subject</th>
+                        <th>Max Marks</th>
+                        <th>Date</th>
+                        <th>Created By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {templates.map((tpl) => (
+                        <tr key={tpl.id}>
+                          <td className="fw-medium">{tpl.title}</td>
+                          <td>
+                            <Badge bg={tpl.type === 'EXAM' ? 'danger' : 'info'}>
+                              {tpl.type === 'EXAM' ? 'Exam' : 'Test'}
+                            </Badge>
+                          </td>
+                          <td className="small">{tpl.course?.name || 'All'}</td>
+                          <td className="fw-bold">{tpl.maxMarks}</td>
+                          <td className="text-muted small">
+                            {tpl.scheduledDate ? new Date(tpl.scheduledDate).toLocaleDateString() : '-'}
+                          </td>
+                          <td className="small">{tpl.createdBy?.name || 'Admin'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+
+          <Card className="shadow-sm">
+            <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+              <h6 className="mb-0">
+                <i className="bi bi-clipboard-data me-2"></i>
+                Latest Test Records
+              </h6>
+              <Badge bg="success">{records.length}</Badge>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {loading ? (
+                <div className="text-center py-4">
+                  <Spinner animation="border" size="sm" />
+                  <p className="mt-2 text-muted small">Loading records...</p>
+                </div>
+              ) : records.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className="bi bi-clipboard-check display-6 text-muted"></i>
+                  <p className="mt-2 text-muted small">No test records found</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover size="sm" className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Subject</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Score</th>
+                        <th>%</th>
+                        <th>Teacher</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {records.map((rec) => (
+                        <tr key={rec.id}>
+                          <td className="text-muted small">
+                            {new Date(rec.performedAt).toLocaleDateString()}
+                          </td>
+                          <td className="fw-medium small">{rec.student.name}</td>
+                          <td className="small">{rec.course.name}</td>
+                          <td className="small">{rec.title}</td>
+                          <td>
+                            <Badge bg={rec.type === 'EXAM' ? 'danger' : 'info'}>
+                              {rec.type === 'EXAM' ? 'Exam' : 'Test'}
+                            </Badge>
+                          </td>
+                          <td>
+                            <Badge bg="dark">{rec.obtainedMarks}/{rec.maxMarks}</Badge>
+                          </td>
+                          <td>
+                            <Badge bg={rec.percentage >= 80 ? 'success' : rec.percentage >= 60 ? 'warning' : 'danger'}>
+                              {rec.percentage}%
+                            </Badge>
+                          </td>
+                          <td className="small">{rec.teacher.name}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('teachers');
 
@@ -3377,6 +3752,18 @@ export default function AdminDashboard() {
           }
         >
           <ProgressTab />
+        </Tab>
+        
+        <Tab 
+          eventKey="tests" 
+          title={
+            <span>
+              <i className="bi bi-journal-check me-2"></i>
+              Tests & Exams
+            </span>
+          }
+        >
+          <TestsTab />
         </Tab>
       </Tabs>
     </div>

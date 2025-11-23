@@ -1,4 +1,4 @@
-import { PrismaClient, ClassDay, NotificationType } from '@prisma/client';
+import { PrismaClient, ClassDay, NotificationType, AssessmentType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -342,6 +342,92 @@ async function main() {
   }
 
   console.log('✅ Progress records created');
+
+  // Exam/Test templates
+  const examTemplates = [
+    {
+      title: 'Mathematics Midterm Exam',
+      description: 'Covers algebra fundamentals and geometry basics',
+      type: AssessmentType.EXAM,
+      courseId: mathCourse.id,
+      maxMarks: 100,
+      scheduledDate: new Date('2024-09-20'),
+      adminId: admin.id,
+      createdById: admin.id,
+    },
+    {
+      title: 'Science Weekly Test',
+      description: 'Short assessment on motion and forces',
+      type: AssessmentType.TEST,
+      courseId: scienceCourse.id,
+      maxMarks: 50,
+      scheduledDate: new Date('2024-09-05'),
+      adminId: admin.id,
+      createdById: admin.id,
+    },
+  ];
+
+  const createdTemplates = [];
+  for (const template of examTemplates) {
+    const created = await prisma.examTemplate.create({ data: template });
+    createdTemplates.push(created);
+  }
+
+  console.log('✅ Exam/Test templates created');
+
+  // Test records
+  const testRecords = [
+    {
+      studentId: student1.id,
+      courseId: mathCourse.id,
+      teacherId: teacher.id,
+      examTemplateId: createdTemplates[0]?.id,
+      title: createdTemplates[0]?.title || 'Mathematics Midterm Exam',
+      type: AssessmentType.EXAM,
+      performedAt: new Date('2024-09-21'),
+      maxMarks: 100,
+      obtainedMarks: 92,
+      percentage: 92,
+      performanceNote: 'Excellent algebra skills and clear working.',
+      remarks: 'Keep up the great work!',
+    },
+    {
+      studentId: student1.id,
+      courseId: scienceCourse.id,
+      teacherId: teacher.id,
+      examTemplateId: createdTemplates[1]?.id,
+      title: createdTemplates[1]?.title || 'Science Weekly Test',
+      type: AssessmentType.TEST,
+      performedAt: new Date('2024-09-06'),
+      maxMarks: 50,
+      obtainedMarks: 40,
+      percentage: 80,
+      performanceNote: 'Good understanding of concepts; minor calculation errors.',
+      remarks: 'Revise motion formulas for faster recall.',
+    },
+    {
+      studentId: student2.id,
+      courseId: mathCourse.id,
+      teacherId: teacher.id,
+      examTemplateId: createdTemplates[0]?.id,
+      title: createdTemplates[0]?.title || 'Mathematics Midterm Exam',
+      type: AssessmentType.EXAM,
+      performedAt: new Date('2024-09-21'),
+      maxMarks: 100,
+      obtainedMarks: 78,
+      percentage: 78,
+      performanceNote: 'Understands geometry; needs practice in algebraic proofs.',
+      remarks: 'Focus on practice worksheets for algebra.',
+    },
+  ];
+
+  for (const test of testRecords) {
+    await prisma.testRecord.create({
+      data: test,
+    });
+  }
+
+  console.log('✅ Test records created');
 
   // Fees for each student/course
   const fees = [

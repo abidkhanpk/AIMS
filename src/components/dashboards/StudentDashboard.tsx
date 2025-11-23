@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Alert, Spinner, ProgressBar, Tabs, Tab, Button } from 'react-bootstrap';
 import FeePaymentModal from './FeePaymentModal';
-import { FeeStatus } from '@prisma/client';
+import { FeeStatus, AssessmentType } from '@prisma/client';
 
 interface StudentData {
   id: string;
@@ -24,6 +24,25 @@ interface StudentData {
     remarks: string;
     attendance: string;
     createdAt: string;
+    course: {
+      id: string;
+      name: string;
+    };
+    teacher: {
+      id: string;
+      name: string;
+    };
+  }[];
+  testRecords: {
+    id: string;
+    title: string;
+    type: AssessmentType;
+    performedAt: string;
+    maxMarks: number;
+    obtainedMarks: number;
+    percentage: number;
+    performanceNote?: string | null;
+    remarks?: string | null;
     course: {
       id: string;
       name: string;
@@ -210,6 +229,17 @@ export default function StudentDashboard() {
     return Math.round(total / coursesWithProgress.length);
   };
 
+  const getTestsForCourse = (courseId: string) => {
+    if (!studentData || !studentData.testRecords) return [];
+    return studentData.testRecords.filter((t) => t.course.id === courseId);
+  };
+
+  const getOverallTestAverage = () => {
+    if (!studentData || !studentData.testRecords || studentData.testRecords.length === 0) return null;
+    const total = studentData.testRecords.reduce((sum, test) => sum + (test.percentage || 0), 0);
+    return Math.round(total / studentData.testRecords.length);
+  };
+
   const getProgressVariant = (percent: number) => {
     if (percent >= 80) return 'success';
     if (percent >= 60) return 'warning';
@@ -283,6 +313,7 @@ export default function StudentDashboard() {
   }
 
   const overallProgress = getOverallProgress();
+  const overallTestAverage = getOverallTestAverage();
 
   return (
     <div className="container-fluid">
@@ -545,6 +576,103 @@ export default function StudentDashboard() {
                 );
               })}
             </Row>
+          )}
+        </Tab>
+        <Tab eventKey="tests" title="Tests & Exams">
+          <Row className="mb-4">
+            <Col>
+              <Card className="shadow-sm">
+                <Card.Body className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <h5 className="mb-1">Your tests & exam results</h5>
+                    <p className="text-muted mb-0">Track obtained marks, percentages, and remarks</p>
+                  </div>
+                  <div className="text-end">
+                    {overallTestAverage !== null ? (
+                      <div>
+                        <h3 className={`mb-0 text-${overallTestAverage >= 80 ? 'success' : overallTestAverage >= 60 ? 'warning' : 'danger'}`}>
+                          {overallTestAverage}%
+                        </h3>
+                        <small className="text-muted">Average score</small>
+                      </div>
+                    ) : (
+                      <div>
+                        <h5 className="mb-0 text-muted">No Data</h5>
+                        <small className="text-muted">No tests recorded yet</small>
+                      </div>
+                    )}
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+
+          {!studentData.testRecords || studentData.testRecords.length === 0 ? (
+            <Card className="text-center py-5">
+              <Card.Body>
+                <i className="bi bi-journal-check display-4 text-muted"></i>
+                <h4 className="mt-3 text-muted">No Tests Recorded</h4>
+                <p className="text-muted">Your teachers will add test and exam results here once available.</p>
+              </Card.Body>
+            </Card>
+          ) : (
+            <Card className="shadow-sm">
+              <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">
+                  <i className="bi bi-journal-check me-2"></i>
+                  Recent Tests & Exams
+                </h6>
+                <Badge bg="info">{studentData.testRecords.length}</Badge>
+              </Card.Header>
+              <Card.Body className="p-0">
+                <div className="table-responsive">
+                  <Table hover className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Date</th>
+                        <th>Subject</th>
+                        <th>Test/Exam</th>
+                        <th>Type</th>
+                        <th>Score</th>
+                        <th>Percentage</th>
+                        <th>Performance</th>
+                        <th>Remarks</th>
+                        <th>Teacher</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {studentData.testRecords.map((test) => (
+                        <tr key={test.id}>
+                          <td className="text-muted small">
+                            {new Date(test.performedAt).toLocaleDateString()}
+                          </td>
+                          <td className="fw-medium small">{test.course.name}</td>
+                          <td className="small">{test.title}</td>
+                          <td>
+                            <Badge bg={test.type === 'EXAM' ? 'danger' : 'info'}>
+                              {test.type === 'EXAM' ? 'Exam' : 'Test'}
+                            </Badge>
+                          </td>
+                          <td>
+                            <Badge bg="dark">
+                              {test.obtainedMarks}/{test.maxMarks}
+                            </Badge>
+                          </td>
+                          <td>
+                            <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
+                              {test.percentage}%
+                            </Badge>
+                          </td>
+                          <td className="small">{test.performanceNote || '-'}</td>
+                          <td className="small">{test.remarks || '-'}</td>
+                          <td className="small">{test.teacher?.name || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              </Card.Body>
+            </Card>
           )}
         </Tab>
         <Tab eventKey="fees" title="Fees">

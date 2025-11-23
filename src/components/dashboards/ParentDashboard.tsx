@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Alert, Spinner, Accordion, Button, Modal, Form, Tabs, Tab } from 'react-bootstrap';
-import { FeeStatus, AttendanceStatus } from '@prisma/client';
+import { FeeStatus, AttendanceStatus, AssessmentType } from '@prisma/client';
 import FeePaymentModal from './FeePaymentModal';
 
 interface Child {
@@ -40,6 +40,25 @@ interface Child {
         name: string;
       };
     }[];
+  }[];
+  testRecords: {
+    id: string;
+    title: string;
+    type: AssessmentType;
+    performedAt: string;
+    maxMarks: number;
+    obtainedMarks: number;
+    percentage: number;
+    performanceNote?: string | null;
+    remarks?: string | null;
+    course: {
+      id: string;
+      name: string;
+    };
+    teacher: {
+      id: string;
+      name: string;
+    };
   }[];
 }
 
@@ -217,6 +236,18 @@ export default function ParentDashboard() {
     }, 0);
 
     return Math.round(total / coursesWithProgress.length);
+  };
+
+  const getTestsForChild = (child: Child) => {
+    if (!child.testRecords || child.testRecords.length === 0) return [];
+    return child.testRecords;
+  };
+
+  const getAverageTestScore = (child: Child) => {
+    const tests = getTestsForChild(child);
+    if (tests.length === 0) return null;
+    const total = tests.reduce((sum, test) => sum + (test.percentage || 0), 0);
+    return Math.round(total / tests.length);
   };
 
   const getStatusBadge = (status: FeeStatus) => {
@@ -488,6 +519,105 @@ export default function ParentDashboard() {
                               );
                             })}
                           </Accordion>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+          </Tab>
+
+          <Tab 
+            eventKey="tests"
+            title={
+              <span>
+                <i className="bi bi-journal-check me-2"></i>
+                Tests & Exams
+              </span>
+            }
+          >
+            <Row className="g-4">
+              {children.map((child) => {
+                const averageTests = getAverageTestScore(child);
+                const tests = getTestsForChild(child);
+                return (
+                  <Col key={`${child.id}-tests`} lg={12}>
+                    <Card className="shadow-sm">
+                      <Card.Header className="bg-light">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <h5 className="mb-0 fw-bold">{child.name}</h5>
+                            <small className="text-muted">{child.email}</small>
+                          </div>
+                          <div className="text-end">
+                            {averageTests !== null ? (
+                              <div>
+                                <Badge 
+                                  bg={averageTests >= 80 ? 'success' : averageTests >= 60 ? 'warning' : 'danger'}
+                                  className="fs-6"
+                                >
+                                  {averageTests}% Avg Score
+                                </Badge>
+                                <div className="small text-muted mt-1">Across all tests</div>
+                              </div>
+                            ) : (
+                              <Badge bg="secondary">No Test Data</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </Card.Header>
+                      <Card.Body className="p-0">
+                        {!tests || tests.length === 0 ? (
+                          <div className="text-center py-4">
+                            <i className="bi bi-journal-check display-6 text-muted"></i>
+                            <p className="mt-2 text-muted">No tests recorded yet</p>
+                          </div>
+                        ) : (
+                          <div className="table-responsive">
+                            <Table hover size="sm" className="mb-0">
+                              <thead className="table-light">
+                                <tr>
+                                  <th>Date</th>
+                                  <th>Subject</th>
+                                  <th>Test/Exam</th>
+                                  <th>Type</th>
+                                  <th>Score</th>
+                                  <th>Percentage</th>
+                                  <th>Performance</th>
+                                  <th>Remarks</th>
+                                  <th>Teacher</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {tests.map((test) => (
+                                  <tr key={test.id}>
+                                    <td className="text-muted small">
+                                      {new Date(test.performedAt).toLocaleDateString()}
+                                    </td>
+                                    <td className="fw-medium small">{test.course.name}</td>
+                                    <td className="small">{test.title}</td>
+                                    <td>
+                                      <Badge bg={test.type === 'EXAM' ? 'danger' : 'info'}>
+                                        {test.type === 'EXAM' ? 'Exam' : 'Test'}
+                                      </Badge>
+                                    </td>
+                                    <td>
+                                      <Badge bg="dark">{test.obtainedMarks}/{test.maxMarks}</Badge>
+                                    </td>
+                                    <td>
+                                      <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
+                                        {test.percentage}%
+                                      </Badge>
+                                    </td>
+                                    <td className="small">{test.performanceNote || '-'}</td>
+                                    <td className="small">{test.remarks || '-'}</td>
+                                    <td className="small">{test.teacher?.name || '-'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </Table>
+                          </div>
                         )}
                       </Card.Body>
                     </Card>

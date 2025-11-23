@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner } from 'react-bootstrap';
-import { AttendanceStatus } from '@prisma/client';
+import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner, Tabs, Tab, InputGroup } from 'react-bootstrap';
+import { AttendanceStatus, AssessmentType } from '@prisma/client';
 
 interface Student {
   id: string;
@@ -36,6 +36,33 @@ interface Student {
       };
     }[];
   }[];
+  testRecords: TestRecord[];
+}
+
+interface TestRecord {
+  id: string;
+  title: string;
+  type: AssessmentType;
+  performedAt: string;
+  maxMarks: number;
+  obtainedMarks: number;
+  percentage: number;
+  performanceNote?: string | null;
+  remarks?: string | null;
+  course: {
+    id: string;
+    name: string;
+  };
+  teacher: {
+    id: string;
+    name: string;
+  };
+  examTemplate?: {
+    id: string;
+    title: string;
+    type: AssessmentType;
+    maxMarks: number;
+  } | null;
 }
 
 // Expandable Text Component
@@ -113,6 +140,7 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState('progress');
 
   // Progress update modal states
   const [showProgressModal, setShowProgressModal] = useState(false);
@@ -131,8 +159,25 @@ export default function TeacherDashboard() {
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [selectedRemarks, setSelectedRemarks] = useState<any[]>([]);
 
+  // Test modal states
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [selectedTestStudent, setSelectedTestStudent] = useState<Student | null>(null);
+  const [selectedTestCourse, setSelectedTestCourse] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [testTitle, setTestTitle] = useState('');
+  const [testType, setTestType] = useState<AssessmentType>('TEST');
+  const [performedAt, setPerformedAt] = useState(new Date().toISOString().split('T')[0]);
+  const [maxMarks, setMaxMarks] = useState('');
+  const [obtainedMarks, setObtainedMarks] = useState('');
+  const [performanceNote, setPerformanceNote] = useState('');
+  const [testRemarks, setTestRemarks] = useState('');
+  const [savingTest, setSavingTest] = useState(false);
+  const [testTemplates, setTestTemplates] = useState<any[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+
   useEffect(() => {
     fetchAssignedStudents();
+    fetchTestTemplates();
   }, []);
 
   const fetchAssignedStudents = async () => {
@@ -154,6 +199,23 @@ export default function TeacherDashboard() {
     }
   };
 
+  const fetchTestTemplates = async () => {
+    try {
+      setLoadingTemplates(true);
+      const res = await fetch('/api/tests/templates');
+      if (res.ok) {
+        const data = await res.json();
+        setTestTemplates(Array.isArray(data) ? data : []);
+      } else {
+        setTestTemplates([]);
+      }
+    } catch (error) {
+      setTestTemplates([]);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
   const handleUpdateProgress = (student: Student) => {
     setSelectedStudent(student);
     setSelectedCourse('');
@@ -165,6 +227,20 @@ export default function TeacherDashboard() {
     setRemarks('');
     setAttendance('PRESENT');
     setShowProgressModal(true);
+  };
+
+  const handleAddTest = (student: Student) => {
+    setSelectedTestStudent(student);
+    setSelectedTestCourse('');
+    setSelectedTemplateId('');
+    setTestTitle('');
+    setTestType('TEST');
+    setPerformedAt(new Date().toISOString().split('T')[0]);
+    setMaxMarks('');
+    setObtainedMarks('');
+    setPerformanceNote('');
+    setTestRemarks('');
+    setShowTestModal(true);
   };
 
   const handleSubmitProgress = async (e: React.FormEvent) => {
@@ -204,6 +280,71 @@ export default function TeacherDashboard() {
       setError('Error updating progress');
     } finally {
       setUpdatingProgress(false);
+    }
+  };
+
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    if (!templateId) {
+      setTestTitle('');
+      setTestType('TEST');
+      setMaxMarks('');
+      return;
+    }
+
+    const template = testTemplates.find((tpl) => tpl.id === templateId);
+    if (template) {
+      setTestTitle(template.title);
+      setTestType(template.type);
+      setMaxMarks(template.maxMarks?.toString() || '');
+    }
+  };
+
+  const computedPercentage = () => {
+    const max = parseFloat(maxMarks);
+    const obtained = parseFloat(obtainedMarks);
+    if (Number.isNaN(max) || max <= 0 || Number.isNaN(obtained) || obtained < 0) return null;
+    return Math.max(0, Math.min(100, (obtained / max) * 100));
+  };
+
+  const handleSubmitTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTestStudent || !selectedTestCourse) return;
+
+    setSavingTest(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/tests/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: selectedTestStudent.id,
+          courseId: selectedTestCourse,
+          examTemplateId: selectedTemplateId || null,
+          title: testTitle,
+          type: testType,
+          performedAt,
+          maxMarks,
+          obtainedMarks,
+          performanceNote,
+          remarks: testRemarks,
+        }),
+      });
+
+      if (res.ok) {
+        setSuccess('Test/Exam recorded successfully!');
+        setShowTestModal(false);
+        fetchAssignedStudents();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to record test');
+      }
+    } catch (err) {
+      setError('Error recording test');
+    } finally {
+      setSavingTest(false);
     }
   };
 
@@ -251,133 +392,261 @@ export default function TeacherDashboard() {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      {!students || students.length === 0 ? (
-        <Card className="text-center py-5">
-          <Card.Body>
-            <i className="bi bi-people display-4 text-muted"></i>
-            <h4 className="mt-3 text-muted">No Students Assigned</h4>
-            <p className="text-muted">You don&apos;t have any students assigned to you yet. Please contact your administrator.</p>
-          </Card.Body>
-        </Card>
-      ) : (
-        <Row className="g-4">
-          {students.map((student) => (
-            <Col key={student.id} xl={12}>
-              <Card className="shadow-sm">
-                <Card.Header className="bg-light">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <div>
-                      <h5 className="mb-0 fw-bold">{student.name}</h5>
-                      <small className="text-muted">{student.email}</small>
-                    </div>
-                    <Button
-                      variant="success"
-                      size="sm"
-                      onClick={() => handleUpdateProgress(student)}
-                    >
-                      <i className="bi bi-plus-circle me-1"></i>
-                      Add Progress & Attendance
-                    </Button>
-                  </div>
-                </Card.Header>
-                <Card.Body className="p-0">
-                  {!student.studentCourses || student.studentCourses.length === 0 ? (
-                    <div className="text-center py-3">
-                      <small className="text-muted">No subjects assigned</small>
-                    </div>
-                  ) : (
-                    <div className="table-responsive">
-                      <Table className="mb-0">
-                        <thead className="table-light">
-                          <tr>
-                            <th>Date</th>
-                            <th>Course</th>
-                            <th>Attendance</th>
-                            <th>Lesson</th>
-                            <th>Homework</th>
-                            <th>Progress %</th>
-                            <th>Score</th>
-                            <th>Remarks</th>
-                            <th>Parent Remarks</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {!student.progressRecords || student.progressRecords.length === 0 ? (
-                            <tr>
-                              <td colSpan={9} className="text-center py-3 text-muted">
-                                No progress records yet
-                              </td>
-                            </tr>
-                          ) : (
-                            student.progressRecords.map((progress) => (
-                              <tr key={progress.id}>
-                                <td className="small">
-                                  {new Date(progress.date).toLocaleDateString()}
-                                </td>
-                                <td className="fw-medium small">
-                                  {progress.course.name}
-                                </td>
-                                <td>
-                                  {getAttendanceBadge(progress.attendance)}
-                                </td>
-                                <td className="small">
-                                  <ExpandableText text={progress.lesson} maxLength={20} />
-                                </td>
-                                <td className="small">
-                                  <ExpandableText text={progress.homework} maxLength={20} />
-                                </td>
-                                <td>
-                                  {progress.lessonProgress !== null ? (
-                                    <Badge bg="primary">
-                                      {progress.lessonProgress}%
-                                    </Badge>
-                                  ) : (
-                                    <span className="text-muted small">-</span>
-                                  )}
-                                </td>
-                                <td>
-                                  {progress.score !== null ? (
-                                    <Badge bg="success">
-                                      {progress.score}
-                                    </Badge>
-                                  ) : (
-                                    <span className="text-muted small">-</span>
-                                  )}
-                                </td>
-                                <td className="small">
-                                  <ExpandableText text={progress.remarks} maxLength={30} />
-                                </td>
-                                <td className="small">
-                                  {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
-                                    <div>
-                                      <Badge bg="info" className="me-1">
-                                        {progress.parentRemarks.length} remark{progress.parentRemarks.length > 1 ? 's' : ''}
-                                      </Badge>
-                                      <Button
-                                        variant="outline-info"
-                                        size="sm"
-                                        onClick={() => handleViewParentRemarks(progress.parentRemarks)}
-                                      >
-                                        <i className="bi bi-eye"></i>
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted">-</span>
-                                  )}
-                                </td>
+      <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'progress')} className="mb-4">
+        <Tab 
+          eventKey="progress" 
+          title={
+            <span>
+              <i className="bi bi-graph-up me-2"></i>
+              Progress & Attendance
+            </span>
+          }
+        >
+          {!students || students.length === 0 ? (
+            <Card className="text-center py-5">
+              <Card.Body>
+                <i className="bi bi-people display-4 text-muted"></i>
+                <h4 className="mt-3 text-muted">No Students Assigned</h4>
+                <p className="text-muted">You don&apos;t have any students assigned to you yet. Please contact your administrator.</p>
+              </Card.Body>
+            </Card>
+          ) : (
+            <Row className="g-4">
+              {students.map((student) => (
+                <Col key={student.id} xl={12}>
+                  <Card className="shadow-sm">
+                    <Card.Header className="bg-light">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h5 className="mb-0 fw-bold">{student.name}</h5>
+                          <small className="text-muted">{student.email}</small>
+                        </div>
+                        <Button
+                          variant="success"
+                          size="sm"
+                          onClick={() => handleUpdateProgress(student)}
+                        >
+                          <i className="bi bi-plus-circle me-1"></i>
+                          Add Progress & Attendance
+                        </Button>
+                      </div>
+                    </Card.Header>
+                    <Card.Body className="p-0">
+                      {!student.studentCourses || student.studentCourses.length === 0 ? (
+                        <div className="text-center py-3">
+                          <small className="text-muted">No subjects assigned</small>
+                        </div>
+                      ) : (
+                        <div className="table-responsive">
+                          <Table className="mb-0">
+                            <thead className="table-light">
+                              <tr>
+                                <th>Date</th>
+                                <th>Course</th>
+                                <th>Attendance</th>
+                                <th>Lesson</th>
+                                <th>Homework</th>
+                                <th>Progress %</th>
+                                <th>Score</th>
+                                <th>Remarks</th>
+                                <th>Parent Remarks</th>
                               </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </Table>
-                    </div>
-                  )}
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      )}
+                            </thead>
+                            <tbody>
+                              {!student.progressRecords || student.progressRecords.length === 0 ? (
+                                <tr>
+                                  <td colSpan={9} className="text-center py-3 text-muted">
+                                    No progress records yet
+                                  </td>
+                                </tr>
+                              ) : (
+                                student.progressRecords.map((progress) => (
+                                  <tr key={progress.id}>
+                                    <td className="small">
+                                      {new Date(progress.date).toLocaleDateString()}
+                                    </td>
+                                    <td className="fw-medium small">
+                                      {progress.course.name}
+                                    </td>
+                                    <td>
+                                      {getAttendanceBadge(progress.attendance)}
+                                    </td>
+                                    <td className="small">
+                                      <ExpandableText text={progress.lesson} maxLength={20} />
+                                    </td>
+                                    <td className="small">
+                                      <ExpandableText text={progress.homework} maxLength={20} />
+                                    </td>
+                                    <td>
+                                      {progress.lessonProgress !== null ? (
+                                        <Badge bg="primary">
+                                          {progress.lessonProgress}%
+                                        </Badge>
+                                      ) : (
+                                        <span className="text-muted small">-</span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      {progress.score !== null ? (
+                                        <Badge bg="success">
+                                          {progress.score}
+                                        </Badge>
+                                      ) : (
+                                        <span className="text-muted small">-</span>
+                                      )}
+                                    </td>
+                                    <td className="small">
+                                      <ExpandableText text={progress.remarks} maxLength={30} />
+                                    </td>
+                                    <td className="small">
+                                      {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
+                                        <div>
+                                          <Badge bg="info" className="me-1">
+                                            {progress.parentRemarks.length} remark{progress.parentRemarks.length > 1 ? 's' : ''}
+                                          </Badge>
+                                          <Button
+                                            variant="outline-info"
+                                            size="sm"
+                                            onClick={() => handleViewParentRemarks(progress.parentRemarks)}
+                                          >
+                                            <i className="bi bi-eye"></i>
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <span className="text-muted">-</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </Table>
+                        </div>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+        </Tab>
+
+        <Tab 
+          eventKey="tests" 
+          title={
+            <span>
+              <i className="bi bi-journal-check me-2"></i>
+              Tests & Exams
+            </span>
+          }
+        >
+          {!students || students.length === 0 ? (
+            <Card className="text-center py-5">
+              <Card.Body>
+                <i className="bi bi-people display-4 text-muted"></i>
+                <h4 className="mt-3 text-muted">No Students Assigned</h4>
+                <p className="text-muted">You don&apos;t have any students assigned to you yet. Please contact your administrator.</p>
+              </Card.Body>
+            </Card>
+          ) : (
+            <Row className="g-4">
+              {students.map((student) => (
+                <Col key={student.id} xl={12}>
+                  <Card className="shadow-sm">
+                    <Card.Header className="bg-light">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <h5 className="mb-0 fw-bold">{student.name}</h5>
+                          <small className="text-muted">{student.email}</small>
+                        </div>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => handleAddTest(student)}
+                        >
+                          <i className="bi bi-plus-circle me-1"></i>
+                          Add Test / Exam Result
+                        </Button>
+                      </div>
+                    </Card.Header>
+                    <Card.Body className="p-0">
+                      {!student.studentCourses || student.studentCourses.length === 0 ? (
+                        <div className="text-center py-3">
+                          <small className="text-muted">No subjects assigned</small>
+                        </div>
+                      ) : (
+                        <div className="table-responsive">
+                          <Table className="mb-0">
+                            <thead className="table-light">
+                              <tr>
+                                <th>Date</th>
+                                <th>Subject</th>
+                                <th>Test/Exam</th>
+                                <th>Type</th>
+                                <th>Score</th>
+                                <th>Percentage</th>
+                                <th>Performance</th>
+                                <th>Remarks</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {!student.testRecords || student.testRecords.length === 0 ? (
+                                <tr>
+                                  <td colSpan={8} className="text-center py-3 text-muted">
+                                    No tests recorded yet
+                                  </td>
+                                </tr>
+                              ) : (
+                                student.testRecords.map((test) => (
+                                  <tr key={test.id}>
+                                    <td className="small">
+                                      {new Date(test.performedAt).toLocaleDateString()}
+                                    </td>
+                                    <td className="fw-medium small">
+                                      {test.course.name}
+                                    </td>
+                                    <td className="small">
+                                      <strong>{test.title}</strong>
+                                      {test.examTemplate && (
+                                        <div className="text-muted small">Template</div>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <Badge bg={test.type === 'EXAM' ? 'danger' : 'info'}>
+                                        {test.type === 'EXAM' ? 'Exam' : 'Test'}
+                                      </Badge>
+                                    </td>
+                                    <td>
+                                      <Badge bg="dark">
+                                        {test.obtainedMarks}/{test.maxMarks}
+                                      </Badge>
+                                    </td>
+                                    <td>
+                                      <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
+                                        {test.percentage}%
+                                      </Badge>
+                                    </td>
+                                    <td className="small">
+                                      <ExpandableText text={test.performanceNote || '-'} maxLength={30} />
+                                    </td>
+                                    <td className="small">
+                                      <ExpandableText text={test.remarks || '-'} maxLength={30} />
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </Table>
+                        </div>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          )}
+        </Tab>
+      </Tabs>
 
       {/* Progress Update Modal */}
       <Modal show={showProgressModal} onHide={() => setShowProgressModal(false)} size="lg">
@@ -539,6 +808,193 @@ export default function TeacherDashboard() {
                   <>
                     <i className="bi bi-check-circle me-2"></i>
                     Add Progress & Attendance
+                  </>
+                )}
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
+      </Modal>
+
+      {/* Test Record Modal */}
+      <Modal show={showTestModal} onHide={() => setShowTestModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-journal-check me-2"></i>
+            Add Test / Exam for {selectedTestStudent?.name}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleSubmitTest}>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Select Subject *</Form.Label>
+                  <Form.Select
+                    value={selectedTestCourse}
+                    onChange={(e) => setSelectedTestCourse(e.target.value)}
+                    required
+                  >
+                    <option value="">Choose a subject...</option>
+                    {selectedTestStudent?.studentCourses?.map(({ course }) => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Date</Form.Label>
+                  <Form.Control
+                    type="date"
+                    value={performedAt}
+                    onChange={(e) => setPerformedAt(e.target.value)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Test/Exam Template</Form.Label>
+                  <Form.Select
+                    value={selectedTemplateId}
+                    onChange={(e) => handleTemplateChange(e.target.value)}
+                    disabled={loadingTemplates}
+                  >
+                    <option value="">-- Optional: pick a template --</option>
+                    {testTemplates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.title} {template.type === 'EXAM' ? '(Exam)' : '(Test)'} {template.course ? `- ${template.course.name}` : ''}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  {loadingTemplates && (
+                    <Form.Text className="text-muted">
+                      Loading templates...
+                    </Form.Text>
+                  )}
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Title *</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={testTitle}
+                    onChange={(e) => setTestTitle(e.target.value)}
+                    placeholder="Mid-term exam, Weekly test, etc."
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Type *</Form.Label>
+                  <Form.Select
+                    value={testType}
+                    onChange={(e) => setTestType(e.target.value as AssessmentType)}
+                  >
+                    <option value="TEST">Test</option>
+                    <option value="EXAM">Exam</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Maximum Marks *</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="1"
+                    step="0.5"
+                    value={maxMarks}
+                    onChange={(e) => setMaxMarks(e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Obtained Marks *</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={obtainedMarks}
+                    onChange={(e) => setObtainedMarks(e.target.value)}
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Performance Summary</Form.Label>
+                  <Form.Control
+                    type="text"
+                    value={performanceNote}
+                    onChange={(e) => setPerformanceNote(e.target.value)}
+                    placeholder="Short note on how the student performed"
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Percentage</Form.Label>
+                  <InputGroup>
+                    <Form.Control
+                      type="text"
+                      value={computedPercentage() !== null ? `${computedPercentage()?.toFixed(2)}%` : 'N/A'}
+                      readOnly
+                    />
+                    <InputGroup.Text>
+                      auto
+                    </InputGroup.Text>
+                  </InputGroup>
+                  <Form.Text className="text-muted">
+                    Calculated automatically from marks
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Form.Group className="mb-4">
+              <Form.Label>Detailed Remarks</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={testRemarks}
+                onChange={(e) => setTestRemarks(e.target.value)}
+                placeholder="Any additional remarks or feedback"
+              />
+            </Form.Group>
+
+            <div className="d-flex justify-content-end gap-2">
+              <Button variant="secondary" onClick={() => setShowTestModal(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={savingTest}
+              >
+                {savingTest ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-save me-2"></i>
+                    Save Test / Exam
                   </>
                 )}
               </Button>

@@ -57,6 +57,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 }
               },
               orderBy: { createdAt: 'desc' }
+            },
+            testRecords: {
+              include: {
+                course: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                },
+                teacher: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                },
+                examTemplate: true,
+              },
+              orderBy: { performedAt: 'desc' }
             }
           }
         }

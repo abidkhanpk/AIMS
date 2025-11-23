@@ -112,6 +112,11 @@ enum RelationType {
   OTHER
 }
 
+enum AssessmentType {
+  TEST
+  EXAM
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -170,6 +175,10 @@ model User {
   adminSalaryPayments   SalaryPayment[] @relation("AdminSalaryPayments")
   salaryAdvances       SalaryAdvance[]  @relation("AdvanceAdmin")
   salaryAdvancesAsTeacher SalaryAdvance[] @relation("AdvanceTeacher")
+  studentTestRecords   TestRecord[]     @relation("StudentTestRecords")
+  teacherTestRecords   TestRecord[]     @relation("TeacherTestRecords")
+  createdExamTemplates ExamTemplate[]   @relation("ExamTemplateCreator")
+  adminExamTemplates   ExamTemplate[]   @relation("ExamTemplateAdmin")
 }
 
 model Course {
@@ -185,6 +194,8 @@ model Course {
   progressRecords Progress[]
   assignments     Assignment[]
   fees            Fee[]
+  examTemplates   ExamTemplate[]
+  testRecords     TestRecord[]
 }
 
 model Assignment {
@@ -485,6 +496,48 @@ model SalaryAdvanceRepayment {
   updatedAt       DateTime @updatedAt
 
   advance         SalaryAdvance @relation(fields: [advanceId], references: [id])
+}
+
+model ExamTemplate {
+  id            String          @id @default(uuid())
+  title         String
+  description   String?
+  type          AssessmentType  @default(TEST)
+  courseId      String?
+  maxMarks      Float
+  scheduledDate DateTime?
+  adminId       String
+  createdById   String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  course    Course? @relation(fields: [courseId], references: [id])
+  admin     User    @relation("ExamTemplateAdmin", fields: [adminId], references: [id])
+  createdBy User    @relation("ExamTemplateCreator", fields: [createdById], references: [id])
+  testRecords TestRecord[]
+}
+
+model TestRecord {
+  id             String         @id @default(uuid())
+  studentId      String
+  courseId       String
+  teacherId      String
+  examTemplateId String?
+  title          String
+  type           AssessmentType @default(TEST)
+  performedAt    DateTime       @default(now())
+  maxMarks       Float
+  obtainedMarks  Float
+  percentage     Float
+  performanceNote String?
+  remarks        String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  student      User         @relation("StudentTestRecords", fields: [studentId], references: [id])
+  course       Course       @relation(fields: [courseId], references: [id])
+  teacher      User         @relation("TeacherTestRecords", fields: [teacherId], references: [id])
+  examTemplate ExamTemplate? @relation(fields: [examTemplateId], references: [id])
 }
 
 model Notification {
