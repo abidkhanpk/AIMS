@@ -154,6 +154,7 @@ export default function TeacherDashboard() {
   const [remarks, setRemarks] = useState('');
   const [attendance, setAttendance] = useState<AttendanceStatus>('PRESENT');
   const [updatingProgress, setUpdatingProgress] = useState(false);
+  const [editingProgressId, setEditingProgressId] = useState<string | null>(null);
 
   // Parent remarks modal states
   const [showRemarksModal, setShowRemarksModal] = useState(false);
@@ -174,6 +175,7 @@ export default function TeacherDashboard() {
   const [savingTest, setSavingTest] = useState(false);
   const [testTemplates, setTestTemplates] = useState<any[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [editingTestId, setEditingTestId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAssignedStudents();
@@ -226,6 +228,21 @@ export default function TeacherDashboard() {
     setScore('');
     setRemarks('');
     setAttendance('PRESENT');
+    setEditingProgressId(null);
+    setShowProgressModal(true);
+  };
+
+  const handleEditProgress = (student: Student, progress: any) => {
+    setSelectedStudent(student);
+    setSelectedCourse(progress.course.id);
+    setProgressDate(progress.date ? progress.date.split('T')[0] : new Date().toISOString().split('T')[0]);
+    setLesson(progress.lesson || '');
+    setHomework(progress.homework || '');
+    setLessonProgress(progress.lessonProgress !== null && progress.lessonProgress !== undefined ? String(progress.lessonProgress) : '');
+    setScore(progress.score !== null && progress.score !== undefined ? String(progress.score) : '');
+    setRemarks(progress.remarks || '');
+    setAttendance(progress.attendance || 'PRESENT');
+    setEditingProgressId(progress.id);
     setShowProgressModal(true);
   };
 
@@ -240,6 +257,7 @@ export default function TeacherDashboard() {
     setObtainedMarks('');
     setPerformanceNote('');
     setTestRemarks('');
+    setEditingTestId(null);
     setShowTestModal(true);
   };
 
@@ -251,26 +269,33 @@ export default function TeacherDashboard() {
     setError('');
     setSuccess('');
 
+    const payload = {
+      studentId: selectedStudent.id,
+      courseId: selectedCourse,
+      date: progressDate,
+      lesson: lesson || null,
+      homework: homework || null,
+      lessonProgress: lessonProgress ? parseFloat(lessonProgress) : null,
+      score: score ? parseFloat(score) : null,
+      remarks: remarks || null,
+      attendance: attendance,
+    };
+
     try {
-      const res = await fetch('/api/progress/update', {
-        method: 'POST',
+      const res = await fetch(editingProgressId ? '/api/progress/edit' : '/api/progress/update', {
+        method: editingProgressId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentId: selectedStudent.id,
-          courseId: selectedCourse,
-          date: progressDate,
-          lesson: lesson || null,
-          homework: homework || null,
-          lessonProgress: lessonProgress ? parseFloat(lessonProgress) : null,
-          score: score ? parseFloat(score) : null,
-          remarks: remarks || null,
-          attendance: attendance,
-        }),
+        body: JSON.stringify(
+          editingProgressId
+            ? { ...payload, id: editingProgressId }
+            : payload
+        ),
       });
 
       if (res.ok) {
-        setSuccess('Progress updated successfully!');
+        setSuccess(editingProgressId ? 'Progress edited successfully!' : 'Progress updated successfully!');
         setShowProgressModal(false);
+        setEditingProgressId(null);
         fetchAssignedStudents(); // Refresh data
       } else {
         const errorData = await res.json();
@@ -316,10 +341,11 @@ export default function TeacherDashboard() {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/tests/records', {
-        method: 'POST',
+      const res = await fetch(editingTestId ? '/api/tests/edit' : '/api/tests/records', {
+        method: editingTestId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: editingTestId || undefined,
           studentId: selectedTestStudent.id,
           courseId: selectedTestCourse,
           examTemplateId: selectedTemplateId || null,
@@ -334,8 +360,9 @@ export default function TeacherDashboard() {
       });
 
       if (res.ok) {
-        setSuccess('Test/Exam recorded successfully!');
+        setSuccess(editingTestId ? 'Test/Exam updated successfully!' : 'Test/Exam recorded successfully!');
         setShowTestModal(false);
+        setEditingTestId(null);
         fetchAssignedStudents();
       } else {
         const errorData = await res.json();
@@ -346,6 +373,21 @@ export default function TeacherDashboard() {
     } finally {
       setSavingTest(false);
     }
+  };
+
+  const handleEditTest = (student: Student, test: TestRecord) => {
+    setSelectedTestStudent(student);
+    setSelectedTestCourse(test.course.id);
+    setSelectedTemplateId(test.examTemplate?.id || '');
+    setTestTitle(test.title);
+    setTestType(test.type);
+    setPerformedAt(test.performedAt ? test.performedAt.split('T')[0] : new Date().toISOString().split('T')[0]);
+    setMaxMarks(String(test.maxMarks));
+    setObtainedMarks(String(test.obtainedMarks));
+    setPerformanceNote(test.performanceNote || '');
+    setTestRemarks(test.remarks || '');
+    setEditingTestId(test.id);
+    setShowTestModal(true);
   };
 
   const handleViewParentRemarks = (remarks: any[]) => {
@@ -445,22 +487,23 @@ export default function TeacherDashboard() {
                                 <th>Course</th>
                                 <th>Attendance</th>
                                 <th>Lesson</th>
-                                <th>Homework</th>
-                                <th>Progress %</th>
-                                <th>Score</th>
-                                <th>Remarks</th>
-                                <th>Parent Remarks</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {!student.progressRecords || student.progressRecords.length === 0 ? (
-                                <tr>
-                                  <td colSpan={9} className="text-center py-3 text-muted">
-                                    No progress records yet
-                                  </td>
-                                </tr>
-                              ) : (
-                                student.progressRecords.map((progress) => (
+                            <th>Homework</th>
+                            <th>Progress %</th>
+                            <th>Score</th>
+                            <th>Remarks</th>
+                            <th>Parent Remarks</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {!student.progressRecords || student.progressRecords.length === 0 ? (
+                            <tr>
+                              <td colSpan={10} className="text-center py-3 text-muted">
+                                No progress records yet
+                              </td>
+                            </tr>
+                          ) : (
+                            student.progressRecords.map((progress) => (
                                   <tr key={progress.id}>
                                     <td className="small">
                                       {new Date(progress.date).toLocaleDateString()}
@@ -512,15 +555,26 @@ export default function TeacherDashboard() {
                                             <i className="bi bi-eye"></i>
                                           </Button>
                                         </div>
-                                      ) : (
-                                        <span className="text-muted">-</span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </Table>
+                                    ) : (
+                                      <span className="text-muted">-</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    <div className="d-flex flex-wrap gap-2">
+                                      <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        onClick={() => handleEditProgress(student, progress)}
+                                      >
+                                        <i className="bi bi-pencil"></i>
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                        </tbody>
+                      </Table>
                         </div>
                       )}
                     </Card.Body>
@@ -583,21 +637,22 @@ export default function TeacherDashboard() {
                                 <th>Subject</th>
                                 <th>Test/Exam</th>
                                 <th>Type</th>
-                                <th>Score</th>
-                                <th>Percentage</th>
-                                <th>Performance</th>
-                                <th>Remarks</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {!student.testRecords || student.testRecords.length === 0 ? (
-                                <tr>
-                                  <td colSpan={8} className="text-center py-3 text-muted">
-                                    No tests recorded yet
-                                  </td>
-                                </tr>
-                              ) : (
-                                student.testRecords.map((test) => (
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Performance</th>
+                            <th>Remarks</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {!student.testRecords || student.testRecords.length === 0 ? (
+                            <tr>
+                              <td colSpan={9} className="text-center py-3 text-muted">
+                                No tests recorded yet
+                              </td>
+                            </tr>
+                          ) : (
+                            student.testRecords.map((test) => (
                                   <tr key={test.id}>
                                     <td className="small">
                                       {new Date(test.performedAt).toLocaleDateString()}
@@ -632,10 +687,19 @@ export default function TeacherDashboard() {
                                     <td className="small">
                                       <ExpandableText text={test.remarks || '-'} maxLength={30} />
                                     </td>
+                                    <td>
+                                      <Button
+                                        variant="outline-primary"
+                                        size="sm"
+                                        onClick={() => handleEditTest(student, test)}
+                                      >
+                                        <i className="bi bi-pencil"></i>
+                                      </Button>
+                                    </td>
                                   </tr>
                                 ))
                               )}
-                            </tbody>
+                        </tbody>
                           </Table>
                         </div>
                       )}
@@ -649,11 +713,12 @@ export default function TeacherDashboard() {
       </Tabs>
 
       {/* Progress Update Modal */}
-      <Modal show={showProgressModal} onHide={() => setShowProgressModal(false)} size="lg">
+      <Modal show={showProgressModal} onHide={() => { setShowProgressModal(false); setEditingProgressId(null); }} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-graph-up me-2"></i>
-            Add Progress & Attendance for {selectedStudent?.name}
+            {editingProgressId ? 'Edit Progress & Attendance for ' : 'Add Progress & Attendance for '}
+            {selectedStudent?.name}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -666,6 +731,7 @@ export default function TeacherDashboard() {
                     value={selectedCourse}
                     onChange={(e) => setSelectedCourse(e.target.value)}
                     required
+                    disabled={!!editingProgressId}
                   >
                     <option value="">Choose a subject...</option>
                     {selectedStudent?.studentCourses?.map(({ course }) => (
@@ -807,7 +873,7 @@ export default function TeacherDashboard() {
                 ) : (
                   <>
                     <i className="bi bi-check-circle me-2"></i>
-                    Add Progress & Attendance
+                    {editingProgressId ? 'Save Changes' : 'Add Progress & Attendance'}
                   </>
                 )}
               </Button>
@@ -817,11 +883,12 @@ export default function TeacherDashboard() {
       </Modal>
 
       {/* Test Record Modal */}
-      <Modal show={showTestModal} onHide={() => setShowTestModal(false)} size="lg">
+      <Modal show={showTestModal} onHide={() => { setShowTestModal(false); setEditingTestId(null); }} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-journal-check me-2"></i>
-            Add Test / Exam for {selectedTestStudent?.name}
+            {editingTestId ? 'Edit Test / Exam for ' : 'Add Test / Exam for '}
+            {selectedTestStudent?.name}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -834,6 +901,7 @@ export default function TeacherDashboard() {
                     value={selectedTestCourse}
                     onChange={(e) => setSelectedTestCourse(e.target.value)}
                     required
+                    disabled={!!editingTestId}
                   >
                     <option value="">Choose a subject...</option>
                     {selectedTestStudent?.studentCourses?.map(({ course }) => (
@@ -994,7 +1062,7 @@ export default function TeacherDashboard() {
                 ) : (
                   <>
                     <i className="bi bi-save me-2"></i>
-                    Save Test / Exam
+                    {editingTestId ? 'Save Changes' : 'Save Test / Exam'}
                   </>
                 )}
               </Button>
