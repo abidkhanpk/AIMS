@@ -1,14 +1,13 @@
-import { useEffect, useState } from 'react';
-import { Card, Table, Alert, Spinner, Form, Button } from 'react-bootstrap';
+import { useEffect, useState, useMemo } from 'react';
+import { Card, Table, Alert, Spinner } from 'react-bootstrap';
+import { useSession } from 'next-auth/react';
 
 export default function MessagesPage() {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [receiverId, setReceiverId] = useState('');
-  const [content, setContent] = useState('');
-  const [sending, setSending] = useState(false);
 
   const fetchMessages = async () => {
     try {
@@ -31,73 +30,19 @@ export default function MessagesPage() {
     fetchMessages();
   }, []);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!receiverId || !content.trim()) return;
-    setError('');
-    setSuccess('');
-    setSending(true);
-    try {
-      const res = await fetch('/api/messages/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receiverId, content }),
-      });
-      if (res.ok) {
-        setContent('');
-        setReceiverId('');
-        setSuccess('Message sent');
-        fetchMessages();
-      } else {
-        const err = await res.json();
-        setError(err.message || 'Failed to send');
-      }
-    } catch (err) {
-      setError('Failed to send');
-    } finally {
-      setSending(false);
-    }
-  };
+  const sortedMessages = useMemo(
+    () => [...messages].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()),
+    [messages]
+  );
 
   return (
     <div className="container py-4">
       <h1 className="h4 mb-4">
-        <i className="bi bi-chat-dots me-2"></i>
+        <i className="bi bi-envelope me-2"></i>
         Messages
       </h1>
 
       {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
-      {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
-
-      <Card className="mb-4">
-        <Card.Header>Compose</Card.Header>
-        <Card.Body>
-          <Form onSubmit={handleSend}>
-            <Form.Group className="mb-3">
-              <Form.Label>Receiver ID</Form.Label>
-              <Form.Control
-                type="text"
-                value={receiverId}
-                onChange={(e) => setReceiverId(e.target.value)}
-                placeholder="Enter recipient user ID"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Message</Form.Label>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Type your message..."
-              />
-            </Form.Group>
-            <Button type="submit" variant="primary" disabled={!receiverId || !content.trim() || sending}>
-              {sending ? 'Sending...' : 'Send'}
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
 
       <Card>
         <Card.Header>Recent Messages</Card.Header>
@@ -109,27 +54,23 @@ export default function MessagesPage() {
           ) : messages.length === 0 ? (
             <div className="text-center py-4 text-muted">No messages</div>
           ) : (
-            <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
-                <thead className="table-light">
-                  <tr>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Content</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {messages.map((msg) => (
-                    <tr key={msg.id}>
-                      <td className="text-muted small">{msg.senderId}</td>
-                      <td className="text-muted small">{msg.receiverId}</td>
-                      <td>{msg.content}</td>
-                      <td className="text-muted small">{new Date(msg.createdAt).toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
+            <div className="p-3 d-flex flex-column gap-2">
+              {sortedMessages.map((msg) => {
+                const isMine = currentUserId && msg.senderId === currentUserId;
+                return (
+                  <div
+                    key={msg.id}
+                    className={`px-3 py-2 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
+                    style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '90%' }}
+                  >
+                    <div className="d-flex justify-content-between">
+                      <small className="text-muted">{isMine ? 'You' : msg.senderId}</small>
+                      <small className="text-muted">{new Date(msg.createdAt).toLocaleString()}</small>
+                    </div>
+                    <div>{msg.content}</div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </Card.Body>

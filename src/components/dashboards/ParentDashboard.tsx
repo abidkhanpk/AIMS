@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Alert, Spinner, Accordion, Button, Modal, Form, Tabs, Tab } from 'react-bootstrap';
 import { FeeStatus, AttendanceStatus, AssessmentType } from '@prisma/client';
 import FeePaymentModal from './FeePaymentModal';
+import { useSession } from 'next-auth/react';
 
 interface Child {
   id: string;
@@ -93,6 +94,8 @@ interface Fee {
 }
 
 export default function ParentDashboard() {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
   const [children, setChildren] = useState<Child[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -493,15 +496,22 @@ export default function ParentDashboard() {
                                                           <div>{remark.remark}</div>
                                                           {remark.replies && remark.replies.length > 0 && (
                                                             <div className="mt-2 d-flex flex-column gap-2">
-                                                              {remark.replies.map((reply) => (
-                                                                <div key={reply.id} className="px-2 py-1 rounded" style={{ backgroundColor: '#eef2ff' }}>
-                                                                  <div className="d-flex justify-content-between">
-                                                                    <span>{reply.author.name} ({reply.author.role})</span>
-                                                                    <small className="text-muted">{new Date(reply.createdAt).toLocaleDateString()}</small>
+                                                              {remark.replies.map((reply) => {
+                                                                const isMine = currentUserId && reply.author.id === currentUserId;
+                                                                return (
+                                                                  <div
+                                                                    key={reply.id}
+                                                                    className={`px-2 py-1 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
+                                                                    style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '90%' }}
+                                                                  >
+                                                                    <div className="d-flex justify-content-between">
+                                                                      <span>{reply.author.name} ({reply.author.role})</span>
+                                                                      <small className="text-muted">{new Date(reply.createdAt).toLocaleDateString()}</small>
+                                                                    </div>
+                                                                    <div>{reply.content}</div>
                                                                   </div>
-                                                                  <div>{reply.content}</div>
-                                                                </div>
-                                                              ))}
+                                                                );
+                                                              })}
                                                             </div>
                                                           )}
                                                         </div>

@@ -7,6 +7,7 @@ import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType, Ass
 import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timezones';
 import FeeManagementTab from './FeeManagementTab';
 import AdminSubscriptionTab from './AdminSubscriptionTab';
+import { useSession } from 'next-auth/react';
 
 interface User {
   id: string;
@@ -3265,6 +3266,8 @@ function ProgressTab() {
 }
 
 function RemarksTab() {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
   const [remarks, setRemarks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -3357,15 +3360,22 @@ function RemarksTab() {
                     <div className="mb-2">{remark.remark}</div>
                         {remark.replies && remark.replies.length > 0 && (
                       <div className="d-flex flex-column gap-2 mt-2">
-                        {remark.replies.map((reply: any) => (
-                          <div key={reply.id} className="px-3 py-2 rounded" style={{ backgroundColor: '#eef2ff' }}>
-                            <div className="d-flex justify-content-between">
-                              <span>{reply.author.name} ({reply.author.role})</span>
-                              <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
+                        {remark.replies.map((reply: any) => {
+                          const isMine = currentUserId && reply.author.id === currentUserId;
+                          return (
+                            <div
+                              key={reply.id}
+                              className={`px-3 py-2 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
+                              style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '90%' }}
+                            >
+                              <div className="d-flex justify-content-between">
+                                <span>{reply.author.name} ({reply.author.role})</span>
+                                <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
+                              </div>
+                              <div>{reply.content}</div>
                             </div>
-                            <div>{reply.content}</div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                     <div className="mt-3">

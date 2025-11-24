@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner, Tabs, Tab, InputGroup } from 'react-bootstrap';
 import { AttendanceStatus, AssessmentType } from '@prisma/client';
+import { useSession } from 'next-auth/react';
 
 interface Student {
   id: string;
@@ -82,7 +83,7 @@ function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: nu
 }
 
 // Parent Remarks Modal
-function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText, setReplyText, replyingRemarkId, setReplyingRemarkId }: { 
+function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText, setReplyText, replyingRemarkId, setReplyingRemarkId, currentUserId }: { 
   show: boolean; 
   onHide: () => void; 
   remarks: any[]; 
@@ -92,6 +93,7 @@ function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText,
   setReplyText: (v: string) => void;
   replyingRemarkId: string | null;
   setReplyingRemarkId: (id: string | null) => void;
+  currentUserId?: string;
 }) {
   return (
     <Modal show={show} onHide={onHide} size="lg">
@@ -121,15 +123,22 @@ function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText,
                   <p className="mb-2">{remark.remark}</p>
                   {remark.replies && remark.replies.length > 0 && (
                     <div className="mt-2 d-flex flex-column gap-2">
-                      {remark.replies.map((reply: any) => (
-                        <div key={reply.id} className="px-3 py-2 rounded" style={{ backgroundColor: '#eef2ff' }}>
-                          <div className="d-flex justify-content-between">
-                            <strong>{reply.author.name} ({reply.author.role})</strong>
-                            <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
+                      {remark.replies.map((reply: any) => {
+                        const isMine = currentUserId && reply.author.id === currentUserId;
+                        return (
+                          <div
+                            key={reply.id}
+                            className={`px-3 py-2 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
+                            style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '90%' }}
+                          >
+                            <div className="d-flex justify-content-between">
+                              <strong>{reply.author.name} ({reply.author.role})</strong>
+                              <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
+                            </div>
+                            <div>{reply.content}</div>
                           </div>
-                          <div>{reply.content}</div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                   <div className="mt-3">
@@ -175,6 +184,8 @@ function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText,
 }
 
 export default function TeacherDashboard() {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -431,6 +442,7 @@ export default function TeacherDashboard() {
   const handleSendChat = async () => {
     if (!chatTargetId || !chatText.trim()) return;
     try {
+      setSavingTest(true);
       const res = await fetch('/api/messages/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -446,6 +458,8 @@ export default function TeacherDashboard() {
       }
     } catch (err) {
       setError('Failed to send message');
+    } finally {
+      setSavingTest(false);
     }
   };
 
@@ -1096,6 +1110,7 @@ export default function TeacherDashboard() {
         setReplyText={setReplyText}
         replyingRemarkId={replyingRemarkId}
         setReplyingRemarkId={setReplyingRemarkId}
+        currentUserId={currentUserId}
       />
 
       {/* Chat Modal */}
