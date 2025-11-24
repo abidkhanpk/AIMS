@@ -3318,6 +3318,25 @@ function RemarksTab() {
     }
   };
 
+  const handleDelete = async (type: 'remark' | 'reply', id: string) => {
+    try {
+      const res = await fetch('/api/remarks/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(type === 'remark' ? { remarkId: id } : { replyId: id }),
+      });
+      if (res.ok) {
+        setSuccess('Deleted successfully');
+        fetchRemarks();
+      } else {
+        const err = await res.json();
+        setError(err.message || 'Failed to delete');
+      }
+    } catch (err) {
+      setError('Failed to delete');
+    }
+  };
+
   const getBubbleColor = (role: string) => {
     if (role === 'ADMIN') return '#6c5ce7';
     if (role === 'TEACHER') return '#00b894';
@@ -3355,7 +3374,12 @@ function RemarksTab() {
                           {remark.progress.student.name} - {remark.progress.course.name}
                         </div>
                       </div>
-                      <small className="text-muted">{new Date(remark.createdAt).toLocaleString()}</small>
+                      <div className="d-flex align-items-center gap-2">
+                        <small className="text-muted">{new Date(remark.createdAt).toLocaleString()}</small>
+                        <Button variant="outline-danger" size="sm" onClick={() => handleDelete('remark', remark.id)}>
+                          <i className="bi bi-trash"></i>
+                        </Button>
+                      </div>
                     </div>
                     <div className="mb-2">{remark.remark}</div>
                         {remark.replies && remark.replies.length > 0 && (
@@ -3368,9 +3392,14 @@ function RemarksTab() {
                               className={`px-3 py-2 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
                               style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '90%' }}
                             >
-                              <div className="d-flex justify-content-between">
+                              <div className="d-flex justify-content-between align-items-center">
                                 <span>{reply.author.name} ({reply.author.role})</span>
-                                <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
+                                <div className="d-flex align-items-center gap-2">
+                                  <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
+                                  <Button variant="outline-danger" size="sm" onClick={() => handleDelete('reply', reply.id)}>
+                                    <i className="bi bi-trash"></i>
+                                  </Button>
+                                </div>
                               </div>
                               <div>{reply.content}</div>
                             </div>

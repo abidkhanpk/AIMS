@@ -129,7 +129,7 @@ function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText,
                           <div
                             key={reply.id}
                             className={`px-3 py-2 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
-                            style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '90%' }}
+                            style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '95%' }}
                           >
                             <div className="d-flex justify-content-between">
                               <strong>{reply.author.name} ({reply.author.role})</strong>

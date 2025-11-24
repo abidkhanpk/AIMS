@@ -502,7 +502,7 @@ export default function ParentDashboard() {
                                                                   <div
                                                                     key={reply.id}
                                                                     className={`px-2 py-1 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
-                                                                    style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '90%' }}
+                                                                    style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '95%' }}
                                                                   >
                                                                     <div className="d-flex justify-content-between">
                                                                       <span>{reply.author.name} ({reply.author.role})</span>
