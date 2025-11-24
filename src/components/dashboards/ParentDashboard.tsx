@@ -110,6 +110,8 @@ export default function ParentDashboard() {
   const [addingRemark, setAddingRemark] = useState(false);
   const [showThreadModal, setShowThreadModal] = useState(false);
   const [threadRemarks, setThreadRemarks] = useState<any[]>([]);
+  const [threadProgressId, setThreadProgressId] = useState<string | null>(null);
+  const [threadChildId, setThreadChildId] = useState<string | null>(null);
 
   // Fee payment states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -126,7 +128,9 @@ export default function ParentDashboard() {
       const res = await fetch('/api/users/my-children');
       if (res.ok) {
         const data = await res.json();
-        setChildren(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+        setChildren(list);
+        return list;
       } else {
         setError('Failed to fetch children data');
         setChildren([]);
@@ -303,7 +307,22 @@ export default function ParentDashboard() {
 
   const openThread = (progress: any) => {
     setThreadRemarks(progress.parentRemarks || []);
+    setThreadProgressId(progress.id);
+    const ownerChild = children.find((c) => c.progressRecords?.some((p) => p.id === progress.id));
+    setThreadChildId(ownerChild?.id || null);
     setShowThreadModal(true);
+  };
+
+  const refreshThread = async () => {
+    const list = await fetchChildren();
+    const data = list || children;
+    if (threadChildId && threadProgressId) {
+      const child = data.find((c: any) => c.id === threadChildId);
+      const progress = child?.progressRecords?.find((p: any) => p.id === threadProgressId);
+      if (progress) {
+        setThreadRemarks(progress.parentRemarks || []);
+      }
+    }
   };
 
   if (loading) {
@@ -811,6 +830,9 @@ export default function ParentDashboard() {
             <i className="bi bi-chat-dots me-2"></i>
             Remark Thread
           </Modal.Title>
+          <Button variant="outline-secondary" size="sm" onClick={refreshThread}>
+            <i className="bi bi-arrow-repeat"></i>
+          </Button>
         </Modal.Header>
         <Modal.Body>
           {(!threadRemarks || threadRemarks.length === 0) ? (

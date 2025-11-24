@@ -83,7 +83,7 @@ function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: nu
 }
 
 // Parent Remarks Modal
-function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText, setReplyText, replyingRemarkId, setReplyingRemarkId, currentUserId }: { 
+function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText, setReplyText, replyingRemarkId, setReplyingRemarkId, currentUserId, onRefresh }: { 
   show: boolean; 
   onHide: () => void; 
   remarks: any[]; 
@@ -94,6 +94,7 @@ function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText,
   replyingRemarkId: string | null;
   setReplyingRemarkId: (id: string | null) => void;
   currentUserId?: string;
+  onRefresh: () => void;
 }) {
   return (
     <Modal show={show} onHide={onHide} size="lg">
@@ -102,6 +103,9 @@ function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText,
           <i className="bi bi-chat-dots me-2"></i>
           Parent Remarks
         </Modal.Title>
+        <Button variant="outline-secondary" size="sm" onClick={onRefresh}>
+          <i className="bi bi-arrow-repeat"></i>
+        </Button>
       </Modal.Header>
       <Modal.Body>
         {remarks && remarks.length > 0 ? (
@@ -186,6 +190,15 @@ function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText,
 export default function TeacherDashboard() {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
+
+  const findProgressInList = (list: Student[], progressId: string) => {
+    for (const student of list) {
+      if (!student.progressRecords) continue;
+      const match = student.progressRecords.find((p: any) => p.id === progressId);
+      if (match) return match;
+    }
+    return null;
+  };
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -208,6 +221,8 @@ export default function TeacherDashboard() {
   // Parent remarks modal states
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [selectedRemarks, setSelectedRemarks] = useState<any[]>([]);
+  const [selectedProgressId, setSelectedProgressId] = useState<string | null>(null);
+  const [selectedRemarksStudentId, setSelectedRemarksStudentId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replyingRemarkId, setReplyingRemarkId] = useState<string | null>(null);
 
@@ -241,7 +256,16 @@ export default function TeacherDashboard() {
       const res = await fetch('/api/users/assigned-students');
       if (res.ok) {
         const data = await res.json();
-        setStudents(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+        setStudents(list);
+        // Refresh open thread if needed
+        if (showRemarksModal && selectedProgressId) {
+          const match = findProgressInList(list, selectedProgressId);
+          if (match) {
+            setSelectedRemarks(match.parentRemarks || []);
+          }
+        }
+        return list;
       } else {
         setError('Failed to fetch assigned students');
         setStudents([]);
@@ -403,8 +427,10 @@ export default function TeacherDashboard() {
     setShowTestModal(true);
   };
 
-  const handleViewParentRemarks = (remarks: any[]) => {
-    setSelectedRemarks(remarks);
+  const handleViewParentRemarks = (progress: any) => {
+    setSelectedRemarks(progress.parentRemarks || []);
+    setSelectedProgressId(progress.id);
+    setSelectedRemarksStudentId(progress.studentId);
     setReplyText('');
     setReplyingRemarkId(null);
     setShowRemarksModal(true);
@@ -421,7 +447,20 @@ export default function TeacherDashboard() {
       if (res.ok) {
         setReplyText('');
         setReplyingRemarkId(null);
-        fetchAssignedStudents();
+        const newReply = await res.json();
+        // Update local thread view immediately
+        setSelectedRemarks((prev) =>
+          prev.map((r: any) =>
+            r.id === newReply.remarkId
+              ? { ...r, replies: [...(r.replies || []), newReply] }
+              : r
+          )
+        );
+        const list = await fetchAssignedStudents();
+        if (list && selectedProgressId) {
+          const match = findProgressInList(list, selectedProgressId);
+          if (match) setSelectedRemarks(match.parentRemarks || []);
+        }
         setSuccess('Reply posted');
       } else {
         const err = await res.json();
@@ -437,6 +476,14 @@ export default function TeacherDashboard() {
     setChatTargetName(name);
     setChatText('');
     setShowChatModal(true);
+  };
+
+  const refreshSelectedThread = async () => {
+    const list = await fetchAssignedStudents();
+    if (list && selectedProgressId) {
+      const match = findProgressInList(list, selectedProgressId);
+      if (match) setSelectedRemarks(match.parentRemarks || []);
+    }
   };
 
   const handleSendChat = async () => {
@@ -615,18 +662,18 @@ export default function TeacherDashboard() {
                                     <td className="small">
                                       {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                         <div>
-                                          <Badge bg="info" className="me-1">
-                                            {progress.parentRemarks.length} remark{progress.parentRemarks.length > 1 ? 's' : ''}
-                                          </Badge>
-                                          <Button
-                                            variant="outline-info"
-                                            size="sm"
-                                            onClick={() => handleViewParentRemarks(progress.parentRemarks)}
-                                          >
-                                            <i className="bi bi-eye"></i>
-                                          </Button>
-                                        </div>
-                                    ) : (
+                                      <Badge bg="info" className="me-1">
+                                        {progress.parentRemarks.length} remark{progress.parentRemarks.length > 1 ? 's' : ''}
+                                      </Badge>
+                                      <Button
+                                        variant="outline-info"
+                                        size="sm"
+                                        onClick={() => handleViewParentRemarks(progress)}
+                                      >
+                                        <i className="bi bi-eye"></i>
+                                      </Button>
+                                    </div>
+                                  ) : (
                                       <span className="text-muted">-</span>
                                     )}
                                   </td>
@@ -1111,6 +1158,7 @@ export default function TeacherDashboard() {
         replyingRemarkId={replyingRemarkId}
         setReplyingRemarkId={setReplyingRemarkId}
         currentUserId={currentUserId}
+        onRefresh={refreshSelectedThread}
       />
 
       {/* Chat Modal */}

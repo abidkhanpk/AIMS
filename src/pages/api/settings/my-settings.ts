@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
         } catch (err: any) {
           // If admin somehow not present (DB out of sync), fall back to defaults instead of crashing
-          if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
+          if (err instanceof Prisma.PrismaClientKnownRequestError && (err.code === 'P2003' || err.code === 'P2014')) {
             settings = {
               appTitle: 'AIMS',
               headerImg: '/assets/default-logo.png',
