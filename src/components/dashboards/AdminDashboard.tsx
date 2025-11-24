@@ -3264,6 +3264,139 @@ function ProgressTab() {
   );
 }
 
+function RemarksTab() {
+  const [remarks, setRemarks] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [replyingId, setReplyingId] = useState<string | null>(null);
+
+  const fetchRemarks = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/remarks');
+      if (res.ok) {
+        const data = await res.json();
+        setRemarks(Array.isArray(data) ? data : []);
+      } else {
+        setError('Failed to fetch remarks');
+      }
+    } catch (err) {
+      setError('Failed to fetch remarks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRemarks();
+  }, []);
+
+  const handleReply = async (remarkId: string) => {
+    if (!replyText.trim()) return;
+    try {
+      const res = await fetch('/api/remarks/reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remarkId, content: replyText.trim() }),
+      });
+      if (res.ok) {
+        setReplyText('');
+        setReplyingId(null);
+        setSuccess('Reply posted');
+        fetchRemarks();
+      } else {
+        const err = await res.json();
+        setError(err.message || 'Failed to reply');
+      }
+    } catch (err) {
+      setError('Failed to reply');
+    }
+  };
+
+  const getBubbleColor = (role: string) => {
+    if (role === 'ADMIN') return '#6c5ce7';
+    if (role === 'TEACHER') return '#00b894';
+    return '#0984e3';
+  };
+
+  return (
+    <div>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+          <h6 className="mb-0">
+            <i className="bi bi-chat-dots me-2"></i>
+            Parent Remarks & Threads
+          </h6>
+          <Badge bg="info">{remarks.length}</Badge>
+        </Card.Header>
+        <Card.Body>
+          {loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" size="sm" />
+            </div>
+          ) : remarks.length === 0 ? (
+            <div className="text-center text-muted py-4">No remarks</div>
+          ) : (
+            <div className="d-flex flex-column gap-3">
+              {remarks.map((remark) => (
+                <Card key={remark.id} className="border-0 shadow-sm">
+                  <Card.Body>
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <div>
+                        <strong className="text-primary">{remark.parent.name}</strong>
+                        <div className="small text-muted">
+                          {remark.progress.student.name} - {remark.progress.course.name}
+                        </div>
+                      </div>
+                      <small className="text-muted">{new Date(remark.createdAt).toLocaleString()}</small>
+                    </div>
+                    <div className="mb-2">{remark.remark}</div>
+                        {remark.replies && remark.replies.length > 0 && (
+                      <div className="d-flex flex-column gap-2 mt-2">
+                        {remark.replies.map((reply: any) => (
+                          <div key={reply.id} className="px-3 py-2 rounded" style={{ backgroundColor: '#eef2ff' }}>
+                            <div className="d-flex justify-content-between">
+                              <span>{reply.author.name} ({reply.author.role})</span>
+                              <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
+                            </div>
+                            <div>{reply.content}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-3">
+                      <Form.Control
+                        as="textarea"
+                        rows={2}
+                        placeholder="Reply..."
+                        value={replyingId === remark.id ? replyText : ''}
+                        onChange={(e) => { setReplyingId(remark.id); setReplyText(e.target.value); }}
+                      />
+                      <div className="d-flex justify-content-end mt-2">
+                        <Button
+                          size="sm"
+                          variant="primary"
+                          disabled={!replyText.trim() || replyingId !== remark.id}
+                          onClick={() => handleReply(remark.id)}
+                        >
+                          <i className="bi bi-send me-1"></i>Reply
+                        </Button>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              ))}
+            </div>
+          )}
+        </Card.Body>
+      </Card>
+    </div>
+  );
+}
 function TestsTab() {
   const [records, setRecords] = useState<AdminTestRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -3521,6 +3654,18 @@ export default function AdminDashboard() {
           }
         >
           <TestsTab />
+        </Tab>
+
+        <Tab 
+          eventKey="remarks" 
+          title={
+            <span>
+              <i className="bi bi-chat-dots me-2"></i>
+              Remarks
+            </span>
+          }
+        >
+          <RemarksTab />
         </Tab>
       </Tabs>
     </div>

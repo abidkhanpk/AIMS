@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import NotificationDropdown from './NotificationDropdown';
 import AdminSubscriptionTab from './dashboards/AdminSubscriptionTab';
+import { useRouter } from 'next/router';
 
 interface Settings {
   appTitle: string;
@@ -14,6 +15,7 @@ interface Settings {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const user = session?.user;
+  const router = useRouter();
   const [settings, setSettings] = useState<Settings | null>(null);
 
   // User settings modal states
@@ -305,6 +307,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="me-2 position-relative">
                     <NotificationDropdown />
                   </div>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="me-2 d-flex align-items-center text-light text-decoration-none p-0"
+                    onClick={() => router.push('/messages')}
+                    title="Messages"
+                  >
+                    <i className="bi bi-envelope fs-5"></i>
+                  </Button>
                   
                   <NavDropdown 
                     title={

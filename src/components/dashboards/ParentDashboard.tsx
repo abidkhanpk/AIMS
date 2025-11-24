@@ -36,8 +36,19 @@ interface Child {
       remark: string;
       createdAt: string;
       parent: {
+        id: string;
         name: string;
       };
+      replies?: {
+        id: string;
+        content: string;
+        createdAt: string;
+        author: {
+          id: string;
+          name: string;
+          role: string;
+        };
+      }[];
     }[];
   }[];
   testRecords: {
@@ -423,7 +434,7 @@ export default function ParentDashboard() {
                                               <th>Homework</th>
                                               <th>Progress</th>
                                               <th>Remarks</th>
-                                              <th>My Remarks</th>
+                                              <th>Thread</th>
                                               <th>Action</th>
                                             </tr>
                                           </thead>
@@ -472,15 +483,27 @@ export default function ParentDashboard() {
                                                 </td>
                                                 <td className="small">
                                                   {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
-                                                    <div>
+                                                    <div className="d-flex flex-column gap-2">
                                                       {progress.parentRemarks.map((remark) => (
-                                                        <div key={remark.id} className="mb-1">
-                                                          <small className="text-info">
-                                                            {remark.remark.length > 20 
-                                                              ? remark.remark.substring(0, 20) + '...'
-                                                              : remark.remark
-                                                            }
-                                                          </small>
+                                                        <div key={remark.id} className="p-2 rounded bg-light">
+                                                          <div className="d-flex justify-content-between">
+                                                            <strong className="text-primary">{remark.parent.name}</strong>
+                                                            <small className="text-muted">{new Date(remark.createdAt).toLocaleDateString()}</small>
+                                                          </div>
+                                                          <div>{remark.remark}</div>
+                                                          {remark.replies && remark.replies.length > 0 && (
+                                                            <div className="mt-2 d-flex flex-column gap-2">
+                                                              {remark.replies.map((reply) => (
+                                                                <div key={reply.id} className="px-2 py-1 rounded" style={{ backgroundColor: '#eef2ff' }}>
+                                                                  <div className="d-flex justify-content-between">
+                                                                    <span>{reply.author.name} ({reply.author.role})</span>
+                                                                    <small className="text-muted">{new Date(reply.createdAt).toLocaleDateString()}</small>
+                                                                  </div>
+                                                                  <div>{reply.content}</div>
+                                                                </div>
+                                                              ))}
+                                                            </div>
+                                                          )}
                                                         </div>
                                                       ))}
                                                     </div>

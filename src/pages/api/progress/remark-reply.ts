@@ -71,17 +71,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (remark.progress.student.adminId) receivers.add(remark.progress.student.adminId);
     receivers.delete(userId);
 
-    receivers.forEach(async (receiverId) => {
-      await prisma.notification.create({
-        data: {
-          type: 'PROGRESS_UPDATE',
-          title: 'Remark reply',
-          message: `${reply.author.name} replied on remark for ${remark.progress.student.name} (${remark.progress.course.name})`,
-          senderId: userId,
-          receiverId,
-        },
-      });
+    const createPromises: Promise<any>[] = [];
+    receivers.forEach((receiverId) => {
+      createPromises.push(
+        prisma.notification.create({
+          data: {
+            type: 'PROGRESS_UPDATE',
+            title: 'Remark reply',
+            message: `${reply.author.name} replied on remark for ${remark.progress.student.name} (${remark.progress.course.name})`,
+            senderId: userId,
+            receiverId,
+          },
+        })
+      );
     });
+    if (createPromises.length > 0) {
+      await Promise.all(createPromises);
+    }
 
     return res.status(201).json(reply);
   } catch (error) {

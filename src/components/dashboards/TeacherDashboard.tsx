@@ -120,14 +120,14 @@ function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText,
                   </div>
                   <p className="mb-2">{remark.remark}</p>
                   {remark.replies && remark.replies.length > 0 && (
-                    <div className="mt-2 ps-2 border-start">
+                    <div className="mt-2 d-flex flex-column gap-2">
                       {remark.replies.map((reply: any) => (
-                        <div key={reply.id} className="mb-2">
+                        <div key={reply.id} className="px-3 py-2 rounded" style={{ backgroundColor: '#eef2ff' }}>
                           <div className="d-flex justify-content-between">
                             <strong>{reply.author.name} ({reply.author.role})</strong>
                             <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
                           </div>
-                          <div className="text-muted">{reply.content}</div>
+                          <div>{reply.content}</div>
                         </div>
                       ))}
                     </div>
