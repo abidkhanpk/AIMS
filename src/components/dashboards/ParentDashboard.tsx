@@ -108,6 +108,8 @@ export default function ParentDashboard() {
   const [selectedProgress, setSelectedProgress] = useState<any>(null);
   const [remarkText, setRemarkText] = useState('');
   const [addingRemark, setAddingRemark] = useState(false);
+  const [showThreadModal, setShowThreadModal] = useState(false);
+  const [threadRemarks, setThreadRemarks] = useState<any[]>([]);
 
   // Fee payment states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -299,6 +301,11 @@ export default function ParentDashboard() {
     return fees.filter(fee => fee.status === 'PENDING' || fee.status === 'OVERDUE');
   };
 
+  const openThread = (progress: any) => {
+    setThreadRemarks(progress.parentRemarks || []);
+    setShowThreadModal(true);
+  };
+
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -486,39 +493,20 @@ export default function ParentDashboard() {
                                                 </td>
                                                 <td className="small">
                                                   {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
-                                                    <div className="d-flex flex-column gap-2">
-                                                      {progress.parentRemarks.map((remark) => (
-                                                        <div key={remark.id} className="p-2 rounded bg-light">
+                                                    (() => {
+                                                      const latest = progress.parentRemarks[0];
+                                                      return (
+                                                        <div className="p-2 rounded bg-light">
                                                           <div className="d-flex justify-content-between">
-                                                            <strong className="text-primary">{remark.parent.name}</strong>
-                                                            <small className="text-muted">{new Date(remark.createdAt).toLocaleDateString()}</small>
+                                                            <strong className="text-primary">{latest.parent.name}</strong>
+                                                            <small className="text-muted">{new Date(latest.createdAt).toLocaleDateString()}</small>
                                                           </div>
-                                                          <div>{remark.remark}</div>
-                                                          {remark.replies && remark.replies.length > 0 && (
-                                                            <div className="mt-2 d-flex flex-column gap-2">
-                                                              {remark.replies.map((reply) => {
-                                                                const isMine = currentUserId && reply.author.id === currentUserId;
-                                                                return (
-                                                                  <div
-                                                                    key={reply.id}
-                                                                    className={`px-2 py-1 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
-                                                                    style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '95%' }}
-                                                                  >
-                                                                    <div className="d-flex justify-content-between">
-                                                                      <span>{reply.author.name} ({reply.author.role})</span>
-                                                                      <small className="text-muted">{new Date(reply.createdAt).toLocaleDateString()}</small>
-                                                                    </div>
-                                                                    <div>{reply.content}</div>
-                                                                  </div>
-                                                                );
-                                                              })}
-                                                            </div>
-                                                          )}
+                                                          <div className="text-truncate" style={{ maxWidth: '220px' }}>{latest.remark}</div>
                                                         </div>
-                                                      ))}
-                                                    </div>
+                                                      );
+                                                    })()
                                                   ) : (
-                                                    <span className="text-muted">-</span>
+                                                    <span className="text-muted">No remarks</span>
                                                   )}
                                                 </td>
                                                 <td>
@@ -529,6 +517,16 @@ export default function ParentDashboard() {
                                                   >
                                                     <i className="bi bi-chat-dots"></i>
                                                   </Button>
+                                                  {progress.parentRemarks && progress.parentRemarks.length > 0 && (
+                                                    <Button
+                                                      variant="outline-secondary"
+                                                      size="sm"
+                                                      className="ms-1"
+                                                      onClick={() => openThread(progress)}
+                                                    >
+                                                      View Thread
+                                                    </Button>
+                                                  )}
                                                 </td>
                                               </tr>
                                             ))}
@@ -804,6 +802,58 @@ export default function ParentDashboard() {
             </div>
           </Form>
         </Modal.Body>
+      </Modal>
+
+      {/* Thread View Modal */}
+      <Modal show={showThreadModal} onHide={() => setShowThreadModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-chat-dots me-2"></i>
+            Remark Thread
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {(!threadRemarks || threadRemarks.length === 0) ? (
+            <div className="text-center text-muted py-3">No remarks</div>
+          ) : (
+            <div className="d-flex flex-column gap-3">
+              {threadRemarks.map((remark) => (
+                <div key={remark.id} className="p-2 rounded bg-light">
+                  <div className="d-flex justify-content-between">
+                    <strong className="text-primary">{remark.parent.name}</strong>
+                    <small className="text-muted">{new Date(remark.createdAt).toLocaleString()}</small>
+                  </div>
+                  <div>{remark.remark}</div>
+                  {remark.replies && remark.replies.length > 0 && (
+                    <div className="mt-2 d-flex flex-column gap-2">
+                      {remark.replies.map((reply: any) => {
+                        const isMine = currentUserId && reply.author.id === currentUserId;
+                        return (
+                          <div
+                            key={reply.id}
+                            className={`px-2 py-1 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
+                            style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '95%' }}
+                          >
+                            <div className="d-flex justify-content-between">
+                              <span>{reply.author.name} ({reply.author.role})</span>
+                              <small className="text-muted">{new Date(reply.createdAt).toLocaleDateString()}</small>
+                            </div>
+                            <div>{reply.content}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowThreadModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
       </Modal>
 
       {selectedFee && (
