@@ -57,6 +57,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                       select: {
                         name: true,
                       }
+                    },
+                    replies: {
+                      include: {
+                        author: {
+                          select: {
+                            id: true,
+                            name: true,
+                            role: true,
+                          }
+                        }
+                      },
+                      orderBy: { createdAt: 'asc' }
                     }
                   },
                   orderBy: { createdAt: 'desc' }

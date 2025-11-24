@@ -119,6 +119,29 @@ enum AssessmentType {
   OTHER
 }
 
+model ParentRemarkReply {
+  id         String   @id @default(uuid())
+  remarkId   String
+  authorId   String
+  content    String
+  createdAt  DateTime @default(now())
+
+  remark ParentRemark @relation(fields: [remarkId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  content    String
+  createdAt  DateTime @default(now())
+  isRead     Boolean  @default(false)
+
+  sender   User @relation("MessageSender", fields: [senderId], references: [id])
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -159,6 +182,7 @@ model User {
   progressUpdates    Progress[]         @relation("TeacherProgress")
   createdCourses     Course[]
   parentRemarks      ParentRemark[]     @relation("ParentRemarks")
+  remarkReplies      ParentRemarkReply[]
   sentNotifications  Notification[]     @relation("NotificationSender")
   receivedNotifications Notification[]  @relation("NotificationReceiver")
   userSettings       UserSettings?
@@ -179,6 +203,8 @@ model User {
   salaryAdvancesAsTeacher SalaryAdvance[] @relation("AdvanceTeacher")
   studentTestRecords   TestRecord[]     @relation("StudentTestRecords")
   teacherTestRecords   TestRecord[]     @relation("TeacherTestRecords")
+  sentMessages        Message[]        @relation("MessageSender")
+  receivedMessages    Message[]        @relation("MessageReceiver")
 }
 
 model Course {
@@ -296,6 +322,7 @@ model ParentRemark {
   // Relations
   progress Progress @relation(fields: [progressId], references: [id])
   parent   User     @relation("ParentRemarks", fields: [parentId], references: [id])
+  replies  ParentRemarkReply[]
 }
 
 model Fee {

@@ -82,10 +82,16 @@ function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: nu
 }
 
 // Parent Remarks Modal
-function ParentRemarksModal({ show, onHide, remarks }: { 
+function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText, setReplyText, replyingRemarkId, setReplyingRemarkId }: { 
   show: boolean; 
   onHide: () => void; 
-  remarks: any[] 
+  remarks: any[]; 
+  onReply: () => void;
+  onChat: (id: string, name: string) => void;
+  replyText: string;
+  setReplyText: (v: string) => void;
+  replyingRemarkId: string | null;
+  setReplyingRemarkId: (id: string | null) => void;
 }) {
   return (
     <Modal show={show} onHide={onHide} size="lg">
@@ -102,12 +108,52 @@ function ParentRemarksModal({ show, onHide, remarks }: {
               <Card key={remark.id} className="mb-3">
                 <Card.Body>
                   <div className="d-flex justify-content-between align-items-start mb-2">
-                    <strong className="text-primary">{remark.parent.name}</strong>
+                    <div className="d-flex align-items-center gap-2">
+                      <strong className="text-primary" role="button" onClick={() => onChat(remark.parent.id, remark.parent.name)}>{remark.parent.name}</strong>
+                      <Button variant="outline-secondary" size="sm" onClick={() => onChat(remark.parent.id, remark.parent.name)}>
+                        <i className="bi bi-envelope"></i>
+                      </Button>
+                    </div>
                     <small className="text-muted">
                       {new Date(remark.createdAt).toLocaleDateString()}
                     </small>
                   </div>
-                  <p className="mb-0">{remark.remark}</p>
+                  <p className="mb-2">{remark.remark}</p>
+                  {remark.replies && remark.replies.length > 0 && (
+                    <div className="mt-2 ps-2 border-start">
+                      {remark.replies.map((reply: any) => (
+                        <div key={reply.id} className="mb-2">
+                          <div className="d-flex justify-content-between">
+                            <strong>{reply.author.name} ({reply.author.role})</strong>
+                            <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
+                          </div>
+                          <div className="text-muted">{reply.content}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="mt-3">
+                    <Form.Control
+                      as="textarea"
+                      rows={2}
+                      placeholder="Reply to this remark..."
+                      value={replyingRemarkId === remark.id ? replyText : ''}
+                      onChange={(e) => { setReplyingRemarkId(remark.id); setReplyText(e.target.value); }}
+                    />
+                    <div className="d-flex justify-content-end mt-2">
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        disabled={!replyText.trim() || replyingRemarkId !== remark.id}
+                        onClick={() => {
+                          setReplyingRemarkId(remark.id);
+                          onReply();
+                        }}
+                      >
+                        <i className="bi bi-send me-1"></i>Reply
+                      </Button>
+                    </div>
+                  </div>
                 </Card.Body>
               </Card>
             ))}
@@ -151,6 +197,8 @@ export default function TeacherDashboard() {
   // Parent remarks modal states
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [selectedRemarks, setSelectedRemarks] = useState<any[]>([]);
+  const [replyText, setReplyText] = useState('');
+  const [replyingRemarkId, setReplyingRemarkId] = useState<string | null>(null);
 
   // Test modal states
   const [showTestModal, setShowTestModal] = useState(false);
@@ -165,6 +213,12 @@ export default function TeacherDashboard() {
   const [testRemarks, setTestRemarks] = useState('');
   const [savingTest, setSavingTest] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
+
+  // Direct message modal
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatTargetId, setChatTargetId] = useState<string | null>(null);
+  const [chatTargetName, setChatTargetName] = useState('');
+  const [chatText, setChatText] = useState('');
 
   useEffect(() => {
     fetchAssignedStudents();
@@ -340,7 +394,59 @@ export default function TeacherDashboard() {
 
   const handleViewParentRemarks = (remarks: any[]) => {
     setSelectedRemarks(remarks);
+    setReplyText('');
+    setReplyingRemarkId(null);
     setShowRemarksModal(true);
+  };
+
+  const handleSendReply = async () => {
+    if (!replyingRemarkId || !replyText.trim()) return;
+    try {
+      const res = await fetch('/api/progress/remark-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remarkId: replyingRemarkId, content: replyText.trim() }),
+      });
+      if (res.ok) {
+        setReplyText('');
+        setReplyingRemarkId(null);
+        fetchAssignedStudents();
+        setSuccess('Reply posted');
+      } else {
+        const err = await res.json();
+        setError(err.message || 'Failed to post reply');
+      }
+    } catch (err) {
+      setError('Failed to post reply');
+    }
+  };
+
+  const openChat = (id: string, name: string) => {
+    setChatTargetId(id);
+    setChatTargetName(name);
+    setChatText('');
+    setShowChatModal(true);
+  };
+
+  const handleSendChat = async () => {
+    if (!chatTargetId || !chatText.trim()) return;
+    try {
+      const res = await fetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ receiverId: chatTargetId, content: chatText.trim() }),
+      });
+      if (res.ok) {
+        setShowChatModal(false);
+        setChatText('');
+        setSuccess('Message sent');
+      } else {
+        const err = await res.json();
+        setError(err.message || 'Failed to send message');
+      }
+    } catch (err) {
+      setError('Failed to send message');
+    }
   };
 
   const getAttendanceBadge = (attendance: AttendanceStatus) => {
@@ -984,7 +1090,43 @@ export default function TeacherDashboard() {
         show={showRemarksModal}
         onHide={() => setShowRemarksModal(false)}
         remarks={selectedRemarks}
+        onReply={handleSendReply}
+        onChat={openChat}
+        replyText={replyText}
+        setReplyText={setReplyText}
+        replyingRemarkId={replyingRemarkId}
+        setReplyingRemarkId={setReplyingRemarkId}
       />
+
+      {/* Chat Modal */}
+      <Modal show={showChatModal} onHide={() => setShowChatModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-envelope me-2"></i>
+            Message {chatTargetName}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Message</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Type your message..."
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowChatModal(false)}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleSendChat} disabled={!chatText.trim()}>
+            <i className="bi bi-send me-1"></i> Send
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
