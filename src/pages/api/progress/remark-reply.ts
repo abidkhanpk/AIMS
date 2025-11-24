@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Parent remark not found' });
     }
 
-    // Permissions: teacher of the progress OR admin of the student
+    // Permissions: teacher of the progress OR admin of the student OR the parent who wrote the remark
     const userRole = session.user.role;
     const userId = session.user.id;
     const adminId = session.user.adminId;
@@ -46,6 +46,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       allowed = true;
     }
     if (userRole === 'ADMIN' && remark.progress.student.adminId === userId) {
+      allowed = true;
+    }
+    if (userRole === 'PARENT' && remark.parentId === userId) {
       allowed = true;
     }
 

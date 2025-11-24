@@ -3,6 +3,7 @@ import { Card, Row, Col, Table, Badge, Alert, Spinner, Accordion, Button, Modal,
 import { FeeStatus, AttendanceStatus, AssessmentType } from '@prisma/client';
 import FeePaymentModal from './FeePaymentModal';
 import { useSession } from 'next-auth/react';
+import RemarkThreadModal from '../remarks/RemarkThreadModal';
 
 interface Child {
   id: string;
@@ -168,6 +169,14 @@ export default function ParentDashboard() {
     setShowRemarkModal(true);
   };
 
+  const handleRemarkAction = (progress: any) => {
+    if (progress.parentRemarks && progress.parentRemarks.length > 0) {
+      openThread(progress);
+    } else {
+      handleAddRemark(progress);
+    }
+  };
+
   const handleSubmitRemark = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProgress || !remarkText.trim()) return;
@@ -311,6 +320,36 @@ export default function ParentDashboard() {
     const ownerChild = children.find((c) => c.progressRecords?.some((p) => p.id === progress.id));
     setThreadChildId(ownerChild?.id || null);
     setShowThreadModal(true);
+  };
+
+  const handleSendReply = async (remarkId: string, content: string) => {
+    if (!remarkId || !content.trim()) return false;
+    try {
+      const res = await fetch('/api/progress/remark-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remarkId, content: content.trim() }),
+      });
+      if (res.ok) {
+        const newReply = await res.json();
+        setThreadRemarks((prev) =>
+          prev.map((r: any) =>
+            r.id === newReply.remarkId
+              ? { ...r, replies: [...(r.replies || []), newReply] }
+              : r
+          )
+        );
+        await refreshThread();
+        setSuccess('Comment added');
+        return true;
+      }
+      const err = await res.json();
+      setError(err.message || 'Failed to add comment');
+      return false;
+    } catch (err) {
+      setError('Failed to add comment');
+      return false;
+    }
   };
 
   const refreshThread = async () => {
@@ -463,7 +502,6 @@ export default function ParentDashboard() {
                                               <th>Homework</th>
                                               <th>Progress</th>
                                               <th>Remarks</th>
-                                              <th>Thread</th>
                                               <th>Action</th>
                                             </tr>
                                           </thead>
@@ -510,42 +548,14 @@ export default function ParentDashboard() {
                                                     <span className="text-muted">-</span>
                                                   )}
                                                 </td>
-                                                <td className="small">
-                                                  {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
-                                                    (() => {
-                                                      const latest = progress.parentRemarks[0];
-                                                      return (
-                                                        <div className="p-2 rounded bg-light">
-                                                          <div className="d-flex justify-content-between">
-                                                            <strong className="text-primary">{latest.parent.name}</strong>
-                                                            <small className="text-muted">{new Date(latest.createdAt).toLocaleDateString()}</small>
-                                                          </div>
-                                                          <div className="text-truncate" style={{ maxWidth: '220px' }}>{latest.remark}</div>
-                                                        </div>
-                                                      );
-                                                    })()
-                                                  ) : (
-                                                    <span className="text-muted">No remarks</span>
-                                                  )}
-                                                </td>
                                                 <td>
                                                   <Button
                                                     variant="outline-info"
                                                     size="sm"
-                                                    onClick={() => handleAddRemark(progress)}
+                                                    onClick={() => handleRemarkAction(progress)}
                                                   >
                                                     <i className="bi bi-chat-dots"></i>
                                                   </Button>
-                                                  {progress.parentRemarks && progress.parentRemarks.length > 0 && (
-                                                    <Button
-                                                      variant="outline-secondary"
-                                                      size="sm"
-                                                      className="ms-1"
-                                                      onClick={() => openThread(progress)}
-                                                    >
-                                                      View Thread
-                                                    </Button>
-                                                  )}
                                                 </td>
                                               </tr>
                                             ))}
@@ -823,60 +833,16 @@ export default function ParentDashboard() {
         </Modal.Body>
       </Modal>
 
-      {/* Thread View Modal */}
-      <Modal show={showThreadModal} onHide={() => setShowThreadModal(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="bi bi-chat-dots me-2"></i>
-            Remark Thread
-          </Modal.Title>
-          <Button variant="outline-secondary" size="sm" onClick={refreshThread}>
-            <i className="bi bi-arrow-repeat"></i>
-          </Button>
-        </Modal.Header>
-        <Modal.Body>
-          {(!threadRemarks || threadRemarks.length === 0) ? (
-            <div className="text-center text-muted py-3">No remarks</div>
-          ) : (
-            <div className="d-flex flex-column gap-3">
-              {threadRemarks.map((remark) => (
-                <div key={remark.id} className="p-2 rounded bg-light">
-                  <div className="d-flex justify-content-between">
-                    <strong className="text-primary">{remark.parent.name}</strong>
-                    <small className="text-muted">{new Date(remark.createdAt).toLocaleString()}</small>
-                  </div>
-                  <div>{remark.remark}</div>
-                  {remark.replies && remark.replies.length > 0 && (
-                    <div className="mt-2 d-flex flex-column gap-2">
-                      {remark.replies.map((reply: any) => {
-                        const isMine = currentUserId && reply.author.id === currentUserId;
-                        return (
-                          <div
-                            key={reply.id}
-                            className={`px-2 py-1 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
-                            style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '95%' }}
-                          >
-                            <div className="d-flex justify-content-between">
-                              <span>{reply.author.name} ({reply.author.role})</span>
-                              <small className="text-muted">{new Date(reply.createdAt).toLocaleDateString()}</small>
-                            </div>
-                            <div>{reply.content}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowThreadModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <RemarkThreadModal
+        show={showThreadModal}
+        onHide={() => setShowThreadModal(false)}
+        remarks={threadRemarks}
+        currentUserId={currentUserId}
+        onRefreshAll={refreshThread}
+        onReply={handleSendReply}
+        title="Remark Thread"
+        emptyMessage="No remarks"
+      />
 
       {selectedFee && (
         <FeePaymentModal

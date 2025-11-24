@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner, Tabs, Tab, InputGroup } from 'react-bootstrap';
 import { AttendanceStatus, AssessmentType } from '@prisma/client';
 import { useSession } from 'next-auth/react';
+import RemarkThreadModal from '../remarks/RemarkThreadModal';
 
 interface Student {
   id: string;
@@ -82,111 +83,6 @@ function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: nu
   );
 }
 
-// Parent Remarks Modal
-function ParentRemarksModal({ show, onHide, remarks, onReply, onChat, replyText, setReplyText, replyingRemarkId, setReplyingRemarkId, currentUserId, onRefresh }: { 
-  show: boolean; 
-  onHide: () => void; 
-  remarks: any[]; 
-  onReply: () => void;
-  onChat: (id: string, name: string) => void;
-  replyText: string;
-  setReplyText: (v: string) => void;
-  replyingRemarkId: string | null;
-  setReplyingRemarkId: (id: string | null) => void;
-  currentUserId?: string;
-  onRefresh: () => void;
-}) {
-  return (
-    <Modal show={show} onHide={onHide} size="lg">
-      <Modal.Header closeButton>
-        <Modal.Title>
-          <i className="bi bi-chat-dots me-2"></i>
-          Parent Remarks
-        </Modal.Title>
-        <Button variant="outline-secondary" size="sm" onClick={onRefresh}>
-          <i className="bi bi-arrow-repeat"></i>
-        </Button>
-      </Modal.Header>
-      <Modal.Body>
-        {remarks && remarks.length > 0 ? (
-          <div className="space-y-3">
-            {remarks.map((remark) => (
-              <Card key={remark.id} className="mb-3">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div className="d-flex align-items-center gap-2">
-                      <strong className="text-primary" role="button" onClick={() => onChat(remark.parent.id, remark.parent.name)}>{remark.parent.name}</strong>
-                      <Button variant="outline-secondary" size="sm" onClick={() => onChat(remark.parent.id, remark.parent.name)}>
-                        <i className="bi bi-envelope"></i>
-                      </Button>
-                    </div>
-                    <small className="text-muted">
-                      {new Date(remark.createdAt).toLocaleDateString()}
-                    </small>
-                  </div>
-                  <p className="mb-2">{remark.remark}</p>
-                  {remark.replies && remark.replies.length > 0 && (
-                    <div className="mt-2 d-flex flex-column gap-2">
-                      {remark.replies.map((reply: any) => {
-                        const isMine = currentUserId && reply.author.id === currentUserId;
-                        return (
-                          <div
-                            key={reply.id}
-                            className={`px-3 py-2 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
-                            style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '95%' }}
-                          >
-                            <div className="d-flex justify-content-between">
-                              <strong>{reply.author.name} ({reply.author.role})</strong>
-                              <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
-                            </div>
-                            <div>{reply.content}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <div className="mt-3">
-                    <Form.Control
-                      as="textarea"
-                      rows={2}
-                      placeholder="Reply to this remark..."
-                      value={replyingRemarkId === remark.id ? replyText : ''}
-                      onChange={(e) => { setReplyingRemarkId(remark.id); setReplyText(e.target.value); }}
-                    />
-                    <div className="d-flex justify-content-end mt-2">
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        disabled={!replyText.trim() || replyingRemarkId !== remark.id}
-                        onClick={() => {
-                          setReplyingRemarkId(remark.id);
-                          onReply();
-                        }}
-                      >
-                        <i className="bi bi-send me-1"></i>Reply
-                      </Button>
-                    </div>
-                  </div>
-                </Card.Body>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <i className="bi bi-chat-dots display-6 text-muted"></i>
-            <p className="mt-2 text-muted">No parent remarks yet</p>
-          </div>
-        )}
-      </Modal.Body>
-      <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>
-          Close
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  );
-}
-
 export default function TeacherDashboard() {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
@@ -222,9 +118,6 @@ export default function TeacherDashboard() {
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [selectedRemarks, setSelectedRemarks] = useState<any[]>([]);
   const [selectedProgressId, setSelectedProgressId] = useState<string | null>(null);
-  const [selectedRemarksStudentId, setSelectedRemarksStudentId] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
-  const [replyingRemarkId, setReplyingRemarkId] = useState<string | null>(null);
 
   // Test modal states
   const [showTestModal, setShowTestModal] = useState(false);
@@ -430,23 +323,18 @@ export default function TeacherDashboard() {
   const handleViewParentRemarks = (progress: any) => {
     setSelectedRemarks(progress.parentRemarks || []);
     setSelectedProgressId(progress.id);
-    setSelectedRemarksStudentId(progress.studentId);
-    setReplyText('');
-    setReplyingRemarkId(null);
     setShowRemarksModal(true);
   };
 
-  const handleSendReply = async () => {
-    if (!replyingRemarkId || !replyText.trim()) return;
+  const handleSendReply = async (remarkId: string, content: string) => {
+    if (!remarkId || !content.trim()) return false;
     try {
       const res = await fetch('/api/progress/remark-reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ remarkId: replyingRemarkId, content: replyText.trim() }),
+        body: JSON.stringify({ remarkId, content: content.trim() }),
       });
       if (res.ok) {
-        setReplyText('');
-        setReplyingRemarkId(null);
         const newReply = await res.json();
         // Update local thread view immediately
         setSelectedRemarks((prev) =>
@@ -462,18 +350,22 @@ export default function TeacherDashboard() {
           if (match) setSelectedRemarks(match.parentRemarks || []);
         }
         setSuccess('Reply posted');
+        return true;
       } else {
         const err = await res.json();
         setError(err.message || 'Failed to post reply');
+        return false;
       }
     } catch (err) {
       setError('Failed to post reply');
+      return false;
     }
   };
 
-  const openChat = (id: string, name: string) => {
+  const openChat = (id?: string, name?: string) => {
+    if (!id) return;
     setChatTargetId(id);
-    setChatTargetName(name);
+    setChatTargetName(name || '');
     setChatText('');
     setShowChatModal(true);
   };
@@ -1146,19 +1038,16 @@ export default function TeacherDashboard() {
         </Modal.Body>
       </Modal>
 
-      {/* Parent Remarks Modal */}
-      <ParentRemarksModal
+      <RemarkThreadModal
         show={showRemarksModal}
         onHide={() => setShowRemarksModal(false)}
         remarks={selectedRemarks}
         onReply={handleSendReply}
-        onChat={openChat}
-        replyText={replyText}
-        setReplyText={setReplyText}
-        replyingRemarkId={replyingRemarkId}
-        setReplyingRemarkId={setReplyingRemarkId}
+        onMessageParent={openChat}
+        onRefreshAll={refreshSelectedThread}
         currentUserId={currentUserId}
-        onRefresh={refreshSelectedThread}
+        title="Parent Remarks"
+        emptyMessage="No parent remarks yet"
       />
 
       {/* Chat Modal */}

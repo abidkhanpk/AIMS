@@ -8,6 +8,7 @@ import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timez
 import FeeManagementTab from './FeeManagementTab';
 import AdminSubscriptionTab from './AdminSubscriptionTab';
 import { useSession } from 'next-auth/react';
+import RemarkThreadModal from '../remarks/RemarkThreadModal';
 
 interface User {
   id: string;
@@ -3272,8 +3273,8 @@ function RemarksTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [replyText, setReplyText] = useState('');
-  const [replyingId, setReplyingId] = useState<string | null>(null);
+  const [showThreadModal, setShowThreadModal] = useState(false);
+  const [activeRemark, setActiveRemark] = useState<any | null>(null);
 
   const fetchRemarks = async () => {
     try {
@@ -3297,13 +3298,13 @@ function RemarksTab() {
     fetchRemarks();
   }, []);
 
-  const handleReply = async (remarkId: string) => {
-    if (!replyText.trim()) return;
+  const handleReply = async (remarkId: string, content: string) => {
+    if (!content.trim()) return false;
     try {
       const res = await fetch('/api/remarks/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ remarkId, content: replyText.trim() }),
+        body: JSON.stringify({ remarkId, content: content.trim() }),
       });
       if (res.ok) {
         const newReply = await res.json();
@@ -3314,8 +3315,6 @@ function RemarksTab() {
               : r
           )
         );
-        setReplyText('');
-        setReplyingId(null);
         setSuccess('Reply posted');
         const list = await fetchRemarks();
         const match = (list || []).find((r: any) => r.id === remarkId);
@@ -3324,12 +3323,18 @@ function RemarksTab() {
             prev.map((r) => (r.id === remarkId ? match : r))
           );
         }
+        if (activeRemark && activeRemark.id === remarkId) {
+          setActiveRemark(match || null);
+        }
+        return true;
       } else {
         const err = await res.json();
         setError(err.message || 'Failed to reply');
+        return false;
       }
     } catch (err) {
       setError('Failed to reply');
+      return false;
     }
   };
 
@@ -3342,7 +3347,16 @@ function RemarksTab() {
       });
       if (res.ok) {
         setSuccess('Deleted successfully');
-        fetchRemarks();
+        const list = await fetchRemarks();
+        if (type === 'remark' && activeRemark?.id === id) {
+          setActiveRemark(null);
+          setShowThreadModal(false);
+        } else if (activeRemark) {
+          const match = (list || []).find((r: any) => r.id === activeRemark.id);
+          if (match) {
+            setActiveRemark(match);
+          }
+        }
       } else {
         const err = await res.json();
         setError(err.message || 'Failed to delete');
@@ -3359,6 +3373,9 @@ function RemarksTab() {
       setRemarks((prev) =>
         prev.map((r) => (r.id === remarkId ? match : r))
       );
+      if (activeRemark && activeRemark.id === remarkId) {
+        setActiveRemark(match);
+      }
     }
   };
 
@@ -3388,65 +3405,38 @@ function RemarksTab() {
                   <Card.Body>
                     <div className="d-flex justify-content-between align-items-start mb-2">
                       <div>
-                        <strong className="text-primary">{remark.parent.name}</strong>
+                        <div className="d-flex align-items-center gap-2">
+                          <strong className="text-primary">{remark.parent.name}</strong>
+                          <Badge bg="secondary">
+                            {remark.replies?.length || 0} repl{(remark.replies?.length || 0) === 1 ? 'y' : 'ies'}
+                          </Badge>
+                        </div>
                         <div className="small text-muted">
                           {remark.progress.student.name} - {remark.progress.course.name}
                         </div>
                       </div>
                       <div className="d-flex align-items-center gap-2">
-                        <Button variant="outline-secondary" size="sm" onClick={() => handleRefreshThread(remark.id)}>
-                          <i className="bi bi-arrow-repeat"></i>
-                        </Button>
                         <small className="text-muted">{new Date(remark.createdAt).toLocaleString()}</small>
-                        <Button variant="outline-danger" size="sm" onClick={() => handleDelete('remark', remark.id)}>
-                          <i className="bi bi-trash"></i>
-                        </Button>
                       </div>
                     </div>
-                    <div className="mb-2">{remark.remark}</div>
-                        {remark.replies && remark.replies.length > 0 && (
-                      <div className="d-flex flex-column gap-2 mt-2">
-                        {remark.replies.map((reply: any) => {
-                          const isMine = currentUserId && reply.author.id === currentUserId;
-                          return (
-                            <div
-                              key={reply.id}
-                              className={`px-3 py-2 rounded ${isMine ? 'ms-auto' : 'me-auto'}`}
-                              style={{ backgroundColor: isMine ? '#e0f2ff' : '#eef2ff', maxWidth: '95%' }}
-                            >
-                              <div className="d-flex justify-content-between align-items-center">
-                                <span>{reply.author.name} ({reply.author.role})</span>
-                                <div className="d-flex align-items-center gap-2">
-                                  <small className="text-muted">{new Date(reply.createdAt).toLocaleString()}</small>
-                                  <Button variant="outline-danger" size="sm" onClick={() => handleDelete('reply', reply.id)}>
-                                    <i className="bi bi-trash"></i>
-                                  </Button>
-                                </div>
-                              </div>
-                              <div>{reply.content}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="mt-3">
-                      <Form.Control
-                        as="textarea"
-                        rows={2}
-                        placeholder="Reply..."
-                        value={replyingId === remark.id ? replyText : ''}
-                        onChange={(e) => { setReplyingId(remark.id); setReplyText(e.target.value); }}
-                      />
-                      <div className="d-flex justify-content-end mt-2">
-                        <Button
-                          size="sm"
-                          variant="primary"
-                          disabled={!replyText.trim() || replyingId !== remark.id}
-                          onClick={() => handleReply(remark.id)}
-                        >
-                          <i className="bi bi-send me-1"></i>Reply
-                        </Button>
-                      </div>
+                    <div className="mb-2 text-muted small">{remark.remark}</div>
+                    <div className="d-flex justify-content-end gap-2 mt-3">
+                      <Button variant="outline-secondary" size="sm" onClick={() => handleRefreshThread(remark.id)}>
+                        <i className="bi bi-arrow-repeat me-1"></i>
+                        Refresh
+                      </Button>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => { setActiveRemark(remark); setShowThreadModal(true); }}
+                      >
+                        <i className="bi bi-chat-dots me-1"></i>
+                        View Thread
+                      </Button>
+                      <Button variant="outline-danger" size="sm" onClick={() => handleDelete('remark', remark.id)}>
+                        <i className="bi bi-trash"></i>
+                        Delete
+                      </Button>
                     </div>
                   </Card.Body>
                 </Card>
@@ -3455,6 +3445,19 @@ function RemarksTab() {
           )}
         </Card.Body>
       </Card>
+      <RemarkThreadModal
+        show={showThreadModal}
+        onHide={() => setShowThreadModal(false)}
+        remarks={activeRemark ? [activeRemark] : []}
+        currentUserId={currentUserId}
+        onReply={handleReply}
+        onDeleteRemark={(id) => handleDelete('remark', id)}
+        onDeleteReply={(id) => handleDelete('reply', id)}
+        onRefresh={handleRefreshThread}
+        title="Parent Remark Thread"
+        emptyMessage="No remarks"
+        loading={loading}
+      />
     </div>
   );
 }
