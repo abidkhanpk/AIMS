@@ -4,6 +4,7 @@ import { FeeStatus, AttendanceStatus, AssessmentType } from '@prisma/client';
 import FeePaymentModal from './FeePaymentModal';
 import { useSession } from 'next-auth/react';
 import RemarkThreadModal from '../remarks/RemarkThreadModal';
+import DirectMessageModal from '../messages/DirectMessageModal';
 
 interface Child {
   id: string;
@@ -114,6 +115,9 @@ export default function ParentDashboard() {
   const [threadProgressId, setThreadProgressId] = useState<string | null>(null);
   const [threadChildId, setThreadChildId] = useState<string | null>(null);
   const [threadTitle, setThreadTitle] = useState('');
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageTargetId, setMessageTargetId] = useState<string | null>(null);
+  const [messageTargetName, setMessageTargetName] = useState('');
 
   // Fee payment states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -143,6 +147,13 @@ export default function ParentDashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openMessage = (id?: string, name?: string) => {
+    if (!id) return;
+    setMessageTargetId(id);
+    setMessageTargetName(name || '');
+    setShowMessageModal(true);
   };
 
   const fetchFees = async () => {
@@ -523,7 +534,13 @@ export default function ParentDashboard() {
                                                   {new Date(progress.date).toLocaleDateString()}
                                                 </td>
                                                 <td className="fw-medium small">
-                                                  {progress.teacher?.name || 'Unknown'}
+                                                  <span
+                                                    role="button"
+                                                    className="text-decoration-underline text-primary"
+                                                    onClick={() => openMessage(progress.teacher?.id, progress.teacher?.name)}
+                                                  >
+                                                    {progress.teacher?.name || 'Unknown'}
+                                                  </span>
                                                 </td>
                                                 <td>
                                                   {getAttendanceBadge(progress.attendance)}
@@ -607,7 +624,7 @@ export default function ParentDashboard() {
                 );
               })}
             </Row>
-          </Tab>
+              </Tab>
 
           <Tab 
             eventKey="tests"
@@ -628,7 +645,9 @@ export default function ParentDashboard() {
                       <Card.Header className="bg-light">
                         <div className="d-flex justify-content-between align-items-center">
                           <div>
-                            <h5 className="mb-0 fw-bold">{child.name}</h5>
+                            <h5 className="mb-0 fw-bold" role="button" onClick={() => openMessage(child.id, child.name)}>
+                              {child.name}
+                            </h5>
                             <small className="text-muted">{child.email}</small>
                           </div>
                           <div className="text-end">
@@ -671,13 +690,13 @@ export default function ParentDashboard() {
                                 </tr>
                               </thead>
                               <tbody>
-                                {tests.map((test) => (
-                                  <tr key={test.id}>
-                                    <td className="text-muted small">
-                                      {new Date(test.performedAt).toLocaleDateString()}
-                                    </td>
-                                    <td className="fw-medium small">{test.course.name}</td>
-                                    <td className="small">{test.title}</td>
+              {tests.map((test) => (
+                <tr key={test.id}>
+                  <td className="text-muted small">
+                    {new Date(test.performedAt).toLocaleDateString()}
+                  </td>
+                  <td className="fw-medium small">{test.course.name}</td>
+                  <td className="small">{test.title}</td>
                                     <td>
                                       <Badge bg={
                                         test.type === 'EXAM'
@@ -884,6 +903,13 @@ export default function ParentDashboard() {
           onPaymentSubmit={handlePaymentSubmit}
         />
       )}
+
+      <DirectMessageModal
+        show={showMessageModal}
+        onHide={() => setShowMessageModal(false)}
+        targetId={messageTargetId}
+        targetName={messageTargetName}
+      />
     </div>
   );
 }

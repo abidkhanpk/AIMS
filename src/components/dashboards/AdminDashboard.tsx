@@ -9,6 +9,7 @@ import FeeManagementTab from './FeeManagementTab';
 import AdminSubscriptionTab from './AdminSubscriptionTab';
 import { useSession } from 'next-auth/react';
 import RemarkThreadModal from '../remarks/RemarkThreadModal';
+import DirectMessageModal from '../messages/DirectMessageModal';
 
 interface User {
   id: string;
@@ -3276,6 +3277,9 @@ function RemarksTab() {
   const [showThreadModal, setShowThreadModal] = useState(false);
   const [activeRemark, setActiveRemark] = useState<any | null>(null);
   const [threadTitle, setThreadTitle] = useState('');
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageTargetId, setMessageTargetId] = useState<string | null>(null);
+  const [messageTargetName, setMessageTargetName] = useState('');
 
   const fetchRemarks = async () => {
     try {
@@ -3389,6 +3393,13 @@ function RemarksTab() {
     return `${teacher}: Progress of ${student} for ${course}${date ? ` on ${date}` : ''}`;
   };
 
+  const openMessage = (id?: string, name?: string) => {
+    if (!id) return;
+    setMessageTargetId(id);
+    setMessageTargetName(name || '');
+    setShowMessageModal(true);
+  };
+
   return (
     <div>
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
@@ -3416,10 +3427,30 @@ function RemarksTab() {
                     <div className="d-flex justify-content-between align-items-start mb-2">
                       <div>
                         <div className="d-flex align-items-center gap-2">
-                          <strong className="text-primary">{remark.parent.name}</strong>
+                          <strong
+                            className="text-primary"
+                            role="button"
+                            onClick={() => openMessage(remark.parent.id, remark.parent.name)}
+                          >
+                            {remark.parent.name}
+                          </strong>
                         </div>
                         <div className="small text-muted">
-                          {remark.progress.student.name} - {remark.progress.course.name}
+                          <span
+                            role="button"
+                            className="text-decoration-underline text-primary"
+                            onClick={() => openMessage(remark.progress.student.id, remark.progress.student.name)}
+                          >
+                            {remark.progress.student.name}
+                          </span>{' '}
+                          -{' '}
+                          <span
+                            role="button"
+                            className="text-decoration-underline text-primary"
+                            onClick={() => openMessage(remark.progress.teacher.id, remark.progress.teacher.name)}
+                          >
+                            {remark.progress.course.name}
+                          </span>
                         </div>
                         <div className="small mt-1 text-muted">
                           Remark with{' '}
@@ -3475,6 +3506,13 @@ function RemarksTab() {
         title={threadTitle || 'Remarks for this progress'}
         emptyMessage="No remarks"
         loading={loading}
+      />
+      <DirectMessageModal
+        show={showMessageModal}
+        onHide={() => setShowMessageModal(false)}
+        targetId={messageTargetId}
+        targetName={messageTargetName}
+        onSent={() => setSuccess('Message sent')}
       />
     </div>
   );

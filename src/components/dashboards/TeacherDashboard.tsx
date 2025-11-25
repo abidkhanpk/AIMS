@@ -3,6 +3,7 @@ import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner, Tabs
 import { AttendanceStatus, AssessmentType } from '@prisma/client';
 import { useSession } from 'next-auth/react';
 import RemarkThreadModal from '../remarks/RemarkThreadModal';
+import DirectMessageModal from '../messages/DirectMessageModal';
 
 interface Student {
   id: string;
@@ -138,7 +139,6 @@ export default function TeacherDashboard() {
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatTargetId, setChatTargetId] = useState<string | null>(null);
   const [chatTargetName, setChatTargetName] = useState('');
-  const [chatText, setChatText] = useState('');
 
   useEffect(() => {
     fetchAssignedStudents();
@@ -376,7 +376,6 @@ export default function TeacherDashboard() {
     if (!id) return;
     setChatTargetId(id);
     setChatTargetName(name || '');
-    setChatText('');
     setShowChatModal(true);
   };
 
@@ -388,18 +387,16 @@ export default function TeacherDashboard() {
     }
   };
 
-  const handleSendChat = async () => {
-    if (!chatTargetId || !chatText.trim()) return;
+  const handleSendChat = async (content: string) => {
+    if (!chatTargetId || !content.trim()) return;
     try {
-      setSavingTest(true);
       const res = await fetch('/api/messages/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receiverId: chatTargetId, content: chatText.trim() }),
+        body: JSON.stringify({ receiverId: chatTargetId, content: content.trim() }),
       });
       if (res.ok) {
         setShowChatModal(false);
-        setChatText('');
         setSuccess('Message sent');
       } else {
         const err = await res.json();
@@ -407,8 +404,6 @@ export default function TeacherDashboard() {
       }
     } catch (err) {
       setError('Failed to send message');
-    } finally {
-      setSavingTest(false);
     }
   };
 
@@ -502,7 +497,13 @@ export default function TeacherDashboard() {
                     <Card.Header className="bg-light">
                       <div className="d-flex justify-content-between align-items-center">
                         <div>
-                          <h5 className="mb-0 fw-bold">{student.name}</h5>
+                          <h5
+                            className="mb-0 fw-bold"
+                            role="button"
+                            onClick={() => openChat(student.id, student.name)}
+                          >
+                            {student.name}
+                          </h5>
                           <small className="text-muted">{student.email}</small>
                         </div>
                         <Button
@@ -1097,35 +1098,13 @@ export default function TeacherDashboard() {
         emptyMessage="No parent remarks yet"
       />
 
-      {/* Chat Modal */}
-      <Modal show={showChatModal} onHide={() => setShowChatModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            <i className="bi bi-envelope me-2"></i>
-            Message {chatTargetName}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group className="mb-3">
-            <Form.Label>Message</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={chatText}
-              onChange={(e) => setChatText(e.target.value)}
-              placeholder="Type your message..."
-            />
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowChatModal(false)}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleSendChat} disabled={!chatText.trim()}>
-            <i className="bi bi-send me-1"></i> Send
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <DirectMessageModal
+        show={showChatModal}
+        onHide={() => setShowChatModal(false)}
+        targetId={chatTargetId}
+        targetName={chatTargetName}
+        onSent={() => setSuccess('Message sent')}
+      />
     </div>
   );
 }
