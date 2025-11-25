@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Card, Button, Form, Badge, Spinner } from 'react-bootstrap';
+import { Modal, Card, Button, Form, Spinner } from 'react-bootstrap';
 
 interface RemarkAuthor {
   id?: string;
@@ -47,7 +47,7 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
   show,
   onHide,
   remarks,
-  title = 'Remark Thread',
+  title = 'Remarks for this progress',
   currentUserId,
   loading = false,
   onReply,
@@ -214,10 +214,6 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
         )}
       </Modal.Body>
       <Modal.Footer>
-        <div className="text-muted small">
-          <Badge bg="secondary" className="me-2">{remarks?.length || 0}</Badge>
-          Threads
-        </div>
         <Button variant="secondary" onClick={onHide}>
           Close
         </Button>

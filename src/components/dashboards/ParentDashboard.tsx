@@ -113,6 +113,7 @@ export default function ParentDashboard() {
   const [threadRemarks, setThreadRemarks] = useState<any[]>([]);
   const [threadProgressId, setThreadProgressId] = useState<string | null>(null);
   const [threadChildId, setThreadChildId] = useState<string | null>(null);
+  const [threadTitle, setThreadTitle] = useState('');
 
   // Fee payment states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -314,11 +315,19 @@ export default function ParentDashboard() {
     return fees.filter(fee => fee.status === 'PENDING' || fee.status === 'OVERDUE');
   };
 
+  const buildThreadTitle = (progress: any) => {
+    const courseName = progress.course?.name ? ` ${progress.course.name}` : '';
+    const dateLabel = progress.date ? ` on ${new Date(progress.date).toLocaleDateString()}` : '';
+    const studentName = progress.student?.name ? ` for ${progress.student.name}` : '';
+    return `Remarks for${courseName}${studentName}${dateLabel}`;
+  };
+
   const openThread = (progress: any) => {
     setThreadRemarks(progress.parentRemarks || []);
     setThreadProgressId(progress.id);
     const ownerChild = children.find((c) => c.progressRecords?.some((p) => p.id === progress.id));
     setThreadChildId(ownerChild?.id || null);
+    setThreadTitle(buildThreadTitle({ ...progress, student: ownerChild || progress.student }));
     setShowThreadModal(true);
   };
 
@@ -501,7 +510,8 @@ export default function ParentDashboard() {
                                               <th>Lesson</th>
                                               <th>Homework</th>
                                               <th>Progress</th>
-                                              <th>Remarks</th>
+                                              <th>Teacher Remarks</th>
+                                              <th>My Remarks</th>
                                               <th>Action</th>
                                             </tr>
                                           </thead>
@@ -546,6 +556,31 @@ export default function ParentDashboard() {
                                                     </span>
                                                   ) : (
                                                     <span className="text-muted">-</span>
+                                                  )}
+                                                </td>
+                                                <td className="small">
+                                                  {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
+                                                    (() => {
+                                                      const remarkCount = progress.parentRemarks.length;
+                                                      const replyCount = progress.parentRemarks.reduce(
+                                                        (sum: number, r: any) => sum + (r.replies?.length || 0),
+                                                        0
+                                                      );
+                                                      return (
+                                                        <div className="d-flex flex-column">
+                                                          <span className="text-success fw-semibold">
+                                                            {remarkCount} remark{remarkCount > 1 ? 's' : ''}
+                                                          </span>
+                                                          <small className="text-muted">
+                                                            {replyCount > 0
+                                                              ? `${replyCount} comment${replyCount > 1 ? 's' : ''}`
+                                                              : 'No comments yet'}
+                                                          </small>
+                                                        </div>
+                                                      );
+                                                    })()
+                                                  ) : (
+                                                    <span className="text-muted">No parent remark</span>
                                                   )}
                                                 </td>
                                                 <td>
@@ -840,7 +875,7 @@ export default function ParentDashboard() {
         currentUserId={currentUserId}
         onRefreshAll={refreshThread}
         onReply={handleSendReply}
-        title="Remark Thread"
+        title={threadTitle || 'Remarks for this progress'}
         emptyMessage="No remarks"
       />
 

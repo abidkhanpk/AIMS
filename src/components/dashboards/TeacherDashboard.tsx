@@ -118,6 +118,7 @@ export default function TeacherDashboard() {
   const [showRemarksModal, setShowRemarksModal] = useState(false);
   const [selectedRemarks, setSelectedRemarks] = useState<any[]>([]);
   const [selectedProgressId, setSelectedProgressId] = useState<string | null>(null);
+  const [threadTitle, setThreadTitle] = useState('');
 
   // Test modal states
   const [showTestModal, setShowTestModal] = useState(false);
@@ -320,9 +321,17 @@ export default function TeacherDashboard() {
     setShowTestModal(true);
   };
 
-  const handleViewParentRemarks = (progress: any) => {
+  const buildThreadTitle = (progress: any, studentName: string) => {
+    const courseName = progress.course?.name ? ` ${progress.course.name}` : '';
+    const dateLabel = progress.date ? ` on ${new Date(progress.date).toLocaleDateString()}` : '';
+    const studentLabel = studentName ? ` for ${studentName}` : '';
+    return `Remarks for${courseName}${studentLabel}${dateLabel}`;
+  };
+
+  const handleViewParentRemarks = (progress: any, studentName: string) => {
     setSelectedRemarks(progress.parentRemarks || []);
     setSelectedProgressId(progress.id);
+    setThreadTitle(buildThreadTitle(progress, studentName));
     setShowRemarksModal(true);
   };
 
@@ -430,6 +439,18 @@ export default function TeacherDashboard() {
     }
   };
 
+  const getLatestMyReply = (progress: any) => {
+    if (!progress.parentRemarks || !currentUserId) return null;
+    const replies = progress.parentRemarks.flatMap((r: any) =>
+      (r.replies || []).map((reply: any) => ({ ...reply, remarkId: r.id }))
+    );
+    const mine = replies.filter((r: any) => r.author?.id === currentUserId);
+    if (!mine.length) return null;
+    return mine.sort(
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )[0];
+  };
+
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -509,7 +530,8 @@ export default function TeacherDashboard() {
                                 <th>Lesson</th>
                             <th>Homework</th>
                             <th>Progress %</th>
-                            <th>Remarks</th>
+                            <th>Teacher&apos;s Remarks</th>
+                            <th>My Remarks</th>
                             <th>Parent Remarks</th>
                             <th>Actions</th>
                           </tr>
@@ -548,9 +570,21 @@ export default function TeacherDashboard() {
                                         <span className="text-muted small">-</span>
                                       )}
                                     </td>
-                                <td className="small">
+                                    <td className="small">
                                   <ExpandableText text={progress.remarks} maxLength={30} />
                                 </td>
+                                    <td className="small">
+                                      {(() => {
+                                        const latest = getLatestMyReply(progress);
+                                        return latest ? (
+                                          <span className="text-muted text-truncate d-inline-block" style={{ maxWidth: '160px' }}>
+                                            {latest.content}
+                                          </span>
+                                        ) : (
+                                          <span className="text-muted">-</span>
+                                        );
+                                      })()}
+                                    </td>
                                     <td className="small">
                                       {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                         <div>
@@ -560,7 +594,7 @@ export default function TeacherDashboard() {
                                       <Button
                                         variant="outline-info"
                                         size="sm"
-                                        onClick={() => handleViewParentRemarks(progress)}
+                                        onClick={() => handleViewParentRemarks(progress, student.name)}
                                       >
                                         <i className="bi bi-eye"></i>
                                       </Button>
@@ -1046,7 +1080,7 @@ export default function TeacherDashboard() {
         onMessageParent={openChat}
         onRefreshAll={refreshSelectedThread}
         currentUserId={currentUserId}
-        title="Parent Remarks"
+        title={threadTitle || 'Parent Remarks for this progress'}
         emptyMessage="No parent remarks yet"
       />
 

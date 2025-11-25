@@ -3275,6 +3275,7 @@ function RemarksTab() {
   const [success, setSuccess] = useState('');
   const [showThreadModal, setShowThreadModal] = useState(false);
   const [activeRemark, setActiveRemark] = useState<any | null>(null);
+  const [threadTitle, setThreadTitle] = useState('');
 
   const fetchRemarks = async () => {
     try {
@@ -3375,8 +3376,16 @@ function RemarksTab() {
       );
       if (activeRemark && activeRemark.id === remarkId) {
         setActiveRemark(match);
+        setThreadTitle(buildThreadTitle(match));
       }
     }
+  };
+
+  const buildThreadTitle = (remark: any) => {
+    const course = remark?.progress?.course?.name ? ` ${remark.progress.course.name}` : '';
+    const student = remark?.progress?.student?.name ? ` for ${remark.progress.student.name}` : '';
+    const date = remark?.progress?.date ? ` on ${new Date(remark.progress.date).toLocaleDateString()}` : '';
+    return `Remarks for${course}${student}${date}`;
   };
 
   return (
@@ -3428,7 +3437,11 @@ function RemarksTab() {
                       <Button
                         variant="outline-primary"
                         size="sm"
-                        onClick={() => { setActiveRemark(remark); setShowThreadModal(true); }}
+                        onClick={() => { 
+                          setActiveRemark(remark); 
+                          setThreadTitle(buildThreadTitle(remark));
+                          setShowThreadModal(true); 
+                        }}
                       >
                         <i className="bi bi-chat-dots me-1"></i>
                         View Thread
@@ -3454,7 +3467,7 @@ function RemarksTab() {
         onDeleteRemark={(id) => handleDelete('remark', id)}
         onDeleteReply={(id) => handleDelete('reply', id)}
         onRefresh={handleRefreshThread}
-        title="Parent Remark Thread"
+        title={threadTitle || 'Parent Remark Thread'}
         emptyMessage="No remarks"
         loading={loading}
       />
