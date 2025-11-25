@@ -604,7 +604,7 @@ export default function TeacherDashboard() {
                                           );
                                         })()
                                       ) : (
-                                        <span className="small text-muted">No parent remark</span>
+                                        <span className="small text-muted d-inline-block">No parent remark</span>
                                       )}
                                     </td>
                                     <td>
