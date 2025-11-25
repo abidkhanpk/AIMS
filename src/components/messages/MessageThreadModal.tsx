@@ -78,34 +78,33 @@ const MessageThreadModal: React.FC<MessageThreadModalProps> = ({
         ) : messages.length === 0 ? (
           <div className="text-center text-muted py-3">No messages</div>
         ) : (
-          <div className="d-flex flex-column gap-3">
+          <div className="d-flex flex-column gap-2">
             {messages.map((msg) => {
               const isMine = currentUserId && msg.author?.id === currentUserId;
               return (
-                <Card key={msg.id} className="border-0 shadow-sm">
-                  <Card.Body>
-                    <div className="d-flex justify-content-between align-items-start mb-2">
-                      <div>
-                        <strong
-                          className={`${onMessageUser ? 'text-decoration-underline text-primary' : ''}`}
-                          role={onMessageUser ? 'button' : undefined}
-                          onClick={() => onMessageUser?.(msg.author?.id, msg.author?.name)}
-                        >
-                          {msg.author?.name || 'User'}
-                        </strong>
-                        {msg.author?.role && <span className="ms-1 text-muted">({msg.author.role})</span>}
-                      </div>
-                      <small className="text-muted">{new Date(msg.createdAt).toLocaleString()}</small>
+                <div
+                  key={msg.id}
+                  className={`px-3 py-2 rounded shadow-sm ${isMine ? 'ms-auto' : 'me-auto'}`}
+                  style={{
+                    maxWidth: '95%',
+                    backgroundColor: isMine ? '#e6f4ff' : '#f4f4f6',
+                  }}
+                >
+                  <div className="d-flex justify-content-between align-items-start mb-1">
+                    <div>
+                      <strong
+                        className={`${onMessageUser ? 'text-decoration-underline text-primary' : ''}`}
+                        role={onMessageUser ? 'button' : undefined}
+                        onClick={() => onMessageUser?.(msg.author?.id, msg.author?.name)}
+                      >
+                        {msg.author?.name || 'User'}
+                      </strong>
+                      {msg.author?.role && <span className="ms-1 text-muted">({msg.author.role})</span>}
                     </div>
-                    <div>{msg.content}</div>
-                  </Card.Body>
-                  <div
-                    className={`position-absolute top-0 ${isMine ? 'end-0' : 'start-0'} mt-2 mx-2`}
-                    style={{ opacity: 0.15 }}
-                  >
-                    <i className={`bi ${isMine ? 'bi-person-check' : 'bi-person'}`}></i>
+                    <small className="text-muted">{new Date(msg.createdAt).toLocaleString()}</small>
                   </div>
-                </Card>
+                  <div>{msg.content}</div>
+                </div>
               );
             })}
           </div>
