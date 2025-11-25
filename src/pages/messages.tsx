@@ -4,6 +4,41 @@ import { useSession } from 'next-auth/react';
 import MessageThreadModal, { MessageItem } from '../components/messages/MessageThreadModal';
 import DirectMessageModal from '../components/messages/DirectMessageModal';
 
+function buildThreads(messagesList: any[], currentUserId?: string | null) {
+  const map = new Map<
+    string,
+    {
+      threadId: string;
+      subject: string;
+      messages: any[];
+      other: any | null;
+      lastDate: string;
+      unreadCount: number;
+    }
+  >();
+  for (const msg of messagesList) {
+    const existing = map.get(msg.threadId) || {
+      threadId: msg.threadId,
+      subject: msg.subject || 'No subject',
+      messages: [] as any[],
+      other: null,
+      lastDate: msg.createdAt,
+      unreadCount: 0,
+    };
+    existing.messages.push(msg);
+    if (new Date(msg.createdAt).getTime() > new Date(existing.lastDate).getTime()) {
+      existing.lastDate = msg.createdAt;
+    }
+    const other = msg.senderId === currentUserId ? msg.receiver : msg.sender;
+    existing.other = other || existing.other;
+    if (msg.receiverId === currentUserId && !msg.isRead) {
+      existing.unreadCount += 1;
+    }
+    map.set(msg.threadId, existing);
+  }
+  return Array.from(map.values()).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
+}
+
 export default function MessagesPage() {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
@@ -25,6 +60,7 @@ export default function MessagesPage() {
       if (res.ok) {
         const data = await res.json();
         setMessages(Array.isArray(data) ? data : []);
+        return Array.isArray(data) ? data : [];
       } else {
         setError('Failed to load messages');
       }
@@ -33,49 +69,19 @@ export default function MessagesPage() {
     } finally {
       setLoading(false);
     }
+    return [];
   };
 
   useEffect(() => {
     fetchMessages();
   }, []);
 
-  const threads = useMemo(() => {
-    const map = new Map<
-      string,
-      {
-        threadId: string;
-        subject: string;
-        messages: any[];
-        other: any | null;
-        lastDate: string;
-        unreadCount: number;
-      }
-    >();
-    for (const msg of messages) {
-      const existing = map.get(msg.threadId) || {
-        threadId: msg.threadId,
-        subject: msg.subject || 'No subject',
-        messages: [] as any[],
-        other: null,
-        lastDate: msg.createdAt,
-        unreadCount: 0,
-      };
-      existing.messages.push(msg);
-      if (new Date(msg.createdAt).getTime() > new Date(existing.lastDate).getTime()) {
-        existing.lastDate = msg.createdAt;
-      }
-      const other = msg.senderId === currentUserId ? msg.receiver : msg.sender;
-      existing.other = other || existing.other;
-      if (msg.receiverId === currentUserId && !msg.isRead) {
-        existing.unreadCount += 1;
-      }
-      map.set(msg.threadId, existing);
-    }
-    return Array.from(map.values()).sort((a, b) => new Date(b.lastDate).getTime() - new Date(a.lastDate).getTime());
-  }, [messages, currentUserId]);
+  const threads = useMemo(() => buildThreads(messages, currentUserId), [messages, currentUserId]);
 
-  const openThread = async (threadId: string) => {
-    const thread = threads.find((t) => t.threadId === threadId);
+  const syncSelectedThread = (threadId: string | null, list: any[]) => {
+    if (!threadId) return;
+    const built = buildThreads(list, currentUserId);
+    const thread = built.find((t) => t.threadId === threadId);
     if (!thread) return;
     const sorted = [...thread.messages].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     const formatted: MessageItem[] = sorted.map((m) => ({
@@ -88,19 +94,28 @@ export default function MessagesPage() {
         role: m.sender?.role,
       },
     }));
-    setSelectedThreadId(thread.threadId);
     setSelectedSubject(thread.subject || 'No subject');
     setSelectedMessages(formatted);
     setSelectedOther(thread.other ? { id: thread.other.id, name: thread.other.name } : null);
+  };
+
+  const openThread = async (threadId: string) => {
+    setSelectedThreadId(threadId);
     setShowThreadModal(true);
-    // mark read
     await fetch('/api/messages/mark-read', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ threadId }),
     });
-    fetchMessages();
+    const data = await fetchMessages();
+    syncSelectedThread(threadId, data);
   };
+
+  useEffect(() => {
+    if (selectedThreadId) {
+      syncSelectedThread(selectedThreadId, messages);
+    }
+  }, [messages, selectedThreadId]);
 
   const handleReply = async (content: string) => {
     if (!selectedOther?.id || !selectedSubject || !selectedThreadId) return false;
@@ -116,7 +131,8 @@ export default function MessagesPage() {
         }),
       });
       if (res.ok) {
-        await fetchMessages();
+        const data = await fetchMessages();
+        syncSelectedThread(selectedThreadId, data);
         return true;
       }
       const err = await res.json();
