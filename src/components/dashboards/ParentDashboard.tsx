@@ -315,11 +315,12 @@ export default function ParentDashboard() {
     return fees.filter(fee => fee.status === 'PENDING' || fee.status === 'OVERDUE');
   };
 
-  const buildThreadTitle = (progress: any) => {
-    const courseName = progress.course?.name ? ` ${progress.course.name}` : '';
-    const dateLabel = progress.date ? ` on ${new Date(progress.date).toLocaleDateString()}` : '';
-    const studentName = progress.student?.name ? ` for ${progress.student.name}` : '';
-    return `Remarks for${courseName}${studentName}${dateLabel}`;
+  const buildThreadTitle = (progress: any, studentName?: string) => {
+    const teacherName = progress.teacher?.name || 'Teacher';
+    const courseName = progress.course?.name || 'Subject';
+    const dateLabel = progress.date ? new Date(progress.date).toLocaleDateString() : '';
+    const student = studentName || progress.student?.name || 'Student';
+    return `${teacherName}: Progress of ${student} for ${courseName}${dateLabel ? ` on ${dateLabel}` : ''}`;
   };
 
   const openThread = (progress: any) => {
@@ -327,7 +328,7 @@ export default function ParentDashboard() {
     setThreadProgressId(progress.id);
     const ownerChild = children.find((c) => c.progressRecords?.some((p) => p.id === progress.id));
     setThreadChildId(ownerChild?.id || null);
-    setThreadTitle(buildThreadTitle({ ...progress, student: ownerChild || progress.student }));
+    setThreadTitle(buildThreadTitle({ ...progress, student: ownerChild || progress.student }, ownerChild?.name));
     setShowThreadModal(true);
   };
 
@@ -502,7 +503,7 @@ export default function ParentDashboard() {
                                     ) : (
                                       <div className="table-responsive">
                                         <Table size="sm" className="mb-0">
-                                          <thead className="table-light">
+                                          <thead className="table-light small">
                                             <tr>
                                               <th>Date</th>
                                               <th>Teacher</th>
@@ -660,7 +661,7 @@ export default function ParentDashboard() {
                         ) : (
                           <div className="table-responsive">
                             <Table hover size="sm" className="mb-0">
-                              <thead className="table-light">
+                              <thead className="table-light small">
                                 <tr>
                                   <th>Date</th>
                                   <th>Subject</th>
@@ -758,7 +759,7 @@ export default function ParentDashboard() {
                 ) : (
                   <div className="table-responsive">
                     <Table hover size="sm" className="mb-0">
-                      <thead className="table-light">
+                      <thead className="table-light small">
                         <tr>
                           <th>Student</th>
                           <th>Title</th>

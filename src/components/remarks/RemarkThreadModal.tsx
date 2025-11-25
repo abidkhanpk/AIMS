@@ -82,16 +82,23 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
 
   return (
     <Modal show={show} onHide={onHide} size="lg">
-      <Modal.Header closeButton>
-        <Modal.Title>
-          <i className="bi bi-chat-dots me-2"></i>
-          {title}
-        </Modal.Title>
-        {onRefreshAll && (
-          <Button variant="outline-secondary" size="sm" onClick={onRefreshAll}>
-            <i className="bi bi-arrow-repeat"></i>
-          </Button>
-        )}
+      <Modal.Header closeButton className="align-items-center">
+        <div className="d-flex align-items-center w-100 gap-2">
+          <Modal.Title className="fs-5 m-0">
+            <i className="bi bi-chat-dots me-2"></i>
+            {title}
+          </Modal.Title>
+          {onRefreshAll && (
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              className="ms-auto me-2"
+              onClick={onRefreshAll}
+            >
+              <i className="bi bi-arrow-repeat"></i>
+            </Button>
+          )}
+        </div>
       </Modal.Header>
       <Modal.Body>
         {loading ? (

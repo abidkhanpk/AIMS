@@ -322,10 +322,11 @@ export default function TeacherDashboard() {
   };
 
   const buildThreadTitle = (progress: any, studentName: string) => {
-    const courseName = progress.course?.name ? ` ${progress.course.name}` : '';
-    const dateLabel = progress.date ? ` on ${new Date(progress.date).toLocaleDateString()}` : '';
-    const studentLabel = studentName ? ` for ${studentName}` : '';
-    return `Remarks for${courseName}${studentLabel}${dateLabel}`;
+    const teacherName = progress.teacher?.name || session?.user?.name || 'Teacher';
+    const courseName = progress.course?.name || 'Subject';
+    const dateLabel = progress.date ? new Date(progress.date).toLocaleDateString() : '';
+    const studentLabel = studentName || 'Student';
+    return `${teacherName}: Progress of ${studentLabel} for ${courseName}${dateLabel ? ` on ${dateLabel}` : ''}`;
   };
 
   const handleViewParentRemarks = (progress: any, studentName: string) => {
@@ -522,7 +523,7 @@ export default function TeacherDashboard() {
                       ) : (
                         <div className="table-responsive">
                           <Table className="mb-0">
-                            <thead className="table-light">
+                            <thead className="table-light small">
                               <tr>
                                 <th>Date</th>
                                 <th>Course</th>
@@ -587,24 +588,40 @@ export default function TeacherDashboard() {
                                     </td>
                                     <td className="small">
                                       {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
-                                        <div>
-                                      <Badge bg="info" className="me-1">
-                                        {progress.parentRemarks.length} remark{progress.parentRemarks.length > 1 ? 's' : ''}
-                                      </Badge>
-                                      <Button
-                                        variant="outline-info"
-                                        size="sm"
-                                        onClick={() => handleViewParentRemarks(progress, student.name)}
-                                      >
-                                        <i className="bi bi-eye"></i>
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                      <span className="text-muted">-</span>
-                                    )}
-                                  </td>
-                                  <td>
-                                    <div className="d-flex flex-wrap gap-2">
+                                        (() => {
+                                          const remarkCount = progress.parentRemarks.length;
+                                          const replyCount = progress.parentRemarks.reduce(
+                                            (sum: number, r: any) => sum + (r.replies?.length || 0),
+                                            0
+                                          );
+                                          return (
+                                            <div className="d-flex flex-column">
+                                              <span className="text-success fw-semibold">
+                                                {remarkCount} remark{remarkCount > 1 ? 's' : ''}
+                                              </span>
+                                              <small className="text-muted">
+                                                {replyCount > 0
+                                                  ? `${replyCount} comment${replyCount > 1 ? 's' : ''}`
+                                                  : 'No comments yet'}
+                                              </small>
+                                            </div>
+                                          );
+                                        })()
+                                      ) : (
+                                        <span className="text-muted">No parent remark</span>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <div className="d-flex flex-wrap gap-2">
+                                        {progress.parentRemarks && progress.parentRemarks.length > 0 && (
+                                          <Button
+                                            variant="outline-secondary"
+                                            size="sm"
+                                            onClick={() => handleViewParentRemarks(progress, student.name)}
+                                          >
+                                            <i className="bi bi-chat-dots"></i>
+                                          </Button>
+                                        )}
                                       <Button
                                         variant="outline-primary"
                                         size="sm"
@@ -675,7 +692,7 @@ export default function TeacherDashboard() {
                       ) : (
                         <div className="table-responsive">
                           <Table className="mb-0">
-                            <thead className="table-light">
+                            <thead className="table-light small">
                               <tr>
                                 <th>Date</th>
                                 <th>Subject</th>
@@ -1080,7 +1097,7 @@ export default function TeacherDashboard() {
         onMessageParent={openChat}
         onRefreshAll={refreshSelectedThread}
         currentUserId={currentUserId}
-        title={threadTitle || 'Parent Remarks for this progress'}
+        title={threadTitle || 'Remarks for this progress'}
         emptyMessage="No parent remarks yet"
       />
 

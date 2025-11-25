@@ -3382,10 +3382,11 @@ function RemarksTab() {
   };
 
   const buildThreadTitle = (remark: any) => {
-    const course = remark?.progress?.course?.name ? ` ${remark.progress.course.name}` : '';
-    const student = remark?.progress?.student?.name ? ` for ${remark.progress.student.name}` : '';
-    const date = remark?.progress?.date ? ` on ${new Date(remark.progress.date).toLocaleDateString()}` : '';
-    return `Remarks for${course}${student}${date}`;
+    const teacher = remark?.progress?.teacher?.name || 'Teacher';
+    const student = remark?.progress?.student?.name || 'Student';
+    const course = remark?.progress?.course?.name || 'Subject';
+    const date = remark?.progress?.date ? new Date(remark.progress.date).toLocaleDateString() : '';
+    return `${teacher}: Progress of ${student} for ${course}${date ? ` on ${date}` : ''}`;
   };
 
   return (
@@ -3416,12 +3417,17 @@ function RemarksTab() {
                       <div>
                         <div className="d-flex align-items-center gap-2">
                           <strong className="text-primary">{remark.parent.name}</strong>
-                          <Badge bg="secondary">
-                            {remark.replies?.length || 0} repl{(remark.replies?.length || 0) === 1 ? 'y' : 'ies'}
-                          </Badge>
                         </div>
                         <div className="small text-muted">
                           {remark.progress.student.name} - {remark.progress.course.name}
+                        </div>
+                        <div className="d-flex flex-column small mt-1">
+                          <span className="text-success fw-semibold">1 remark</span>
+                          <span className="text-muted">
+                            {remark.replies?.length
+                              ? `${remark.replies.length} comment${remark.replies.length > 1 ? 's' : ''}`
+                              : 'No comments yet'}
+                          </span>
                         </div>
                       </div>
                       <div className="d-flex align-items-center gap-2">
@@ -3467,7 +3473,7 @@ function RemarksTab() {
         onDeleteRemark={(id) => handleDelete('remark', id)}
         onDeleteReply={(id) => handleDelete('reply', id)}
         onRefresh={handleRefreshThread}
-        title={threadTitle || 'Parent Remark Thread'}
+        title={threadTitle || 'Remarks for this progress'}
         emptyMessage="No remarks"
         loading={loading}
       />
