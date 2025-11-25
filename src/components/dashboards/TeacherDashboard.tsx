@@ -1092,6 +1092,7 @@ export default function TeacherDashboard() {
         remarks={selectedRemarks}
         onReply={handleSendReply}
         onMessageParent={openChat}
+        onMessageUser={openChat}
         onRefreshAll={refreshSelectedThread}
         currentUserId={currentUserId}
         title={threadTitle || 'Remarks for this progress'}

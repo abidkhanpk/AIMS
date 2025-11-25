@@ -3506,6 +3506,8 @@ function RemarksTab() {
         title={threadTitle || 'Remarks for this progress'}
         emptyMessage="No remarks"
         loading={loading}
+        onMessageParent={openMessage}
+        onMessageUser={openMessage}
       />
       <DirectMessageModal
         show={showMessageModal}

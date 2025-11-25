@@ -40,6 +40,7 @@ interface RemarkThreadModalProps {
   onDeleteRemark?: (remarkId: string) => Promise<void> | void;
   onDeleteReply?: (replyId: string) => Promise<void> | void;
   onMessageParent?: (parentId?: string, parentName?: string) => void;
+  onMessageUser?: (userId?: string, userName?: string) => void;
   emptyMessage?: string;
 }
 
@@ -56,6 +57,7 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
   onDeleteRemark,
   onDeleteReply,
   onMessageParent,
+  onMessageUser,
   emptyMessage = 'No remarks',
 }) => {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -115,7 +117,13 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
                   <div className="d-flex justify-content-between align-items-start mb-2">
                     <div>
                       <div className="d-flex align-items-center gap-2">
-                        <strong className="text-primary">{remark.parent?.name || 'Parent'}</strong>
+                        <strong
+                          className={`text-primary ${onMessageParent ? 'text-decoration-underline' : ''}`}
+                          role={onMessageParent ? 'button' : undefined}
+                          onClick={() => onMessageParent?.(remark.parent?.id, remark.parent?.name)}
+                        >
+                          {remark.parent?.name || 'Parent'}
+                        </strong>
                         {onMessageParent && remark.parent?.id && (
                           <Button
                             variant="outline-secondary"
@@ -161,7 +169,13 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
                           >
                             <div className="d-flex justify-content-between align-items-start">
                               <div>
-                                <strong>{reply.author?.name}</strong>
+                                <strong
+                                  className={`${onMessageUser ? 'text-decoration-underline text-primary' : ''}`}
+                                  role={onMessageUser ? 'button' : undefined}
+                                  onClick={() => onMessageUser?.(reply.author?.id, reply.author?.name)}
+                                >
+                                  {reply.author?.name}
+                                </strong>
                                 {reply.author?.role && <span className="ms-1 text-muted">({reply.author.role})</span>}
                               </div>
                               <div className="d-flex align-items-center gap-2">

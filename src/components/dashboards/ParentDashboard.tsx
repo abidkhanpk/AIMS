@@ -893,6 +893,8 @@ export default function ParentDashboard() {
         onReply={handleSendReply}
         title={threadTitle || 'Remarks for this progress'}
         emptyMessage="No remarks"
+        onMessageParent={openMessage}
+        onMessageUser={openMessage}
       />
 
       {selectedFee && (
