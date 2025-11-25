@@ -1,9 +1,11 @@
-/*
-  Warnings:
+-- Add nullable columns first for existing rows
+ALTER TABLE "public"."Message" ADD COLUMN "subject" TEXT,
+ADD COLUMN "threadId" TEXT;
 
-  - The required column `threadId` was added to the `Message` table with a prisma-level default value. This is not possible if the table is not empty. Please add this column as optional, then populate it before making it required.
+-- Backfill existing rows with defaults
+UPDATE "public"."Message" SET "subject" = COALESCE("subject", 'No subject') WHERE "subject" IS NULL;
+UPDATE "public"."Message" SET "threadId" = COALESCE("threadId", gen_random_uuid()::text) WHERE "threadId" IS NULL;
 
-*/
--- AlterTable
-ALTER TABLE "public"."Message" ADD COLUMN     "subject" TEXT NOT NULL DEFAULT 'No subject',
-ADD COLUMN     "threadId" TEXT NOT NULL;
+-- Enforce NOT NULL after backfill
+ALTER TABLE "public"."Message" ALTER COLUMN "subject" SET NOT NULL;
+ALTER TABLE "public"."Message" ALTER COLUMN "threadId" SET NOT NULL;

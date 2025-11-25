@@ -55,7 +55,7 @@ export default function MessagesPage() {
       const existing = map.get(msg.threadId) || {
         threadId: msg.threadId,
         subject: msg.subject || 'No subject',
-        messages: [],
+        messages: [] as any[],
         other: null,
         lastDate: msg.createdAt,
         unreadCount: 0,
