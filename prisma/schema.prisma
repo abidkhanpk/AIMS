@@ -134,6 +134,8 @@ model Message {
   id         String   @id @default(uuid())
   senderId   String
   receiverId String
+  subject    String   @default("No subject")
+  threadId   String   @default(uuid())
   content    String
   createdAt  DateTime @default(now())
   isRead     Boolean  @default(false)

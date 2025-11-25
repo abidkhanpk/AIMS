@@ -19,6 +19,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ],
         },
         orderBy: { createdAt: 'desc' },
+        include: {
+          sender: { select: { id: true, name: true, role: true } },
+          receiver: { select: { id: true, name: true, role: true } },
+        },
       });
       return res.status(200).json(messages);
     } catch (error) {

@@ -1,5 +1,5 @@
 import { useSession, signOut } from 'next-auth/react';
-import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab } from 'react-bootstrap';
+import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab, Badge } from 'react-bootstrap';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import NotificationDropdown from './NotificationDropdown';
@@ -35,6 +35,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -57,6 +58,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     if (status === 'authenticated') {
       fetchSettings();
       fetchUserSettings();
+      loadUnreadMessages();
+      const interval = setInterval(loadUnreadMessages, 30000);
+      return () => clearInterval(interval);
     }
   }, [status]);
 
@@ -203,6 +207,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loadUnreadMessages = async () => {
+    try {
+      const res = await fetch('/api/messages/unread-count');
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadMessages(data.count || 0);
+      }
+    } catch (error) {
+      // ignore
+    }
+  };
+
   const handleNotificationSettingsUpdate = async () => {
     setUpdating(true);
     setError('');
@@ -310,11 +326,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Button
                     variant="link"
                     size="sm"
-                    className="me-2 d-flex align-items-center text-light text-decoration-none p-0"
+                    className="me-2 d-flex align-items-center text-light text-decoration-none p-0 position-relative"
                     onClick={() => router.push('/messages')}
                     title="Messages"
                   >
                     <i className="bi bi-envelope fs-5"></i>
+                    {unreadMessages > 0 && (
+                      <Badge bg="danger" pill className="position-absolute top-0 start-100 translate-middle">
+                        {unreadMessages}
+                      </Badge>
+                    )}
                   </Button>
                   
                   <NavDropdown 

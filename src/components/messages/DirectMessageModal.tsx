@@ -6,20 +6,24 @@ interface DirectMessageModalProps {
   onHide: () => void;
   targetId: string | null;
   targetName?: string;
+  subject?: string;
+  threadId?: string;
   onSent?: () => void;
 }
 
-export default function DirectMessageModal({ show, onHide, targetId, targetName, onSent }: DirectMessageModalProps) {
+export default function DirectMessageModal({ show, onHide, targetId, targetName, onSent, subject, threadId }: DirectMessageModalProps) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [msgSubject, setMsgSubject] = useState(subject || '');
 
   useEffect(() => {
     if (show) {
       setText('');
       setError('');
+      setMsgSubject(subject || '');
     }
-  }, [show]);
+  }, [show, subject]);
 
   const handleSend = async () => {
     if (!targetId || !text.trim()) return;
@@ -29,7 +33,12 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
       const res = await fetch('/api/messages/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ receiverId: targetId, content: text.trim() }),
+        body: JSON.stringify({
+          receiverId: targetId,
+          content: text.trim(),
+          subject: msgSubject?.trim() || 'No subject',
+          threadId: threadId || undefined,
+        }),
       });
       if (res.ok) {
         setText('');
@@ -55,11 +64,21 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {error && <div className="alert alert-danger py-2">{error}</div>}
-        <Form.Group className="mb-3">
-          <Form.Label>Message</Form.Label>
-          <Form.Control
-            as="textarea"
+    {error && <div className="alert alert-danger py-2">{error}</div>}
+      <Form.Group className="mb-3">
+        <Form.Label>Subject</Form.Label>
+        <Form.Control
+          type="text"
+          value={msgSubject}
+          onChange={(e) => setMsgSubject(e.target.value)}
+          placeholder="Enter subject"
+          disabled={!!threadId}
+        />
+      </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Message</Form.Label>
+        <Form.Control
+          as="textarea"
             rows={3}
             value={text}
             onChange={(e) => setText(e.target.value)}

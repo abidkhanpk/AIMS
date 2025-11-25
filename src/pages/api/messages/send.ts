@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
+import { randomUUID } from 'crypto';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -13,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const { receiverId, content } = req.body as { receiverId?: string; content?: string };
+  const { receiverId, content, subject, threadId } = req.body as { receiverId?: string; content?: string; subject?: string; threadId?: string };
   if (!receiverId || !content?.trim()) {
     return res.status(400).json({ message: 'Receiver and content are required' });
   }
@@ -46,6 +47,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       data: {
         senderId: session.user.id,
         receiverId,
+        subject: subject?.trim() || 'No subject',
+        threadId: threadId || randomUUID(),
         content: content.trim(),
       },
     });
@@ -53,8 +56,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await prisma.notification.create({
       data: {
         type: 'SYSTEM_ALERT',
-        title: 'New message',
-        message: `You received a new message from ${session.user.id}`,
+        title: subject?.trim() || 'New message',
+        message: `You received a new message from ${session.user.name || session.user.id}`,
         senderId: session.user.id,
         receiverId,
       },
