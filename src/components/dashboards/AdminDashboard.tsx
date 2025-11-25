@@ -3421,13 +3421,12 @@ function RemarksTab() {
                         <div className="small text-muted">
                           {remark.progress.student.name} - {remark.progress.course.name}
                         </div>
-                        <div className="d-flex flex-column small mt-1">
-                          <span className="text-success fw-semibold">1 remark</span>
-                          <span className="text-muted">
-                            {remark.replies?.length
-                              ? `${remark.replies.length} comment${remark.replies.length > 1 ? 's' : ''}`
-                              : 'No comments yet'}
-                          </span>
+                        <div className="small mt-1 text-muted">
+                          Remark with{' '}
+                          <span className={(remark.replies?.length || 0) > 0 ? 'text-success' : 'text-danger'}>
+                            {(remark.replies?.length || 0) > 0 ? remark.replies?.length : 'no'}
+                          </span>{' '}
+                          comment{(remark.replies?.length || 0) === 1 ? '' : 's'}
                         </div>
                       </div>
                       <div className="d-flex align-items-center gap-2">

@@ -589,30 +589,26 @@ export default function TeacherDashboard() {
                                     <td className="small">
                                       {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                         (() => {
-                                          const remarkCount = progress.parentRemarks.length;
                                           const replyCount = progress.parentRemarks.reduce(
                                             (sum: number, r: any) => sum + (r.replies?.length || 0),
                                             0
                                           );
                                           return (
-                                            <div className="d-flex flex-column">
-                                              <span className="text-success fw-semibold">
-                                                {remarkCount} remark{remarkCount > 1 ? 's' : ''}
-                                              </span>
-                                              <small className="text-muted">
-                                                {replyCount > 0
-                                                  ? `${replyCount} comment${replyCount > 1 ? 's' : ''}`
-                                                  : 'No comments yet'}
-                                              </small>
-                                            </div>
+                                            <span className="small text-muted d-inline-block">
+                                              Remark with{' '}
+                                              <span className={replyCount > 0 ? 'text-success' : 'text-danger'}>
+                                                {replyCount > 0 ? replyCount : 'no'}
+                                              </span>{' '}
+                                              comment{replyCount === 1 ? '' : 's'}
+                                            </span>
                                           );
                                         })()
                                       ) : (
-                                        <span className="text-muted">No parent remark</span>
+                                        <span className="small text-muted">No parent remark</span>
                                       )}
                                     </td>
                                     <td>
-                                      <div className="d-flex flex-wrap gap-2">
+                                      <div className="d-flex gap-2 align-items-center flex-nowrap">
                                         {progress.parentRemarks && progress.parentRemarks.length > 0 && (
                                           <Button
                                             variant="outline-secondary"
@@ -622,15 +618,15 @@ export default function TeacherDashboard() {
                                             <i className="bi bi-chat-dots"></i>
                                           </Button>
                                         )}
-                                      <Button
-                                        variant="outline-primary"
-                                        size="sm"
-                                        onClick={() => handleEditProgress(student, progress)}
-                                      >
-                                        <i className="bi bi-pencil"></i>
-                                      </Button>
-                                    </div>
-                                  </td>
+                                        <Button
+                                          variant="outline-primary"
+                                          size="sm"
+                                          onClick={() => handleEditProgress(student, progress)}
+                                        >
+                                          <i className="bi bi-pencil"></i>
+                                        </Button>
+                                      </div>
+                                    </td>
                                 </tr>
                               ))
                             )}
