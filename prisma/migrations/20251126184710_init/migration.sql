@@ -38,6 +38,31 @@ CREATE TYPE "public"."RelationType" AS ENUM ('FATHER', 'MOTHER', 'GUARDIAN', 'ST
 CREATE TYPE "public"."AssessmentType" AS ENUM ('QUIZ', 'EXAM', 'HOMEWORK', 'OTHER');
 
 -- CreateTable
+CREATE TABLE "public"."ParentRemarkReply" (
+    "id" TEXT NOT NULL,
+    "remarkId" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ParentRemarkReply_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."Message" (
+    "id" TEXT NOT NULL,
+    "senderId" TEXT NOT NULL,
+    "receiverId" TEXT NOT NULL,
+    "subject" TEXT NOT NULL DEFAULT 'No subject',
+    "threadId" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+
+    CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."User" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -436,6 +461,18 @@ CREATE UNIQUE INDEX "Settings_adminId_key" ON "public"."Settings"("adminId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserSettings_userId_key" ON "public"."UserSettings"("userId");
+
+-- AddForeignKey
+ALTER TABLE "public"."ParentRemarkReply" ADD CONSTRAINT "ParentRemarkReply_remarkId_fkey" FOREIGN KEY ("remarkId") REFERENCES "public"."ParentRemark"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."ParentRemarkReply" ADD CONSTRAINT "ParentRemarkReply_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."Message" ADD CONSTRAINT "Message_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."User" ADD CONSTRAINT "User_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "public"."User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
