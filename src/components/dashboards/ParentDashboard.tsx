@@ -128,9 +128,10 @@ export default function ParentDashboard() {
     fetchFees();
   }, []);
 
-  const fetchChildren = async () => {
+  const fetchChildren = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetch('/api/users/my-children');
       if (res.ok) {
         const data = await res.json();
@@ -145,7 +146,7 @@ export default function ParentDashboard() {
       setError('Error fetching children data');
       setChildren([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -374,7 +375,7 @@ export default function ParentDashboard() {
   };
 
   const refreshThread = async () => {
-    const list = await fetchChildren();
+    const list = await fetchChildren({ silent: true });
     const data = list || children;
     if (threadChildId && threadProgressId) {
       const child = data.find((c: any) => c.id === threadChildId);
