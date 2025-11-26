@@ -3281,9 +3281,10 @@ function RemarksTab() {
   const [messageTargetId, setMessageTargetId] = useState<string | null>(null);
   const [messageTargetName, setMessageTargetName] = useState('');
 
-  const fetchRemarks = async () => {
+  const fetchRemarks = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetch('/api/remarks');
       if (res.ok) {
         const data = await res.json();
@@ -3295,7 +3296,7 @@ function RemarksTab() {
     } catch (err) {
       setError('Failed to fetch remarks');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -3321,7 +3322,7 @@ function RemarksTab() {
           )
         );
         setSuccess('Reply posted');
-        const list = await fetchRemarks();
+        const list = await fetchRemarks({ silent: true });
         const match = (list || []).find((r: any) => r.id === remarkId);
         if (match) {
           setRemarks((prev) =>
@@ -3372,7 +3373,7 @@ function RemarksTab() {
   };
 
   const handleRefreshThread = async (remarkId: string) => {
-    const list = await fetchRemarks();
+    const list = await fetchRemarks({ silent: true });
     const match = (list || []).find((r: any) => r.id === remarkId);
     if (match) {
       setRemarks((prev) =>

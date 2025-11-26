@@ -144,9 +144,10 @@ export default function TeacherDashboard() {
     fetchAssignedStudents();
   }, []);
 
-  const fetchAssignedStudents = async () => {
+  const fetchAssignedStudents = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetch('/api/users/assigned-students');
       if (res.ok) {
         const data = await res.json();
@@ -168,7 +169,7 @@ export default function TeacherDashboard() {
       setError('Error fetching assigned students');
       setStudents([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -354,7 +355,7 @@ export default function TeacherDashboard() {
               : r
           )
         );
-        const list = await fetchAssignedStudents();
+        const list = await fetchAssignedStudents({ silent: true });
         if (list && selectedProgressId) {
           const match = findProgressInList(list, selectedProgressId);
           if (match) setSelectedRemarks(match.parentRemarks || []);
@@ -380,7 +381,7 @@ export default function TeacherDashboard() {
   };
 
   const refreshSelectedThread = async () => {
-    const list = await fetchAssignedStudents();
+    const list = await fetchAssignedStudents({ silent: true });
     if (list && selectedProgressId) {
       const match = findProgressInList(list, selectedProgressId);
       if (match) setSelectedRemarks(match.parentRemarks || []);
