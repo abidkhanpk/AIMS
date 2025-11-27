@@ -240,6 +240,7 @@ async function main() {
     { studentId: student1.id, courseId: tajweedCourse.id },
     { studentId: student1.id, courseId: basicIslamicEduCourse.id },
     { studentId: student2.id, courseId: tajweedCourse.id },
+    { studentId: student2.id, courseId: basicIslamicEduCourse.id },
     { studentId: student3.id, courseId: tajweedCourse.id },
   ];
 
@@ -315,6 +316,22 @@ async function main() {
       timezone: 'Europe/London',
       monthlyFee: 7200.0,
       currency: 'PKR',
+    },
+  });
+
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student3.id, courseId: tajweedCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
+      studentId: student3.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      startTime: '18:30',
+      duration: 45,
+      classDays: [ClassDay.TUESDAY, ClassDay.THURSDAY],
+      timezone: 'Europe/London',
+      monthlyFee: 60.0,
+      currency: 'USD',
     },
   });
 
