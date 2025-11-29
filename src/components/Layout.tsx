@@ -274,7 +274,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Navbar bg="dark" variant="dark" expand="lg" className="shadow-sm" style={{ minHeight: '80px' }}>
+      <Navbar
+        bg="dark"
+        variant="dark"
+        expand="lg"
+        className="shadow-sm"
+        style={{
+          minHeight: '80px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1040,
+          backgroundColor: 'hsl(256, 12%, 12%)',
+        }}
+      >
         <Container fluid className="px-3">
           <div className="d-flex align-items-center">
             {settings?.headerImg && (

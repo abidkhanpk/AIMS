@@ -10,6 +10,8 @@ import AdminSubscriptionTab from './AdminSubscriptionTab';
 import { useSession } from 'next-auth/react';
 import RemarkThreadModal from '../remarks/RemarkThreadModal';
 import DirectMessageModal from '../messages/DirectMessageModal';
+import AdminMenu from './AdminMenu';
+import menuStyles from './AdminMenu.module.css';
 
 interface User {
   id: string;
@@ -3637,160 +3639,199 @@ function TestsTab() {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('teachers');
+  const [activeTab, setActiveTab] = useState('home');
+  const showHome = activeTab === 'home';
+  const tabActiveKey = showHome ? 'teachers' : activeTab;
 
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="h4 mb-1">
-            <i className="bi bi-gear-fill me-2 text-primary"></i>
-            Admin Dashboard
-          </h2>
-          <p className="text-muted mb-0">Manage users, subjects, assignments, and more</p>
+    <div className={menuStyles.menuShell}>
+      <div className={menuStyles.menuLayout}>
+        <AdminMenu activeKey={activeTab} onSelect={setActiveTab} />
+        <div className={menuStyles.mainContent}>
+          <div className="container-fluid py-4">
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h2 className="h4 mb-1">
+                  <i className="bi bi-gear-fill me-2 text-primary"></i>
+                  Admin Dashboard
+                </h2>
+                <p className="text-muted mb-0">Manage users, subjects, assignments, and more</p>
+              </div>
+            </div>
+
+            {showHome ? (
+              <div className={`${menuStyles.homePanel} p-4`}>
+                <h3 className="h5 mb-2">Welcome to the Admin dashboard</h3>
+                <p className="text-muted mb-3">Use the menu to jump into each workflow.</p>
+                <div className={`d-flex flex-wrap ${menuStyles.homeActions}`}>
+                  <Button variant="dark" size="sm" onClick={() => setActiveTab('teachers')}>
+                    <i className="bi bi-person-workspace me-1"></i>
+                    Teachers
+                  </Button>
+                  <Button variant="dark" size="sm" onClick={() => setActiveTab('parents')}>
+                    <i className="bi bi-people me-1"></i>
+                    Relatives
+                  </Button>
+                  <Button variant="dark" size="sm" onClick={() => setActiveTab('students')}>
+                    <i className="bi bi-mortarboard me-1"></i>
+                    Students
+                  </Button>
+                  <Button variant="dark" size="sm" onClick={() => setActiveTab('fees')}>
+                    <i className="bi bi-cash-coin me-1"></i>
+                    Fee
+                  </Button>
+                  <Button variant="dark" size="sm" onClick={() => setActiveTab('fee-verification')}>
+                    <i className="bi bi-check-circle me-1"></i>
+                    Fee Verification
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Tabs 
+                id="admin-dashboard-tabs"
+                activeKey={tabActiveKey} 
+                onSelect={(k) => setActiveTab(k || 'teachers')} 
+                className={`${menuStyles.hiddenTabsNav} mb-4`}
+                variant="pills"
+              >
+                <Tab 
+                  eventKey="teachers" 
+                  title={
+                    <span>
+                      <i className="bi bi-person-workspace me-2"></i>
+                      Teachers
+                    </span>
+                  }
+                >
+                  <UserManagementTab role="TEACHER" />
+                </Tab>
+                
+                <Tab 
+                  eventKey="parents" 
+                  title={
+                    <span>
+                      <i className="bi bi-people me-2"></i>
+                      Parents
+                    </span>
+                  }
+                >
+                  <UserManagementTab role="PARENT" />
+                </Tab>
+                
+                <Tab 
+                  eventKey="students" 
+                  title={
+                    <span>
+                      <i className="bi bi-mortarboard me-2"></i>
+                      Students
+                    </span>
+                  }
+                >
+                  <UserManagementTab role="STUDENT" />
+                </Tab>
+                
+                
+                
+                <Tab 
+                  eventKey="subjects" 
+                  title={
+                    <span>
+                      <i className="bi bi-book me-2"></i>
+                      Subjects
+                    </span>
+                  }
+                >
+                  <SubjectManagementTab />
+                </Tab>
+                
+                <Tab 
+                  eventKey="assignments" 
+                  title={
+                    <span>
+                      <i className="bi bi-diagram-3 me-2"></i>
+                      Assignments
+                    </span>
+                  }
+                >
+                  <AssignmentsTab />
+                </Tab>
+                
+                <Tab 
+                  eventKey="fees" 
+                  title={
+                    <span>
+                      <i className="bi bi-cash-coin me-2"></i>
+                      Fees
+                    </span>
+                  }
+                >
+                  <FeeManagementTab />
+                </Tab>
+                
+                <Tab 
+                  eventKey="fee-verification" 
+                  title={
+                    <span>
+                      <i className="bi bi-check-circle me-2"></i>
+                      Fee Verification
+                    </span>
+                  }
+                >
+                  <FeeVerificationTab />
+                </Tab>
+                
+                <Tab 
+                  eventKey="salaries" 
+                  title={
+                    <span>
+                      <i className="bi bi-wallet2 me-2"></i>
+                      Salaries
+                    </span>
+                  }
+                >
+                  <SalaryManagementTab />
+                </Tab>
+                
+                <Tab 
+                  eventKey="progress" 
+                  title={
+                    <span>
+                      <i className="bi bi-graph-up me-2"></i>
+                      Progress
+                    </span>
+                  }
+                >
+                  <ProgressTab />
+                </Tab>
+                
+                <Tab 
+                  eventKey="tests" 
+                  title={
+                    <span>
+                      <i className="bi bi-journal-check me-2"></i>
+                      Tests & Exams
+                    </span>
+                  }
+                >
+                  <TestsTab />
+                </Tab>
+
+                <Tab 
+                  eventKey="remarks" 
+                  title={
+                    <span>
+                      <i className="bi bi-chat-dots me-2"></i>
+                      Remarks
+                    </span>
+                  }
+                >
+                  <RemarksTab />
+                </Tab>
+              </Tabs>
+            )}
+          </div>
         </div>
       </div>
-
-      <Tabs 
-        activeKey={activeTab} 
-        onSelect={(k) => setActiveTab(k || 'teachers')} 
-        className="mb-4"
-        variant="pills"
-      >
-        <Tab 
-          eventKey="teachers" 
-          title={
-            <span>
-              <i className="bi bi-person-workspace me-2"></i>
-              Teachers
-            </span>
-          }
-        >
-          <UserManagementTab role="TEACHER" />
-        </Tab>
-        
-        <Tab 
-          eventKey="parents" 
-          title={
-            <span>
-              <i className="bi bi-people me-2"></i>
-              Parents
-            </span>
-          }
-        >
-          <UserManagementTab role="PARENT" />
-        </Tab>
-        
-        <Tab 
-          eventKey="students" 
-          title={
-            <span>
-              <i className="bi bi-mortarboard me-2"></i>
-              Students
-            </span>
-          }
-        >
-          <UserManagementTab role="STUDENT" />
-        </Tab>
-        
-        
-        
-        <Tab 
-          eventKey="subjects" 
-          title={
-            <span>
-              <i className="bi bi-book me-2"></i>
-              Subjects
-            </span>
-          }
-        >
-          <SubjectManagementTab />
-        </Tab>
-        
-        <Tab 
-          eventKey="assignments" 
-          title={
-            <span>
-              <i className="bi bi-diagram-3 me-2"></i>
-              Assignments
-            </span>
-          }
-        >
-          <AssignmentsTab />
-        </Tab>
-        
-        <Tab 
-          eventKey="fees" 
-          title={
-            <span>
-              <i className="bi bi-cash-coin me-2"></i>
-              Fees
-            </span>
-          }
-        >
-          <FeeManagementTab />
-        </Tab>
-        
-        <Tab 
-          eventKey="fee-verification" 
-          title={
-            <span>
-              <i className="bi bi-check-circle me-2"></i>
-              Fee Verification
-            </span>
-          }
-        >
-          <FeeVerificationTab />
-        </Tab>
-        
-        <Tab 
-          eventKey="salaries" 
-          title={
-            <span>
-              <i className="bi bi-wallet2 me-2"></i>
-              Salaries
-            </span>
-          }
-        >
-          <SalaryManagementTab />
-        </Tab>
-        
-        <Tab 
-          eventKey="progress" 
-          title={
-            <span>
-              <i className="bi bi-graph-up me-2"></i>
-              Progress
-            </span>
-          }
-        >
-          <ProgressTab />
-        </Tab>
-        
-        <Tab 
-          eventKey="tests" 
-          title={
-            <span>
-              <i className="bi bi-journal-check me-2"></i>
-              Tests & Exams
-            </span>
-          }
-        >
-          <TestsTab />
-        </Tab>
-
-        <Tab 
-          eventKey="remarks" 
-          title={
-            <span>
-              <i className="bi bi-chat-dots me-2"></i>
-              Remarks
-            </span>
-          }
-        >
-          <RemarksTab />
-        </Tab>
-      </Tabs>
     </div>
   );
 }
