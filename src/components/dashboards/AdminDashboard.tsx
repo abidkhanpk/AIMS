@@ -684,6 +684,18 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
+  // Create form state
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newMobile, setNewMobile] = useState('');
+  const [newDateOfBirth, setNewDateOfBirth] = useState('');
+  const [newAddress, setNewAddress] = useState('');
+  const [newQualification, setNewQualification] = useState('');
+  const [newPayRate, setNewPayRate] = useState('');
+  const [newPayType, setNewPayType] = useState<PayType>('MONTHLY');
+  const [newPayCurrency, setNewPayCurrency] = useState('USD');
+  // Edit form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -758,21 +770,21 @@ export function UserManagementTab({ role }: { role: Role }) {
 
     try {
       const userData: any = { 
-        name, 
-        email, 
-        password, 
+        name: newName, 
+        email: newEmail, 
+        password: newPassword, 
         role,
-        mobile: mobile || undefined,
-        dateOfBirth: dateOfBirth || undefined,
-        address: address || undefined
+        mobile: newMobile || undefined,
+        dateOfBirth: newDateOfBirth || undefined,
+        address: newAddress || undefined
       };
 
       // Only add teacher-specific fields for teachers
       if (role === 'TEACHER') {
-        userData.qualification = qualification || undefined;
-        userData.payRate = payRate ? parseFloat(payRate) : undefined;
-        userData.payType = payType;
-        userData.payCurrency = payCurrency;
+        userData.qualification = newQualification || undefined;
+        userData.payRate = newPayRate ? parseFloat(newPayRate) : undefined;
+        userData.payType = newPayType;
+        userData.payCurrency = newPayCurrency;
       }
 
       const res = await fetch('/api/users/create', {
@@ -784,7 +796,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       if (res.ok) {
         setSuccess(`${role.toLowerCase()} created successfully!`);
         fetchUsers();
-        resetForm();
+        resetCreateForm();
       } else {
         const errorData = await res.json();
         setError(errorData.message || `Failed to create ${role.toLowerCase()}`);
@@ -796,7 +808,20 @@ export function UserManagementTab({ role }: { role: Role }) {
     }
   };
 
-  const resetForm = () => {
+  const resetCreateForm = () => {
+    setNewName('');
+    setNewEmail('');
+    setNewPassword('');
+    setNewMobile('');
+    setNewDateOfBirth('');
+    setNewAddress('');
+    setNewQualification('');
+    setNewPayRate('');
+    setNewPayType('MONTHLY');
+    setNewPayCurrency('USD');
+  };
+
+  const resetEditForm = () => {
     setName('');
     setEmail('');
     setPassword('');
@@ -808,6 +833,25 @@ export function UserManagementTab({ role }: { role: Role }) {
     setPayType('MONTHLY');
     setPayCurrency('USD');
     setActiveTab('basic');
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditingUser(null);
+    resetEditForm();
+    setStudentAssignments([]);
+    setStudentFees([]);
+    setParentAssociations([]);
+    setTeacherPayments([]);
+    setTeacherAdvances([]);
+    setRecordingPayment(false);
+    setCreatingAdvance(false);
+    setPaymentAmount('');
+    setPaymentDate('');
+    setPaymentDetails('');
+    setAdvancePrincipal('');
+    setAdvanceInstallments('');
+    setAdvanceDetails('');
   };
 
   const handleEditUser = (user: User) => {
@@ -990,8 +1034,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       if (res.ok) {
         setSuccess(`${role.toLowerCase()} updated successfully!`);
         fetchUsers();
-        setShowEditModal(false);
-        setEditingUser(null);
+        closeEditModal();
       } else {
         const errorData = await res.json();
         setError(errorData.message || `Failed to update ${role.toLowerCase()}`);
@@ -1048,8 +1091,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         setSuccess('User deleted successfully');
         fetchUsers();
         if (editingUser && editingUser.id === userId) {
-          setShowEditModal(false);
-          setEditingUser(null);
+          closeEditModal();
         }
       } else {
         const err = await res.json();
@@ -1082,8 +1124,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Form.Label>Full Name</Form.Label>
                   <Form.Control 
                     type="text" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
+                    value={newName} 
+                    onChange={(e) => setNewName(e.target.value)} 
                     required 
                     placeholder="Enter full name"
                     size="sm"
@@ -1093,8 +1135,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Form.Label>Email Address</Form.Label>
                   <Form.Control 
                     type="email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
+                    value={newEmail} 
+                    onChange={(e) => setNewEmail(e.target.value)} 
                     required 
                     placeholder="Enter email address"
                     size="sm"
@@ -1104,8 +1146,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Form.Label>Password</Form.Label>
                   <Form.Control 
                     type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
+                    value={newPassword} 
+                    onChange={(e) => setNewPassword(e.target.value)} 
                     required 
                     placeholder="Enter password"
                     minLength={6}
@@ -1116,8 +1158,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Form.Label>Mobile Number</Form.Label>
                   <Form.Control 
                     type="tel" 
-                    value={mobile} 
-                    onChange={(e) => setMobile(e.target.value)} 
+                    value={newMobile} 
+                    onChange={(e) => setNewMobile(e.target.value)} 
                     placeholder="Enter mobile number"
                     size="sm"
                   />
@@ -1127,8 +1169,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <Form.Label>Date of Birth</Form.Label>
                     <Form.Control 
                       type="date" 
-                      value={dateOfBirth} 
-                      onChange={(e) => setDateOfBirth(e.target.value)} 
+                      value={newDateOfBirth} 
+                      onChange={(e) => setNewDateOfBirth(e.target.value)} 
                       size="sm"
                     />
                   </Form.Group>
@@ -1138,8 +1180,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Form.Control 
                     as="textarea"
                     rows={2}
-                    value={address} 
-                    onChange={(e) => setAddress(e.target.value)} 
+                    value={newAddress} 
+                    onChange={(e) => setNewAddress(e.target.value)} 
                     placeholder="Enter address"
                     size="sm"
                   />
@@ -1152,8 +1194,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                       <Form.Label>Qualification</Form.Label>
                       <Form.Control 
                         type="text" 
-                        value={qualification} 
-                        onChange={(e) => setQualification(e.target.value)} 
+                        value={newQualification} 
+                        onChange={(e) => setNewQualification(e.target.value)} 
                         placeholder="Enter qualification"
                         size="sm"
                       />
@@ -1165,8 +1207,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                           <Form.Control 
                             type="number" 
                             step="0.01"
-                            value={payRate} 
-                            onChange={(e) => setPayRate(e.target.value)} 
+                            value={newPayRate} 
+                            onChange={(e) => setNewPayRate(e.target.value)} 
                             placeholder="0.00"
                             size="sm"
                           />
@@ -1176,8 +1218,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                         <Form.Group className="mb-3">
                           <Form.Label>Salary Type</Form.Label>
                           <Form.Select 
-                            value={payType}
-                            onChange={(e) => setPayType(e.target.value as PayType)}
+                            value={newPayType}
+                            onChange={(e) => setNewPayType(e.target.value as PayType)}
                             size="sm"
                           >
                             <option value="DAILY">Daily</option>
@@ -1191,8 +1233,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <Form.Group className="mb-3">
                       <Form.Label>Pay Currency</Form.Label>
                       <Form.Select 
-                        value={payCurrency}
-                        onChange={(e) => setPayCurrency(e.target.value)}
+                        value={newPayCurrency}
+                        onChange={(e) => setNewPayCurrency(e.target.value)}
                         size="sm"
                       >
                         {currencies.map(currency => (
@@ -1326,7 +1368,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       </Row>
 
       {/* Enhanced Edit User Modal with Tabs for Students and salary subform for teachers */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size={role === 'STUDENT' ? 'xl' : 'lg'}>
+      <Modal show={showEditModal} onHide={closeEditModal} size={role === 'STUDENT' ? 'xl' : 'lg'}>
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
@@ -1416,7 +1458,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Form.Text>
                   </Form.Group>
                   <div className="d-flex justify-content-end gap-2">
-                    <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                    <Button variant="secondary" onClick={closeEditModal}>
                       Cancel
                     </Button>
                     <Button
@@ -1606,7 +1648,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Form.Text>
                   </Form.Group>
                   <div className="d-flex justify-content-end gap-2">
-                    <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                    <Button variant="secondary" onClick={closeEditModal}>
                       Cancel
                     </Button>
                     <Button type="submit" variant="warning" disabled={editing}>
@@ -1827,7 +1869,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                 </Form.Text>
               </Form.Group>
               <div className="d-flex justify-content-end gap-2">
-                <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                <Button variant="secondary" onClick={closeEditModal}>
                   Cancel
                 </Button>
                 <Button
