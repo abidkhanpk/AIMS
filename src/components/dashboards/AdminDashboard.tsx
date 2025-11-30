@@ -3086,6 +3086,7 @@ export function SalaryManagementTab() {
   const [salaryAmount, setSalaryAmount] = useState('');
   const [salaryCurrency, setSalaryCurrency] = useState('USD');
   const [salaryDueDate, setSalaryDueDate] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Edit states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -3152,6 +3153,7 @@ export function SalaryManagementTab() {
         setSalaryAmount('');
         setSalaryCurrency('USD');
         setSalaryDueDate('');
+        setShowCreateForm(false);
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create salary');
@@ -3241,100 +3243,138 @@ export function SalaryManagementTab() {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Row className="g-4">
-        <Col lg={4}>
-          <Card className="h-100 shadow-sm">
-            <Card.Header className="bg-success text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-wallet2 me-2"></i>
-                Create New Salary
-              </h6>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleCreateSalary}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Select Teacher</Form.Label>
-                  <Form.Select 
-                    value={selectedTeacher}
-                    onChange={(e) => setSelectedTeacher(e.target.value)}
-                    required
-                    size="sm"
-                  >
-                    <option value="">Choose a teacher...</option>
-                    {teachers.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Salary Title</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    value={salaryTitle} 
-                    onChange={(e) => setSalaryTitle(e.target.value)} 
-                    required 
-                    placeholder="Enter salary title"
-                    size="sm"
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control 
-                    as="textarea" 
-                    rows={2} 
-                    value={salaryDescription} 
-                    onChange={(e) => setSalaryDescription(e.target.value)}
-                    placeholder="Optional description"
-                    size="sm"
-                  />
-                </Form.Group>
-                <Row>
-                  <Col xs={8}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Amount</Form.Label>
-                      <Form.Control 
-                        type="number" 
-                        step="0.01"
-                        value={salaryAmount} 
-                        onChange={(e) => setSalaryAmount(e.target.value)} 
-                        required 
-                        placeholder="0.00"
-                        size="sm"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col xs={4}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Currency</Form.Label>
-                      <Form.Select 
-                        value={salaryCurrency}
-                        onChange={(e) => setSalaryCurrency(e.target.value)}
-                        size="sm"
-                      >
-                        {currencies.map(currency => (
-                          <option key={currency.code} value={currency.code}>
-                            {currency.code} - {currency.name}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Form.Group className="mb-4">
-                  <Form.Label>Due Date</Form.Label>
-                  <Form.Control 
-                    type="date" 
-                    value={salaryDueDate} 
-                    onChange={(e) => setSalaryDueDate(e.target.value)} 
-                    required 
-                    size="sm"
-                  />
-                </Form.Group>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex align-items-center gap-2">
+          <i className="bi bi-cash-coin text-success"></i>
+          <h6 className="mb-0">Salary Management</h6>
+          <Badge bg="success">{salaries.length} Total</Badge>
+        </div>
+        <Button
+          size="sm"
+          variant={showCreateForm ? 'secondary' : 'success'}
+          onClick={() => setShowCreateForm((v) => !v)}
+        >
+          {showCreateForm ? 'Hide Form' : 'Add New Salary'}
+        </Button>
+      </div>
+
+      {showCreateForm && (
+        <Card className="shadow-sm mb-3">
+          <Card.Header className="bg-success text-white">
+            <h6 className="mb-0">
+              <i className="bi bi-wallet2 me-2"></i>
+              Create New Salary
+            </h6>
+          </Card.Header>
+          <Card.Body>
+            <Form onSubmit={handleCreateSalary}>
+              <Row className="g-3">
+                <Col md={4}>
+                  <Form.Group className="mb-0">
+                    <Form.Label>Select Teacher</Form.Label>
+                    <Form.Select 
+                      value={selectedTeacher}
+                      onChange={(e) => setSelectedTeacher(e.target.value)}
+                      required
+                      size="sm"
+                    >
+                      <option value="">Choose a teacher...</option>
+                      {teachers.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-0">
+                    <Form.Label>Salary Title</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      value={salaryTitle} 
+                      onChange={(e) => setSalaryTitle(e.target.value)} 
+                      required 
+                      placeholder="Enter salary title"
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-0">
+                    <Form.Label>Due Date</Form.Label>
+                    <Form.Control 
+                      type="date" 
+                      value={salaryDueDate} 
+                      onChange={(e) => setSalaryDueDate(e.target.value)} 
+                      required 
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-0">
+                    <Form.Label>Amount</Form.Label>
+                    <Form.Control 
+                      type="number" 
+                      step="0.01"
+                      value={salaryAmount} 
+                      onChange={(e) => setSalaryAmount(e.target.value)} 
+                      required 
+                      placeholder="0.00"
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-0">
+                    <Form.Label>Currency</Form.Label>
+                    <Form.Select 
+                      value={salaryCurrency}
+                      onChange={(e) => setSalaryCurrency(e.target.value)}
+                      size="sm"
+                    >
+                      {currencies.map(currency => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.code} - {currency.name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={12}>
+                  <Form.Group className="mb-0">
+                    <Form.Label>Description</Form.Label>
+                    <Form.Control 
+                      as="textarea" 
+                      rows={2} 
+                      value={salaryDescription} 
+                      onChange={(e) => setSalaryDescription(e.target.value)}
+                      placeholder="Optional description"
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <div className="d-flex justify-content-end gap-2 mt-3">
+                <Button
+                  variant="secondary"
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedTeacher('');
+                    setSalaryTitle('');
+                    setSalaryDescription('');
+                    setSalaryAmount('');
+                    setSalaryCurrency('USD');
+                    setSalaryDueDate('');
+                    setShowCreateForm(false);
+                  }}
+                >
+                  Cancel
+                </Button>
                 <Button 
                   variant="success" 
                   type="submit" 
                   disabled={creating}
-                  className="w-100"
                   size="sm"
                 >
                   {creating ? (
@@ -3349,71 +3389,69 @@ export function SalaryManagementTab() {
                     </>
                   )}
                 </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col lg={8}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-light">
-              <div className="d-flex justify-content-between align-items-center">
-                <h6 className="mb-0">
-                  <i className="bi bi-cash-coin me-2"></i>
-                  Salary Management
-                </h6>
-                <Badge bg="success">{salaries.length} Total</Badge>
               </div>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {loading ? (
-                <div className="text-center py-4">
-                  <Spinner animation="border" size="sm" />
-                  <p className="mt-2 text-muted small">Loading salaries...</p>
-                </div>
-              ) : salaries.length === 0 ? (
-                <div className="text-center py-4">
-                  <i className="bi bi-wallet2 display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">No salaries found</p>
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Teacher</th>
-                        <th>Title</th>
-                        <th>Amount</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                        <th>Paid By</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {salaries.map((salary) => (
-                        <tr key={salary.id}>
-                          <td className="fw-medium">{salary.teacher.name}</td>
-                          <td>{salary.title}</td>
-                          <td className="fw-bold text-success">
-                            {getCurrencySymbol(salary.currency)}{salary.amount.toFixed(2)}
-                          </td>
-                          <td className="text-muted small">
-                            {new Date(salary.dueDate).toLocaleDateString()}
-                          </td>
-                          <td>{getStatusBadge(salary.status)}</td>
-                          <td className="text-muted small">
-                            {salary.paidBy ? salary.paidBy.name : '-'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+            </Form>
+          </Card.Body>
+        </Card>
+      )}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">
+              <i className="bi bi-cash-coin me-2"></i>
+              Salary Management
+            </h6>
+            <Badge bg="success">{salaries.length} Total</Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" size="sm" />
+              <p className="mt-2 text-muted small">Loading salaries...</p>
+            </div>
+          ) : salaries.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-wallet2 display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">No salaries found</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Teacher</th>
+                    <th>Title</th>
+                    <th>Amount</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Paid By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {salaries.map((salary) => (
+                    <tr key={salary.id}>
+                      <td className="fw-medium">{salary.teacher.name}</td>
+                      <td>{salary.title}</td>
+                      <td className="fw-bold text-success">
+                        {getCurrencySymbol(salary.currency)}{salary.amount.toFixed(2)}
+                      </td>
+                      <td className="text-muted small">
+                        {new Date(salary.dueDate).toLocaleDateString()}
+                      </td>
+                      <td>{getStatusBadge(salary.status)}</td>
+                      <td className="text-muted small">
+                        {salary.paidBy ? salary.paidBy.name : '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
     </div>
   );
 }
