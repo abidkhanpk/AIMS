@@ -693,7 +693,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [newPayRate, setNewPayRate] = useState('');
   const [newPayType, setNewPayType] = useState<PayType>('MONTHLY');
   const [newPayCurrency, setNewPayCurrency] = useState('USD');
-  const [showCreateForm, setShowCreateForm] = useState(role !== 'TEACHER');
+  const [showCreateForm, setShowCreateForm] = useState(false);
   // Edit form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -737,6 +737,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [activeTab, setActiveTab] = useState('basic');
 
   const config = roleConfig[role as keyof typeof roleConfig];
+  const roleLabel = role.charAt(0) + role.slice(1).toLowerCase();
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -796,9 +797,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         setSuccess(`${role.toLowerCase()} created successfully!`);
         fetchUsers();
         resetCreateForm();
-        if (role === 'TEACHER') {
-          setShowCreateForm(false);
-        }
+        setShowCreateForm(false);
       } else {
         const errorData = await res.json();
         setError(errorData.message || `Failed to create ${role.toLowerCase()}`);
@@ -1397,190 +1396,229 @@ export function UserManagementTab({ role }: { role: Role }) {
           </Card>
         </>
       ) : (
-        <Row className="g-4">
-          <Col lg={4}>
-            <Card className="h-100 shadow-sm">
+        <>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="d-flex align-items-center gap-2">
+              <i className={`${config.icon} text-${config.color}`}></i>
+              <h6 className="mb-0">{config.title}</h6>
+              <Badge bg={config.color}>{users.length} Total</Badge>
+            </div>
+            <Button
+              size="sm"
+              variant={showCreateForm ? 'secondary' : config.color}
+              onClick={() => setShowCreateForm((v) => !v)}
+            >
+              {showCreateForm ? 'Hide Form' : `Add New ${role === 'STUDENT' ? 'Student' : role === 'PARENT' ? 'Parent' : roleLabel}`}
+            </Button>
+          </div>
+
+          {showCreateForm && (
+            <Card className="shadow-sm mb-3">
               <Card.Header className={`bg-${config.color} text-white`}>
                 <h6 className="mb-0">
                   <i className={`${config.icon} me-2`}></i>
-                  Create New {role.charAt(0) + role.slice(1).toLowerCase()}
+                  Create New {roleLabel}
                 </h6>
               </Card.Header>
               <Card.Body>
                 <Form onSubmit={handleCreateUser}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Full Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      required
-                      placeholder="Enter full name"
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Email Address</Form.Label>
-                    <Form.Control
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      required
-                      placeholder="Enter email address"
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Password</Form.Label>
-                    <Form.Control
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      placeholder="Enter password"
-                      minLength={6}
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Mobile Number</Form.Label>
-                    <Form.Control
-                      type="tel"
-                      value={newMobile}
-                      onChange={(e) => setNewMobile(e.target.value)}
-                      placeholder="Enter mobile number"
-                      size="sm"
-                    />
-                  </Form.Group>
-                  {role === 'STUDENT' && (
-                    <Form.Group className="mb-3">
-                      <Form.Label>Date of Birth</Form.Label>
-                      <Form.Control
-                        type="date"
-                        value={newDateOfBirth}
-                        onChange={(e) => setNewDateOfBirth(e.target.value)}
-                        size="sm"
-                      />
-                    </Form.Group>
-                  )}
-                  <Form.Group className="mb-3">
-                    <Form.Label>Address</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={2}
-                      value={newAddress}
-                      onChange={(e) => setNewAddress(e.target.value)}
-                      placeholder="Enter address"
-                      size="sm"
-                    />
-                  </Form.Group>
-
-                  <Button
-                    variant={config.color}
-                    type="submit"
-                    disabled={creating}
-                    className="w-100"
-                    size="sm"
-                  >
-                    {creating ? (
-                      <>
-                        <Spinner animation="border" size="sm" className="me-2" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-plus-circle me-2"></i>
-                        Create
-                      </>
+                  <Row className="g-3">
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Full Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          required
+                          placeholder="Enter full name"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Email Address</Form.Label>
+                        <Form.Control
+                          type="email"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          required
+                          placeholder="Enter email address"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          required
+                          placeholder="Enter password"
+                          minLength={6}
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Control
+                          type="tel"
+                          value={newMobile}
+                          onChange={(e) => setNewMobile(e.target.value)}
+                          placeholder="Enter mobile number"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    {role === 'STUDENT' && (
+                      <Col md={4}>
+                        <Form.Group className="mb-0">
+                          <Form.Label>Date of Birth</Form.Label>
+                          <Form.Control
+                            type="date"
+                            value={newDateOfBirth}
+                            onChange={(e) => setNewDateOfBirth(e.target.value)}
+                            size="sm"
+                          />
+                        </Form.Group>
+                      </Col>
                     )}
-                  </Button>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Address</Form.Label>
+                        <Form.Control
+                          as="textarea"
+                          rows={2}
+                          value={newAddress}
+                          onChange={(e) => setNewAddress(e.target.value)}
+                          placeholder="Enter address"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+
+                  <div className="d-flex justify-content-end gap-2 mt-3">
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        resetCreateForm();
+                        setShowCreateForm(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant={config.color}
+                      type="submit"
+                      disabled={creating}
+                      size="sm"
+                    >
+                      {creating ? (
+                        <>
+                          <Spinner animation="border" size="sm" className="me-2" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-plus-circle me-2"></i>
+                          Create
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </Form>
               </Card.Body>
             </Card>
-          </Col>
+          )}
 
-          <Col lg={8}>
-            <Card className="shadow-sm">
-              <Card.Header className="bg-light">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h6 className="mb-0">
-                    <i className={`${config.icon} me-2`}></i>
-                    {config.title}
-                  </h6>
-                  <Badge bg={config.color}>{users.length} Total</Badge>
+          <Card className="shadow-sm">
+            <Card.Header className="bg-light">
+              <div className="d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">
+                  <i className={`${config.icon} me-2`}></i>
+                  {config.title}
+                </h6>
+                <Badge bg={config.color}>{users.length} Total</Badge>
+              </div>
+            </Card.Header>
+            <Card.Body className="p-0">
+              {loading ? (
+                <div className="text-center py-4">
+                  <Spinner animation="border" size="sm" />
+                  <p className="mt-2 text-muted small">Loading {config.title.toLowerCase()}...</p>
                 </div>
-              </Card.Header>
-              <Card.Body className="p-0">
-                {loading ? (
-                  <div className="text-center py-4">
-                    <Spinner animation="border" size="sm" />
-                    <p className="mt-2 text-muted small">Loading {config.title.toLowerCase()}...</p>
-                  </div>
-                ) : users.length === 0 ? (
-                  <div className="text-center py-4">
-                    <i className={`${config.icon} display-6 text-muted`}></i>
-                    <p className="mt-2 text-muted small">No {config.title.toLowerCase()} found</p>
-                  </div>
-                ) : (
-                  <div className="table-responsive">
-                    <Table hover size="sm" className="mb-0">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Mobile</th>
+              ) : users.length === 0 ? (
+                <div className="text-center py-4">
+                  <i className={`${config.icon} display-6 text-muted`}></i>
+                  <p className="mt-2 text-muted small">No {config.title.toLowerCase()} found</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <Table hover size="sm" className="mb-0">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
                         <th>Created</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                        {users.map((user) => (
-                          <tr key={user.id}>
-                            <td className="fw-medium">{user.name}</td>
-                            <td className="text-muted">{user.email}</td>
-                            <td className="text-muted">{user.mobile || '-'}</td>
-                            <td className="text-muted small">
-                              {new Date(user.createdAt).toLocaleDateString()}
-                            </td>
-                            <td>
-                              <div className="d-flex gap-1">
-                                <Button
-                                  variant="outline-info"
-                                  size="sm"
-                                  onClick={() => handleViewDetails(user)}
-                                  title="View Details"
-                                >
-                                  <i className="bi bi-eye"></i>
-                                </Button>
-                                <Button
-                                  variant="outline-warning"
-                                  size="sm"
-                                  onClick={() => handleEditUser(user)}
-                                  title="Edit User"
-                                >
-                                  <i className="bi bi-pencil"></i>
-                                </Button>
-                                <Button
-                                  variant="outline-danger"
-                                  size="sm"
-                                  onClick={() => handleDeleteUser(user.id)}
-                                  title="Delete User"
-                                  disabled={deletingId === user.id}
-                                >
-                                  <i className="bi bi-trash"></i>
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+                      {users.map((user) => (
+                        <tr key={user.id}>
+                          <td className="fw-medium">{user.name}</td>
+                          <td className="text-muted">{user.email}</td>
+                          <td className="text-muted">{user.mobile || '-'}</td>
+                          <td className="text-muted small">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </td>
+                          <td>
+                            <div className="d-flex gap-1">
+                              <Button
+                                variant="outline-info"
+                                size="sm"
+                                onClick={() => handleViewDetails(user)}
+                                title="View Details"
+                              >
+                                <i className="bi bi-eye"></i>
+                              </Button>
+                              <Button
+                                variant="outline-warning"
+                                size="sm"
+                                onClick={() => handleEditUser(user)}
+                                title="Edit User"
+                              >
+                                <i className="bi bi-pencil"></i>
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() => handleDeleteUser(user.id)}
+                                title="Delete User"
+                                disabled={deletingId === user.id}
+                              >
+                                <i className="bi bi-trash"></i>
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </Card.Body>
+          </Card>
+        </>
       )}
 
       {/* Enhanced Edit User Modal with Tabs for Students and salary subform for teachers */}
@@ -1588,7 +1626,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
-            Edit {role.charAt(0) + role.slice(1).toLowerCase()}
+            Edit {roleLabel}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -2115,7 +2153,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       <DetailViewModal
         show={showDetailModal}
         onHide={() => setShowDetailModal(false)}
-        title={`${role.charAt(0) + role.slice(1).toLowerCase()} Details`}
+        title={`${roleLabel} Details`}
         data={detailData}
       />
     </div>
