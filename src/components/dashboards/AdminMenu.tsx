@@ -56,24 +56,37 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
 
   useEffect(() => {
     // Keep parent group open when a child is active
-    const defaults: Record<string, boolean> = {};
-    menuItems.forEach((item) => {
-      if (item.children?.some((child) => child.key === activeKey)) {
-        defaults[item.key] = true;
-      }
+    setOpenGroups((prev) => {
+      const defaults: Record<string, boolean> = {};
+      menuItems.forEach((item) => {
+        if (item.children?.some((child) => child.key === activeKey) && typeof prev[item.key] !== 'boolean') {
+          defaults[item.key] = true;
+        }
+      });
+      return Object.keys(defaults).length ? { ...prev, ...defaults } : prev;
     });
-    setOpenGroups((prev) => ({ ...prev, ...defaults }));
   }, [activeKey]);
 
   const renderMenuItem = (item: MenuItem, isChild = false) => {
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
     const childActive = item.children?.some((child) => child.key === activeKey);
     const isActive = activeKey === item.key || childActive;
-    const expanded = hasChildren && (openGroups[item.key] ?? childActive);
+    const explicit = openGroups[item.key];
+    const expanded = hasChildren && (typeof explicit === 'boolean' ? explicit : childActive);
 
     const handleClick = () => {
       if (hasChildren) {
-        setOpenGroups({ [item.key]: !expanded });
+        setOpenGroups((prev) => {
+          const next: Record<string, boolean> = {};
+          menuItems.forEach((m) => {
+            if (m.children?.length) {
+              next[m.key] = false;
+            }
+          });
+          const current = typeof prev[item.key] === 'boolean' ? prev[item.key] : childActive;
+          next[item.key] = !current;
+          return next;
+        });
         return;
       }
       onSelect(item.key);
