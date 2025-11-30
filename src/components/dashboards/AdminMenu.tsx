@@ -34,6 +34,20 @@ const menuItems: MenuItem[] = [
       { key: 'fee-verification', label: 'Fee Verification', icon: 'bi-check-circle' },
     ],
   },
+  {
+    key: 'parent-remarks',
+    label: 'Parent Remarks',
+    icon: 'bi-chat-dots',
+  },
+  {
+    key: 'academic',
+    label: 'Academic',
+    icon: 'bi-mortarboard',
+    children: [
+      { key: 'progress', label: 'Progress', icon: 'bi-graph-up' },
+      { key: 'tests', label: 'Tests & Exams', icon: 'bi-journal-check' },
+    ],
+  },
 ];
 
 export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; onSelect: (key: string) => void }) {

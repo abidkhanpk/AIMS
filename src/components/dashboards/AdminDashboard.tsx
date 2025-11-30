@@ -3164,7 +3164,7 @@ function SalaryManagementTab() {
   );
 }
 
-function ProgressTab() {
+export function ProgressTab() {
   const [progress, setProgress] = useState<Progress[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -3312,7 +3312,7 @@ function ProgressTab() {
   );
 }
 
-function RemarksTab() {
+export function RemarksTab() {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const [remarks, setRemarks] = useState<any[]>([]);
@@ -3565,7 +3565,7 @@ function RemarksTab() {
     </div>
   );
 }
-function TestsTab() {
+export function TestsTab() {
   const [records, setRecords] = useState<AdminTestRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -3683,7 +3683,7 @@ function TestsTab() {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const disallowedTabs = new Set(['teachers', 'parents', 'students']);
+  const disallowedTabs = new Set(['teachers', 'parents', 'students', 'progress', 'tests', 'remarks', 'parent-remarks']);
   const initialTab = typeof router.query.tab === 'string' && !disallowedTabs.has(router.query.tab)
     ? router.query.tab
     : 'home';
@@ -3706,16 +3706,18 @@ export default function AdminDashboard() {
 
   const handleSelect = (key?: string | null) => {
     const next = key || 'subjects';
-    if (next === 'teachers') {
-      router.push('/dashboard/teachers');
-      return;
-    }
-    if (next === 'parents') {
-      router.push('/dashboard/parents');
-      return;
-    }
-    if (next === 'students') {
-      router.push('/dashboard/students');
+    const routeMap: Record<string, string> = {
+      teachers: '/dashboard/teachers',
+      parents: '/dashboard/parents',
+      students: '/dashboard/students',
+      progress: '/dashboard/progress',
+      tests: '/dashboard/tests',
+      remarks: '/dashboard/parent-remarks',
+      'parent-remarks': '/dashboard/parent-remarks',
+    };
+
+    if (routeMap[next]) {
+      router.push(routeMap[next]);
       return;
     }
     setActiveTab(next);
@@ -3823,41 +3825,6 @@ export default function AdminDashboard() {
                   <SalaryManagementTab />
                 </Tab>
                 
-                <Tab 
-                  eventKey="progress" 
-                  title={
-                    <span>
-                      <i className="bi bi-graph-up me-2"></i>
-                      Progress
-                    </span>
-                  }
-                >
-                  <ProgressTab />
-                </Tab>
-                
-                <Tab 
-                  eventKey="tests" 
-                  title={
-                    <span>
-                      <i className="bi bi-journal-check me-2"></i>
-                      Tests & Exams
-                    </span>
-                  }
-                >
-                  <TestsTab />
-                </Tab>
-
-                <Tab 
-                  eventKey="remarks" 
-                  title={
-                    <span>
-                      <i className="bi bi-chat-dots me-2"></i>
-                      Remarks
-                    </span>
-                  }
-                >
-                  <RemarksTab />
-                </Tab>
               </Tabs>
             )}
           </div>
