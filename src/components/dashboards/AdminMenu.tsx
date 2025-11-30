@@ -26,20 +26,6 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    key: 'financials',
-    label: 'Financials',
-    icon: 'bi-cash-stack',
-    children: [
-      { key: 'fees', label: 'Fee', icon: 'bi-cash-coin' },
-      { key: 'fee-verification', label: 'Fee Verification', icon: 'bi-check-circle' },
-    ],
-  },
-  {
-    key: 'parent-remarks',
-    label: 'Parent Remarks',
-    icon: 'bi-chat-dots',
-  },
-  {
     key: 'academic',
     label: 'Academic',
     icon: 'bi-mortarboard',
@@ -47,6 +33,21 @@ const menuItems: MenuItem[] = [
       { key: 'progress', label: 'Progress', icon: 'bi-graph-up' },
       { key: 'tests', label: 'Tests & Exams', icon: 'bi-journal-check' },
     ],
+  },
+  {
+    key: 'financials',
+    label: 'Financials',
+    icon: 'bi-cash-stack',
+    children: [
+      { key: 'fees', label: 'Fee', icon: 'bi-cash-coin' },
+      { key: 'fee-verification', label: 'Fee Verification', icon: 'bi-check-circle' },
+      { key: 'salaries', label: 'Salaries', icon: 'bi-wallet2' },
+    ],
+  },
+  {
+    key: 'parent-remarks',
+    label: 'Parent Remarks',
+    icon: 'bi-chat-dots',
   },
 ];
 

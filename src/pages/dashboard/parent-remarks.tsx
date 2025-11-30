@@ -38,6 +38,9 @@ export default function AdminParentRemarksPage() {
       students: '/dashboard/students',
       progress: '/dashboard/progress',
       tests: '/dashboard/tests',
+      fees: '/dashboard/fees',
+      'fee-verification': '/dashboard/fee-verification',
+      salaries: '/dashboard/salaries',
     };
     router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };

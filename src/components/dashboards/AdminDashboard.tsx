@@ -1,11 +1,9 @@
-import FeeVerificationTab from './FeeVerificationTab';
 import FeeSubform from './FeeSubform';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ParentAssociationSubform from '../ParentAssociationSubform';
 import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, Modal, InputGroup } from 'react-bootstrap';
 import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType, AssessmentType } from '@prisma/client';
 import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timezones';
-import FeeManagementTab from './FeeManagementTab';
 import AdminSubscriptionTab from './AdminSubscriptionTab';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
@@ -2816,7 +2814,7 @@ function AssignmentsTab() {
   );
 }
 
-function SalaryManagementTab() {
+export function SalaryManagementTab() {
   const [salaries, setSalaries] = useState<Salary[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -3683,7 +3681,18 @@ export function TestsTab() {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const disallowedTabs = new Set(['teachers', 'parents', 'students', 'progress', 'tests', 'remarks', 'parent-remarks']);
+  const disallowedTabs = new Set([
+    'teachers',
+    'parents',
+    'students',
+    'progress',
+    'tests',
+    'remarks',
+    'parent-remarks',
+    'fees',
+    'fee-verification',
+    'salaries',
+  ]);
   const initialTab = typeof router.query.tab === 'string' && !disallowedTabs.has(router.query.tab)
     ? router.query.tab
     : 'home';
@@ -3714,6 +3723,9 @@ export default function AdminDashboard() {
       tests: '/dashboard/tests',
       remarks: '/dashboard/parent-remarks',
       'parent-remarks': '/dashboard/parent-remarks',
+      fees: '/dashboard/fees',
+      'fee-verification': '/dashboard/fee-verification',
+      salaries: '/dashboard/salaries',
     };
 
     if (routeMap[next]) {
@@ -3746,11 +3758,11 @@ export default function AdminDashboard() {
                 <h3 className="h5 mb-2">Welcome to the Admin dashboard</h3>
                 <p className="text-muted mb-3">Use the menu to jump into each workflow.</p>
                 <div className={`d-flex flex-wrap ${menuStyles.homeActions}`}>
-                  <Button variant="dark" size="sm" onClick={() => setActiveTab('fees')}>
+                  <Button variant="dark" size="sm" onClick={() => handleSelect('fees')}>
                     <i className="bi bi-cash-coin me-1"></i>
                     Fee
                   </Button>
-                  <Button variant="dark" size="sm" onClick={() => setActiveTab('fee-verification')}>
+                  <Button variant="dark" size="sm" onClick={() => handleSelect('fee-verification')}>
                     <i className="bi bi-check-circle me-1"></i>
                     Fee Verification
                   </Button>
@@ -3787,42 +3799,6 @@ export default function AdminDashboard() {
                   }
                 >
                   <AssignmentsTab />
-                </Tab>
-                
-                <Tab 
-                  eventKey="fees" 
-                  title={
-                    <span>
-                      <i className="bi bi-cash-coin me-2"></i>
-                      Fees
-                    </span>
-                  }
-                >
-                  <FeeManagementTab />
-                </Tab>
-                
-                <Tab 
-                  eventKey="fee-verification" 
-                  title={
-                    <span>
-                      <i className="bi bi-check-circle me-2"></i>
-                      Fee Verification
-                    </span>
-                  }
-                >
-                  <FeeVerificationTab />
-                </Tab>
-                
-                <Tab 
-                  eventKey="salaries" 
-                  title={
-                    <span>
-                      <i className="bi bi-wallet2 me-2"></i>
-                      Salaries
-                    </span>
-                  }
-                >
-                  <SalaryManagementTab />
                 </Tab>
                 
               </Tabs>

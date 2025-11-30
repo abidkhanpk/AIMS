@@ -40,6 +40,9 @@ export default function AdminTestsPage() {
       remarks: '/dashboard/parent-remarks',
       progress: '/dashboard/progress',
       tests: '/dashboard/tests',
+      fees: '/dashboard/fees',
+      'fee-verification': '/dashboard/fee-verification',
+      salaries: '/dashboard/salaries',
     };
     router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };
