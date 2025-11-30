@@ -74,12 +74,9 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
     const handleClick = () => {
       if (hasChildren) {
         setOpenGroups({ [item.key]: !expanded });
-        if (!expanded) {
-          onSelect(item.children?.[0]?.key || item.key);
-        }
-      } else {
-        onSelect(item.key);
+        return;
       }
+      onSelect(item.key);
     };
 
     return (
