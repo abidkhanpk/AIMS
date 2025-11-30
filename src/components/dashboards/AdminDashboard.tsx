@@ -8,6 +8,7 @@ import { timezones, getTimezonesByRegion, findTimezone } from '../../utils/timez
 import FeeManagementTab from './FeeManagementTab';
 import AdminSubscriptionTab from './AdminSubscriptionTab';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import RemarkThreadModal from '../remarks/RemarkThreadModal';
 import DirectMessageModal from '../messages/DirectMessageModal';
 import AdminMenu from './AdminMenu';
@@ -678,7 +679,7 @@ function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: nu
   );
 }
 
-function UserManagementTab({ role }: { role: Role }) {
+export function UserManagementTab({ role }: { role: Role }) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -3639,14 +3640,51 @@ function TestsTab() {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('home');
+  const router = useRouter();
+  const disallowedTabs = new Set(['teachers', 'parents', 'students']);
+  const initialTab = typeof router.query.tab === 'string' && !disallowedTabs.has(router.query.tab)
+    ? router.query.tab
+    : 'home';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const showHome = activeTab === 'home';
-  const tabActiveKey = showHome ? 'teachers' : activeTab;
+  const tabActiveKey = showHome ? 'subjects' : activeTab;
+
+  useEffect(() => {
+    const qTab = router.query.tab;
+    if (typeof qTab === 'string') {
+      if (disallowedTabs.has(qTab)) {
+        router.push(`/dashboard/${qTab}`);
+        return;
+      }
+      if (qTab !== activeTab) {
+        setActiveTab(qTab);
+      }
+    }
+  }, [router.query.tab, activeTab]);
+
+  const handleSelect = (key?: string | null) => {
+    const next = key || 'subjects';
+    if (next === 'teachers') {
+      router.push('/dashboard/teachers');
+      return;
+    }
+    if (next === 'parents') {
+      router.push('/dashboard/parents');
+      return;
+    }
+    if (next === 'students') {
+      router.push('/dashboard/students');
+      return;
+    }
+    setActiveTab(next);
+    const query = next === 'home' ? {} : { tab: next };
+    router.replace({ pathname: '/dashboard', query }, undefined, { shallow: true });
+  };
 
   return (
     <div className={menuStyles.menuShell}>
       <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey={activeTab} onSelect={setActiveTab} />
+        <AdminMenu activeKey={activeTab} onSelect={(key) => handleSelect(key)} />
         <div className={menuStyles.mainContent}>
           <div className="container-fluid py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -3664,18 +3702,6 @@ export default function AdminDashboard() {
                 <h3 className="h5 mb-2">Welcome to the Admin dashboard</h3>
                 <p className="text-muted mb-3">Use the menu to jump into each workflow.</p>
                 <div className={`d-flex flex-wrap ${menuStyles.homeActions}`}>
-                  <Button variant="dark" size="sm" onClick={() => setActiveTab('teachers')}>
-                    <i className="bi bi-person-workspace me-1"></i>
-                    Teachers
-                  </Button>
-                  <Button variant="dark" size="sm" onClick={() => setActiveTab('parents')}>
-                    <i className="bi bi-people me-1"></i>
-                    Relatives
-                  </Button>
-                  <Button variant="dark" size="sm" onClick={() => setActiveTab('students')}>
-                    <i className="bi bi-mortarboard me-1"></i>
-                    Students
-                  </Button>
                   <Button variant="dark" size="sm" onClick={() => setActiveTab('fees')}>
                     <i className="bi bi-cash-coin me-1"></i>
                     Fee
@@ -3687,50 +3713,13 @@ export default function AdminDashboard() {
                 </div>
               </div>
             ) : (
-              <Tabs 
+              <Tabs
                 id="admin-dashboard-tabs"
-                activeKey={tabActiveKey} 
-                onSelect={(k) => setActiveTab(k || 'teachers')} 
+                activeKey={tabActiveKey}
+                onSelect={(k) => handleSelect(k)}
                 className={`${menuStyles.hiddenTabsNav} mb-4`}
                 variant="pills"
               >
-                <Tab 
-                  eventKey="teachers" 
-                  title={
-                    <span>
-                      <i className="bi bi-person-workspace me-2"></i>
-                      Teachers
-                    </span>
-                  }
-                >
-                  <UserManagementTab role="TEACHER" />
-                </Tab>
-                
-                <Tab 
-                  eventKey="parents" 
-                  title={
-                    <span>
-                      <i className="bi bi-people me-2"></i>
-                      Parents
-                    </span>
-                  }
-                >
-                  <UserManagementTab role="PARENT" />
-                </Tab>
-                
-                <Tab 
-                  eventKey="students" 
-                  title={
-                    <span>
-                      <i className="bi bi-mortarboard me-2"></i>
-                      Students
-                    </span>
-                  }
-                >
-                  <UserManagementTab role="STUDENT" />
-                </Tab>
-                
-                
                 
                 <Tab 
                   eventKey="subjects" 
