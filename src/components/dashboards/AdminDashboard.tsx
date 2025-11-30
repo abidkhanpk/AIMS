@@ -1137,83 +1137,84 @@ export function UserManagementTab({ role }: { role: Role }) {
               </Card.Header>
               <Card.Body>
                 <Form onSubmit={handleCreateUser}>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Full Name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      required
-                      placeholder="Enter full name"
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Email Address</Form.Label>
-                    <Form.Control
-                      type="email"
-                      value={newEmail}
-                      onChange={(e) => setNewEmail(e.target.value)}
-                      required
-                      placeholder="Enter email address"
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Password</Form.Label>
-                    <Form.Control
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      required
-                      placeholder="Enter password"
-                      minLength={6}
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Mobile Number</Form.Label>
-                    <Form.Control
-                      type="tel"
-                      value={newMobile}
-                      onChange={(e) => setNewMobile(e.target.value)}
-                      placeholder="Enter mobile number"
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Date of Birth</Form.Label>
-                    <Form.Control
-                      type="date"
-                      value={newDateOfBirth}
-                      onChange={(e) => setNewDateOfBirth(e.target.value)}
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Address</Form.Label>
-                    <Form.Control
-                      as="textarea"
-                      rows={2}
-                      value={newAddress}
-                      onChange={(e) => setNewAddress(e.target.value)}
-                      placeholder="Enter address"
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Qualification</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={newQualification}
-                      onChange={(e) => setNewQualification(e.target.value)}
-                      placeholder="Enter qualification"
-                      size="sm"
-                    />
-                  </Form.Group>
-                  <Row>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
+                  <Row className="g-3">
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Full Name</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={newName}
+                          onChange={(e) => setNewName(e.target.value)}
+                          required
+                          placeholder="Enter full name"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Email Address</Form.Label>
+                        <Form.Control
+                          type="email"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          required
+                          placeholder="Enter email address"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          required
+                          placeholder="Enter password"
+                          minLength={6}
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Control
+                          type="tel"
+                          value={newMobile}
+                          onChange={(e) => setNewMobile(e.target.value)}
+                          placeholder="Enter mobile number"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Date of Birth</Form.Label>
+                        <Form.Control
+                          type="date"
+                          value={newDateOfBirth}
+                          onChange={(e) => setNewDateOfBirth(e.target.value)}
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Qualification</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={newQualification}
+                          onChange={(e) => setNewQualification(e.target.value)}
+                          placeholder="Enter qualification"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
                         <Form.Label>Pay Rate</Form.Label>
                         <Form.Control
                           type="number"
@@ -1225,8 +1226,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                         />
                       </Form.Group>
                     </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
                         <Form.Label>Salary Type</Form.Label>
                         <Form.Select
                           value={newPayType}
@@ -1240,21 +1241,36 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Form.Select>
                       </Form.Group>
                     </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Pay Currency</Form.Label>
+                        <Form.Select
+                          value={newPayCurrency}
+                          onChange={(e) => setNewPayCurrency(e.target.value)}
+                          size="sm"
+                        >
+                          {currencies.map((currency) => (
+                            <option key={currency.code} value={currency.code}>
+                              {currency.code} - {currency.name}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={12}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Address</Form.Label>
+                        <Form.Control
+                          as="textarea"
+                          rows={2}
+                          value={newAddress}
+                          onChange={(e) => setNewAddress(e.target.value)}
+                          placeholder="Enter address"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
                   </Row>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Pay Currency</Form.Label>
-                    <Form.Select
-                      value={newPayCurrency}
-                      onChange={(e) => setNewPayCurrency(e.target.value)}
-                      size="sm"
-                    >
-                      {currencies.map((currency) => (
-                        <option key={currency.code} value={currency.code}>
-                          {currency.code} - {currency.name}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
                   <div className="d-flex justify-content-end gap-2">
                     <Button
                       variant="secondary"
