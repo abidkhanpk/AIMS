@@ -322,7 +322,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="d-flex align-items-center">
+            <Nav className="d-flex align-items-center ms-auto">
               {status === 'authenticated' && user && (
                 <>
                   <div className="me-2 position-relative">
