@@ -3993,6 +3993,20 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const showHome = activeTab === 'home';
   const tabActiveKey = showHome ? 'subjects' : activeTab;
+  const [homeLoading, setHomeLoading] = useState(false);
+  const [homeError, setHomeError] = useState('');
+  const [homeSnapshot, setHomeSnapshot] = useState<{
+    counts: { students: number; teachers: number; parents: number };
+    fees: { total: number; pending: number; overdue: number; paid: number };
+    salaries: { pending: number; paid: number };
+    progress: {
+      records: number;
+      avgLessonProgress: number;
+      recent: Progress[];
+      topTeachers: Array<{ name: string; avg: number; count: number }>;
+    };
+    remarks: { total: number };
+  } | null>(null);
 
   useEffect(() => {
     const qTab = router.query.tab;
@@ -4006,6 +4020,109 @@ export default function AdminDashboard() {
       }
     }
   }, [router.query.tab, activeTab]);
+
+  const fetchHomeSnapshot = useCallback(async () => {
+    try {
+      setHomeLoading(true);
+      setHomeError('');
+      const [studentsRes, teachersRes, parentsRes, feesRes, salariesRes, progressRes, remarksRes] = await Promise.all([
+        fetch('/api/users?role=STUDENT'),
+        fetch('/api/users?role=TEACHER'),
+        fetch('/api/users?role=PARENT'),
+        fetch('/api/fees'),
+        fetch('/api/salaries'),
+        fetch('/api/progress'),
+        fetch('/api/remarks'),
+      ]);
+
+      const students = studentsRes.ok ? await studentsRes.json() : [];
+      const teachers = teachersRes.ok ? await teachersRes.json() : [];
+      const parents = parentsRes.ok ? await parentsRes.json() : [];
+      const fees = feesRes.ok ? await feesRes.json() : [];
+      const salaries = salariesRes.ok ? await salariesRes.json() : [];
+      const progressData: Progress[] = progressRes.ok ? await progressRes.json() : [];
+      const remarks = remarksRes.ok ? await remarksRes.json() : [];
+
+      const feeTotals = fees.reduce(
+        (acc: { total: number; pending: number; overdue: number; paid: number }, fee: any) => {
+          const amount = Number(fee.amount) || 0;
+          acc.total += amount;
+          if (fee.status === 'PAID') acc.paid += amount;
+          else if (fee.status === 'OVERDUE') acc.overdue += amount;
+          else acc.pending += amount;
+          return acc;
+        },
+        { total: 0, pending: 0, overdue: 0, paid: 0 }
+      );
+
+      const salaryTotals = salaries.reduce(
+        (acc: { pending: number; paid: number }, salary: any) => {
+          const amount = Number(salary.amount) || 0;
+          if (salary.status === 'PAID') acc.paid += amount;
+          else acc.pending += amount;
+          return acc;
+        },
+        { pending: 0, paid: 0 }
+      );
+
+      const lessonProgressValues = progressData
+        .map((p) => p.lessonProgress)
+        .filter((p): p is number => typeof p === 'number');
+      const avgLessonProgress =
+        lessonProgressValues.length > 0
+          ? Math.round(
+              lessonProgressValues.reduce((sum, val) => sum + val, 0) / lessonProgressValues.length
+            )
+          : 0;
+
+      const recentProgress = [...progressData]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
+
+      const teacherProgressMap: Record<string, { total: number; count: number }> = {};
+      progressData.forEach((p) => {
+        const name = p.teacher?.name || 'Unknown';
+        if (!teacherProgressMap[name]) {
+          teacherProgressMap[name] = { total: 0, count: 0 };
+        }
+        if (typeof p.lessonProgress === 'number') {
+          teacherProgressMap[name].total += p.lessonProgress;
+          teacherProgressMap[name].count += 1;
+        }
+      });
+      const topTeachers = Object.entries(teacherProgressMap)
+        .map(([name, data]) => ({
+          name,
+          avg: data.count ? Math.round(data.total / data.count) : 0,
+          count: data.count,
+        }))
+        .sort((a, b) => b.avg - a.avg)
+        .slice(0, 4);
+
+      setHomeSnapshot({
+        counts: { students: students.length, teachers: teachers.length, parents: parents.length },
+        fees: feeTotals,
+        salaries: salaryTotals,
+        progress: {
+          records: progressData.length,
+          avgLessonProgress,
+          recent: recentProgress,
+          topTeachers,
+        },
+        remarks: { total: Array.isArray(remarks) ? remarks.length : 0 },
+      });
+    } catch (err) {
+      setHomeError('Failed to load dashboard overview');
+    } finally {
+      setHomeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showHome) {
+      fetchHomeSnapshot();
+    }
+  }, [showHome, fetchHomeSnapshot]);
 
   const handleSelect = (key?: string | null) => {
     const next = key || 'subjects';
@@ -4048,19 +4165,356 @@ export default function AdminDashboard() {
             </div>
 
             {showHome ? (
-              <div className={`${menuStyles.homePanel} p-4`}>
-                <h3 className="h5 mb-2">Welcome to the Admin dashboard</h3>
-                <p className="text-muted mb-3">Use the menu to jump into each workflow.</p>
-                <div className={`d-flex flex-wrap ${menuStyles.homeActions}`}>
-                  <Button variant="dark" size="sm" onClick={() => handleSelect('fees')}>
-                    <i className="bi bi-cash-coin me-1"></i>
-                    Fee
-                  </Button>
-                  <Button variant="dark" size="sm" onClick={() => handleSelect('fee-verification')}>
-                    <i className="bi bi-check-circle me-1"></i>
-                    Fee Verification
-                  </Button>
+              <div className={`${menuStyles.homePanel} p-3 p-md-4`}>
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <div>
+                    <h3 className="h5 mb-1">Overview</h3>
+                    <p className="text-muted mb-0">Quick health check of students, fees, teachers, and progress.</p>
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <Button variant="outline-secondary" size="sm" onClick={fetchHomeSnapshot} disabled={homeLoading}>
+                      <i className="bi bi-arrow-repeat me-1"></i>
+                      Refresh
+                    </Button>
+                    <Button variant="primary" size="sm" onClick={() => handleSelect('fees')}>
+                      <i className="bi bi-rocket-takeoff me-1"></i>
+                      Go to Fees
+                    </Button>
+                  </div>
                 </div>
+
+                {homeError && (
+                  <Alert variant="danger" className="mb-3" dismissible onClose={() => setHomeError('')}>
+                    {homeError}
+                  </Alert>
+                )}
+
+                {homeLoading || !homeSnapshot ? (
+                  <div className="text-center py-5">
+                    <Spinner animation="border" />
+                    <p className="text-muted mt-2 mb-0">Loading overview...</p>
+                  </div>
+                ) : (
+                  <>
+                    <Row className="g-3 mb-3">
+                      <Col md={3} sm={6}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Body>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <p className="text-muted mb-1 small">Students</p>
+                                <h3 className="mb-0">{homeSnapshot.counts.students}</h3>
+                              </div>
+                              <span className="badge bg-primary-subtle text-primary">
+                                <i className="bi bi-mortarboard-fill"></i>
+                              </span>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Body>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <p className="text-muted mb-1 small">Teachers</p>
+                                <h3 className="mb-0">{homeSnapshot.counts.teachers}</h3>
+                              </div>
+                              <span className="badge bg-success-subtle text-success">
+                                <i className="bi bi-person-workspace"></i>
+                              </span>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Body>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <p className="text-muted mb-1 small">Parents</p>
+                                <h3 className="mb-0">{homeSnapshot.counts.parents}</h3>
+                              </div>
+                              <span className="badge bg-info-subtle text-info">
+                                <i className="bi bi-people-fill"></i>
+                              </span>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                      <Col md={3} sm={6}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Body>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <p className="text-muted mb-1 small">Avg Lesson Progress</p>
+                                <h3 className="mb-0">{homeSnapshot.progress.avgLessonProgress}%</h3>
+                              </div>
+                              <span className="badge bg-warning-subtle text-warning">
+                                <i className="bi bi-graph-up-arrow"></i>
+                              </span>
+                            </div>
+                            <div className="progress mt-3" style={{ height: '6px' }}>
+                              <div
+                                className="progress-bar bg-warning"
+                                style={{ width: `${homeSnapshot.progress.avgLessonProgress}%` }}
+                                role="progressbar"
+                                aria-valuenow={homeSnapshot.progress.avgLessonProgress}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                              ></div>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+
+                    <Row className="g-3 mb-3">
+                      <Col lg={4}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+                            <div>
+                              <h6 className="mb-0">Fee Summary</h6>
+                              <small className="text-muted">Paid vs pending</small>
+                            </div>
+                            <Badge bg="primary">
+                              {getCurrencySymbol('USD')}
+                              {homeSnapshot.fees.total.toFixed(0)} total
+                            </Badge>
+                          </Card.Header>
+                          <Card.Body>
+                            <div className="mb-3">
+                              <div className="d-flex justify-content-between small text-muted mb-1">
+                                <span>Paid</span>
+                                <span>
+                                  {getCurrencySymbol('USD')}
+                                  {homeSnapshot.fees.paid.toFixed(0)}
+                                </span>
+                              </div>
+                              <div className="progress" style={{ height: '8px' }}>
+                                <div
+                                  className="progress-bar bg-success"
+                                  style={{
+                                    width: `${homeSnapshot.fees.total ? (homeSnapshot.fees.paid / homeSnapshot.fees.total) * 100 : 0}%`,
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                            <div className="mb-3">
+                              <div className="d-flex justify-content-between small text-muted mb-1">
+                                <span>Pending</span>
+                                <span>
+                                  {getCurrencySymbol('USD')}
+                                  {homeSnapshot.fees.pending.toFixed(0)}
+                                </span>
+                              </div>
+                              <div className="progress" style={{ height: '8px' }}>
+                                <div
+                                  className="progress-bar bg-warning"
+                                  style={{
+                                    width: `${homeSnapshot.fees.total ? (homeSnapshot.fees.pending / homeSnapshot.fees.total) * 100 : 0}%`,
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="d-flex justify-content-between small text-muted mb-1">
+                                <span>Overdue</span>
+                                <span>
+                                  {getCurrencySymbol('USD')}
+                                  {homeSnapshot.fees.overdue.toFixed(0)}
+                                </span>
+                              </div>
+                              <div className="progress" style={{ height: '8px' }}>
+                                <div
+                                  className="progress-bar bg-danger"
+                                  style={{
+                                    width: `${homeSnapshot.fees.total ? (homeSnapshot.fees.overdue / homeSnapshot.fees.total) * 100 : 0}%`,
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          </Card.Body>
+                          <Card.Footer className="bg-light">
+                            <div className="d-flex gap-2">
+                              <Button size="sm" variant="outline-primary" onClick={() => handleSelect('fees')}>
+                                Manage Fees
+                              </Button>
+                              <Button size="sm" variant="outline-secondary" onClick={() => handleSelect('fee-verification')}>
+                                Verify Payments
+                              </Button>
+                            </div>
+                          </Card.Footer>
+                        </Card>
+                      </Col>
+                      <Col lg={4}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+                            <div>
+                              <h6 className="mb-0">Salary Snapshot</h6>
+                              <small className="text-muted">Upcoming teacher payouts</small>
+                            </div>
+                            <Badge bg="success">
+                              {getCurrencySymbol('USD')}
+                              {(homeSnapshot.salaries.pending + homeSnapshot.salaries.paid).toFixed(0)}
+                            </Badge>
+                          </Card.Header>
+                          <Card.Body>
+                            <div className="mb-3">
+                              <div className="d-flex justify-content-between small text-muted mb-1">
+                                <span>Pending</span>
+                                <span>
+                                  {getCurrencySymbol('USD')}
+                                  {homeSnapshot.salaries.pending.toFixed(0)}
+                                </span>
+                              </div>
+                              <div className="progress" style={{ height: '8px' }}>
+                                <div
+                                  className="progress-bar bg-warning"
+                                  style={{
+                                    width: `${homeSnapshot.salaries.pending + homeSnapshot.salaries.paid ? (homeSnapshot.salaries.pending / (homeSnapshot.salaries.pending + homeSnapshot.salaries.paid)) * 100 : 0}%`,
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                            <div>
+                              <div className="d-flex justify-content-between small text-muted mb-1">
+                                <span>Paid</span>
+                                <span>
+                                  {getCurrencySymbol('USD')}
+                                  {homeSnapshot.salaries.paid.toFixed(0)}
+                                </span>
+                              </div>
+                              <div className="progress" style={{ height: '8px' }}>
+                                <div
+                                  className="progress-bar bg-success"
+                                  style={{
+                                    width: `${homeSnapshot.salaries.pending + homeSnapshot.salaries.paid ? (homeSnapshot.salaries.paid / (homeSnapshot.salaries.pending + homeSnapshot.salaries.paid)) * 100 : 0}%`,
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          </Card.Body>
+                          <Card.Footer className="bg-light">
+                            <Button size="sm" variant="outline-success" onClick={() => handleSelect('salaries')}>
+                              Go to Salaries
+                            </Button>
+                          </Card.Footer>
+                        </Card>
+                      </Col>
+                      <Col lg={4}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+                            <h6 className="mb-0">Remarks & Threads</h6>
+                            <Badge bg="info">{homeSnapshot.remarks.total}</Badge>
+                          </Card.Header>
+                          <Card.Body>
+                            <p className="text-muted small mb-3">
+                              Keep an eye on parent conversations and follow-ups.
+                            </p>
+                            <div className="d-flex flex-column gap-2">
+                              <Button size="sm" variant="outline-primary" onClick={() => handleSelect('parent-remarks')}>
+                                View Remarks
+                              </Button>
+                              <Button size="sm" variant="outline-secondary" onClick={() => handleSelect('tests')}>
+                                Tests & Exams
+                              </Button>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+
+                    <Row className="g-3">
+                      <Col lg={7}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+                            <h6 className="mb-0">Recent Progress</h6>
+                            <Badge bg="info">{homeSnapshot.progress.records} records</Badge>
+                          </Card.Header>
+                          <Card.Body className="p-0">
+                            {homeSnapshot.progress.recent.length === 0 ? (
+                              <div className="text-center text-muted py-4">No recent progress</div>
+                            ) : (
+                              <div className="table-responsive">
+                                <Table hover size="sm" className="mb-0">
+                                  <thead className="table-light">
+                                    <tr>
+                                      <th>Date</th>
+                                      <th>Student</th>
+                                      <th>Subject</th>
+                                      <th>Teacher</th>
+                                      <th>Progress</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {homeSnapshot.progress.recent.map((item) => (
+                                      <tr key={item.id}>
+                                        <td className="text-muted small">
+                                          {new Date(item.date).toLocaleDateString()}
+                                        </td>
+                                        <td>{item.student.name}</td>
+                                        <td className="text-muted small">{item.course.name}</td>
+                                        <td className="text-muted small">{item.teacher.name}</td>
+                                        <td>
+                                          <div className="d-flex align-items-center">
+                                            <div className="progress me-2" style={{ width: '80px', height: '6px' }}>
+                                              <div
+                                                className="progress-bar bg-success"
+                                                style={{ width: `${item.lessonProgress ?? 0}%` }}
+                                              ></div>
+                                            </div>
+                                            <small className="text-muted">{item.lessonProgress ?? 0}%</small>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </Table>
+                              </div>
+                            )}
+                          </Card.Body>
+                          <Card.Footer className="bg-light">
+                            <Button size="sm" variant="outline-info" onClick={() => handleSelect('progress')}>
+                              View Full Progress
+                            </Button>
+                          </Card.Footer>
+                        </Card>
+                      </Col>
+                      <Col lg={5}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+                            <h6 className="mb-0">Top Teacher Progress</h6>
+                            <Badge bg="secondary">Avg %</Badge>
+                          </Card.Header>
+                          <Card.Body>
+                            {homeSnapshot.progress.topTeachers.length === 0 ? (
+                              <div className="text-muted text-center py-3">No progress data yet</div>
+                            ) : (
+                              <div className="d-flex flex-column gap-3">
+                                {homeSnapshot.progress.topTeachers.map((teacher) => (
+                                  <div key={teacher.name}>
+                                    <div className="d-flex justify-content-between align-items-center mb-1">
+                                      <strong>{teacher.name}</strong>
+                                      <small className="text-muted">{teacher.count} sessions</small>
+                                    </div>
+                                    <div className="progress" style={{ height: '8px' }}>
+                                      <div
+                                        className={`progress-bar ${teacher.avg >= 80 ? 'bg-success' : teacher.avg >= 60 ? 'bg-warning' : 'bg-danger'}`}
+                                        style={{ width: `${teacher.avg}%` }}
+                                      ></div>
+                                    </div>
+                                    <small className="text-muted">{teacher.avg}% average lesson progress</small>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+                  </>
+                )}
               </div>
             ) : (
               <Tabs
