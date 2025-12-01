@@ -4160,7 +4160,6 @@ export default function AdminDashboard() {
                   <i className="bi bi-gear-fill me-2 text-primary"></i>
                   Admin Dashboard
                 </h2>
-                <p className="text-muted mb-0">Manage users, subjects, assignments, and more</p>
               </div>
             </div>
 
@@ -4169,16 +4168,11 @@ export default function AdminDashboard() {
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <div>
                     <h3 className="h5 mb-1">Overview</h3>
-                    <p className="text-muted mb-0">Quick health check of students, fees, teachers, and progress.</p>
                   </div>
                   <div className="d-flex align-items-center gap-2">
                     <Button variant="outline-secondary" size="sm" onClick={fetchHomeSnapshot} disabled={homeLoading}>
                       <i className="bi bi-arrow-repeat me-1"></i>
                       Refresh
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={() => handleSelect('fees')}>
-                      <i className="bi bi-rocket-takeoff me-1"></i>
-                      Go to Fees
                     </Button>
                   </div>
                 </div>
