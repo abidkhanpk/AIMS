@@ -322,13 +322,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
-              {user && (
-                <Link href="/dashboard" passHref>
-                  <Nav.Link className="fw-medium">Dashboard</Nav.Link>
-                </Link>
-              )}
-            </Nav>
             <Nav className="d-flex align-items-center">
               {status === 'authenticated' && user && (
                 <>
