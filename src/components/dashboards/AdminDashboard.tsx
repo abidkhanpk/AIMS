@@ -224,6 +224,7 @@ function AssignmentSubform({
   const [success, setSuccess] = useState('');
 
   // Assignment form states
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState('');
   const [assignmentDate, setAssignmentDate] = useState('');
@@ -287,6 +288,7 @@ function AssignmentSubform({
         setSuccess('Assignment created successfully!');
         onAssignmentChange();
         resetForm();
+        setShowCreateForm(false);
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create assignment');
@@ -354,156 +356,181 @@ function AssignmentSubform({
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Row className="g-3">
-        <Col lg={6}>
-          <Card className="h-100">
-            <Card.Header className="bg-primary text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-plus-circle me-2"></i>
-                Create Assignment
-              </h6>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleCreateAssignment}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Subject *</Form.Label>
-                  <Form.Select 
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    required
-                    size="sm"
-                  >
-                    <option value="">Choose a subject...</option>
-                    {subjects.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex align-items-center gap-2">
+          <h6 className="mb-0">
+            <i className="bi bi-list-task me-2"></i>
+            Current Assignments
+          </h6>
+          <Badge bg="primary">{assignments.length}</Badge>
+        </div>
+        <Button
+          variant={showCreateForm ? 'outline-secondary' : 'primary'}
+          size="sm"
+          onClick={() => setShowCreateForm((prev) => !prev)}
+        >
+          <i className="bi bi-plus-circle me-2"></i>
+          {showCreateForm ? 'Cancel' : 'Add New Assignment'}
+        </Button>
+      </div>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Teacher *</Form.Label>
-                  <Form.Select 
-                    value={selectedTeacher}
-                    onChange={(e) => setSelectedTeacher(e.target.value)}
-                    required
-                    size="sm"
-                  >
-                    <option value="">Choose a teacher...</option>
-                    {teachers.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+      {showCreateForm && (
+        <Card className="mb-3">
+          <Card.Body>
+            <Form onSubmit={handleCreateAssignment}>
+              <Row className="g-3">
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>Subject *</Form.Label>
+                    <Form.Select 
+                      value={selectedSubject}
+                      onChange={(e) => setSelectedSubject(e.target.value)}
+                      required
+                      size="sm"
+                    >
+                      <option value="">Choose a subject...</option>
+                      {subjects.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>Teacher *</Form.Label>
+                    <Form.Select 
+                      value={selectedTeacher}
+                      onChange={(e) => setSelectedTeacher(e.target.value)}
+                      required
+                      size="sm"
+                    >
+                      <option value="">Choose a teacher...</option>
+                      {teachers.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>Assignment Date</Form.Label>
+                    <Form.Control 
+                      type="date"
+                      value={assignmentDate}
+                      onChange={(e) => setAssignmentDate(e.target.value)}
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>Start Time</Form.Label>
+                    <Form.Control 
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>Duration (minutes)</Form.Label>
+                    <Form.Control 
+                      type="number"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      placeholder="60"
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>Timezone</Form.Label>
+                    <Form.Select 
+                      value={timezone}
+                      onChange={(e) => setTimezone(e.target.value)}
+                      size="sm"
+                    >
+                      {Object.entries(timezonesByRegion).map(([region, tzList]) => (
+                        <optgroup key={region} label={region}>
+                          {tzList.map(tz => (
+                            <option key={tz.value} value={tz.value}>
+                              {tz.label} ({tz.offset})
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>Monthly Fee</Form.Label>
+                    <Form.Control 
+                      type="number"
+                      step="0.01"
+                      value={monthlyFee}
+                      onChange={(e) => setMonthlyFee(e.target.value)}
+                      placeholder="0.00"
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>Currency</Form.Label>
+                    <Form.Select 
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      size="sm"
+                    >
+                      {currencies.map(curr => (
+                        <option key={curr.code} value={curr.code}>
+                          {curr.code}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={12}>
+                  <Form.Group>
+                    <Form.Label>Class Days</Form.Label>
+                    <div className="d-flex flex-wrap gap-2">
+                      {daysOfWeek.map(day => (
+                        <Form.Check
+                          key={day.value}
+                          type="checkbox"
+                          id={`day-${day.value}`}
+                          label={day.label}
+                          checked={classDays.includes(day.value)}
+                          onChange={() => handleDayToggle(day.value)}
+                          className="me-2"
+                        />
+                      ))}
+                    </div>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Assignment Date</Form.Label>
-                  <Form.Control 
-                    type="date"
-                    value={assignmentDate}
-                    onChange={(e) => setAssignmentDate(e.target.value)}
-                    size="sm"
-                  />
-                </Form.Group>
-
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Start Time</Form.Label>
-                      <Form.Control 
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        size="sm"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Duration (minutes)</Form.Label>
-                      <Form.Control 
-                        type="number"
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        placeholder="60"
-                        size="sm"
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Timezone</Form.Label>
-                  <Form.Select 
-                    value={timezone}
-                    onChange={(e) => setTimezone(e.target.value)}
-                    size="sm"
-                  >
-                    {Object.entries(timezonesByRegion).map(([region, tzList]) => (
-                      <optgroup key={region} label={region}>
-                        {tzList.map(tz => (
-                          <option key={tz.value} value={tz.value}>
-                            {tz.label} ({tz.offset})
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-
-                <Form.Group className="mb-3">
-                  <Form.Label>Class Days</Form.Label>
-                  <div className="d-flex flex-wrap gap-2">
-                    {daysOfWeek.map(day => (
-                      <Form.Check
-                        key={day.value}
-                        type="checkbox"
-                        id={`day-${day.value}`}
-                        label={day.label}
-                        checked={classDays.includes(day.value)}
-                        onChange={() => handleDayToggle(day.value)}
-                        className="me-2"
-                      />
-                    ))}
-                  </div>
-                </Form.Group>
-
-                <Row>
-                  <Col md={8}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Monthly Fee</Form.Label>
-                      <Form.Control 
-                        type="number"
-                        step="0.01"
-                        value={monthlyFee}
-                        onChange={(e) => setMonthlyFee(e.target.value)}
-                        placeholder="0.00"
-                        size="sm"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={4}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>Currency</Form.Label>
-                      <Form.Select 
-                        value={currency}
-                        onChange={(e) => setCurrency(e.target.value)}
-                        size="sm"
-                      >
-                        {currencies.map(curr => (
-                          <option key={curr.code} value={curr.code}>
-                            {curr.code}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                </Row>
-
+              <div className="d-flex justify-content-end gap-2 mt-3">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  onClick={() => {
+                    resetForm();
+                    setShowCreateForm(false);
+                  }}
+                  disabled={creating}
+                >
+                  Cancel
+                </Button>
                 <Button 
                   variant="primary" 
                   type="submit" 
                   disabled={creating}
-                  className="w-100"
                   size="sm"
                 >
                   {creating ? (
@@ -514,96 +541,94 @@ function AssignmentSubform({
                   ) : (
                     <>
                       <i className="bi bi-plus-circle me-2"></i>
-                      Create Assignment
+                      Save Assignment
                     </>
                   )}
                 </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col lg={6}>
-          <Card className="h-100">
-            <Card.Header className="bg-light">
-              <div className="d-flex justify-content-between align-items-center">
-                <h6 className="mb-0">
-                  <i className="bi bi-list-task me-2"></i>
-                  Current Assignments
-                </h6>
-                <Badge bg="primary">{assignments.length}</Badge>
               </div>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {assignments.length === 0 ? (
-                <div className="text-center py-4">
-                  <i className="bi bi-list-task display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">No assignments found</p>
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Subject</th>
-                        <th>Teacher</th>
-                        <th>Schedule</th>
-                        <th>Fee</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {assignments.map((assignment) => (
-                        <tr key={assignment.id}>
-                          <td className="fw-medium">{assignment.course?.name}</td>
-                          <td className="text-muted">{assignment.teacher?.name}</td>
-                          <td className="small">
-                            {assignment.startTime && (
-                              <div>{assignment.startTime}</div>
-                            )}
-                            {assignment.duration && (
-                              <div className="text-muted">{assignment.duration}min</div>
-                            )}
-                            {assignment.classDays && assignment.classDays.length > 0 && (
-                              <div className="text-muted">
-                                {assignment.classDays.join(', ')}
-                              </div>
-                            )}
-                            {assignment.timezone && (
-                              <div className="text-muted small">
-                                {findTimezone(assignment.timezone)?.label || assignment.timezone}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            {assignment.monthlyFee ? (
-                              <Badge bg="success">
-                                {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted">-</span>
-                            )}
-                          </td>
-                          <td>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => handleDeleteAssignment(assignment.id)}
-                              title="Delete Assignment"
-                            >
-                              <i className="bi bi-trash"></i>
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+            </Form>
+          </Card.Body>
+        </Card>
+      )}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">
+              <i className="bi bi-list-task me-2"></i>
+              Current Assignments
+            </h6>
+            <Badge bg="primary">{assignments.length}</Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {assignments.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-list-task display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">No assignments found</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Subject</th>
+                    <th>Teacher</th>
+                    <th>Schedule</th>
+                    <th>Fee</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignments.map((assignment) => (
+                    <tr key={assignment.id}>
+                      <td className="fw-medium">{assignment.course?.name}</td>
+                      <td className="text-muted">{assignment.teacher?.name}</td>
+                      <td className="small">
+                        {assignment.startTime && (
+                          <div>{assignment.startTime}</div>
+                        )}
+                        {assignment.duration && (
+                          <div className="text-muted">{assignment.duration}min</div>
+                        )}
+                        {assignment.classDays && assignment.classDays.length > 0 && (
+                          <div className="text-muted">
+                            {assignment.classDays.join(', ')}
+                          </div>
+                        )}
+                        {assignment.timezone && (
+                          <div className="text-muted small">
+                            {findTimezone(assignment.timezone)?.label || assignment.timezone}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        {assignment.monthlyFee ? (
+                          <Badge bg="success">
+                            {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
+                      <td>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleDeleteAssignment(assignment.id)}
+                          title="Delete Assignment"
+                        >
+                          <i className="bi bi-trash"></i>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
     </div>
   );
 }
@@ -734,6 +759,10 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [studentAssignments, setStudentAssignments] = useState<Assignment[]>([]);
   const [studentFees, setStudentFees] = useState<Fee[]>([]);
   const [parentAssociations, setParentAssociations] = useState<any[]>([]);
+  const [studentProgress, setStudentProgress] = useState<Progress[]>([]);
+  const [studentTests, setStudentTests] = useState<AdminTestRecord[]>([]);
+  const [studentProgressLoading, setStudentProgressLoading] = useState(false);
+  const [studentTestsLoading, setStudentTestsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
 
   const config = roleConfig[role as keyof typeof roleConfig];
@@ -843,6 +872,10 @@ export function UserManagementTab({ role }: { role: Role }) {
     setStudentAssignments([]);
     setStudentFees([]);
     setParentAssociations([]);
+    setStudentProgress([]);
+    setStudentTests([]);
+    setStudentProgressLoading(false);
+    setStudentTestsLoading(false);
     setTeacherPayments([]);
     setTeacherAdvances([]);
     setRecordingPayment(false);
@@ -882,10 +915,14 @@ export function UserManagementTab({ role }: { role: Role }) {
   const fetchStudentData = async (studentId: string) => {
     try {
       setLoading(true);
-      const [assignmentsRes, feesRes, associationsRes] = await Promise.all([
+      setStudentProgressLoading(true);
+      setStudentTestsLoading(true);
+      const [assignmentsRes, feesRes, associationsRes, progressRes, testsRes] = await Promise.all([
         fetch('/api/assignments'),
         fetch('/api/fees'),
         fetch(`/api/users/parent-associations?studentId=${studentId}`),
+        fetch('/api/progress'),
+        fetch('/api/tests/records'),
       ]);
 
       if (assignmentsRes.ok) {
@@ -911,10 +948,28 @@ export function UserManagementTab({ role }: { role: Role }) {
         setError('Failed to fetch parent associations');
         setParentAssociations([]);
       }
+
+      if (progressRes.ok) {
+        const progressData = await progressRes.json();
+        setStudentProgress(progressData.filter((p: Progress) => p.student.id === studentId));
+      } else {
+        setError('Failed to fetch progress data');
+        setStudentProgress([]);
+      }
+
+      if (testsRes.ok) {
+        const testsData = await testsRes.json();
+        setStudentTests(testsData.filter((t: AdminTestRecord) => t.student.id === studentId));
+      } else {
+        setError('Failed to fetch test records');
+        setStudentTests([]);
+      }
     } catch (error) {
       console.error('Error fetching student data:', error);
     } finally {
       setLoading(false);
+      setStudentProgressLoading(false);
+      setStudentTestsLoading(false);
     }
   };
 
@@ -1769,7 +1824,41 @@ export function UserManagementTab({ role }: { role: Role }) {
                   />
                 )}
               </Tab>
-              
+
+              <Tab eventKey="progress" title={
+                <span>
+                  <i className="bi bi-graph-up me-2"></i>
+                  Progress
+                  {studentProgress.length > 0 && (
+                    <Badge bg="info" className="ms-2">{studentProgress.length}</Badge>
+                  )}
+                </span>
+              }>
+                {editingUser && (
+                  <StudentProgressTabContent
+                    progress={studentProgress}
+                    loading={studentProgressLoading}
+                  />
+                )}
+              </Tab>
+
+              <Tab eventKey="tests" title={
+                <span>
+                  <i className="bi bi-clipboard-data me-2"></i>
+                  Tests & Exams
+                  {studentTests.length > 0 && (
+                    <Badge bg="success" className="ms-2">{studentTests.length}</Badge>
+                  )}
+                </span>
+              }>
+                {editingUser && (
+                  <StudentTestsTabContent
+                    tests={studentTests}
+                    loading={studentTestsLoading}
+                  />
+                )}
+              </Tab>
+
               <Tab eventKey="fees" title={
                 <span>
                   <i className="bi bi-cash-stack me-2"></i>
@@ -1786,7 +1875,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                   />
                 )}
               </Tab>
-                          </Tabs>
+            </Tabs>
           ) : role === 'TEACHER' ? (
             <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
               <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>
@@ -3444,6 +3533,211 @@ export function SalaryManagementTab() {
                       <td className="text-muted small">
                         {salary.paidBy ? salary.paidBy.name : '-'}
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
+    </div>
+  );
+}
+
+function StudentProgressTabContent({ progress, loading }: { progress: Progress[]; loading: boolean }) {
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailData, setDetailData] = useState<Progress | null>(null);
+
+  const getAttendanceBadge = (status: AttendanceStatus) => {
+    switch (status) {
+      case 'PRESENT':
+        return <Badge bg="success">Present</Badge>;
+      case 'ABSENT':
+        return <Badge bg="danger">Absent</Badge>;
+      case 'LATE':
+        return <Badge bg="warning">Late</Badge>;
+      case 'EXCUSED':
+        return <Badge bg="info">Excused</Badge>;
+      default:
+        return <Badge bg="secondary">{status}</Badge>;
+    }
+  };
+
+  const handleViewDetails = (progressItem: Progress) => {
+    setDetailData(progressItem);
+    setShowDetailModal(true);
+  };
+
+  return (
+    <div>
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">
+              <i className="bi bi-graph-up me-2"></i>
+              Student Progress Overview
+            </h6>
+            <Badge bg="info">{progress.length} Records</Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" size="sm" />
+              <p className="mt-2 text-muted small">Loading progress data...</p>
+            </div>
+          ) : progress.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-graph-up display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">No progress records found</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Subject</th>
+                    <th>Teacher</th>
+                    <th>Lesson</th>
+                    <th>Progress</th>
+                    <th>Attendance</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {progress.map((item) => (
+                    <tr key={item.id}>
+                      <td className="text-muted small">
+                        {new Date(item.date).toLocaleDateString()}
+                      </td>
+                      <td className="fw-medium">{item.student.name}</td>
+                      <td>{item.course.name}</td>
+                      <td className="text-muted">{item.teacher.name}</td>
+                      <td className="text-muted">
+                        <ExpandableText text={item.lesson || 'No lesson'} maxLength={30} />
+                      </td>
+                      <td>
+                        {item.lessonProgress !== null ? (
+                          <div className="d-flex align-items-center">
+                            <div className="progress me-2" style={{ width: '60px', height: '8px' }}>
+                              <div 
+                                className="progress-bar bg-success" 
+                                style={{ width: `${item.lessonProgress}%` }}
+                              ></div>
+                            </div>
+                            <small className="text-muted">{item.lessonProgress}%</small>
+                          </div>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
+                      <td>{getAttendanceBadge(item.attendance)}</td>
+                      <td>
+                        <Button
+                          variant="outline-info"
+                          size="sm"
+                          onClick={() => handleViewDetails(item)}
+                          title="View Details"
+                        >
+                          <i className="bi bi-eye"></i>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
+
+      <DetailViewModal
+        show={showDetailModal}
+        onHide={() => setShowDetailModal(false)}
+        title="Progress Details"
+        data={detailData}
+      />
+    </div>
+  );
+}
+
+function StudentTestsTabContent({ tests, loading }: { tests: AdminTestRecord[]; loading: boolean }) {
+  return (
+    <div>
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light d-flex justify-content-between align-items-center">
+          <h6 className="mb-0">
+            <i className="bi bi-clipboard-data me-2"></i>
+            Latest Test Records
+          </h6>
+          <Badge bg="success">{tests.length}</Badge>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" size="sm" />
+              <p className="mt-2 text-muted small">Loading records...</p>
+            </div>
+          ) : tests.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-clipboard-check display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">No test records found</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Student</th>
+                    <th>Subject</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Score</th>
+                    <th>%</th>
+                    <th>Teacher</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tests.map((rec) => (
+                    <tr key={rec.id}>
+                      <td className="text-muted small">
+                        {new Date(rec.performedAt).toLocaleDateString()}
+                      </td>
+                      <td className="fw-medium small">{rec.student.name}</td>
+                      <td className="small">{rec.course.name}</td>
+                      <td className="small">{rec.title}</td>
+                      <td>
+                        <Badge bg={
+                          rec.type === 'EXAM'
+                            ? 'danger'
+                            : rec.type === 'HOMEWORK'
+                              ? 'secondary'
+                              : rec.type === 'OTHER'
+                                ? 'info'
+                                : 'info'
+                        }>
+                          {rec.type === 'EXAM'
+                            ? 'Exam'
+                            : rec.type === 'HOMEWORK'
+                              ? 'Homework'
+                              : rec.type === 'OTHER'
+                                ? 'Other'
+                                : 'Quiz'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge bg="dark">{rec.obtainedMarks}/{rec.maxMarks}</Badge>
+                      </td>
+                      <td>
+                        <Badge bg={rec.percentage >= 80 ? 'success' : rec.percentage >= 60 ? 'warning' : 'danger'}>
+                          {rec.percentage}%
+                        </Badge>
+                      </td>
+                      <td className="small">{rec.teacher.name}</td>
                     </tr>
                   ))}
                 </tbody>
