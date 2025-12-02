@@ -3626,6 +3626,9 @@ export function SalaryManagementTab() {
 function StudentProgressTabContent({ progress, loading }: { progress: Progress[]; loading: boolean }) {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailData, setDetailData] = useState<Progress | null>(null);
+  const [showParentRemarksModal, setShowParentRemarksModal] = useState(false);
+  const [selectedParentRemarks, setSelectedParentRemarks] = useState<any[]>([]);
+  const [threadTitle, setThreadTitle] = useState('');
 
   const getAttendanceBadge = (status: AttendanceStatus) => {
     switch (status) {
@@ -3645,6 +3648,20 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
   const handleViewDetails = (progressItem: Progress) => {
     setDetailData(progressItem);
     setShowDetailModal(true);
+  };
+
+  const buildThreadTitle = (progressItem: Progress) => {
+    const teacherName = progressItem.teacher?.name || 'Teacher';
+    const courseName = progressItem.course?.name || 'Subject';
+    const dateLabel = progressItem.date ? new Date(progressItem.date).toLocaleDateString() : '';
+    const studentLabel = progressItem.student?.name || 'Student';
+    return `${teacherName}: Progress of ${studentLabel} for ${courseName}${dateLabel ? ` on ${dateLabel}` : ''}`;
+  };
+
+  const handleViewParentRemarks = (progressItem: Progress) => {
+    setSelectedParentRemarks(progressItem.parentRemarks || []);
+    setThreadTitle(buildThreadTitle(progressItem));
+    setShowParentRemarksModal(true);
   };
 
   return (
@@ -3682,6 +3699,7 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
                     <th>Lesson</th>
                     <th>Progress</th>
                     <th>Attendance</th>
+                    <th>Parent Remarks</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -3714,6 +3732,37 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
                       </td>
                       <td>{getAttendanceBadge(item.attendance)}</td>
                       <td>
+                        <div className="d-flex align-items-center gap-2">
+                          <div className="small text-muted">
+                            {item.parentRemarks && item.parentRemarks.length > 0 ? (() => {
+                              const replyCount = item.parentRemarks.reduce(
+                                (sum: number, r: any) => sum + (r.replies?.length || 0),
+                                0
+                              );
+                              return (
+                                <>
+                                  Remark with{' '}
+                                  <span className={replyCount > 0 ? 'text-success' : 'text-danger'}>
+                                    {replyCount > 0 ? replyCount : 'no'}
+                                  </span>{' '}
+                                  comment{replyCount === 1 ? '' : 's'}
+                                </>
+                              );
+                            })() : 'No parent remark'}
+                          </div>
+                          {item.parentRemarks && item.parentRemarks.length > 0 && (
+                            <Button
+                              variant="outline-secondary"
+                              size="sm"
+                              onClick={() => handleViewParentRemarks(item)}
+                              title="View parent remarks"
+                            >
+                              <i className="bi bi-chat-dots"></i>
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                      <td>
                         <Button
                           variant="outline-info"
                           size="sm"
@@ -3737,6 +3786,13 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
         onHide={() => setShowDetailModal(false)}
         title="Progress Details"
         data={detailData}
+      />
+      <RemarkThreadModal
+        show={showParentRemarksModal}
+        onHide={() => setShowParentRemarksModal(false)}
+        remarks={selectedParentRemarks}
+        title={threadTitle || 'Parent Remarks'}
+        emptyMessage="No parent remarks"
       />
     </div>
   );
