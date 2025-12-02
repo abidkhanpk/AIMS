@@ -280,11 +280,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { 
       id,
+      courseId,
+      teacherId,
+      assignmentDate,
       startTime,
       duration,
       classDays,
       monthlyFee,
       currency,
+      timezone,
       isActive
     } = req.body;
 
@@ -310,11 +314,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const updatedAssignment = await prisma.assignment.update({
         where: { id },
         data: {
+          ...(courseId && { courseId }),
+          ...(teacherId && { teacherId }),
+          ...(assignmentDate && { assignmentDate: new Date(assignmentDate) }),
           ...(startTime !== undefined && { startTime }),
           ...(duration !== undefined && { duration: duration ? parseInt(duration) : null }),
           ...(classDays !== undefined && { classDays }),
           ...(monthlyFee !== undefined && { monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null }),
           ...(currency && { currency }),
+          ...(timezone && { timezone }),
           ...(isActive !== undefined && { isActive }),
         },
         include: {

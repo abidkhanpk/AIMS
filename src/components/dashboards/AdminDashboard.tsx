@@ -224,6 +224,7 @@ function AssignmentSubform({
   const [success, setSuccess] = useState('');
 
   // Assignment form states
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState('');
@@ -266,35 +267,41 @@ function AssignmentSubform({
     setError('');
     setSuccess('');
 
+    const payload: any = {
+      studentId,
+      courseId: selectedSubject,
+      teacherId: selectedTeacher,
+      assignmentDate: assignmentDate ? new Date(assignmentDate).toISOString() : new Date().toISOString(),
+      startTime,
+      duration: duration ? parseInt(duration) : null,
+      classDays,
+      timezone,
+      monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
+      currency,
+    };
+
     try {
       const res = await fetch('/api/assignments', {
-        method: 'POST',
+        method: editingAssignment ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentId,
-          courseId: selectedSubject,
-          teacherId: selectedTeacher,
-          assignmentDate: assignmentDate || new Date().toISOString(),
-          startTime,
-          duration: duration ? parseInt(duration) : null,
-          classDays,
-          timezone,
-          monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
-          currency,
-        }),
+        body: JSON.stringify(
+          editingAssignment
+            ? { id: editingAssignment.id, ...payload }
+            : payload
+        ),
       });
 
       if (res.ok) {
-        setSuccess('Assignment created successfully!');
+        setSuccess(editingAssignment ? 'Assignment updated successfully!' : 'Assignment created successfully!');
         onAssignmentChange();
         resetForm();
         setShowCreateForm(false);
       } else {
         const errorData = await res.json();
-        setError(errorData.message || 'Failed to create assignment');
+        setError(errorData.message || `Failed to ${editingAssignment ? 'update' : 'create'} assignment`);
       }
     } catch (error) {
-      setError('Error creating assignment');
+      setError(`Error ${editingAssignment ? 'updating' : 'creating'} assignment`);
     } finally {
       setCreating(false);
     }
@@ -310,6 +317,7 @@ function AssignmentSubform({
     setTimezone('UTC');
     setMonthlyFee('');
     setCurrency('USD');
+    setEditingAssignment(null);
   };
 
   const handleDayToggle = (day: string) => {
@@ -318,6 +326,15 @@ function AssignmentSubform({
         ? prev.filter(d => d !== day)
         : [...prev, day]
     );
+  };
+
+  const toggleForm = () => {
+    setShowCreateForm(prev => {
+      if (prev) {
+        resetForm();
+      }
+      return !prev;
+    });
   };
 
   const handleDeleteAssignment = async (assignmentId: string) => {
@@ -332,6 +349,10 @@ function AssignmentSubform({
 
       if (res.ok) {
         setSuccess('Assignment deleted successfully!');
+        if (editingAssignment?.id === assignmentId) {
+          resetForm();
+          setShowCreateForm(false);
+        }
         onAssignmentChange();
       } else {
         const errorData = await res.json();
@@ -340,6 +361,24 @@ function AssignmentSubform({
     } catch (error) {
       setError('Error deleting assignment');
     }
+  };
+
+  const handleEditAssignment = (assignment: Assignment) => {
+    setEditingAssignment(assignment);
+    setSelectedSubject(assignment.courseId || '');
+    setSelectedTeacher(assignment.teacherId || '');
+    setAssignmentDate(
+      assignment.assignmentDate
+        ? new Date(assignment.assignmentDate).toISOString().slice(0, 10)
+        : ''
+    );
+    setStartTime(assignment.startTime || '');
+    setDuration(assignment.duration?.toString() || '');
+    setClassDays(assignment.classDays || []);
+    setTimezone(assignment.timezone || 'UTC');
+    setMonthlyFee(assignment.monthlyFee?.toString() || '');
+    setCurrency(assignment.currency || 'USD');
+    setShowCreateForm(true);
   };
 
   if (loading) {
@@ -367,16 +406,22 @@ function AssignmentSubform({
         <Button
           variant={showCreateForm ? 'outline-secondary' : 'primary'}
           size="sm"
-          onClick={() => setShowCreateForm((prev) => !prev)}
+          onClick={toggleForm}
         >
           <i className="bi bi-plus-circle me-2"></i>
-          {showCreateForm ? 'Cancel' : 'Add New Assignment'}
+          {editingAssignment ? 'Cancel Edit' : showCreateForm ? 'Cancel' : 'Add New Assignment'}
         </Button>
       </div>
 
       {showCreateForm && (
         <Card className="mb-3">
           <Card.Body>
+            {editingAssignment && (
+              <Alert variant="info" className="py-2">
+                <i className="bi bi-pencil-square me-2"></i>
+                Editing assignment for {editingAssignment.course?.name || 'subject'}
+              </Alert>
+            )}
             <Form onSubmit={handleCreateAssignment}>
               <Row className="g-3">
                 <Col lg={4} md={6}>
@@ -536,12 +581,12 @@ function AssignmentSubform({
                   {creating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Creating...
+                      {editingAssignment ? 'Updating...' : 'Creating...'}
                     </>
                   ) : (
                     <>
-                      <i className="bi bi-plus-circle me-2"></i>
-                      Save Assignment
+                      <i className={`bi ${editingAssignment ? 'bi-check2-circle' : 'bi-plus-circle'} me-2`}></i>
+                      {editingAssignment ? 'Update Assignment' : 'Save Assignment'}
                     </>
                   )}
                 </Button>
@@ -612,14 +657,24 @@ function AssignmentSubform({
                         )}
                       </td>
                       <td>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          onClick={() => handleDeleteAssignment(assignment.id)}
-                          title="Delete Assignment"
-                        >
-                          <i className="bi bi-trash"></i>
-                        </Button>
+                        <div className="d-flex gap-2">
+                          <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => handleEditAssignment(assignment)}
+                            title="Edit Assignment"
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDeleteAssignment(assignment.id)}
+                            title="Delete Assignment"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
