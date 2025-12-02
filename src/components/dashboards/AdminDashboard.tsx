@@ -964,7 +964,9 @@ export function UserManagementTab({ role }: { role: Role }) {
       fetchTeacherSalaryData(user.id);
     }
     
-    setShowEditModal(true);
+    if (role !== 'STUDENT') {
+      setShowEditModal(true);
+    }
   };
 
   const fetchStudentData = async (studentId: string) => {
@@ -1649,90 +1651,301 @@ export function UserManagementTab({ role }: { role: Role }) {
             </Card>
           )}
 
-          <Card className="shadow-sm">
-            <Card.Header className="bg-light">
-              <div className="d-flex justify-content-between align-items-center">
-                <h6 className="mb-0">
-                  <i className={`${config.icon} me-2`}></i>
-                  {config.title}
-                </h6>
-                <Badge bg={config.color}>{users.length} Total</Badge>
-              </div>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {loading ? (
-                <div className="text-center py-4">
-                  <Spinner animation="border" size="sm" />
-                  <p className="mt-2 text-muted small">Loading {config.title.toLowerCase()}...</p>
+          {role === 'STUDENT' && editingUser ? (
+            <Card className="shadow-sm">
+              <Card.Header className="bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="bi bi-pencil text-warning"></i>
+                  <div>
+                    <h6 className="mb-0">Editing Student</h6>
+                    <small className="text-muted">{editingUser.name}</small>
+                  </div>
                 </div>
-              ) : users.length === 0 ? (
-                <div className="text-center py-4">
-                  <i className={`${config.icon} display-6 text-muted`}></i>
-                  <p className="mt-2 text-muted small">No {config.title.toLowerCase()} found</p>
+                <Button variant="outline-secondary" size="sm" onClick={closeEditModal}>
+                  <i className="bi bi-arrow-left me-2"></i>
+                  Back to List
+                </Button>
+              </Card.Header>
+              <Card.Body className="p-3">
+                <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
+                  <Tab eventKey="basic" title={
+                    <span>
+                      <i className="bi bi-person me-2"></i>
+                      Basic Info
+                    </span>
+                  }>
+                    <Form onSubmit={handleUpdateUser} className="mt-3">
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Full Name</Form.Label>
+                            <Form.Control 
+                              type="text" 
+                              value={name} 
+                              onChange={(e) => setName(e.target.value)} 
+                              required 
+                              placeholder="Enter full name"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Email Address</Form.Label>
+                            <Form.Control 
+                              type="email" 
+                              value={email} 
+                              onChange={(e) => setEmail(e.target.value)} 
+                              required 
+                              placeholder="Enter email address"
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                      <Row>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Mobile Number</Form.Label>
+                            <Form.Control 
+                              type="tel" 
+                              value={mobile} 
+                              onChange={(e) => setMobile(e.target.value)} 
+                              placeholder="Enter mobile number"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={6}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Date of Birth</Form.Label>
+                            <Form.Control 
+                              type="date" 
+                              value={dateOfBirth} 
+                              onChange={(e) => setDateOfBirth(e.target.value)} 
+                            />
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                      <Form.Group className="mb-3">
+                        <Form.Label>Address</Form.Label>
+                        <Form.Control 
+                          as="textarea"
+                          rows={3}
+                          value={address} 
+                          onChange={(e) => setAddress(e.target.value)} 
+                          placeholder="Enter address"
+                        />
+                      </Form.Group>
+                      <Form.Group className="mb-4">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control 
+                          type="password" 
+                          value={password} 
+                          onChange={(e) => setPassword(e.target.value)} 
+                          placeholder="Leave blank to keep current password"
+                          minLength={6}
+                        />
+                        <Form.Text className="text-muted">
+                          Leave blank to keep current password
+                        </Form.Text>
+                      </Form.Group>
+                      <div className="d-flex justify-content-end gap-2">
+                        <Button variant="secondary" onClick={closeEditModal}>
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          variant="warning"
+                          disabled={editing}
+                        >
+                          {editing ? (
+                            <>
+                              <Spinner animation="border" size="sm" className="me-2" />
+                              Updating...
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-check-circle me-2"></i>
+                              Update
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </Form>
+                  </Tab>
+                  
+                  <Tab eventKey="parents" title={
+                    <span>
+                      <i className="bi bi-people me-2"></i>
+                      Parent Associations
+                      {parentAssociations.length > 0 && (
+                        <Badge bg="info" className="ms-2">{parentAssociations.length}</Badge>
+                      )}
+                    </span>
+                  }>
+                    {editingUser && (
+                      <ParentAssociationSubform 
+                        studentId={editingUser.id}
+                        onAssociationChange={handleAssociationChange}
+                      />
+                    )}
+                  </Tab>              
+                  <Tab eventKey="assignments" title={
+                    <span>
+                      <i className="bi bi-diagram-3 me-2"></i>
+                      Assignments
+                      {studentAssignments.length > 0 && (
+                        <Badge bg="primary" className="ms-2">{studentAssignments.length}</Badge>
+                      )}
+                    </span>
+                  }>
+                    {editingUser && (
+                      <AssignmentSubform 
+                        studentId={editingUser.id}
+                        assignments={studentAssignments}
+                        onAssignmentChange={handleAssignmentChange}
+                      />
+                    )}
+                  </Tab>
+                  
+                  <Tab eventKey="progress" title={
+                    <span>
+                      <i className="bi bi-graph-up me-2"></i>
+                      Progress
+                      {studentProgress.length > 0 && (
+                        <Badge bg="info" className="ms-2">{studentProgress.length}</Badge>
+                      )}
+                    </span>
+                  }>
+                    {editingUser && (
+                      <StudentProgressTabContent
+                        progress={studentProgress}
+                        loading={studentProgressLoading}
+                      />
+                    )}
+                  </Tab>
+
+                  <Tab eventKey="tests" title={
+                    <span>
+                      <i className="bi bi-clipboard-data me-2"></i>
+                      Tests & Exams
+                      {studentTests.length > 0 && (
+                        <Badge bg="success" className="ms-2">{studentTests.length}</Badge>
+                      )}
+                    </span>
+                  }>
+                    {editingUser && (
+                      <StudentTestsTabContent
+                        tests={studentTests}
+                        loading={studentTestsLoading}
+                      />
+                    )}
+                  </Tab>
+
+                  <Tab eventKey="fees" title={
+                    <span>
+                      <i className="bi bi-cash-stack me-2"></i>
+                      Fees
+                      {studentFees.length > 0 && (
+                        <Badge bg="success" className="ms-2">{studentFees.length}</Badge>
+                      )}
+                    </span>
+                  }>
+                    {editingUser && (
+                      <FeeSubform
+                        studentId={editingUser.id}
+                        onFeeChange={handleFeeChange}
+                      />
+                    )}
+                  </Tab>
+                </Tabs>
+              </Card.Body>
+            </Card>
+          ) : (
+            <Card className="shadow-sm">
+              <Card.Header className="bg-light">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h6 className="mb-0">
+                    <i className={`${config.icon} me-2`}></i>
+                    {config.title}
+                  </h6>
+                  <Badge bg={config.color}>{users.length} Total</Badge>
                 </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Mobile</th>
-                        <th>Created</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((user) => (
-                        <tr key={user.id}>
-                          <td className="fw-medium">{user.name}</td>
-                          <td className="text-muted">{user.email}</td>
-                          <td className="text-muted">{user.mobile || '-'}</td>
-                          <td className="text-muted small">
-                            {new Date(user.createdAt).toLocaleDateString()}
-                          </td>
-                          <td>
-                            <div className="d-flex gap-1">
-                              <Button
-                                variant="outline-info"
-                                size="sm"
-                                onClick={() => handleViewDetails(user)}
-                                title="View Details"
-                              >
-                                <i className="bi bi-eye"></i>
-                              </Button>
-                              <Button
-                                variant="outline-warning"
-                                size="sm"
-                                onClick={() => handleEditUser(user)}
-                                title="Edit User"
-                              >
-                                <i className="bi bi-pencil"></i>
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() => handleDeleteUser(user.id)}
-                                title="Delete User"
-                                disabled={deletingId === user.id}
-                              >
-                                <i className="bi bi-trash"></i>
-                              </Button>
-                            </div>
-                          </td>
+              </Card.Header>
+              <Card.Body className="p-0">
+                {loading ? (
+                  <div className="text-center py-4">
+                    <Spinner animation="border" size="sm" />
+                    <p className="mt-2 text-muted small">Loading {config.title.toLowerCase()}...</p>
+                  </div>
+                ) : users.length === 0 ? (
+                  <div className="text-center py-4">
+                    <i className={`${config.icon} display-6 text-muted`}></i>
+                    <p className="mt-2 text-muted small">No {config.title.toLowerCase()} found</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <Table hover size="sm" className="mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Mobile</th>
+                          <th>Created</th>
+                          <th>Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
+                      </thead>
+                      <tbody>
+                        {users.map((user) => (
+                          <tr key={user.id}>
+                            <td className="fw-medium">{user.name}</td>
+                            <td className="text-muted">{user.email}</td>
+                            <td className="text-muted">{user.mobile || '-'}</td>
+                            <td className="text-muted small">
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </td>
+                            <td>
+                              <div className="d-flex gap-1">
+                                <Button
+                                  variant="outline-info"
+                                  size="sm"
+                                  onClick={() => handleViewDetails(user)}
+                                  title="View Details"
+                                >
+                                  <i className="bi bi-eye"></i>
+                                </Button>
+                                <Button
+                                  variant="outline-warning"
+                                  size="sm"
+                                  onClick={() => handleEditUser(user)}
+                                  title="Edit User"
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  onClick={() => handleDeleteUser(user.id)}
+                                  title="Delete User"
+                                  disabled={deletingId === user.id}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                )}
+              </Card.Body>
+            </Card>
+          )}
         </>
       )}
 
-      {/* Enhanced Edit User Modal with Tabs for Students and salary subform for teachers */}
-      <Modal show={showEditModal} onHide={closeEditModal} size={role === 'STUDENT' ? 'xl' : 'lg'}>
+      {/* Enhanced Edit User Modal for non-student roles */}
+      {role !== 'STUDENT' && (
+      <Modal show={showEditModal} onHide={closeEditModal} size={role === 'TEACHER' ? 'xl' : 'lg'}>
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
@@ -1740,198 +1953,7 @@ export function UserManagementTab({ role }: { role: Role }) {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {role === 'STUDENT' ? (
-            <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
-              <Tab eventKey="basic" title={
-                <span>
-                  <i className="bi bi-person me-2"></i>
-                  Basic Info
-                </span>
-              }>
-                <Form onSubmit={handleUpdateUser}>
-                  <Row>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Full Name</Form.Label>
-                        <Form.Control 
-                          type="text" 
-                          value={name} 
-                          onChange={(e) => setName(e.target.value)} 
-                          required 
-                          placeholder="Enter full name"
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Email Address</Form.Label>
-                        <Form.Control 
-                          type="email" 
-                          value={email} 
-                          onChange={(e) => setEmail(e.target.value)} 
-                          required 
-                          placeholder="Enter email address"
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Mobile Number</Form.Label>
-                        <Form.Control 
-                          type="tel" 
-                          value={mobile} 
-                          onChange={(e) => setMobile(e.target.value)} 
-                          placeholder="Enter mobile number"
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={6}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Date of Birth</Form.Label>
-                        <Form.Control 
-                          type="date" 
-                          value={dateOfBirth} 
-                          onChange={(e) => setDateOfBirth(e.target.value)} 
-                        />
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Address</Form.Label>
-                    <Form.Control 
-                      as="textarea"
-                      rows={3}
-                      value={address} 
-                      onChange={(e) => setAddress(e.target.value)} 
-                      placeholder="Enter address"
-                    />
-                  </Form.Group>
-                  <Form.Group className="mb-4">
-                    <Form.Label>Password</Form.Label>
-                    <Form.Control 
-                      type="password" 
-                      value={password} 
-                      onChange={(e) => setPassword(e.target.value)} 
-                      placeholder="Leave blank to keep current password"
-                      minLength={6}
-                    />
-                    <Form.Text className="text-muted">
-                      Leave blank to keep current password
-                    </Form.Text>
-                  </Form.Group>
-                  <div className="d-flex justify-content-end gap-2">
-                    <Button variant="secondary" onClick={closeEditModal}>
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="warning"
-                      disabled={editing}
-                    >
-                      {editing ? (
-                        <>
-                          <Spinner animation="border" size="sm" className="me-2" />
-                          Updating...
-                        </>
-                      ) : (
-                        <>
-                          <i className="bi bi-check-circle me-2"></i>
-                          Update
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </Form>
-              </Tab>
-              
-              <Tab eventKey="parents" title={
-                <span>
-                  <i className="bi bi-people me-2"></i>
-                  Parent Associations
-                  {parentAssociations.length > 0 && (
-                    <Badge bg="info" className="ms-2">{parentAssociations.length}</Badge>
-                  )}
-                </span>
-              }>
-                {editingUser && (
-                  <ParentAssociationSubform 
-                    studentId={editingUser.id}
-                    onAssociationChange={handleAssociationChange}
-                  />
-                )}
-              </Tab>              
-              <Tab eventKey="assignments" title={
-                <span>
-                  <i className="bi bi-diagram-3 me-2"></i>
-                  Assignments
-                  {studentAssignments.length > 0 && (
-                    <Badge bg="primary" className="ms-2">{studentAssignments.length}</Badge>
-                  )}
-                </span>
-              }>
-                {editingUser && (
-                  <AssignmentSubform 
-                    studentId={editingUser.id}
-                    assignments={studentAssignments}
-                    onAssignmentChange={handleAssignmentChange}
-                  />
-                )}
-              </Tab>
-
-              <Tab eventKey="progress" title={
-                <span>
-                  <i className="bi bi-graph-up me-2"></i>
-                  Progress
-                  {studentProgress.length > 0 && (
-                    <Badge bg="info" className="ms-2">{studentProgress.length}</Badge>
-                  )}
-                </span>
-              }>
-                {editingUser && (
-                  <StudentProgressTabContent
-                    progress={studentProgress}
-                    loading={studentProgressLoading}
-                  />
-                )}
-              </Tab>
-
-              <Tab eventKey="tests" title={
-                <span>
-                  <i className="bi bi-clipboard-data me-2"></i>
-                  Tests & Exams
-                  {studentTests.length > 0 && (
-                    <Badge bg="success" className="ms-2">{studentTests.length}</Badge>
-                  )}
-                </span>
-              }>
-                {editingUser && (
-                  <StudentTestsTabContent
-                    tests={studentTests}
-                    loading={studentTestsLoading}
-                  />
-                )}
-              </Tab>
-
-              <Tab eventKey="fees" title={
-                <span>
-                  <i className="bi bi-cash-stack me-2"></i>
-                  Fees
-                  {studentFees.length > 0 && (
-                    <Badge bg="success" className="ms-2">{studentFees.length}</Badge>
-                  )}
-                </span>
-              }>
-                {editingUser && (
-                  <FeeSubform
-                    studentId={editingUser.id}
-                    onFeeChange={handleFeeChange}
-                  />
-                )}
-              </Tab>
-            </Tabs>
-          ) : role === 'TEACHER' ? (
+          {role === 'TEACHER' ? (
             <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
               <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>
                 <Form onSubmit={handleUpdateUser}>
@@ -2292,6 +2314,7 @@ export function UserManagementTab({ role }: { role: Role }) {
           )}
         </Modal.Body>
       </Modal>
+      )}
 
       {/* Detail View Modal */}
       <DetailViewModal
