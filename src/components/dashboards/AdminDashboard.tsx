@@ -964,7 +964,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       fetchTeacherSalaryData(user.id);
     }
     
-    if (role !== 'STUDENT') {
+    if (role !== 'STUDENT' && role !== 'TEACHER' && role !== 'PARENT') {
       setShowEditModal(true);
     }
   };
@@ -1222,7 +1222,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      {role === 'TEACHER' ? (
+      {role === 'TEACHER' && !editingUser && (
         <>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div className="d-flex align-items-center gap-2">
@@ -1507,7 +1507,9 @@ export function UserManagementTab({ role }: { role: Role }) {
             </Card.Body>
           </Card>
         </>
-      ) : (
+      )}
+
+      {role !== 'TEACHER' && (
         <>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div className="d-flex align-items-center gap-2">
@@ -1650,6 +1652,9 @@ export function UserManagementTab({ role }: { role: Role }) {
               </Card.Body>
             </Card>
           )}
+
+        </>
+      )}
 
           {role === 'STUDENT' && editingUser ? (
             <Card className="shadow-sm">
@@ -1859,7 +1864,487 @@ export function UserManagementTab({ role }: { role: Role }) {
                 </Tabs>
               </Card.Body>
             </Card>
-          ) : (
+          ) : role === 'TEACHER' && editingUser ? (
+            <Card className="shadow-sm">
+              <Card.Header className="bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="bi bi-pencil text-warning"></i>
+                  <div>
+                    <h6 className="mb-0">Editing Teacher</h6>
+                    <small className="text-muted">{editingUser.name}</small>
+                  </div>
+                </div>
+                <Button variant="outline-secondary" size="sm" onClick={closeEditModal}>
+                  <i className="bi bi-arrow-left me-2"></i>
+                  Back to List
+                </Button>
+              </Card.Header>
+              <Card.Body className="p-3">
+                <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
+                  <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>
+                    <Form onSubmit={handleUpdateUser} className="mt-3">
+                      <Row className="g-3">
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Full Name</Form.Label>
+                            <Form.Control 
+                              type="text" 
+                              value={name} 
+                              onChange={(e) => setName(e.target.value)} 
+                              required 
+                              placeholder="Enter full name"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Email Address</Form.Label>
+                            <Form.Control 
+                              type="email" 
+                              value={email} 
+                              onChange={(e) => setEmail(e.target.value)} 
+                              required 
+                              placeholder="Enter email address"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Mobile Number</Form.Label>
+                            <Form.Control 
+                              type="tel" 
+                              value={mobile} 
+                              onChange={(e) => setMobile(e.target.value)} 
+                              placeholder="Enter mobile number"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Date of Birth</Form.Label>
+                            <Form.Control 
+                              type="date" 
+                              value={dateOfBirth} 
+                              onChange={(e) => setDateOfBirth(e.target.value)} 
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Address</Form.Label>
+                            <Form.Control 
+                              as="textarea"
+                              rows={2}
+                              value={address} 
+                              onChange={(e) => setAddress(e.target.value)} 
+                              placeholder="Enter address"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Qualification</Form.Label>
+                            <Form.Control 
+                              type="text" 
+                              value={qualification} 
+                              onChange={(e) => setQualification(e.target.value)} 
+                              placeholder="Enter qualification"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Pay Rate</Form.Label>
+                            <Form.Control 
+                              type="number" 
+                              step="0.01"
+                              value={payRate} 
+                              onChange={(e) => setPayRate(e.target.value)} 
+                              placeholder="0.00"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Salary Type</Form.Label>
+                            <Form.Select 
+                              value={payType}
+                              onChange={(e) => setPayType(e.target.value as PayType)}
+                            >
+                              <option value="DAILY">Daily</option>
+                              <option value="WEEKLY">Weekly</option>
+                              <option value="FORTNIGHTLY">Fortnightly</option>
+                              <option value="MONTHLY">Monthly</option>
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Pay Currency</Form.Label>
+                            <Form.Select 
+                              value={payCurrency}
+                              onChange={(e) => setPayCurrency(e.target.value)}
+                            >
+                              {currencies.map(currency => (
+                                <option key={currency.code} value={currency.code}>
+                                  {currency.code} - {currency.name}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group className="mb-1">
+                            <Form.Label>Password</Form.Label>
+                            <Form.Control 
+                              type="password" 
+                              value={password} 
+                              onChange={(e) => setPassword(e.target.value)} 
+                              placeholder="Leave blank to keep current password"
+                              minLength={6}
+                            />
+                            <Form.Text className="text-muted">
+                              Leave blank to keep current password
+                            </Form.Text>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                      <div className="d-flex justify-content-end gap-2 mt-3">
+                        <Button variant="secondary" onClick={closeEditModal}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" variant="warning" disabled={editing}>
+                          {editing ? (
+                            <><Spinner animation="border" size="sm" className="me-2" />Updating...</>
+                          ) : (
+                            <><i className="bi bi-check-circle me-2"></i>Update</>
+                          )}
+                        </Button>
+                      </div>
+                    </Form>
+                  </Tab>
+                  <Tab eventKey="salaries" title={<span><i className="bi bi-cash-stack me-2"></i>Salary</span>}>
+                    <Row className="g-3">
+                      <Col md={6}>
+                        <Card>
+                          <Card.Header className="bg-light"><strong>Record Salary Payment</strong></Card.Header>
+                          <Card.Body>
+                            <Row>
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Amount</Form.Label>
+                                  <Form.Control type="number" step="0.01" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
+                                </Form.Group>
+                              </Col>
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Paid Date</Form.Label>
+                                  <Form.Control type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Payment Details/Remarks</Form.Label>
+                              <Form.Control as="textarea" rows={2} value={paymentDetails} onChange={(e) => setPaymentDetails(e.target.value)} />
+                            </Form.Group>
+                            <div className="d-flex justify-content-end">
+                              <Button variant="primary" size="sm" onClick={handleRecordPayment} disabled={recordingPayment}>
+                                {recordingPayment ? 'Recording...' : 'Record Payment'}
+                              </Button>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                      <Col md={6}>
+                        <Card>
+                          <Card.Header className="bg-light"><strong>Create Salary Advance/Loan</strong></Card.Header>
+                          <Card.Body>
+                            <Row>
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Principal</Form.Label>
+                                  <Form.Control type="number" step="0.01" value={advancePrincipal} onChange={(e) => setAdvancePrincipal(e.target.value)} />
+                                </Form.Group>
+                              </Col>
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Installments</Form.Label>
+                                  <Form.Control type="number" value={advanceInstallments} onChange={(e) => setAdvanceInstallments(e.target.value)} />
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                            <Row>
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Repayment Frequency</Form.Label>
+                                  <Form.Select value={advancePayType} onChange={(e) => setAdvancePayType(e.target.value as PayType)}>
+                                    <option value="DAILY">Daily</option>
+                                    <option value="WEEKLY">Weekly</option>
+                                    <option value="FORTNIGHTLY">Fortnightly</option>
+                                    <option value="MONTHLY">Monthly</option>
+                                  </Form.Select>
+                                </Form.Group>
+                              </Col>
+                              <Col md={6}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>Currency</Form.Label>
+                                  <Form.Select value={advanceCurrency} onChange={(e) => setAdvanceCurrency(e.target.value)}>
+                                    {currencies.map(currency => (
+                                      <option key={currency.code} value={currency.code}>{currency.code}</option>
+                                    ))}
+                                  </Form.Select>
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                            <Form.Group className="mb-3">
+                              <Form.Label>Details/Remarks</Form.Label>
+                              <Form.Control as="textarea" rows={2} value={advanceDetails} onChange={(e) => setAdvanceDetails(e.target.value)} />
+                            </Form.Group>
+                            <div className="d-flex justify-content-end">
+                              <Button variant="warning" size="sm" onClick={handleCreateAdvance} disabled={creatingAdvance}>
+                                {creatingAdvance ? 'Creating...' : 'Create Advance'}
+                              </Button>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+
+                    <Row className="g-3 mt-2">
+                      <Col md={6}>
+                        <Card>
+                          <Card.Header className="bg-light"><strong>Payment History</strong></Card.Header>
+                          <Card.Body className="p-0">
+                            <div className="table-responsive">
+                              <Table size="sm" className="mb-0">
+                                <thead className="table-light">
+                                  <tr>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Details</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {teacherPayments.length === 0 ? (
+                                    <tr><td colSpan={3} className="text-center text-muted small py-3">No records</td></tr>
+                                  ) : teacherPayments.map((p) => (
+                                    <tr key={p.id}>
+                                      <td className="fw-bold text-success">{getCurrencySymbol(p.currency)}{p.amount.toFixed(2)}</td>
+                                      <td className="small">{new Date(p.paidDate).toLocaleDateString()}</td>
+                                      <td className="small">{p.paymentDetails || '-'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </Table>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                      <Col md={6}>
+                        <Card>
+                          <Card.Header className="bg-light"><strong>Advances/Loans</strong></Card.Header>
+                          <Card.Body className="p-0">
+                            <div className="table-responsive">
+                              <Table size="sm" className="mb-0">
+                                <thead className="table-light">
+                                  <tr>
+                                    <th>Principal</th>
+                                    <th>Balance</th>
+                                    <th>Installments</th>
+                                    <th>Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {teacherAdvances.length === 0 ? (
+                                    <tr><td colSpan={4} className="text-center text-muted small py-3">No records</td></tr>
+                                  ) : teacherAdvances.map((a) => (
+                                    <tr key={a.id}>
+                                      <td className="fw-bold">{getCurrencySymbol(a.currency)}{a.principal.toFixed(2)}</td>
+                                      <td>{getCurrencySymbol(a.currency)}{a.balance.toFixed(2)}</td>
+                                      <td>{a.installments} x {a.installmentAmount}</td>
+                                      <td><Badge bg={a.status === 'ACTIVE' ? 'warning' : a.status === 'COMPLETED' ? 'success' : 'secondary'}>{a.status}</Badge></td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </Table>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+                  </Tab>
+                </Tabs>
+              </Card.Body>
+            </Card>
+          ) : role === 'PARENT' && editingUser ? (
+            <Card className="shadow-sm">
+              <Card.Header className="bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div className="d-flex align-items-center gap-2">
+                  <i className="bi bi-pencil text-warning"></i>
+                  <div>
+                    <h6 className="mb-0">Editing Parent</h6>
+                    <small className="text-muted">{editingUser.name}</small>
+                  </div>
+                </div>
+                <Button variant="outline-secondary" size="sm" onClick={closeEditModal}>
+                  <i className="bi bi-arrow-left me-2"></i>
+                  Back to List
+                </Button>
+              </Card.Header>
+              <Card.Body>
+                <Form onSubmit={handleUpdateUser}>
+                  <Row className="g-3">
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Full Name</Form.Label>
+                        <Form.Control 
+                          type="text" 
+                          value={name} 
+                          onChange={(e) => setName(e.target.value)} 
+                          required 
+                          placeholder="Enter full name"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Email Address</Form.Label>
+                        <Form.Control 
+                          type="email" 
+                          value={email} 
+                          onChange={(e) => setEmail(e.target.value)} 
+                          required 
+                          placeholder="Enter email address"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Control 
+                          type="tel" 
+                          value={mobile} 
+                          onChange={(e) => setMobile(e.target.value)} 
+                          placeholder="Enter mobile number"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Date of Birth</Form.Label>
+                        <Form.Control 
+                          type="date" 
+                          value={dateOfBirth} 
+                          onChange={(e) => setDateOfBirth(e.target.value)} 
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Address</Form.Label>
+                        <Form.Control 
+                          as="textarea"
+                          rows={2}
+                          value={address} 
+                          onChange={(e) => setAddress(e.target.value)} 
+                          placeholder="Enter address"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Qualification</Form.Label>
+                        <Form.Control 
+                          type="text" 
+                          value={qualification} 
+                          onChange={(e) => setQualification(e.target.value)} 
+                          placeholder="Enter qualification"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Pay Rate</Form.Label>
+                        <Form.Control 
+                          type="number" 
+                          step="0.01"
+                          value={payRate} 
+                          onChange={(e) => setPayRate(e.target.value)} 
+                          placeholder="0.00"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Salary Type</Form.Label>
+                        <Form.Select 
+                          value={payType}
+                          onChange={(e) => setPayType(e.target.value as PayType)}
+                        >
+                          <option value="DAILY">Daily</option>
+                          <option value="WEEKLY">Weekly</option>
+                          <option value="FORTNIGHTLY">Fortnightly</option>
+                          <option value="MONTHLY">Monthly</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Pay Currency</Form.Label>
+                        <Form.Select 
+                          value={payCurrency}
+                          onChange={(e) => setPayCurrency(e.target.value)}
+                        >
+                          {currencies.map(currency => (
+                            <option key={currency.code} value={currency.code}>
+                              {currency.code} - {currency.name}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-1">
+                        <Form.Label>Password</Form.Label>
+                        <Form.Control 
+                          type="password" 
+                          value={password} 
+                          onChange={(e) => setPassword(e.target.value)} 
+                          placeholder="Leave blank to keep current password"
+                          minLength={6}
+                        />
+                        <Form.Text className="text-muted">
+                          Leave blank to keep current password
+                        </Form.Text>
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <div className="d-flex justify-content-end gap-2 mt-3">
+                    <Button variant="secondary" onClick={closeEditModal}>
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="warning"
+                      disabled={editing}
+                    >
+                      {editing ? (
+                        <>
+                          <Spinner animation="border" size="sm" className="me-2" />
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-check-circle me-2"></i>
+                          Update
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </Form>
+              </Card.Body>
+            </Card>
+          ) : role !== 'TEACHER' ? (
             <Card className="shadow-sm">
               <Card.Header className="bg-light">
                 <div className="d-flex justify-content-between align-items-center">
@@ -1939,9 +2424,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                 )}
               </Card.Body>
             </Card>
-          )}
-        </>
-      )}
+          ) : null}
 
       {/* Enhanced Edit User Modal for non-student roles */}
       {role !== 'STUDENT' && (
