@@ -1,5 +1,5 @@
 import FeeSubform from './FeeSubform';
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import ParentAssociationSubform from '../ParentAssociationSubform';
 import { Form, Button, Table, Card, Row, Col, Tabs, Tab, Alert, Spinner, Badge, Modal, InputGroup } from 'react-bootstrap';
 import { Role, FeeStatus, AttendanceStatus, SalaryStatus, ClassDay, PayType, AssessmentType } from '@prisma/client';
@@ -4774,17 +4774,7 @@ export function TestsTab() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    await loadRecords();
-    setLoading(false);
-  };
-
-  const loadRecords = async () => {
+  const loadRecords = useCallback(async () => {
     try {
       const res = await fetch('/api/tests/records');
       if (res.ok) {
@@ -4794,7 +4784,17 @@ export function TestsTab() {
     } catch (err) {
       console.error('Error fetching test records', err);
     }
-  };
+  }, []);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    await loadRecords();
+    setLoading(false);
+  }, [loadRecords]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   return (
     <div>
@@ -4886,7 +4886,7 @@ export function TestsTab() {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const disallowedTabs = new Set([
+  const disallowedTabs = useMemo(() => new Set([
     'teachers',
     'parents',
     'students',
@@ -4897,7 +4897,7 @@ export default function AdminDashboard() {
     'fees',
     'fee-verification',
     'salaries',
-  ]);
+  ]), []);
   const initialTab = typeof router.query.tab === 'string' && !disallowedTabs.has(router.query.tab)
     ? router.query.tab
     : 'home';
@@ -4930,7 +4930,7 @@ export default function AdminDashboard() {
         setActiveTab(qTab);
       }
     }
-  }, [router.query.tab, activeTab]);
+  }, [router, router.query.tab, activeTab, disallowedTabs]);
 
   const fetchHomeSnapshot = useCallback(async () => {
     try {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner, Tabs, Tab, InputGroup } from 'react-bootstrap';
 import { AttendanceStatus, AssessmentType } from '@prisma/client';
 import { useSession } from 'next-auth/react';
@@ -140,11 +140,7 @@ export default function TeacherDashboard() {
   const [chatTargetId, setChatTargetId] = useState<string | null>(null);
   const [chatTargetName, setChatTargetName] = useState('');
 
-  useEffect(() => {
-    fetchAssignedStudents();
-  }, []);
-
-  const fetchAssignedStudents = async (options?: { silent?: boolean }) => {
+  const fetchAssignedStudents = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent;
     try {
       if (!silent) setLoading(true);
@@ -171,7 +167,11 @@ export default function TeacherDashboard() {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [showRemarksModal, selectedProgressId]);
+
+  useEffect(() => {
+    fetchAssignedStudents();
+  }, [fetchAssignedStudents]);
 
   const handleUpdateProgress = (student: Student) => {
     setSelectedStudent(student);

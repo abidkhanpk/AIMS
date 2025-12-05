@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, Table, Alert, Spinner, Badge } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import MessageThreadModal, { MessageItem } from '../components/messages/MessageThreadModal';
@@ -78,7 +78,7 @@ export default function MessagesPage() {
 
   const threads = useMemo(() => buildThreads(messages, currentUserId), [messages, currentUserId]);
 
-  const syncSelectedThread = (threadId: string | null, list: any[]) => {
+  const syncSelectedThread = useCallback((threadId: string | null, list: any[]) => {
     if (!threadId) return;
     const built = buildThreads(list, currentUserId);
     const thread = built.find((t) => t.threadId === threadId);
@@ -97,7 +97,7 @@ export default function MessagesPage() {
     setSelectedSubject(thread.subject || 'No subject');
     setSelectedMessages(formatted);
     setSelectedOther(thread.other ? { id: thread.other.id, name: thread.other.name } : null);
-  };
+  }, [currentUserId]);
 
   const openThread = async (threadId: string) => {
     setSelectedThreadId(threadId);
@@ -115,7 +115,7 @@ export default function MessagesPage() {
     if (selectedThreadId) {
       syncSelectedThread(selectedThreadId, messages);
     }
-  }, [messages, selectedThreadId]);
+  }, [messages, selectedThreadId, syncSelectedThread]);
 
   const handleReply = async (content: string) => {
     if (!selectedOther?.id || !selectedSubject || !selectedThreadId) return false;

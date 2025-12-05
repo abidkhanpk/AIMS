@@ -1,5 +1,6 @@
 import type { NextPage } from 'next';
 import Head from 'next/head';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
@@ -120,19 +121,16 @@ const Home: NextPage = () => {
             <Col lg={6} className="text-center">
               <div className="py-5">
                 {appSettings.appLogo && (
-                  <img 
-                    src={appSettings.appLogo} 
-                    alt="AIMS Logo" 
+                  <Image
+                    src={appSettings.appLogo || '/assets/app-logo.png'}
+                    alt="AIMS Logo"
+                    width={300}
+                    height={200}
                     className="img-fluid mb-4"
-                    style={{ 
-                      maxHeight: '200px', 
-                      maxWidth: '100%',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain'
-                    }}
+                    style={{ height: 'auto', width: 'auto', maxHeight: '200px', maxWidth: '100%', objectFit: 'contain' }}
+                    unoptimized
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/assets/app-logo.png';
+                      (e.currentTarget as HTMLImageElement).src = '/assets/app-logo.png';
                     }}
                   />
                 )}

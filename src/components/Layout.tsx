@@ -1,7 +1,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab, Badge } from 'react-bootstrap';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import NotificationDropdown from './NotificationDropdown';
 import AdminSubscriptionTab from './dashboards/AdminSubscriptionTab';
 import { useRouter } from 'next/router';
@@ -54,17 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     "What is the name of your best friend?"
   ];
 
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchSettings();
-      fetchUserSettings();
-      loadUnreadMessages();
-      const interval = setInterval(loadUnreadMessages, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [status]);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings/my-settings');
       if (res.ok) {
@@ -79,9 +69,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         tagline: 'Academy Information and Management System',
       });
     }
-  };
+  }, []);
 
-  const fetchUserSettings = async () => {
+  const fetchUserSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings/user-settings');
       if (res.ok) {
@@ -99,7 +89,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error fetching user settings:', error);
     }
-  };
+  }, [user?.email]);
+
+  const loadUnreadMessages = useCallback(async () => {
+    try {
+      const res = await fetch('/api/messages/unread-count');
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadMessages(data.count || 0);
+      }
+    } catch (error) {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchSettings();
+      fetchUserSettings();
+      loadUnreadMessages();
+      const interval = setInterval(loadUnreadMessages, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [status, fetchSettings, fetchUserSettings, loadUnreadMessages]);
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -204,18 +216,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       setError('Error updating settings');
     } finally {
       setUpdating(false);
-    }
-  };
-
-  const loadUnreadMessages = async () => {
-    try {
-      const res = await fetch('/api/messages/unread-count');
-      if (res.ok) {
-        const data = await res.json();
-        setUnreadMessages(data.count || 0);
-      }
-    } catch (error) {
-      // ignore
     }
   };
 

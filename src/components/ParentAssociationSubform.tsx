@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Form, Button, Table, Card, Row, Col, Alert, Spinner, Badge, Modal } from 'react-bootstrap';
 import { RelationType } from '@prisma/client';
 
@@ -86,13 +86,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
   const [editRelationType, setEditRelationType] = useState<RelationType>('GUARDIAN');
   const [updating, setUpdating] = useState(false);
 
-  useEffect(() => {
-    if (studentId) {
-      fetchData();
-    }
-  }, [studentId]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [parentsRes, associationsRes] = await Promise.all([
@@ -118,7 +112,13 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
     } finally {
       setLoading(false);
     }
-  };
+  }, [studentId]);
+
+  useEffect(() => {
+    if (studentId) {
+      fetchData();
+    }
+  }, [studentId, fetchData]);
 
   const handleCreateAssociation = async (e: React.FormEvent) => {
     e.preventDefault();

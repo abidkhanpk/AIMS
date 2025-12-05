@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { Form, Button, Table, Card, Row, Col, Modal, Alert, Spinner, Badge, Tabs, Tab } from 'react-bootstrap';
 import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
 import { currencies } from '../../utils/currencies';
@@ -873,13 +874,15 @@ function AdminManagementTab() {
                   <div className="mb-3">
                     <Form.Label>Current Logo Preview</Form.Label>
                     <div className="border rounded p-3 bg-light text-center">
-                      <img 
-                        src={headerImage} 
-                        alt="Header preview" 
-                        style={{ maxHeight: '80px', maxWidth: '200px' }}
+                      <Image
+                        src={headerImage || '/assets/default-logo.png'}
+                        alt="Header preview"
+                        width={200}
+                        height={80}
+                        style={{ height: 'auto', width: 'auto', maxHeight: '80px', maxWidth: '200px' }}
                         className="rounded"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/assets/default-logo.png';
+                          (e.currentTarget as HTMLImageElement).src = '/assets/default-logo.png';
                         }}
                       />
                     </div>
@@ -1203,13 +1206,15 @@ function GlobalSettingsTab() {
             <div className="mb-4">
               <Form.Label>Current Logo Preview</Form.Label>
               <div className="border rounded p-3 bg-light text-center">
-                <img 
-                  src={appLogo} 
-                  alt="App logo preview" 
-                  style={{ maxHeight: '100px', maxWidth: '300px' }}
+                <Image
+                  src={appLogo || '/assets/app-logo.png'}
+                  alt="App logo preview"
+                  width={300}
+                  height={100}
+                  style={{ height: 'auto', width: 'auto', maxHeight: '100px', maxWidth: '300px' }}
                   className="rounded"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/assets/app-logo.png';
+                    (e.currentTarget as HTMLImageElement).src = '/assets/app-logo.png';
                   }}
                 />
               </div>
