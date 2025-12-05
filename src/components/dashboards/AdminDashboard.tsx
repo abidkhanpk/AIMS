@@ -183,6 +183,29 @@ const currencies = [
   { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
 ];
 
+const countryOptions = [
+  'Afghanistan','Albania','Algeria','Andorra','Angola','Antigua and Barbuda','Argentina','Armenia','Australia','Austria',
+  'Azerbaijan','Bahamas','Bahrain','Bangladesh','Barbados','Belarus','Belgium','Belize','Benin','Bhutan','Bolivia',
+  'Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria','Burkina Faso','Burundi','Cabo Verde','Cambodia','Cameroon',
+  'Canada','Central African Republic','Chad','Chile','China','Colombia','Comoros','Congo (Congo-Brazzaville)','Costa Rica','Croatia',
+  'Cuba','Cyprus','Czechia','Democratic Republic of the Congo','Denmark','Djibouti','Dominica','Dominican Republic','Ecuador','Egypt',
+  'El Salvador','Equatorial Guinea','Eritrea','Estonia','Eswatini','Ethiopia','Fiji','Finland','France','Gabon',
+  'Gambia','Georgia','Germany','Ghana','Greece','Grenada','Guatemala','Guinea','Guinea-Bissau','Guyana',
+  'Haiti','Honduras','Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland','Israel',
+  'Italy','Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kiribati','Kuwait','Kyrgyzstan','Laos',
+  'Latvia','Lebanon','Lesotho','Liberia','Libya','Liechtenstein','Lithuania','Luxembourg','Madagascar','Malawi',
+  'Malaysia','Maldives','Mali','Malta','Marshall Islands','Mauritania','Mauritius','Mexico','Micronesia','Moldova',
+  'Monaco','Mongolia','Montenegro','Morocco','Mozambique','Myanmar','Namibia','Nauru','Nepal','Netherlands',
+  'New Zealand','Nicaragua','Niger','Nigeria','North Korea','North Macedonia','Norway','Oman','Pakistan','Palau',
+  'Panama','Papua New Guinea','Paraguay','Peru','Philippines','Poland','Portugal','Qatar','Romania','Russia',
+  'Rwanda','Saint Kitts and Nevis','Saint Lucia','Saint Vincent and the Grenadines','Samoa','San Marino','Sao Tome and Principe','Saudi Arabia','Senegal','Serbia',
+  'Seychelles','Sierra Leone','Singapore','Slovakia','Slovenia','Solomon Islands','Somalia','South Africa','South Korea','South Sudan',
+  'Spain','Sri Lanka','Sudan','Suriname','Sweden','Switzerland','Syria','Taiwan','Tajikistan','Tanzania',
+  'Thailand','Timor-Leste','Togo','Tonga','Trinidad and Tobago','Tunisia','Turkey','Turkmenistan','Tuvalu','Uganda',
+  'Ukraine','United Arab Emirates','United Kingdom','United States','Uruguay','Uzbekistan','Vanuatu','Vatican City','Venezuela','Vietnam',
+  'Yemen','Zambia','Zimbabwe'
+];
+
 const roleConfig = {
   TEACHER: { icon: 'bi-person-workspace', color: 'success', title: 'Teachers' },
   PARENT: { icon: 'bi-people', color: 'info', title: 'Parents' },
@@ -1376,18 +1399,6 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Form.Select>
                       </Form.Group>
                     </Col>
-                    <Col md={4}>
-                      <Form.Group className="mb-0">
-                        <Form.Label>Country</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={newCountry}
-                          onChange={(e) => setNewCountry(e.target.value)}
-                          placeholder="Enter country"
-                          size="sm"
-                        />
-                      </Form.Group>
-                    </Col>
                     <Col md={12}>
                       <Form.Group className="mb-0">
                         <Form.Label>Address</Form.Label>
@@ -1397,6 +1408,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                           value={newAddress}
                           onChange={(e) => setNewAddress(e.target.value)}
                           placeholder="Enter address"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Country</Form.Label>
+                        <Form.Control
+                          list="countryOptionsList"
+                          value={newCountry}
+                          onChange={(e) => setNewCountry(e.target.value)}
+                          placeholder="Select country"
                           size="sm"
                         />
                       </Form.Group>
@@ -1624,18 +1647,6 @@ export function UserManagementTab({ role }: { role: Role }) {
                     )}
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Country</Form.Label>
-                        <Form.Control
-                          type="text"
-                          value={newCountry}
-                          onChange={(e) => setNewCountry(e.target.value)}
-                          placeholder="Enter country"
-                          size="sm"
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                      <Form.Group className="mb-0">
                         <Form.Label>Address</Form.Label>
                         <Form.Control
                           as="textarea"
@@ -1643,6 +1654,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                           value={newAddress}
                           onChange={(e) => setNewAddress(e.target.value)}
                           placeholder="Enter address"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Country</Form.Label>
+                        <Form.Control
+                          list="countryOptionsList"
+                          value={newCountry}
+                          onChange={(e) => setNewCountry(e.target.value)}
+                          placeholder="Select country"
                           size="sm"
                         />
                       </Form.Group>
@@ -1760,28 +1783,32 @@ export function UserManagementTab({ role }: { role: Role }) {
                             />
                           </Form.Group>
                         </Col>
+                      </Row>
+                      <Row className="g-3">
+                        <Col md={8}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Address</Form.Label>
+                            <Form.Control 
+                              as="textarea"
+                              rows={3}
+                              value={address} 
+                              onChange={(e) => setAddress(e.target.value)} 
+                              placeholder="Enter address"
+                            />
+                          </Form.Group>
+                        </Col>
                         <Col md={4}>
                           <Form.Group className="mb-3">
                             <Form.Label>Country</Form.Label>
                             <Form.Control 
-                              type="text" 
+                              list="countryOptionsList"
                               value={country} 
                               onChange={(e) => setCountry(e.target.value)} 
-                              placeholder="Enter country"
+                              placeholder="Select country"
                             />
                           </Form.Group>
                         </Col>
                       </Row>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Address</Form.Label>
-                        <Form.Control 
-                          as="textarea"
-                          rows={3}
-                          value={address} 
-                          onChange={(e) => setAddress(e.target.value)} 
-                          placeholder="Enter address"
-                        />
-                      </Form.Group>
                       <Form.Group className="mb-4">
                         <Form.Label>Password</Form.Label>
                         <Form.Control 
@@ -1974,17 +2001,6 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Country</Form.Label>
-                            <Form.Control 
-                              type="text" 
-                              value={country} 
-                              onChange={(e) => setCountry(e.target.value)} 
-                              placeholder="Enter country"
-                            />
-                          </Form.Group>
-                        </Col>
-                        <Col md={4}>
-                          <Form.Group>
                             <Form.Label>Address</Form.Label>
                             <Form.Control 
                               as="textarea"
@@ -1992,6 +2008,17 @@ export function UserManagementTab({ role }: { role: Role }) {
                               value={address} 
                               onChange={(e) => setAddress(e.target.value)} 
                               placeholder="Enter address"
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Country</Form.Label>
+                            <Form.Control 
+                              list="countryOptionsList"
+                              value={country} 
+                              onChange={(e) => setCountry(e.target.value)} 
+                              placeholder="Select country"
                             />
                           </Form.Group>
                         </Col>
@@ -2286,12 +2313,15 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <Col md={4}>
                       <Form.Group>
                         <Form.Label>Country</Form.Label>
-                        <Form.Control 
-                          type="text" 
+                        <Form.Select 
                           value={country} 
                           onChange={(e) => setCountry(e.target.value)} 
-                          placeholder="Enter country"
-                        />
+                        >
+                          <option value="">Select country</option>
+                          {countryOptions.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </Form.Select>
                       </Form.Group>
                     </Col>
                     <Col md={4}>
