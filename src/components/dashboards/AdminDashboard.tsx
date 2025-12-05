@@ -1250,11 +1250,6 @@ export function UserManagementTab({ role }: { role: Role }) {
 
   return (
     <div>
-      <datalist id="countryOptionsList">
-        {countryOptions.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
@@ -1420,13 +1415,16 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <Col md={4}>
                       <Form.Group className="mb-0">
                         <Form.Label>Country</Form.Label>
-                        <Form.Control
-                          list="countryOptionsList"
+                        <Form.Select
                           value={newCountry}
                           onChange={(e) => setNewCountry(e.target.value)}
-                          placeholder="Select country"
                           size="sm"
-                        />
+                        >
+                          <option value="">Select country</option>
+                          {countryOptions.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </Form.Select>
                       </Form.Group>
                     </Col>
                   </Row>
@@ -1666,13 +1664,16 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <Col md={4}>
                       <Form.Group className="mb-0">
                         <Form.Label>Country</Form.Label>
-                        <Form.Control
-                          list="countryOptionsList"
+                        <Form.Select
                           value={newCountry}
                           onChange={(e) => setNewCountry(e.target.value)}
-                          placeholder="Select country"
                           size="sm"
-                        />
+                        >
+                          <option value="">Select country</option>
+                          {countryOptions.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </Form.Select>
                       </Form.Group>
                     </Col>
                   </Row>
@@ -2019,12 +2020,15 @@ export function UserManagementTab({ role }: { role: Role }) {
                         <Col md={4}>
                           <Form.Group>
                             <Form.Label>Country</Form.Label>
-                            <Form.Control 
-                              list="countryOptionsList"
+                            <Form.Select 
                               value={country} 
                               onChange={(e) => setCountry(e.target.value)} 
-                              placeholder="Select country"
-                            />
+                            >
+                              <option value="">Select country</option>
+                              {countryOptions.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                            </Form.Select>
                           </Form.Group>
                         </Col>
                         <Col md={4}>
@@ -2315,17 +2319,20 @@ export function UserManagementTab({ role }: { role: Role }) {
                         />
                       </Form.Group>
                     </Col>
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>Country</Form.Label>
-                        <Form.Control 
-                          list="countryOptionsList"
-                          value={country} 
-                          onChange={(e) => setCountry(e.target.value)} 
-                          placeholder="Select country"
-                        />
-                      </Form.Group>
-                    </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Country</Form.Label>
+                            <Form.Select 
+                              value={country} 
+                              onChange={(e) => setCountry(e.target.value)} 
+                            >
+                              <option value="">Select country</option>
+                              {countryOptions.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
                     <Col md={4}>
                       <Form.Group>
                         <Form.Label>Date of Birth</Form.Label>
