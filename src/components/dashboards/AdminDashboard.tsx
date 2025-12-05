@@ -1250,6 +1250,11 @@ export function UserManagementTab({ role }: { role: Role }) {
 
   return (
     <div>
+      <datalist id="countryOptionsList">
+        {countryOptions.map((c) => (
+          <option key={c} value={c} />
+        ))}
+      </datalist>
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
@@ -2313,15 +2318,12 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <Col md={4}>
                       <Form.Group>
                         <Form.Label>Country</Form.Label>
-                        <Form.Select 
+                        <Form.Control 
+                          list="countryOptionsList"
                           value={country} 
                           onChange={(e) => setCountry(e.target.value)} 
-                        >
-                          <option value="">Select country</option>
-                          {countryOptions.map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </Form.Select>
+                          placeholder="Select country"
+                        />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
