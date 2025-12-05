@@ -266,9 +266,9 @@ const FeeManagementTab = () => {
         </Col>
         <Col md={4}>
           <Form.Group className="mb-0">
-            <Form.Label>Due After (Days)</Form.Label>
+            <Form.Label>Due Date After (Days)</Form.Label>
             <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
-            <Form.Text className="text-muted">Days after generation when fee is due.</Form.Text>
+            <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
           </Form.Group>
         </Col>
         <Col md={4}>

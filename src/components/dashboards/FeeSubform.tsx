@@ -303,9 +303,9 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         </Col>
       </Row>
       <Form.Group className="mb-3">
-        <Form.Label>Due After (Days)</Form.Label>
+        <Form.Label>Due Date After (Days)</Form.Label>
         <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
-        <Form.Text className="text-muted">Number of days after generation day when the fee becomes due.</Form.Text>
+        <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
       </Form.Group>
       <Button variant="primary" type="submit" disabled={isEditing ? editing : creating} className="w-100">
         {isEditing ? (editing ? 'Updating...' : 'Update Fee Definition') : (creating ? 'Creating...' : 'Create Fee Definition')}
@@ -425,9 +425,9 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                       </Col>
                       <Col md={4}>
                         <Form.Group>
-                          <Form.Label>Due After (Days)</Form.Label>
+                          <Form.Label>Due Date After (Days)</Form.Label>
                           <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
-                          <Form.Text className="text-muted">Number of days after generation day when the fee becomes due.</Form.Text>
+                          <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
                         </Form.Group>
                       </Col>
                       <Col md={12}>
