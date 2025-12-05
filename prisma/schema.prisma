@@ -158,6 +158,7 @@ model User {
   mobile    String?
   dateOfBirth DateTime? // Only for STUDENT and TEACHER
   address   String?
+  country   String?
   
   // Teacher specific fields
   qualification String?

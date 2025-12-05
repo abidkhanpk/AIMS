@@ -21,6 +21,7 @@ interface User {
   mobile?: string;
   dateOfBirth?: string;
   address?: string;
+  country?: string;
   qualification?: string;
   payRate?: number;
   payType?: PayType;
@@ -769,6 +770,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [newMobile, setNewMobile] = useState('');
   const [newDateOfBirth, setNewDateOfBirth] = useState('');
   const [newAddress, setNewAddress] = useState('');
+  const [newCountry, setNewCountry] = useState('');
   const [newQualification, setNewQualification] = useState('');
   const [newPayRate, setNewPayRate] = useState('');
   const [newPayType, setNewPayType] = useState<PayType>('MONTHLY');
@@ -781,6 +783,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [mobile, setMobile] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
+  const [country, setCountry] = useState('');
   
   // Teacher-specific fields
   const [qualification, setQualification] = useState('');
@@ -860,7 +863,8 @@ export function UserManagementTab({ role }: { role: Role }) {
         role,
         mobile: newMobile || undefined,
         dateOfBirth: newDateOfBirth || undefined,
-        address: newAddress || undefined
+        address: newAddress || undefined,
+        country: newCountry || undefined
       };
 
       // Only add teacher-specific fields for teachers
@@ -900,6 +904,7 @@ export function UserManagementTab({ role }: { role: Role }) {
     setNewMobile('');
     setNewDateOfBirth('');
     setNewAddress('');
+    setNewCountry('');
     setNewQualification('');
     setNewPayRate('');
     setNewPayType('MONTHLY');
@@ -913,6 +918,7 @@ export function UserManagementTab({ role }: { role: Role }) {
     setMobile('');
     setDateOfBirth('');
     setAddress('');
+    setCountry('');
     setQualification('');
     setPayRate('');
     setPayType('MONTHLY');
@@ -951,6 +957,7 @@ export function UserManagementTab({ role }: { role: Role }) {
     setMobile(user.mobile || '');
     setDateOfBirth(user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '');
     setAddress(user.address || '');
+    setCountry(user.country || '');
     setQualification(user.qualification || '');
     setPayRate(user.payRate?.toString() || '');
     setPayType(user.payType || 'MONTHLY');
@@ -1127,7 +1134,8 @@ export function UserManagementTab({ role }: { role: Role }) {
         ...(password && { password }),
         mobile: mobile || undefined,
         dateOfBirth: dateOfBirth || undefined,
-        address: address || undefined
+        address: address || undefined,
+        country: country || undefined
       };
 
       // Only add teacher-specific fields for teachers
@@ -1368,6 +1376,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Form.Select>
                       </Form.Group>
                     </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
+                        <Form.Label>Country</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={newCountry}
+                          onChange={(e) => setNewCountry(e.target.value)}
+                          placeholder="Enter country"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
                     <Col md={12}>
                       <Form.Group className="mb-0">
                         <Form.Label>Address</Form.Label>
@@ -1604,6 +1624,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                     )}
                     <Col md={4}>
                       <Form.Group className="mb-0">
+                        <Form.Label>Country</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={newCountry}
+                          onChange={(e) => setNewCountry(e.target.value)}
+                          placeholder="Enter country"
+                          size="sm"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-0">
                         <Form.Label>Address</Form.Label>
                         <Form.Control
                           as="textarea"
@@ -1707,7 +1739,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Col>
                       </Row>
                       <Row>
-                        <Col md={6}>
+                        <Col md={4}>
                           <Form.Group className="mb-3">
                             <Form.Label>Mobile Number</Form.Label>
                             <Form.Control 
@@ -1718,13 +1750,24 @@ export function UserManagementTab({ role }: { role: Role }) {
                             />
                           </Form.Group>
                         </Col>
-                        <Col md={6}>
+                        <Col md={4}>
                           <Form.Group className="mb-3">
                             <Form.Label>Date of Birth</Form.Label>
                             <Form.Control 
                               type="date" 
                               value={dateOfBirth} 
                               onChange={(e) => setDateOfBirth(e.target.value)} 
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group className="mb-3">
+                            <Form.Label>Country</Form.Label>
+                            <Form.Control 
+                              type="text" 
+                              value={country} 
+                              onChange={(e) => setCountry(e.target.value)} 
+                              placeholder="Enter country"
                             />
                           </Form.Group>
                         </Col>
@@ -1926,6 +1969,17 @@ export function UserManagementTab({ role }: { role: Role }) {
                               type="date" 
                               value={dateOfBirth} 
                               onChange={(e) => setDateOfBirth(e.target.value)} 
+                            />
+                          </Form.Group>
+                        </Col>
+                        <Col md={4}>
+                          <Form.Group>
+                            <Form.Label>Country</Form.Label>
+                            <Form.Control 
+                              type="text" 
+                              value={country} 
+                              onChange={(e) => setCountry(e.target.value)} 
+                              placeholder="Enter country"
                             />
                           </Form.Group>
                         </Col>
@@ -2226,6 +2280,17 @@ export function UserManagementTab({ role }: { role: Role }) {
                           value={mobile} 
                           onChange={(e) => setMobile(e.target.value)} 
                           placeholder="Enter mobile number"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Country</Form.Label>
+                        <Form.Control 
+                          type="text" 
+                          value={country} 
+                          onChange={(e) => setCountry(e.target.value)} 
+                          placeholder="Enter country"
                         />
                       </Form.Group>
                     </Col>

@@ -23,6 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     mobile, 
     dateOfBirth, 
     address,
+    country,
     // Teacher specific fields
     qualification,
     payRate,
@@ -95,6 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Add additional fields if provided
     if (mobile) userData.mobile = mobile;
     if (address) userData.address = address;
+    if (country) userData.country = country;
 
     // Add date of birth only for STUDENT and TEACHER
     if (dateOfBirth && ['STUDENT', 'TEACHER'].includes(role)) {
@@ -120,6 +122,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         mobile: true,
         dateOfBirth: true,
         address: true,
+        country: true,
         qualification: true,
         payRate: true,
         payType: true,
