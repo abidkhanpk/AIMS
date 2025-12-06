@@ -63,6 +63,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [verifyTarget, setVerifyTarget] = useState<any | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [activeTab, setActiveTab] = useState<'definitions' | 'payments'>('definitions');
 
   const resetForm = () => {
     setTitle('');
@@ -340,13 +341,21 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
     }
   };
 
+  const handleTabSelect = (key: string | null) => {
+    const next = (key || 'definitions') as 'definitions' | 'payments';
+    setActiveTab(next);
+    if (next === 'payments') {
+      setShowCreateForm(false);
+    }
+  };
+
   return (
     <div>
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
       <Card className="mb-3">
-        <Tab.Container defaultActiveKey="definitions">
+        <Tab.Container activeKey={activeTab} onSelect={handleTabSelect}>
           <div className="d-flex justify-content-between align-items-center px-3 pt-3">
             <Nav variant="tabs" className="flex-grow-1">
               <Nav.Item>
@@ -356,19 +365,21 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                 <Nav.Link eventKey="payments">Fee Payments</Nav.Link>
               </Nav.Item>
             </Nav>
-            <Button
-              size="sm"
-              className="ms-3"
-              variant={showCreateForm ? 'secondary' : 'primary'}
-              onClick={() => {
-                if (showCreateForm) {
-                  resetForm();
-                }
-                setShowCreateForm((prev) => !prev);
-              }}
-            >
-              {showCreateForm ? 'Hide Form' : 'Add Fee Definition'}
-            </Button>
+            {activeTab === 'definitions' && (
+              <Button
+                size="sm"
+                className="ms-3"
+                variant={showCreateForm ? 'secondary' : 'primary'}
+                onClick={() => {
+                  if (showCreateForm) {
+                    resetForm();
+                  }
+                  setShowCreateForm((prev) => !prev);
+                }}
+              >
+                {showCreateForm ? 'Hide Form' : 'Add Fee Definition'}
+              </Button>
+            )}
           </div>
 
           <Tab.Content>
