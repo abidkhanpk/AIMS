@@ -846,8 +846,12 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [studentTestsLoading, setStudentTestsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
 
-  const config = roleConfig[role as keyof typeof roleConfig];
-  const roleLabel = role.charAt(0) + role.slice(1).toLowerCase();
+  const roleValue = String(role) as keyof typeof roleConfig;
+  const config = roleConfig[roleValue];
+  const roleLabel = roleValue.charAt(0) + roleValue.slice(1).toLowerCase();
+  const isTeacher = roleValue === 'TEACHER';
+  const isParent = roleValue === 'PARENT';
+  const isStudent = roleValue === 'STUDENT';
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -891,7 +895,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       };
 
       // Only add teacher-specific fields for teachers
-      if (role === 'TEACHER') {
+      if (isTeacher) {
         userData.qualification = newQualification || undefined;
         userData.payRate = newPayRate ? parseFloat(newPayRate) : undefined;
         userData.payType = newPayType;
@@ -987,14 +991,14 @@ export function UserManagementTab({ role }: { role: Role }) {
     setPayCurrency(user.payCurrency || 'USD');
     setActiveTab('basic');
     
-    if (role === 'STUDENT') {
+    if (isStudent) {
       fetchStudentData(user.id);
     }
-    if (role === 'TEACHER') {
+    if (isTeacher) {
       fetchTeacherSalaryData(user.id);
     }
     
-    if (role !== 'STUDENT' && role !== 'TEACHER' && role !== 'PARENT') {
+    if (!isStudent && !isTeacher && !isParent) {
       setShowEditModal(true);
     }
   };
@@ -1162,7 +1166,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       };
 
       // Only add teacher-specific fields for teachers
-      if (role === 'TEACHER') {
+      if (isTeacher) {
         updateData.qualification = qualification || undefined;
         updateData.payRate = payRate ? parseFloat(payRate) : undefined;
         updateData.payType = payType;
@@ -1193,7 +1197,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   const handleViewDetails = (user: User) => {
     // Hide teacher-only fields from Student and Parent detail views
     const data: any = { ...user };
-    if (role !== 'TEACHER') {
+    if (!isTeacher) {
       delete data.qualification;
       delete data.payRate;
       delete data.payType;
@@ -1253,7 +1257,7 @@ export function UserManagementTab({ role }: { role: Role }) {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      {role === 'TEACHER' && !editingUser && (
+      {isTeacher && !editingUser && (
         <>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div className="d-flex align-items-center gap-2">
@@ -1555,7 +1559,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         </>
       )}
 
-      {role !== 'TEACHER' && (
+      {!isTeacher && (
         <>
           <div className="d-flex justify-content-between align-items-center mb-3">
             <div className="d-flex align-items-center gap-2">
@@ -1568,7 +1572,7 @@ export function UserManagementTab({ role }: { role: Role }) {
               variant={showCreateForm ? 'secondary' : config.color}
               onClick={() => setShowCreateForm((v) => !v)}
             >
-              {showCreateForm ? 'Hide Form' : `Add New ${role === 'STUDENT' ? 'Student' : role === 'PARENT' ? 'Parent' : roleLabel}`}
+              {showCreateForm ? 'Hide Form' : `Add New ${isStudent ? 'Student' : isParent ? 'Parent' : roleLabel}`}
             </Button>
           </div>
 
@@ -1635,7 +1639,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                         />
                       </Form.Group>
                     </Col>
-                    {role === 'STUDENT' && (
+                    {isStudent && (
                       <Col md={4}>
                         <Form.Group className="mb-0">
                           <Form.Label>Date of Birth</Form.Label>
@@ -1717,7 +1721,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         </>
       )}
 
-          {role === 'STUDENT' && editingUser ? (
+          {isStudent && editingUser ? (
             <Card className="shadow-sm">
               <Card.Header className="bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div className="d-flex align-items-center gap-2">
@@ -1806,12 +1810,15 @@ export function UserManagementTab({ role }: { role: Role }) {
                         <Col md={4}>
                           <Form.Group className="mb-3">
                             <Form.Label>Country</Form.Label>
-                            <Form.Control 
-                              list="countryOptionsList"
+                            <Form.Select 
                               value={country} 
                               onChange={(e) => setCountry(e.target.value)} 
-                              placeholder="Select country"
-                            />
+                            >
+                              <option value="">Select country</option>
+                              {countryOptions.map((c) => (
+                                <option key={c} value={c}>{c}</option>
+                              ))}
+                            </Form.Select>
                           </Form.Group>
                         </Col>
                       </Row>
@@ -1940,7 +1947,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                 </Tabs>
               </Card.Body>
             </Card>
-          ) : role === 'TEACHER' && editingUser ? (
+          ) : isTeacher && editingUser ? (
             <Card className="shadow-sm">
               <Card.Header className="bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div className="d-flex align-items-center gap-2">
@@ -2266,7 +2273,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                 </Tabs>
               </Card.Body>
             </Card>
-          ) : role === 'PARENT' && editingUser ? (
+          ) : isParent && editingUser ? (
             <Card className="shadow-sm">
               <Card.Header className="bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <div className="d-flex align-items-center gap-2">
@@ -2319,20 +2326,6 @@ export function UserManagementTab({ role }: { role: Role }) {
                         />
                       </Form.Group>
                     </Col>
-                        <Col md={4}>
-                          <Form.Group>
-                            <Form.Label>Country</Form.Label>
-                            <Form.Select 
-                              value={country} 
-                              onChange={(e) => setCountry(e.target.value)} 
-                            >
-                              <option value="">Select country</option>
-                              {countryOptions.map((c) => (
-                                <option key={c} value={c}>{c}</option>
-                              ))}
-                            </Form.Select>
-                          </Form.Group>
-                        </Col>
                     <Col md={4}>
                       <Form.Group>
                         <Form.Label>Date of Birth</Form.Label>
@@ -2353,6 +2346,20 @@ export function UserManagementTab({ role }: { role: Role }) {
                           onChange={(e) => setAddress(e.target.value)} 
                           placeholder="Enter address"
                         />
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Country</Form.Label>
+                        <Form.Select 
+                          value={country} 
+                          onChange={(e) => setCountry(e.target.value)} 
+                        >
+                          <option value="">Select country</option>
+                          {countryOptions.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </Form.Select>
                       </Form.Group>
                     </Col>
                     <Col md={4}>
@@ -2448,7 +2455,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                 </Form>
               </Card.Body>
             </Card>
-          ) : role !== 'TEACHER' ? (
+          ) : !isTeacher ? (
             <Card className="shadow-sm">
               <Card.Header className="bg-light">
                 <div className="d-flex justify-content-between align-items-center">
@@ -2531,8 +2538,8 @@ export function UserManagementTab({ role }: { role: Role }) {
           ) : null}
 
       {/* Enhanced Edit User Modal for non-student roles */}
-      {role !== 'STUDENT' && (
-      <Modal show={showEditModal} onHide={closeEditModal} size={role === 'TEACHER' ? 'xl' : 'lg'}>
+      {!isStudent && (
+      <Modal show={showEditModal} onHide={closeEditModal} size={isTeacher ? 'xl' : 'lg'}>
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
@@ -2540,7 +2547,7 @@ export function UserManagementTab({ role }: { role: Role }) {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {role === 'TEACHER' ? (
+          {isTeacher ? (
             <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
               <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>
                 <Form onSubmit={handleUpdateUser}>
