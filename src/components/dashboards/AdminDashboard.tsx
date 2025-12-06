@@ -5027,6 +5027,22 @@ export default function AdminDashboard() {
       recent: Progress[];
       topTeachers: Array<{ name: string; avg: number; count: number }>;
     };
+    teacherActivity: {
+      activeThisWeek: number;
+      totalTeachers: number;
+      activeRate: number;
+      entriesThisWeek: number;
+    };
+    subscription: {
+      plan: string | null;
+      status: string | null;
+      startDate: string | null;
+      endDate: string | null;
+      amount: number | null;
+      currency: string | null;
+      daysLeft: number | null;
+      warning: boolean;
+    };
     remarks: { total: number };
   } | null>(null);
 
@@ -5047,7 +5063,7 @@ export default function AdminDashboard() {
     try {
       setHomeLoading(true);
       setHomeError('');
-      const [studentsRes, teachersRes, parentsRes, feesRes, salariesRes, progressRes, remarksRes] = await Promise.all([
+      const [studentsRes, teachersRes, parentsRes, feesRes, salariesRes, progressRes, remarksRes, subscriptionsRes] = await Promise.all([
         fetch('/api/users?role=STUDENT'),
         fetch('/api/users?role=TEACHER'),
         fetch('/api/users?role=PARENT'),
@@ -5055,6 +5071,7 @@ export default function AdminDashboard() {
         fetch('/api/salaries'),
         fetch('/api/progress'),
         fetch('/api/remarks'),
+        fetch('/api/subscriptions'),
       ]);
 
       const students = studentsRes.ok ? await studentsRes.json() : [];
@@ -5063,6 +5080,7 @@ export default function AdminDashboard() {
       const fees = feesRes.ok ? await feesRes.json() : [];
       const salaries = salariesRes.ok ? await salariesRes.json() : [];
       const progressData: Progress[] = progressRes.ok ? await progressRes.json() : [];
+      const subscriptions = subscriptionsRes.ok ? await subscriptionsRes.json() : [];
       const remarks = remarksRes.ok ? await remarksRes.json() : [];
 
       const feeTotals = fees.reduce(
@@ -5101,6 +5119,29 @@ export default function AdminDashboard() {
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5);
 
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const activeTeacherIds = new Set<string>();
+      const entriesThisWeek = progressData.filter((p) => {
+        const d = new Date(p.date);
+        const inRange = d >= weekAgo;
+        if (inRange && p.teacher?.id) {
+          activeTeacherIds.add(p.teacher.id);
+        }
+        return inRange;
+      }).length;
+      const activeThisWeek = activeTeacherIds.size;
+      const activeRate = teachers.length ? Math.round((activeThisWeek / teachers.length) * 100) : 0;
+
+      const latestSubscription = Array.isArray(subscriptions) && subscriptions.length
+        ? subscriptions.reduce((latest: any, sub: any) =>
+            new Date(sub.endDate || sub.startDate || 0) > new Date(latest.endDate || latest.startDate || 0) ? sub : latest,
+          subscriptions[0])
+        : null;
+      const now = new Date();
+      const subEndDate = latestSubscription?.endDate ? new Date(latestSubscription.endDate) : null;
+      const daysLeft = subEndDate ? Math.ceil((subEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+
       const teacherProgressMap: Record<string, { total: number; count: number }> = {};
       progressData.forEach((p) => {
         const name = p.teacher?.name || 'Unknown';
@@ -5130,6 +5171,22 @@ export default function AdminDashboard() {
           avgLessonProgress,
           recent: recentProgress,
           topTeachers,
+        },
+        teacherActivity: {
+          activeThisWeek,
+          totalTeachers: teachers.length,
+          activeRate,
+          entriesThisWeek,
+        },
+        subscription: {
+          plan: latestSubscription?.plan || null,
+          status: latestSubscription?.status || null,
+          startDate: latestSubscription?.startDate || null,
+          endDate: latestSubscription?.endDate || null,
+          amount: latestSubscription?.amount ?? null,
+          currency: latestSubscription?.currency || null,
+          daysLeft,
+          warning: typeof daysLeft === 'number' ? daysLeft <= 7 : false,
         },
         remarks: { total: Array.isArray(remarks) ? remarks.length : 0 },
       });
@@ -5280,6 +5337,86 @@ export default function AdminDashboard() {
                                 aria-valuemax={100}
                               ></div>
                             </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+
+                    <Row className="g-3 mb-3">
+                      <Col lg={6}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Body>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <p className="text-muted mb-1 small">Teacher Activity (7d)</p>
+                                <h5 className="mb-0">
+                                  {homeSnapshot.teacherActivity.activeThisWeek} active
+                                  <small className="text-muted ms-2">
+                                    / {homeSnapshot.teacherActivity.totalTeachers} teachers
+                                  </small>
+                                </h5>
+                              </div>
+                              <Badge bg={homeSnapshot.teacherActivity.activeRate >= 70 ? 'success' : homeSnapshot.teacherActivity.activeRate >= 40 ? 'warning' : 'danger'}>
+                                {homeSnapshot.teacherActivity.activeRate}%
+                              </Badge>
+                            </div>
+                            <div className="progress mt-3" style={{ height: '8px' }}>
+                              <div
+                                className={`progress-bar ${homeSnapshot.teacherActivity.activeRate >= 70 ? 'bg-success' : homeSnapshot.teacherActivity.activeRate >= 40 ? 'bg-warning' : 'bg-danger'}`}
+                                style={{ width: `${homeSnapshot.teacherActivity.activeRate}%` }}
+                              ></div>
+                            </div>
+                            <small className="text-muted d-block mt-2">
+                              {homeSnapshot.teacherActivity.entriesThisWeek} progress entries logged this week.
+                            </small>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                      <Col lg={6}>
+                        <Card className="shadow-sm h-100">
+                          <Card.Body>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div>
+                                <p className="text-muted mb-1 small">Subscription</p>
+                                <h5 className="mb-0">
+                                  {homeSnapshot.subscription.plan ? homeSnapshot.subscription.plan : 'No plan'}
+                                  {homeSnapshot.subscription.status && (
+                                    <Badge
+                                      bg={homeSnapshot.subscription.status === 'ACTIVE' ? 'success' : homeSnapshot.subscription.warning ? 'danger' : 'secondary'}
+                                      className="ms-2"
+                                    >
+                                      {homeSnapshot.subscription.status}
+                                    </Badge>
+                                  )}
+                                </h5>
+                              </div>
+                              {homeSnapshot.subscription.amount && (
+                                <span className="badge bg-primary-subtle text-primary">
+                                  {getCurrencySymbol(homeSnapshot.subscription.currency || 'USD')}
+                                  {homeSnapshot.subscription.amount}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-2">
+                              <small className="text-muted d-block">
+                                {homeSnapshot.subscription.endDate
+                                  ? `Renews on ${new Date(homeSnapshot.subscription.endDate).toLocaleDateString()}`
+                                  : 'No expiry date set'}
+                              </small>
+                              {typeof homeSnapshot.subscription.daysLeft === 'number' && (
+                                <small className={homeSnapshot.subscription.warning ? 'text-danger' : 'text-success'}>
+                                  {homeSnapshot.subscription.daysLeft >= 0
+                                    ? `${homeSnapshot.subscription.daysLeft} day(s) left`
+                                    : `Expired ${Math.abs(homeSnapshot.subscription.daysLeft)} day(s) ago`}
+                                </small>
+                              )}
+                            </div>
+                            {homeSnapshot.subscription.warning && (
+                              <div className="alert alert-warning py-2 px-3 mt-3 mb-0">
+                                <i className="bi bi-exclamation-triangle me-1"></i>
+                                Subscription ends soon. Please renew within 7 days.
+                              </div>
+                            )}
                           </Card.Body>
                         </Card>
                       </Col>
