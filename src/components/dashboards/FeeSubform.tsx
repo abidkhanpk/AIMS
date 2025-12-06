@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Form, Button, Table, Card, Row, Col, Alert, Spinner, Badge, Modal } from 'react-bootstrap';
-import { FeeType } from '@prisma/client';
+import { Form, Button, Table, Card, Row, Col, Alert, Spinner, Badge, Modal, Nav, Tab } from 'react-bootstrap';
+import { FeeStatus, FeeType } from '@prisma/client';
 
 interface StudentRef { id: string; name?: string }
 interface StudentFeeDefinitionRef { student: StudentRef }
@@ -56,6 +56,14 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingFeeDefinition, setEditingFeeDefinition] = useState<FeeDefinition | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  // Payments tab
+  const [feePayments, setFeePayments] = useState<any[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [verifyTarget, setVerifyTarget] = useState<any | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [activeTab, setActiveTab] = useState<'definitions' | 'payments'>('definitions');
 
   const resetForm = () => {
     setTitle('');
@@ -92,11 +100,32 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
     }
   }, [studentId]);
 
+  const fetchPayments = useCallback(async () => {
+    try {
+      setPaymentsLoading(true);
+      const res = await fetch('/api/fees');
+      if (res.ok) {
+        const data = await res.json();
+        const filtered = (Array.isArray(data) ? data : []).filter((fee) => fee.student?.id === studentId);
+        setFeePayments(filtered);
+      } else {
+        setError('Failed to fetch fee payments');
+        setFeePayments([]);
+      }
+    } catch (err) {
+      setError('Error fetching fee payments');
+      setFeePayments([]);
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }, [studentId]);
+
   useEffect(() => {
     if (studentId) {
       fetchFees();
+      fetchPayments();
     }
-  }, [studentId, fetchFees]);
+  }, [studentId, fetchFees, fetchPayments]);
 
   const handleCreateFeeDefinition = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +153,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       if (res.ok) {
         setSuccess('Fee definition created successfully!');
         resetForm();
+        setShowCreateForm(false);
         fetchFees();
         onFeeChange();
       } else {
@@ -274,9 +304,9 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         </Col>
       </Row>
       <Form.Group className="mb-3">
-        <Form.Label>Due After (Days)</Form.Label>
+        <Form.Label>Due Date After (Days)</Form.Label>
         <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
-        <Form.Text className="text-muted">Number of days after generation day when the fee becomes due.</Form.Text>
+        <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
       </Form.Group>
       <Button variant="primary" type="submit" disabled={isEditing ? editing : creating} className="w-100">
         {isEditing ? (editing ? 'Updating...' : 'Update Fee Definition') : (creating ? 'Creating...' : 'Create Fee Definition')}
@@ -284,94 +314,281 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
     </Form>
   );
 
+  const handleVerify = async (approve: boolean) => {
+    if (!verifyTarget) return;
+    setVerifying(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/fees/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ feeId: verifyTarget.id, approve }),
+      });
+      if (res.ok) {
+        setSuccess(approve ? 'Payment verified' : 'Payment rejected');
+        setVerifyTarget(null);
+        fetchPayments();
+        onFeeChange();
+      } else {
+        const err = await res.json();
+        setError(err.message || 'Failed to process verification');
+      }
+    } catch (err) {
+      setError('Error verifying payment');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleTabSelect = (key: string | null) => {
+    const next = (key || 'definitions') as 'definitions' | 'payments';
+    setActiveTab(next);
+    if (next === 'payments') {
+      setShowCreateForm(false);
+    }
+  };
+
   return (
     <div>
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Row className="g-3">
-        <Col lg={6}>
-          <Card className="h-100">
-            <Card.Header className="bg-primary text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-plus-circle me-2"></i>
-                Create Fee Definition
-              </h6>
-            </Card.Header>
-            <Card.Body>
-              {renderForm(handleCreateFeeDefinition)}
-            </Card.Body>
-          </Card>
-        </Col>
+      <Card className="mb-3">
+        <Tab.Container activeKey={activeTab} onSelect={handleTabSelect}>
+          <div className="d-flex justify-content-between align-items-center px-3 pt-3">
+            <Nav variant="tabs" className="flex-grow-1">
+              <Nav.Item>
+                <Nav.Link eventKey="definitions">Fee Definitions <Badge bg="primary">{feeDefinitions.length}</Badge></Nav.Link>
+              </Nav.Item>
+              <Nav.Item>
+                <Nav.Link eventKey="payments">Fee Payments</Nav.Link>
+              </Nav.Item>
+            </Nav>
+            {activeTab === 'definitions' && (
+              <Button
+                size="sm"
+                className="ms-3"
+                variant={showCreateForm ? 'secondary' : 'primary'}
+                onClick={() => {
+                  if (showCreateForm) {
+                    resetForm();
+                  }
+                  setShowCreateForm((prev) => !prev);
+                }}
+              >
+                {showCreateForm ? 'Hide Form' : 'Add Fee Definition'}
+              </Button>
+            )}
+          </div>
 
-        <Col lg={6}>
-          <Card className="h-100">
-            <Card.Header className="bg-light">
-              <div className="d-flex justify-content-between align-items-center">
-                <h6 className="mb-0">
-                  <i className="bi bi-list-task me-2"></i>
-                  Fee Definitions
-                </h6>
-                <Badge bg="primary">{feeDefinitions.length}</Badge>
-              </div>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {loading ? (
-                <div className="text-center py-3">
-                  <Spinner animation="border" size="sm" />
-                  <p className="mt-2 text-muted small">Loading fee definitions...</p>
-                </div>
-              ) : feeDefinitions.length === 0 ? (
-                <div className="text-center py-4">
-                  <i className="bi bi-list-task display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">No fee definitions found</p>
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Title</th>
-                        <th>Amount</th>
-                        <th>Type</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {feeDefinitions.map((fd) => (
-                        <tr key={fd.id}>
-                          <td className="fw-medium">{fd.title}</td>
-                          <td>{fd.amount} {fd.currency}</td>
-                          <td>{fd.type}</td>
-                          <td>
-                            <Button
-                              variant="outline-warning"
-                              size="sm"
-                              onClick={() => handleEditFeeDefinition(fd)}
-                              title="Edit Fee Definition"
-                              className="me-2"
-                            >
-                              <i className="bi bi-pencil"></i>
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => askDeleteFeeDefinition(fd)}
-                              title="Delete Fee Definition"
-                            >
-                              <i className="bi bi-trash"></i>
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
+          <Tab.Content>
+            <Tab.Pane eventKey="definitions">
+              {showCreateForm && (
+                <Card.Body className="border-bottom">
+                  <Form onSubmit={handleCreateFeeDefinition}>
+                    <Row className="g-3">
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Title</Form.Label>
+                          <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                        </Form.Group>
+                      </Col>
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Amount</Form.Label>
+                          <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+                        </Form.Group>
+                      </Col>
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Currency</Form.Label>
+                          <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
+                            {currencies.map(curr => (
+                              <option key={curr.code} value={curr.code}>
+                                {curr.symbol} {curr.name} ({curr.code})
+                              </option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Type</Form.Label>
+                          <Form.Select value={type} onChange={(e) => setType(e.target.value as FeeType)} required>
+                            {feeTypes.map((feeType) => (
+                              <option key={feeType} value={feeType}>{feeType}</option>
+                            ))}
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Generation Day</Form.Label>
+                          <Form.Control type="number" value={generationDay} onChange={(e) => setGenerationDay(e.target.value)} required />
+                        </Form.Group>
+                      </Col>
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Start Date</Form.Label>
+                          <Form.Control type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+                        </Form.Group>
+                      </Col>
+                      <Col md={4}>
+                        <Form.Group>
+                          <Form.Label>Due Date After (Days)</Form.Label>
+                          <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
+                          <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
+                        </Form.Group>
+                      </Col>
+                      <Col md={12}>
+                        <Form.Group>
+                          <Form.Label>Description</Form.Label>
+                          <Form.Control as="textarea" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+                        </Form.Group>
+                      </Col>
+                    </Row>
+                    <div className="d-flex justify-content-end gap-2 mt-3">
+                      <Button
+                        variant="secondary"
+                        type="button"
+                        onClick={() => {
+                          resetForm();
+                          setShowCreateForm(false);
+                        }}
+                        disabled={creating}
+                      >
+                        Cancel
+                      </Button>
+                      <Button variant="primary" type="submit" disabled={creating}>
+                        {creating ? 'Creating...' : 'Save Fee Definition'}
+                      </Button>
+                    </div>
+                  </Form>
+                </Card.Body>
               )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+
+              <Card.Body className="p-0">
+                {loading ? (
+                  <div className="text-center py-3">
+                    <Spinner animation="border" size="sm" />
+                    <p className="mt-2 text-muted small">Loading fee definitions...</p>
+                  </div>
+                ) : feeDefinitions.length === 0 ? (
+                  <div className="text-center py-4">
+                    <i className="bi bi-list-task display-6 text-muted"></i>
+                    <p className="mt-2 text-muted small">No fee definitions found</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <Table hover size="sm" className="mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Title</th>
+                          <th>Amount</th>
+                          <th>Type</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feeDefinitions.map((fd) => (
+                          <tr key={fd.id}>
+                            <td className="fw-medium">{fd.title}</td>
+                            <td>{fd.amount} {fd.currency}</td>
+                            <td>{fd.type}</td>
+                            <td>
+                              <Button
+                                variant="outline-warning"
+                                size="sm"
+                                onClick={() => handleEditFeeDefinition(fd)}
+                                title="Edit Fee Definition"
+                                className="me-2"
+                              >
+                                <i className="bi bi-pencil"></i>
+                              </Button>
+                              <Button
+                                variant="outline-danger"
+                                size="sm"
+                                onClick={() => askDeleteFeeDefinition(fd)}
+                                title="Delete Fee Definition"
+                              >
+                                <i className="bi bi-trash"></i>
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                )}
+              </Card.Body>
+            </Tab.Pane>
+
+            <Tab.Pane eventKey="payments">
+              <Card.Body className="p-0">
+                {paymentsLoading ? (
+                  <div className="text-center py-3">
+                    <Spinner animation="border" size="sm" />
+                    <p className="mt-2 text-muted small">Loading payments...</p>
+                  </div>
+                ) : feePayments.length === 0 ? (
+                  <div className="text-center py-4">
+                    <i className="bi bi-receipt-cutoff display-6 text-muted"></i>
+                    <p className="mt-2 text-muted small">No fee payments found</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <Table hover size="sm" className="mb-0">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Title</th>
+                          <th>Amount</th>
+                          <th>Status</th>
+                          <th>Paid Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {feePayments.map((fee) => (
+                          <tr key={fee.id}>
+                            <td className="fw-medium">{fee.feeDefinition?.title || fee.title}</td>
+                            <td>{fee.feeDefinition?.amount || fee.amount} {fee.feeDefinition?.currency || fee.currency}</td>
+                            <td>
+                              <Badge bg={
+                                fee.status === 'PAID' ? 'success' :
+                                fee.status === 'PROCESSING' ? 'warning' :
+                                fee.status === 'OVERDUE' ? 'danger' : 'secondary'
+                              }>
+                                {fee.status}
+                              </Badge>
+                            </td>
+                            <td className="text-muted small">
+                              {fee.paidDate ? new Date(fee.paidDate).toLocaleDateString() : '-'}
+                            </td>
+                            <td>
+                              {fee.status === FeeStatus.PROCESSING ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline-primary"
+                                  onClick={() => setVerifyTarget(fee)}
+                                >
+                                  Verify/Reject
+                                </Button>
+                              ) : (
+                                <span className="text-muted small">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </div>
+                )}
+              </Card.Body>
+            </Tab.Pane>
+          </Tab.Content>
+        </Tab.Container>
+      </Card>
 
       {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
@@ -396,11 +613,36 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       {/* Edit Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Edit Fee Definition</Modal.Title>
+      <Modal.Title>Edit Fee Definition</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+      {renderForm(handleUpdateFeeDefinition, true)}
+    </Modal.Body>
+  </Modal>
+
+      {/* Verify / Reject payment */}
+      <Modal show={!!verifyTarget} onHide={() => setVerifyTarget(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Verify Payment</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {renderForm(handleUpdateFeeDefinition, true)}
+          {verifyTarget && (
+            <>
+              <p className="mb-1"><strong>Fee:</strong> {verifyTarget.feeDefinition?.title || verifyTarget.title}</p>
+              <p className="mb-1"><strong>Amount:</strong> {verifyTarget.feeDefinition?.amount || verifyTarget.amount} {verifyTarget.feeDefinition?.currency || verifyTarget.currency}</p>
+              <p className="mb-0 text-muted small">Approve to mark as paid, or reject to send it back to pending.</p>
+            </>
+          )}
         </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setVerifyTarget(null)} disabled={verifying}>Cancel</Button>
+          <Button variant="danger" onClick={() => handleVerify(false)} disabled={verifying}>
+            {verifying ? 'Rejecting...' : 'Reject'}
+          </Button>
+          <Button variant="success" onClick={() => handleVerify(true)} disabled={verifying}>
+            {verifying ? 'Verifying...' : 'Verify'}
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

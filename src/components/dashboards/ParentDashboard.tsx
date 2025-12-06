@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Alert, Spinner, Accordion, Button, Modal, Form, Tabs, Tab } from 'react-bootstrap';
-import { FeeStatus, AttendanceStatus } from '@prisma/client';
+import { FeeStatus, AttendanceStatus, AssessmentType } from '@prisma/client';
 import FeePaymentModal from './FeePaymentModal';
+import { useSession } from 'next-auth/react';
+import RemarkThreadModal from '../remarks/RemarkThreadModal';
+import DirectMessageModal from '../messages/DirectMessageModal';
 
 interface Child {
   id: string;
@@ -20,7 +23,6 @@ interface Child {
     lesson: string;
     homework: string;
     lessonProgress: number;
-    score: number;
     remarks: string;
     attendance: AttendanceStatus;
     createdAt: string;
@@ -37,9 +39,39 @@ interface Child {
       remark: string;
       createdAt: string;
       parent: {
+        id: string;
         name: string;
       };
+      replies?: {
+        id: string;
+        content: string;
+        createdAt: string;
+        author: {
+          id: string;
+          name: string;
+          role: string;
+        };
+      }[];
     }[];
+  }[];
+  testRecords: {
+    id: string;
+    title: string;
+    type: AssessmentType;
+    performedAt: string;
+    maxMarks: number;
+    obtainedMarks: number;
+    percentage: number;
+    performanceNote?: string | null;
+    remarks?: string | null;
+    course: {
+      id: string;
+      name: string;
+    };
+    teacher: {
+      id: string;
+      name: string;
+    };
   }[];
 }
 
@@ -64,6 +96,8 @@ interface Fee {
 }
 
 export default function ParentDashboard() {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
   const [children, setChildren] = useState<Child[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +110,14 @@ export default function ParentDashboard() {
   const [selectedProgress, setSelectedProgress] = useState<any>(null);
   const [remarkText, setRemarkText] = useState('');
   const [addingRemark, setAddingRemark] = useState(false);
+  const [showThreadModal, setShowThreadModal] = useState(false);
+  const [threadRemarks, setThreadRemarks] = useState<any[]>([]);
+  const [threadProgressId, setThreadProgressId] = useState<string | null>(null);
+  const [threadChildId, setThreadChildId] = useState<string | null>(null);
+  const [threadTitle, setThreadTitle] = useState('');
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageTargetId, setMessageTargetId] = useState<string | null>(null);
+  const [messageTargetName, setMessageTargetName] = useState('');
 
   // Fee payment states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -86,13 +128,16 @@ export default function ParentDashboard() {
     fetchFees();
   }, []);
 
-  const fetchChildren = async () => {
+  const fetchChildren = async (options?: { silent?: boolean }) => {
+    const silent = options?.silent;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetch('/api/users/my-children');
       if (res.ok) {
         const data = await res.json();
-        setChildren(Array.isArray(data) ? data : []);
+        const list = Array.isArray(data) ? data : [];
+        setChildren(list);
+        return list;
       } else {
         setError('Failed to fetch children data');
         setChildren([]);
@@ -101,8 +146,15 @@ export default function ParentDashboard() {
       setError('Error fetching children data');
       setChildren([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
+  };
+
+  const openMessage = (id?: string, name?: string) => {
+    if (!id) return;
+    setMessageTargetId(id);
+    setMessageTargetName(name || '');
+    setShowMessageModal(true);
   };
 
   const fetchFees = async () => {
@@ -128,6 +180,14 @@ export default function ParentDashboard() {
     setSelectedProgress(progress);
     setRemarkText('');
     setShowRemarkModal(true);
+  };
+
+  const handleRemarkAction = (progress: any) => {
+    if (progress.parentRemarks && progress.parentRemarks.length > 0) {
+      openThread(progress);
+    } else {
+      handleAddRemark(progress);
+    }
   };
 
   const handleSubmitRemark = async (e: React.FormEvent) => {
@@ -219,6 +279,18 @@ export default function ParentDashboard() {
     return Math.round(total / coursesWithProgress.length);
   };
 
+  const getTestsForChild = (child: Child) => {
+    if (!child.testRecords || child.testRecords.length === 0) return [];
+    return child.testRecords;
+  };
+
+  const getAverageTestScore = (child: Child) => {
+    const tests = getTestsForChild(child);
+    if (tests.length === 0) return null;
+    const total = tests.reduce((sum, test) => sum + (test.percentage || 0), 0);
+    return Math.round(total / tests.length);
+  };
+
   const getStatusBadge = (status: FeeStatus) => {
     switch (status) {
       case 'PAID':
@@ -253,6 +325,65 @@ export default function ParentDashboard() {
 
   const getPendingFees = () => {
     return fees.filter(fee => fee.status === 'PENDING' || fee.status === 'OVERDUE');
+  };
+
+  const buildThreadTitle = (progress: any, studentName?: string) => {
+    const teacherName = progress.teacher?.name || 'Teacher';
+    const courseName = progress.course?.name || 'Subject';
+    const dateLabel = progress.date ? new Date(progress.date).toLocaleDateString() : '';
+    const student = studentName || progress.student?.name || 'Student';
+    return `${teacherName}: Progress of ${student} for ${courseName}${dateLabel ? ` on ${dateLabel}` : ''}`;
+  };
+
+  const openThread = (progress: any) => {
+    setThreadRemarks(progress.parentRemarks || []);
+    setThreadProgressId(progress.id);
+    const ownerChild = children.find((c) => c.progressRecords?.some((p) => p.id === progress.id));
+    setThreadChildId(ownerChild?.id || null);
+    setThreadTitle(buildThreadTitle({ ...progress, student: ownerChild || progress.student }, ownerChild?.name));
+    setShowThreadModal(true);
+  };
+
+  const handleSendReply = async (remarkId: string, content: string) => {
+    if (!remarkId || !content.trim()) return false;
+    try {
+      const res = await fetch('/api/progress/remark-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ remarkId, content: content.trim() }),
+      });
+      if (res.ok) {
+        const newReply = await res.json();
+        setThreadRemarks((prev) =>
+          prev.map((r: any) =>
+            r.id === newReply.remarkId
+              ? { ...r, replies: [...(r.replies || []), newReply] }
+              : r
+          )
+        );
+        await refreshThread();
+        setSuccess('Comment added');
+        return true;
+      }
+      const err = await res.json();
+      setError(err.message || 'Failed to add comment');
+      return false;
+    } catch (err) {
+      setError('Failed to add comment');
+      return false;
+    }
+  };
+
+  const refreshThread = async () => {
+    const list = await fetchChildren({ silent: true });
+    const data = list || children;
+    if (threadChildId && threadProgressId) {
+      const child = data.find((c: any) => c.id === threadChildId);
+      const progress = child?.progressRecords?.find((p: any) => p.id === threadProgressId);
+      if (progress) {
+        setThreadRemarks(progress.parentRemarks || []);
+      }
+    }
   };
 
   if (loading) {
@@ -384,7 +515,7 @@ export default function ParentDashboard() {
                                     ) : (
                                       <div className="table-responsive">
                                         <Table size="sm" className="mb-0">
-                                          <thead className="table-light">
+                                          <thead className="table-light small">
                                             <tr>
                                               <th>Date</th>
                                               <th>Teacher</th>
@@ -392,8 +523,7 @@ export default function ParentDashboard() {
                                               <th>Lesson</th>
                                               <th>Homework</th>
                                               <th>Progress</th>
-                                              <th>Score</th>
-                                              <th>Remarks</th>
+                                              <th>Teacher Remarks</th>
                                               <th>My Remarks</th>
                                               <th>Action</th>
                                             </tr>
@@ -405,7 +535,13 @@ export default function ParentDashboard() {
                                                   {new Date(progress.date).toLocaleDateString()}
                                                 </td>
                                                 <td className="fw-medium small">
-                                                  {progress.teacher?.name || 'Unknown'}
+                                                  <span
+                                                    role="button"
+                                                    className="text-decoration-underline text-primary"
+                                                    onClick={() => openMessage(progress.teacher?.id, progress.teacher?.name)}
+                                                  >
+                                                    {progress.teacher?.name || 'Unknown'}
+                                                  </span>
                                                 </td>
                                                 <td>
                                                   {getAttendanceBadge(progress.attendance)}
@@ -429,15 +565,6 @@ export default function ParentDashboard() {
                                                     <span className="text-muted small">-</span>
                                                   )}
                                                 </td>
-                                                <td>
-                                                  {progress.score !== null ? (
-                                                    <Badge bg="success" className="small">
-                                                      {progress.score}
-                                                    </Badge>
-                                                  ) : (
-                                                    <span className="text-muted small">-</span>
-                                                  )}
-                                                </td>
                                                 <td className="small">
                                                   {progress.remarks ? (
                                                     <span className="text-muted">
@@ -452,27 +579,30 @@ export default function ParentDashboard() {
                                                 </td>
                                                 <td className="small">
                                                   {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
-                                                    <div>
-                                                      {progress.parentRemarks.map((remark) => (
-                                                        <div key={remark.id} className="mb-1">
-                                                          <small className="text-info">
-                                                            {remark.remark.length > 20 
-                                                              ? remark.remark.substring(0, 20) + '...'
-                                                              : remark.remark
-                                                            }
-                                                          </small>
-                                                        </div>
-                                                      ))}
-                                                    </div>
+                                                    (() => {
+                                                      const replyCount = progress.parentRemarks.reduce(
+                                                        (sum: number, r: any) => sum + (r.replies?.length || 0),
+                                                        0
+                                                      );
+                                                      return (
+                                                        <span className="small text-muted d-inline-block">
+                                                          Remark with{' '}
+                                                          <span className={replyCount > 0 ? 'text-success' : 'text-danger'}>
+                                                            {replyCount > 0 ? replyCount : 'no'}
+                                                          </span>{' '}
+                                                          comment{replyCount === 1 ? '' : 's'}
+                                                        </span>
+                                                      );
+                                                    })()
                                                   ) : (
-                                                    <span className="text-muted">-</span>
+                                                    <span className="small text-muted d-inline-block">No parent remark</span>
                                                   )}
                                                 </td>
                                                 <td>
                                                   <Button
                                                     variant="outline-info"
                                                     size="sm"
-                                                    onClick={() => handleAddRemark(progress)}
+                                                    onClick={() => handleRemarkAction(progress)}
                                                   >
                                                     <i className="bi bi-chat-dots"></i>
                                                   </Button>
@@ -488,6 +618,121 @@ export default function ParentDashboard() {
                               );
                             })}
                           </Accordion>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                );
+              })}
+            </Row>
+              </Tab>
+
+          <Tab 
+            eventKey="tests"
+            title={
+              <span>
+                <i className="bi bi-journal-check me-2"></i>
+                Tests & Exams
+              </span>
+            }
+          >
+            <Row className="g-4">
+              {children.map((child) => {
+                const averageTests = getAverageTestScore(child);
+                const tests = getTestsForChild(child);
+                return (
+                  <Col key={`${child.id}-tests`} lg={12}>
+                    <Card className="shadow-sm">
+                      <Card.Header className="bg-light">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <h5 className="mb-0 fw-bold" role="button" onClick={() => openMessage(child.id, child.name)}>
+                              {child.name}
+                            </h5>
+                            <small className="text-muted">{child.email}</small>
+                          </div>
+                          <div className="text-end">
+                            {averageTests !== null ? (
+                              <div>
+                                <Badge 
+                                  bg={averageTests >= 80 ? 'success' : averageTests >= 60 ? 'warning' : 'danger'}
+                                  className="fs-6"
+                                >
+                                  {averageTests}% Avg Score
+                                </Badge>
+                                <div className="small text-muted mt-1">Across all tests</div>
+                              </div>
+                            ) : (
+                              <Badge bg="secondary">No Test Data</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </Card.Header>
+                      <Card.Body className="p-0">
+                        {!tests || tests.length === 0 ? (
+                          <div className="text-center py-4">
+                            <i className="bi bi-journal-check display-6 text-muted"></i>
+                            <p className="mt-2 text-muted">No tests recorded yet</p>
+                          </div>
+                        ) : (
+                          <div className="table-responsive">
+                            <Table hover size="sm" className="mb-0">
+                              <thead className="table-light small">
+                                <tr>
+                                  <th>Date</th>
+                                  <th>Subject</th>
+                                  <th>Test/Exam</th>
+                                  <th>Type</th>
+                                  <th>Score</th>
+                                  <th>Percentage</th>
+                                  <th>Performance</th>
+                                  <th>Remarks</th>
+                                  <th>Teacher</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+              {tests.map((test) => (
+                <tr key={test.id}>
+                  <td className="text-muted small">
+                    {new Date(test.performedAt).toLocaleDateString()}
+                  </td>
+                  <td className="fw-medium small">{test.course.name}</td>
+                  <td className="small">{test.title}</td>
+                                    <td>
+                                      <Badge bg={
+                                        test.type === 'EXAM'
+                                          ? 'danger'
+                                          : test.type === 'HOMEWORK'
+                                            ? 'secondary'
+                                            : test.type === 'OTHER'
+                                              ? 'info'
+                                              : 'info'
+                                      }>
+                                        {test.type === 'EXAM'
+                                          ? 'Exam'
+                                          : test.type === 'HOMEWORK'
+                                            ? 'Homework'
+                                            : test.type === 'OTHER'
+                                              ? 'Other'
+                                              : 'Quiz'}
+                                      </Badge>
+                                    </td>
+                                    <td>
+                                      <Badge bg="dark">{test.obtainedMarks}/{test.maxMarks}</Badge>
+                                    </td>
+                                    <td>
+                                      <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
+                                        {test.percentage}%
+                                      </Badge>
+                                    </td>
+                                    <td className="small">{test.performanceNote || '-'}</td>
+                                    <td className="small">{test.remarks || '-'}</td>
+                                    <td className="small">{test.teacher?.name || '-'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </Table>
+                          </div>
                         )}
                       </Card.Body>
                     </Card>
@@ -530,7 +775,7 @@ export default function ParentDashboard() {
                 ) : (
                   <div className="table-responsive">
                     <Table hover size="sm" className="mb-0">
-                      <thead className="table-light">
+                      <thead className="table-light small">
                         <tr>
                           <th>Student</th>
                           <th>Title</th>
@@ -640,6 +885,19 @@ export default function ParentDashboard() {
         </Modal.Body>
       </Modal>
 
+      <RemarkThreadModal
+        show={showThreadModal}
+        onHide={() => setShowThreadModal(false)}
+        remarks={threadRemarks}
+        currentUserId={currentUserId}
+        onRefreshAll={refreshThread}
+        onReply={handleSendReply}
+        title={threadTitle || 'Remarks for this progress'}
+        emptyMessage="No remarks"
+        onMessageParent={openMessage}
+        onMessageUser={openMessage}
+      />
+
       {selectedFee && (
         <FeePaymentModal
           show={showPaymentModal}
@@ -648,6 +906,13 @@ export default function ParentDashboard() {
           onPaymentSubmit={handlePaymentSubmit}
         />
       )}
+
+      <DirectMessageModal
+        show={showMessageModal}
+        onHide={() => setShowMessageModal(false)}
+        targetId={messageTargetId}
+        targetName={messageTargetName}
+      />
     </div>
   );
 }

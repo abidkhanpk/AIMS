@@ -57,19 +57,54 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                       select: {
                         name: true,
                       }
+                    },
+                    replies: {
+                      include: {
+                        author: {
+                          select: {
+                            id: true,
+                            name: true,
+                            role: true,
+                          }
+                        }
+                      },
+                      orderBy: { createdAt: 'asc' }
                     }
                   },
                   orderBy: { createdAt: 'desc' }
                 }
               },
               orderBy: { createdAt: 'desc' }
+            },
+            studentTestRecords: {
+              include: {
+                course: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                },
+                teacher: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                },
+              },
+              orderBy: { performedAt: 'desc' }
             }
           }
         }
       }
     });
 
-    const children = parentAssignments.map(assignment => assignment.student);
+    const children = parentAssignments.map(({ student }) => {
+      const { studentTestRecords, ...rest } = student as any;
+      return {
+        ...rest,
+        testRecords: studentTestRecords || [],
+      };
+    });
 
     res.status(200).json(children);
   } catch (error) {

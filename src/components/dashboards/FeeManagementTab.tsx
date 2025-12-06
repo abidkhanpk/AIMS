@@ -37,6 +37,7 @@ const FeeManagementTab = () => {
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -116,6 +117,7 @@ const FeeManagementTab = () => {
         setSuccess('Fee definition created successfully!');
         fetchFeeDefinitions();
         resetForm();
+        setShowCreateForm(false);
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create fee definition');
@@ -214,25 +216,27 @@ const FeeManagementTab = () => {
     setStudentIds([]);
   };
 
-  const renderForm = (handleSubmit: (e: React.FormEvent) => void, isEditing = false) => (
+  const renderForm = (handleSubmit: (e: React.FormEvent) => void, isEditing = false, onCancel?: () => void) => (
     <Form onSubmit={handleSubmit}>
-      <Form.Group className="mb-3">
-        <Form.Label>Title</Form.Label>
-        <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-      </Form.Group>
-      <Form.Group className="mb-3">
-        <Form.Label>Description</Form.Label>
-        <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-      </Form.Group>
-      <Row>
-        <Col>
-          <Form.Group className="mb-3">
-            <Form.Label>Amount</Form.Label>
-            <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+      <Row className="g-3">
+        <Col md={4}>
+          <Form.Group className="mb-0">
+            <Form.Label>Title</Form.Label>
+            <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </Form.Group>
         </Col>
-        <Col>
-          <Form.Group className="mb-3">
+        <Col md={4}>
+          <Form.Group className="mb-0">
+            <Form.Label>Type</Form.Label>
+            <Form.Select value={type} onChange={(e) => setType(e.target.value as FeeType)} required>
+              {feeTypes.map((feeType) => (
+                <option key={feeType} value={feeType}>{feeType}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </Col>
+        <Col md={4}>
+          <Form.Group className="mb-0">
             <Form.Label>Currency</Form.Label>
             <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
               <option value="USD">$ US Dollar (USD)</option>
@@ -248,51 +252,70 @@ const FeeManagementTab = () => {
             </Form.Select>
           </Form.Group>
         </Col>
-      </Row>
-      <Form.Group className="mb-3">
-        <Form.Label>Type</Form.Label>
-        <Form.Select value={type} onChange={(e) => setType(e.target.value as FeeType)} required>
-          {feeTypes.map((feeType) => (
-            <option key={feeType} value={feeType}>{feeType}</option>
-          ))}
-        </Form.Select>
-      </Form.Group>
-      <Row>
-        <Col>
-          <Form.Group className="mb-3">
+        <Col md={4}>
+          <Form.Group className="mb-0">
+            <Form.Label>Amount</Form.Label>
+            <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+          </Form.Group>
+        </Col>
+        <Col md={4}>
+          <Form.Group className="mb-0">
             <Form.Label>Generation Day</Form.Label>
             <Form.Control type="number" value={generationDay} onChange={(e) => setGenerationDay(e.target.value)} required />
           </Form.Group>
         </Col>
-        <Col>
-          <Form.Group className="mb-3">
+        <Col md={4}>
+          <Form.Group className="mb-0">
+            <Form.Label>Due Date After (Days)</Form.Label>
+            <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
+            <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
+          </Form.Group>
+        </Col>
+        <Col md={4}>
+          <Form.Group className="mb-0">
             <Form.Label>Start Date</Form.Label>
             <Form.Control type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
           </Form.Group>
         </Col>
+        <Col md={8}>
+          <Form.Group className="mb-0">
+            <Form.Label>Description</Form.Label>
+            <Form.Control as="textarea" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
+          </Form.Group>
+        </Col>
+        <Col md={12}>
+          <Form.Group className="mb-0">
+            <Form.Label>Students</Form.Label>
+            <Form.Control
+              as="select"
+              multiple
+              value={studentIds}
+              onChange={(e) => setStudentIds(Array.from((e.target as unknown as HTMLSelectElement).selectedOptions, option => option.value))}
+              required
+            >
+              {students.map((student) => (
+                <option key={student.id} value={student.id}>{student.name}</option>
+              ))}
+            </Form.Control>
+          </Form.Group>
+        </Col>
       </Row>
-      <Form.Group className="mb-3">
-        <Form.Label>Due After (Days)</Form.Label>
-        <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
-        <Form.Text className="text-muted">Number of days after generation day when the fee becomes due.</Form.Text>
-      </Form.Group>
-      <Form.Group className="mb-3">
-        <Form.Label>Students</Form.Label>
-        <Form.Control
-          as="select"
-          multiple
-          value={studentIds}
-                    onChange={(e) => setStudentIds(Array.from((e.target as unknown as HTMLSelectElement).selectedOptions, option => option.value))}
-          required
+      <div className="d-flex justify-content-end gap-2 mt-3">
+        <Button
+          variant="secondary"
+          type="button"
+          size="sm"
+          onClick={() => {
+            resetForm();
+            onCancel?.();
+          }}
         >
-          {students.map((student) => (
-            <option key={student.id} value={student.id}>{student.name}</option>
-          ))}
-        </Form.Control>
-      </Form.Group>
-      <Button variant="primary" type="submit" disabled={isEditing ? editing : creating} className="w-100">
-        {isEditing ? (editing ? 'Updating...' : 'Update Fee Definition') : (creating ? 'Creating...' : 'Create Fee Definition')}
-      </Button>
+          Cancel
+        </Button>
+        <Button variant="primary" type="submit" disabled={isEditing ? editing : creating} size="sm">
+          {isEditing ? (editing ? 'Updating...' : 'Update Fee Definition') : (creating ? 'Creating...' : 'Create Fee Definition')}
+        </Button>
+      </div>
     </Form>
   );
 
@@ -301,78 +324,89 @@ const FeeManagementTab = () => {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Row className="g-4">
-        <Col lg={4}>
-          <Card className="h-100 shadow-sm">
-            <Card.Header className="bg-primary text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-plus-circle me-2"></i>
-                Create Fee Definition
-              </h6>
-            </Card.Header>
-            <Card.Body>
-              {renderForm(handleCreateFeeDefinition)}
-            </Card.Body>
-          </Card>
-        </Col>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex align-items-center gap-2">
+          <i className="bi bi-list-ul text-primary"></i>
+          <h6 className="mb-0">Fee Definitions</h6>
+          <Badge bg="primary">{feeDefinitions.length}</Badge>
+        </div>
+        <Button
+          size="sm"
+          variant={showCreateForm ? 'secondary' : 'primary'}
+          onClick={() => setShowCreateForm((v) => !v)}
+        >
+          {showCreateForm ? 'Hide Form' : 'Add New Fee Definition'}
+        </Button>
+      </div>
 
-        <Col lg={8}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-light">
-              <h6 className="mb-0">
-                <i className="bi bi-list-ul me-2"></i>
-                Fee Definitions
-              </h6>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {loading ? (
-                <div className="text-center py-4">
-                  <Spinner animation="border" size="sm" />
-                  <p className="mt-2 text-muted small">Loading fee definitions...</p>
-                </div>
-              ) : feeDefinitions.length === 0 ? (
-                <div className="text-center py-4">
-                  <p className="mt-2 text-muted small">No fee definitions found</p>
-                </div>
-              ) : (
-                <Table hover size="sm" className="mb-0">
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Student</th>
-                      <th>Amount</th>
-                      <th>Type</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {feeDefinitions.map((fd) => (
-                      <tr key={fd.id}>
-                        <td>{fd.title}</td>
-                        <td>
-                          {fd.studentFeeDefinitions.map(sfd => (
-                            <Badge key={sfd.student.id} bg="info" className="me-1">{sfd.student.name}</Badge>
-                          ))}
-                        </td>
-                        <td>{fd.amount} {fd.currency}</td>
-                        <td>{fd.type}</td>
-                        <td>
-                          <Button variant="outline-warning" size="sm" onClick={() => handleEditFeeDefinition(fd)}>
-                            <i className="bi bi-pencil"></i>
-                          </Button>
-                          <Button variant="outline-danger" size="sm" className="ms-2" onClick={() => handleDeleteFeeDefinition(fd.id)}>
-                            <i className="bi bi-trash"></i>
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+      {showCreateForm && (
+        <Card className="shadow-sm mb-3">
+          <Card.Header className="bg-primary text-white">
+            <h6 className="mb-0">
+              <i className="bi bi-plus-circle me-2"></i>
+              Create Fee Definition
+            </h6>
+          </Card.Header>
+          <Card.Body>
+            {renderForm(handleCreateFeeDefinition, false, () => setShowCreateForm(false))}
+          </Card.Body>
+        </Card>
+      )}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <h6 className="mb-0">
+            <i className="bi bi-list-ul me-2"></i>
+            Fee Definitions
+          </h6>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" size="sm" />
+              <p className="mt-2 text-muted small">Loading fee definitions...</p>
+            </div>
+          ) : feeDefinitions.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="mt-2 text-muted small">No fee definitions found</p>
+            </div>
+          ) : (
+            <Table hover size="sm" className="mb-0">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Student</th>
+                  <th>Amount</th>
+                  <th>Type</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {feeDefinitions.map((fd) => (
+                  <tr key={fd.id}>
+                    <td>{fd.title}</td>
+                    <td>
+                      {fd.studentFeeDefinitions.map(sfd => (
+                        <Badge key={sfd.student.id} bg="info" className="me-1">{sfd.student.name}</Badge>
+                      ))}
+                    </td>
+                    <td>{fd.amount} {fd.currency}</td>
+                    <td>{fd.type}</td>
+                    <td>
+                      <Button variant="outline-warning" size="sm" onClick={() => handleEditFeeDefinition(fd)}>
+                        <i className="bi bi-pencil"></i>
+                      </Button>
+                      <Button variant="outline-danger" size="sm" className="ms-2" onClick={() => handleDeleteFeeDefinition(fd.id)}>
+                        <i className="bi bi-trash"></i>
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          )}
+        </Card.Body>
+      </Card>
 
       {/* Edit Fee Definition Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">

@@ -1,9 +1,10 @@
 import { useSession, signOut } from 'next-auth/react';
-import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab } from 'react-bootstrap';
+import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab, Badge } from 'react-bootstrap';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import NotificationDropdown from './NotificationDropdown';
 import AdminSubscriptionTab from './dashboards/AdminSubscriptionTab';
+import { useRouter } from 'next/router';
 
 interface Settings {
   appTitle: string;
@@ -14,6 +15,7 @@ interface Settings {
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const user = session?.user;
+  const router = useRouter();
   const [settings, setSettings] = useState<Settings | null>(null);
 
   // User settings modal states
@@ -33,6 +35,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [updating, setUpdating] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -51,14 +54,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     "What is the name of your best friend?"
   ];
 
-  useEffect(() => {
-    if (status === 'authenticated') {
-      fetchSettings();
-      fetchUserSettings();
-    }
-  }, [status]);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings/my-settings');
       if (res.ok) {
@@ -73,9 +69,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         tagline: 'Academy Information and Management System',
       });
     }
-  };
+  }, []);
 
-  const fetchUserSettings = async () => {
+  const fetchUserSettings = useCallback(async () => {
     try {
       const res = await fetch('/api/settings/user-settings');
       if (res.ok) {
@@ -93,7 +89,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error fetching user settings:', error);
     }
-  };
+  }, [user?.email]);
+
+  const loadUnreadMessages = useCallback(async () => {
+    try {
+      const res = await fetch('/api/messages/unread-count');
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadMessages(data.count || 0);
+      }
+    } catch (error) {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchSettings();
+      fetchUserSettings();
+      loadUnreadMessages();
+      const interval = setInterval(loadUnreadMessages, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [status, fetchSettings, fetchUserSettings, loadUnreadMessages]);
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -256,7 +274,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Navbar bg="dark" variant="dark" expand="lg" className="shadow-sm" style={{ minHeight: '80px' }}>
+      <Navbar
+        bg="dark"
+        variant="dark"
+        expand="lg"
+        className="shadow-sm"
+        style={{
+          minHeight: '80px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1040,
+          backgroundColor: 'hsl(256, 12%, 12%)',
+        }}
+      >
         <Container fluid className="px-3">
           <div className="d-flex align-items-center">
             {settings?.headerImg && (
@@ -292,19 +322,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
-              {user && (
-                <Link href="/dashboard" passHref>
-                  <Nav.Link className="fw-medium">Dashboard</Nav.Link>
-                </Link>
-              )}
-            </Nav>
-            <Nav className="d-flex align-items-center">
+            <Nav className="d-flex align-items-center ms-auto">
               {status === 'authenticated' && user && (
                 <>
                   <div className="me-2 position-relative">
                     <NotificationDropdown />
                   </div>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="me-2 d-flex align-items-center text-light text-decoration-none p-0 position-relative"
+                    onClick={() => router.push('/messages')}
+                    title="Messages"
+                  >
+                    <i className="bi bi-envelope fs-5"></i>
+                    {unreadMessages > 0 && (
+                      <Badge bg="danger" pill className="position-absolute top-0 start-100 translate-middle">
+                        {unreadMessages}
+                      </Badge>
+                    )}
+                  </Button>
                   
                   <NavDropdown 
                     title={

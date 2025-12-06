@@ -13,6 +13,9 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/assets/app-logo.png" />
+        <meta name="theme-color" content="#0d6efd" />
       </Head>
       <SessionProvider session={session}>
         <Layout>

@@ -112,6 +112,38 @@ enum RelationType {
   OTHER
 }
 
+enum AssessmentType {
+  QUIZ
+  EXAM
+  HOMEWORK
+  OTHER
+}
+
+model ParentRemarkReply {
+  id         String   @id @default(uuid())
+  remarkId   String
+  authorId   String
+  content    String
+  createdAt  DateTime @default(now())
+
+  remark ParentRemark @relation(fields: [remarkId], references: [id])
+  author User @relation(fields: [authorId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  subject    String   @default("No subject")
+  threadId   String   @default(uuid())
+  content    String
+  createdAt  DateTime @default(now())
+  isRead     Boolean  @default(false)
+
+  sender   User @relation("MessageSender", fields: [senderId], references: [id])
+  receiver User @relation("MessageReceiver", fields: [receiverId], references: [id])
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -126,6 +158,7 @@ model User {
   mobile    String?
   dateOfBirth DateTime? // Only for STUDENT and TEACHER
   address   String?
+  country   String?
   
   // Teacher specific fields
   qualification String?
@@ -152,6 +185,7 @@ model User {
   progressUpdates    Progress[]         @relation("TeacherProgress")
   createdCourses     Course[]
   parentRemarks      ParentRemark[]     @relation("ParentRemarks")
+  remarkReplies      ParentRemarkReply[]
   sentNotifications  Notification[]     @relation("NotificationSender")
   receivedNotifications Notification[]  @relation("NotificationReceiver")
   userSettings       UserSettings?
@@ -170,6 +204,10 @@ model User {
   adminSalaryPayments   SalaryPayment[] @relation("AdminSalaryPayments")
   salaryAdvances       SalaryAdvance[]  @relation("AdvanceAdmin")
   salaryAdvancesAsTeacher SalaryAdvance[] @relation("AdvanceTeacher")
+  studentTestRecords   TestRecord[]     @relation("StudentTestRecords")
+  teacherTestRecords   TestRecord[]     @relation("TeacherTestRecords")
+  sentMessages        Message[]        @relation("MessageSender")
+  receivedMessages    Message[]        @relation("MessageReceiver")
 }
 
 model Course {
@@ -185,6 +223,7 @@ model Course {
   progressRecords Progress[]
   assignments     Assignment[]
   fees            Fee[]
+  testRecords     TestRecord[]
 }
 
 model Assignment {
@@ -264,7 +303,6 @@ model Progress {
   lesson         String?          // Manually typed by teacher
   homework       String?          // Homework description
   lessonProgress Float?           // Lesson progress percentage
-  score          Float?           // Score/marks assigned by teacher
   remarks        String?          // Teacher remarks
   attendance     AttendanceStatus @default(PRESENT) // Attendance status
   createdAt      DateTime         @default(now())
@@ -287,6 +325,7 @@ model ParentRemark {
   // Relations
   progress Progress @relation(fields: [progressId], references: [id])
   parent   User     @relation("ParentRemarks", fields: [parentId], references: [id])
+  replies  ParentRemarkReply[]
 }
 
 model Fee {
@@ -485,6 +524,27 @@ model SalaryAdvanceRepayment {
   updatedAt       DateTime @updatedAt
 
   advance         SalaryAdvance @relation(fields: [advanceId], references: [id])
+}
+
+model TestRecord {
+  id             String         @id @default(uuid())
+  studentId      String
+  courseId       String
+  teacherId      String
+  title          String
+  type           AssessmentType @default(QUIZ)
+  performedAt    DateTime       @default(now())
+  maxMarks       Float
+  obtainedMarks  Float
+  percentage     Float
+  performanceNote String?
+  remarks        String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  student      User         @relation("StudentTestRecords", fields: [studentId], references: [id])
+  course       Course       @relation(fields: [courseId], references: [id])
+  teacher      User         @relation("TeacherTestRecords", fields: [teacherId], references: [id])
 }
 
 model Notification {

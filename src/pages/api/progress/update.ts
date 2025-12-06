@@ -25,7 +25,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     lesson, 
     homework, 
     lessonProgress, 
-    score, 
     remarks,
     attendance = 'PRESENT' // Default to PRESENT if not provided
   } = req.body;
@@ -74,7 +73,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         lesson: lesson || null,
         homework: homework || null,
         lessonProgress: lessonProgress ? parseFloat(lessonProgress) : null,
-        score: score ? parseFloat(score) : null,
         remarks: remarks || null,
         attendance: attendance as AttendanceStatus,
       },
@@ -120,7 +118,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: {
           type: 'PROGRESS_UPDATE',
           title: 'Progress Update',
-          message: `New progress update for ${progress.student.name} in ${progress.course.name}. Attendance: ${attendance}${lesson ? `, Lesson: ${lesson}` : ''}${score ? `, Score: ${score}` : ''}`,
+          message: `New progress update for ${progress.student.name} in ${progress.course.name}. Attendance: ${attendance}${lesson ? `, Lesson: ${lesson}` : ''}`,
           senderId: session.user.id,
           receiverId: parentStudent.parent.id,
         }

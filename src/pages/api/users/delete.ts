@@ -60,6 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await tx.studentCourse.deleteMany({ where: { studentId } });
         // Assignments
         await tx.assignment.deleteMany({ where: { studentId } });
+        await tx.testRecord.deleteMany({ where: { studentId } });
         // Fees and fee definitions links
         await tx.fee.deleteMany({ where: { studentId } });
         await tx.studentFeeDefinition.deleteMany({ where: { studentId } });
@@ -78,6 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const deleteTeacher = async (teacherId: string) => {
         await tx.teacherStudent.deleteMany({ where: { teacherId } });
         await tx.assignment.deleteMany({ where: { teacherId } });
+        await tx.testRecord.deleteMany({ where: { teacherId } });
         // Salaries & payments
         const advances = await tx.salaryAdvance.findMany({ where: { teacherId }, select: { id: true } });
         const advanceIds = advances.map(a => a.id);
@@ -133,6 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (courseIds.length > 0) {
           await tx.assignment.deleteMany({ where: { courseId: { in: courseIds } } });
           await tx.fee.deleteMany({ where: { courseId: { in: courseIds } } });
+          await tx.testRecord.deleteMany({ where: { courseId: { in: courseIds } } });
           const courseProgress = await tx.progress.findMany({ where: { courseId: { in: courseIds } }, select: { id: true } });
           await deleteParentRemarksForProgressIds(courseProgress.map(p => p.id));
           await tx.progress.deleteMany({ where: { courseId: { in: courseIds } } });

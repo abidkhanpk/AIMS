@@ -18,7 +18,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     lesson, 
     homework, 
     lessonProgress, 
-    score, 
     remarks, 
     attendance,
     date 
@@ -65,7 +64,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ...(lesson !== undefined && { lesson }),
         ...(homework !== undefined && { homework }),
         ...(lessonProgress !== undefined && { lessonProgress: parseFloat(lessonProgress) }),
-        ...(score !== undefined && { score: parseFloat(score) }),
         ...(remarks !== undefined && { remarks }),
         ...(attendance !== undefined && { attendance }),
         ...(date !== undefined && { date: new Date(date) }),

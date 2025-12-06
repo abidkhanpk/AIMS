@@ -3,6 +3,7 @@ import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { Form, Button, Card, Container, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import Head from 'next/head';
+import Image from 'next/image';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -83,19 +84,16 @@ export default function SignIn() {
                 <Card.Body className="p-5">
                   <div className="text-center mb-4">
                     {settings.headerImg && (
-                      <img 
-                        src={settings.headerImg} 
-                        alt="Logo" 
-                        style={{ 
-                          maxHeight: '100px', 
-                          maxWidth: '250px',
-                          width: 'auto',
-                          height: 'auto',
-                          objectFit: 'contain'
-                        }}
+                      <Image
+                        src={settings.headerImg || '/assets/app-logo.png'}
+                        alt="Logo"
+                        width={250}
+                        height={100}
+                        style={{ height: 'auto', width: 'auto', objectFit: 'contain', maxHeight: '100px', maxWidth: '250px' }}
                         className="mb-3"
+                        unoptimized
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/assets/app-logo.png';
+                          (e.currentTarget as HTMLImageElement).src = '/assets/app-logo.png';
                         }}
                       />
                     )}

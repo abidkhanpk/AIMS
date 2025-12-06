@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "check:data": "ts-node --compiler-options {\"module\":\"CommonJS\"} scripts/check-data.ts"
   },
   "prisma": {
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
@@ -19,11 +20,12 @@
     "bootstrap": "^5.3.3",
     "cloudinary": "^2.5.1",
     "eslint": "^9.33.0",
-    "eslint-config-next": "^15.4.6",
+    "eslint-config-next": "^15.5.7",
     "formidable": "^3.5.2",
     "multer": "latest",
-    "next": "^15.4.6",
+    "next": "^15.5.7",
     "next-auth": "^4.24.11",
+    "next-pwa": "^5.6.0",
     "react": "^19.1.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",

@@ -51,6 +51,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
           },
           orderBy: { createdAt: 'desc' }
+        },
+        studentTestRecords: {
+          include: {
+            course: {
+              select: {
+                id: true,
+                name: true,
+              }
+            },
+            teacher: {
+              select: {
+                id: true,
+                name: true,
+              }
+            },
+          },
+          orderBy: { performedAt: 'desc' }
         }
       }
     });
@@ -59,7 +76,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    res.status(200).json(studentData);
+    if (!studentData) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Rename studentTestRecords -> testRecords for frontend compatibility
+    const { studentTestRecords, ...rest } = studentData as any;
+    res.status(200).json({
+      ...rest,
+      testRecords: studentTestRecords || [],
+    });
   } catch (error) {
     console.error('Error fetching student progress:', error);
     res.status(500).json({ message: 'Internal server error' });

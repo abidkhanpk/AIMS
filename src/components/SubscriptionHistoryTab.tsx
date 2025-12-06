@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Table, Spinner, Alert, Badge, Button, Modal, Form, Row, Col } from 'react-bootstrap';
 
 interface SubscriptionHistoryProps {
@@ -62,13 +62,7 @@ export default function SubscriptionHistoryTab({ adminId, allowVerify = false }:
     { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
   ];
 
-  useEffect(() => {
-    if (adminId) {
-      fetchSubscriptionHistory();
-    }
-  }, [adminId]);
-
-  const fetchSubscriptionHistory = async () => {
+  const fetchSubscriptionHistory = useCallback(async () => {
     try {
       setLoading(true);
       const res = await fetch(`/api/subscriptions/history?adminId=${adminId}`);
@@ -84,7 +78,13 @@ export default function SubscriptionHistoryTab({ adminId, allowVerify = false }:
     } finally {
       setLoading(false);
     }
-  };
+  }, [adminId]);
+
+  useEffect(() => {
+    if (adminId) {
+      fetchSubscriptionHistory();
+    }
+  }, [adminId, fetchSubscriptionHistory]);
 
   const handleExtendSubscription = async () => {
     setExtending(true);

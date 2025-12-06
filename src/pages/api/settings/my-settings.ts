@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
+import { Prisma } from '@prisma/client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -50,42 +51,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // If admin doesn't have settings, create default ones
       if (!settings) {
-        settings = await prisma.settings.create({
-          data: {
-            adminId: session.user.id,
-            appTitle: 'AIMS',
-            headerImg: '/assets/default-logo.png',
-            enableHomePage: true,
-          },
-          select: {
-            id: true,
-            appTitle: true,
-            headerImg: true,
-            enableHomePage: true,
+        try {
+          settings = await prisma.settings.create({
+            data: {
+              adminId: session.user.id,
+              appTitle: 'AIMS',
+              headerImg: '/assets/default-logo.png',
+              enableHomePage: true,
+            },
+            select: {
+              id: true,
+              appTitle: true,
+              headerImg: true,
+              enableHomePage: true,
+            }
+          });
+        } catch (err: any) {
+          // If admin somehow not present (DB out of sync), fall back to defaults instead of crashing
+          if (err instanceof Prisma.PrismaClientKnownRequestError && (err.code === 'P2003' || err.code === 'P2014')) {
+            settings = {
+              appTitle: 'AIMS',
+              headerImg: '/assets/default-logo.png',
+              enableHomePage: true,
+            };
+          } else {
+            throw err;
           }
-        });
+        }
       }
     } else if (session.user.adminId) {
       // Other users (TEACHER, PARENT, STUDENT) get their admin's settings
-      settings = await prisma.settings.findUnique({
-        where: { adminId: session.user.adminId },
-        select: {
-          id: true,
-          appTitle: true,
-          headerImg: true,
-          enableHomePage: true,
-        }
+      const adminExists = await prisma.user.findUnique({
+        where: { id: session.user.adminId },
+        select: { id: true },
       });
 
-      // If admin settings don't exist, create default ones for the admin
-      if (!settings) {
-        settings = await prisma.settings.create({
-          data: {
-            adminId: session.user.adminId,
-            appTitle: 'AIMS',
-            headerImg: '/assets/default-logo.png',
-            enableHomePage: true,
-          },
+      if (!adminExists) {
+        // If admin is missing, return safe defaults rather than throwing FK errors
+        settings = {
+          appTitle: 'AIMS',
+          headerImg: '/assets/default-logo.png',
+          enableHomePage: true,
+        };
+      } else {
+        settings = await prisma.settings.findUnique({
+          where: { adminId: session.user.adminId },
           select: {
             id: true,
             appTitle: true,
@@ -93,6 +103,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             enableHomePage: true,
           }
         });
+
+        // If admin settings don't exist, create default ones for the admin
+        if (!settings) {
+          settings = await prisma.settings.create({
+            data: {
+              adminId: session.user.adminId,
+              appTitle: 'AIMS',
+              headerImg: '/assets/default-logo.png',
+              enableHomePage: true,
+            },
+            select: {
+              id: true,
+              appTitle: true,
+              headerImg: true,
+              enableHomePage: true,
+            }
+          });
+        }
       }
     } else {
       // Users without admin - return default settings

@@ -1,4 +1,4 @@
-import { PrismaClient, ClassDay, NotificationType } from '@prisma/client';
+import { PrismaClient, ClassDay, NotificationType, AssessmentType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -20,7 +20,7 @@ async function main() {
 
   console.log('✅ Developer created:', developer.email);
 
-  /*/ Create Admin
+  // Create Admin
   const admin = await prisma.user.upsert({
     where: { email: 'admin@school.com' },
     update: {},
@@ -40,172 +40,142 @@ async function main() {
     update: {},
     create: {
       adminId: admin.id,
-      appTitle: 'Greenwood Academy',
+      appTitle: 'Eilm-e-Quran Academy',
       headerImg: 'https://via.placeholder.com/200x60/28a745/ffffff?text=Greenwood+Academy',
     },
   });
 
   console.log('✅ Admin settings created');
 
-  // Create Teachers
-  const teacher1 = await prisma.user.upsert({
-    where: { email: 'john.teacher@school.com' },
+  // Create a single teacher
+  const teacher = await prisma.user.upsert({
+    where: { email: 'teacher1@school.com' },
     update: {},
     create: {
-      name: 'John Smith',
-      email: 'john.teacher@school.com',
+      name: 'Qari Abdul Majeed Sb',
+      email: 'teacher1@school.com',
       password: bcrypt.hashSync('teacher123', 10),
       role: 'TEACHER',
       adminId: admin.id,
       mobile: '+1234567890',
       dateOfBirth: new Date('1985-03-15'),
-      address: '123 Teacher Street, Education City',
-      qualification: 'Master of Science in Mathematics',
-      payRate: 50.0,
+      address: 'House 123, Jami Street, Hall Road, Lahore',
+      qualification: 'Hafiz, M.A. Arabic',
+      payRate: 10000.0,
       payType: 'MONTHLY',
-      payCurrency: 'USD',
+      payCurrency: 'PKR',
     },
   });
 
-  const teacher2 = await prisma.user.upsert({
-    where: { email: 'sarah.teacher@school.com' },
-    update: {},
-    create: {
-      name: 'Sarah Johnson',
-      email: 'sarah.teacher@school.com',
-      password: bcrypt.hashSync('teacher123', 10),
-      role: 'TEACHER',
-      adminId: admin.id,
-      mobile: '+1234567891',
-      dateOfBirth: new Date('1988-07-22'),
-      address: '456 Science Avenue, Knowledge Town',
-      qualification: 'Master of Science in Physics',
-      payRate: 55.0,
-      payType: 'MONTHLY',
-      payCurrency: 'USD',
-    },
-  });
+  console.log('✅ Teacher created:', teacher.email);
 
-  console.log('✅ Teachers created:', teacher1.email, teacher2.email);
-
-  // Create Parents
+  // Create two parents
   const parent1 = await prisma.user.upsert({
-    where: { email: 'mike.parent@email.com' },
+    where: { email: 'parent1@email.com' },
     update: {},
     create: {
-      name: 'Mike Wilson',
-      email: 'mike.parent@email.com',
+      name: 'Muhammad Nauman',
+      email: 'parent1@email.com',
       password: bcrypt.hashSync('parent123', 10),
       role: 'PARENT',
       adminId: admin.id,
       mobile: '+1234567892',
-      address: '789 Family Lane, Parent City',
+      address: 'House 353, Qurtaba Street, Faisalabad',
       profession: 'Software Engineer',
     },
   });
 
   const parent2 = await prisma.user.upsert({
-    where: { email: 'lisa.parent@email.com' },
+    where: { email: 'parent2@email.com' },
     update: {},
     create: {
-      name: 'Lisa Brown',
-      email: 'lisa.parent@email.com',
+      name: 'Abdur Rehman',
+      email: 'parent2@email.com',
       password: bcrypt.hashSync('parent123', 10),
       role: 'PARENT',
       adminId: admin.id,
       mobile: '+1234567893',
-      address: '321 Guardian Street, Family Town',
-      profession: 'Marketing Manager',
+      address: '353, Kings Valley, Red Castle, UK',
+      profession: 'Doctor',
     },
   });
 
   console.log('✅ Parents created:', parent1.email, parent2.email);
 
-  // Create Students
+  // Create two students
   const student1 = await prisma.user.upsert({
-    where: { email: 'emma.student@school.com' },
+    where: { email: 'student1@email.com' },
     update: {},
     create: {
-      name: 'Emma Wilson',
-      email: 'emma.student@school.com',
+      name: 'Zafar Nauman',
+      email: 'student1@email.com',
       password: bcrypt.hashSync('student123', 10),
       role: 'STUDENT',
       adminId: admin.id,
       mobile: '+1234567894',
       dateOfBirth: new Date('2008-05-10'),
-      address: '789 Family Lane, Parent City',
+      address: 'House 353, Qurtaba Street, Faisalabad',
     },
   });
 
   const student2 = await prisma.user.upsert({
-    where: { email: 'alex.student@school.com' },
+    where: { email: 'student2@email.com' },
     update: {},
     create: {
-      name: 'Alex Brown',
-      email: 'alex.student@school.com',
+      name: 'Wajeeha Nauman',
+      email: 'student2@email.com',
       password: bcrypt.hashSync('student123', 10),
       role: 'STUDENT',
       adminId: admin.id,
       mobile: '+1234567895',
       dateOfBirth: new Date('2009-02-18'),
-      address: '321 Guardian Street, Family Town',
+      address: 'House 353, Qurtaba Street, Faisalabad',
     },
   });
 
   const student3 = await prisma.user.upsert({
-    where: { email: 'sophia.student@school.com' },
+    where: { email: 'student3@email.com' },
     update: {},
     create: {
-      name: 'Sophia Davis',
-      email: 'sophia.student@school.com',
+      name: 'Junaid Ali',
+      email: 'student3@email.com',
       password: bcrypt.hashSync('student123', 10),
       role: 'STUDENT',
       adminId: admin.id,
-      mobile: '+1234567896',
-      dateOfBirth: new Date('2008-11-25'),
-      address: '654 Student Boulevard, Learning District',
+      mobile: '+1234567895',
+      dateOfBirth: new Date('2009-02-18'),
+      address: '353, Kings Valley, Red Castle, UK',
     },
   });
 
   console.log('✅ Students created:', student1.email, student2.email, student3.email);
 
   // Create Courses
-  const mathCourse = await prisma.course.upsert({
-    where: { id: 'math-course-id' },
+  const tajweedCourse = await prisma.course.upsert({
+    where: { id: 'tajweed-course-id' },
     update: {},
     create: {
-      id: 'math-course-id',
-      name: 'Mathematics',
-      description: 'Advanced mathematics including algebra, geometry, and calculus',
+      id: 'tajweed-course-id',
+      name: 'Tajweed ul Quran',
+      description: 'Reading Quran al Kareem with Tajweed rules.',
       adminId: admin.id,
     },
   });
 
-  const scienceCourse = await prisma.course.upsert({
-    where: { id: 'science-course-id' },
+  const basicIslamicEduCourse = await prisma.course.upsert({
+    where: { id: 'basicIslamicEdu-course-id' },
     update: {},
     create: {
-      id: 'science-course-id',
-      name: 'Science',
-      description: 'General science covering physics, chemistry, and biology',
+      id: 'basicIslamicEdu-course-id',
+      name: 'Basic Islamic Education',
+      description: 'Basic Islamic education including namaz, basic duas, and Islamic manners.',
       adminId: admin.id,
     },
   });
 
-  const englishCourse = await prisma.course.upsert({
-    where: { id: 'english-course-id' },
-    update: {},
-    create: {
-      id: 'english-course-id',
-      name: 'English Literature',
-      description: 'English language arts and literature studies',
-      adminId: admin.id,
-    },
-  });
+  console.log('✅ Courses created:', tajweedCourse.name, basicIslamicEduCourse.name);
 
-  console.log('✅ Courses created:', mathCourse.name, scienceCourse.name, englishCourse.name);
-
-  // Create Parent-Student relationships
+  // Parent-Student relationships (each student has a parent)
   await prisma.parentStudent.upsert({
     where: { parentId_studentId: { parentId: parent1.id, studentId: student1.id } },
     update: {},
@@ -216,63 +186,62 @@ async function main() {
   });
 
   await prisma.parentStudent.upsert({
-    where: { parentId_studentId: { parentId: parent2.id, studentId: student2.id } },
+    where: { parentId_studentId: { parentId: parent1.id, studentId: student2.id } },
+    update: {},
+    create: {
+      parentId: parent1.id,
+      studentId: student2.id,
+    },
+  });
+
+  await prisma.parentStudent.upsert({
+    where: { parentId_studentId: { parentId: parent2.id, studentId: student3.id } },
     update: {},
     create: {
       parentId: parent2.id,
-      studentId: student2.id,
+      studentId: student3.id,
     },
   });
 
   console.log('✅ Parent-Student relationships created');
 
-  // Create Teacher-Student assignments
+  // Teacher-Student assignments
   await prisma.teacherStudent.upsert({
-    where: { teacherId_studentId: { teacherId: teacher1.id, studentId: student1.id } },
+    where: { teacherId_studentId: { teacherId: teacher.id, studentId: student1.id } },
     update: {},
     create: {
-      teacherId: teacher1.id,
+      teacherId: teacher.id,
       studentId: student1.id,
     },
   });
 
   await prisma.teacherStudent.upsert({
-    where: { teacherId_studentId: { teacherId: teacher1.id, studentId: student2.id } },
+    where: { teacherId_studentId: { teacherId: teacher.id, studentId: student2.id } },
     update: {},
     create: {
-      teacherId: teacher1.id,
+      teacherId: teacher.id,
       studentId: student2.id,
     },
   });
 
   await prisma.teacherStudent.upsert({
-    where: { teacherId_studentId: { teacherId: teacher2.id, studentId: student2.id } },
+    where: { teacherId_studentId: { teacherId: teacher.id, studentId: student3.id } },
     update: {},
     create: {
-      teacherId: teacher2.id,
-      studentId: student2.id,
-    },
-  });
-
-  await prisma.teacherStudent.upsert({
-    where: { teacherId_studentId: { teacherId: teacher2.id, studentId: student3.id } },
-    update: {},
-    create: {
-      teacherId: teacher2.id,
+      teacherId: teacher.id,
       studentId: student3.id,
     },
   });
 
   console.log('✅ Teacher-Student assignments created');
 
-  // Create Student-Course assignments
+  // Student-Course assignments
   const studentCourses = [
-    { studentId: student1.id, courseId: mathCourse.id },
-    { studentId: student1.id, courseId: scienceCourse.id },
-    { studentId: student2.id, courseId: mathCourse.id },
-    { studentId: student2.id, courseId: englishCourse.id },
-    { studentId: student3.id, courseId: scienceCourse.id },
-    { studentId: student3.id, courseId: englishCourse.id },
+    { studentId: student1.id, courseId: tajweedCourse.id },
+    { studentId: student1.id, courseId: basicIslamicEduCourse.id },
+    { studentId: student2.id, courseId: tajweedCourse.id },
+    { studentId: student2.id, courseId: basicIslamicEduCourse.id },
+    { studentId: student3.id, courseId: tajweedCourse.id },
   ];
 
   for (const sc of studentCourses) {
@@ -285,148 +254,139 @@ async function main() {
 
   console.log('✅ Student-Course assignments created');
 
-  // Create Assignment records (new model in schema)
-  await prisma.assignment.create({
-    data: {
+  // Detailed class assignments (schedule + fees)
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student1.id, courseId: tajweedCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
       studentId: student1.id,
-      courseId: mathCourse.id,
-      teacherId: teacher1.id,
-      startTime: '09:00',
-      duration: 60,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      startTime: '06:30',
+      duration: 45,
       classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY, ClassDay.FRIDAY],
-      timezone: 'UTC',
-      monthlyFee: 150.0,
-      currency: 'USD',
+      timezone: 'Asia/Karachi',
+      monthlyFee: 7500.0,
+      currency: 'PKR',
     },
   });
 
-  await prisma.assignment.create({
-    data: {
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student1.id, courseId: basicIslamicEduCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
       studentId: student1.id,
-      courseId: scienceCourse.id,
-      teacherId: teacher2.id,
-      startTime: '10:30',
-      duration: 60,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      startTime: '07:30',
+      duration: 45,
       classDays: [ClassDay.TUESDAY, ClassDay.THURSDAY],
-      timezone: 'UTC',
-      monthlyFee: 140.0,
-      currency: 'USD',
+      timezone: 'Asia/Karachi',
+      monthlyFee: 7000.0,
+      currency: 'PKR',
     },
   });
 
-  await prisma.assignment.create({
-    data: {
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student2.id, courseId: tajweedCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
       studentId: student2.id,
-      courseId: mathCourse.id,
-      teacherId: teacher1.id,
-      startTime: '11:00',
-      duration: 60,
-      classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY, ClassDay.FRIDAY],
-      timezone: 'UTC',
-      monthlyFee: 150.0,
-      currency: 'USD',
-    },
-  });
-
-  await prisma.assignment.create({
-    data: {
-      studentId: student2.id,
-      courseId: englishCourse.id,
-      teacherId: teacher2.id,
-      startTime: '14:00',
-      duration: 60,
-      classDays: [ClassDay.TUESDAY, ClassDay.THURSDAY],
-      timezone: 'UTC',
-      monthlyFee: 130.0,
-      currency: 'USD',
-    },
-  });
-
-  await prisma.assignment.create({
-    data: {
-      studentId: student3.id,
-      courseId: scienceCourse.id,
-      teacherId: teacher2.id,
-      startTime: '15:30',
-      duration: 60,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      startTime: '16:00',
+      duration: 45,
       classDays: [ClassDay.MONDAY, ClassDay.WEDNESDAY],
-      timezone: 'UTC',
-      monthlyFee: 140.0,
-      currency: 'USD',
+      timezone: 'Europe/London',
+      monthlyFee: 8000.0,
+      currency: 'PKR',
     },
   });
 
-  await prisma.assignment.create({
-    data: {
-      studentId: student3.id,
-      courseId: englishCourse.id,
-      teacherId: teacher2.id,
-      startTime: '16:30',
-      duration: 60,
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student2.id, courseId: basicIslamicEduCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
+      studentId: student2.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      startTime: '17:00',
+      duration: 45,
       classDays: [ClassDay.TUESDAY, ClassDay.FRIDAY],
-      timezone: 'UTC',
-      monthlyFee: 130.0,
+      timezone: 'Europe/London',
+      monthlyFee: 7200.0,
+      currency: 'PKR',
+    },
+  });
+
+  await prisma.assignment.upsert({
+    where: { studentId_courseId_teacherId: { studentId: student3.id, courseId: tajweedCourse.id, teacherId: teacher.id } },
+    update: {},
+    create: {
+      studentId: student3.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      startTime: '18:30',
+      duration: 45,
+      classDays: [ClassDay.TUESDAY, ClassDay.THURSDAY],
+      timezone: 'Europe/London',
+      monthlyFee: 60.0,
       currency: 'USD',
     },
   });
 
-  console.log('✅ Assignment records created');
+  console.log('✅ Class assignments created');
 
-  // Create sample progress records with correct field names and enum values
+  // Progress records
   const progressRecords = [
     {
       studentId: student1.id,
-      courseId: mathCourse.id,
-      teacherId: teacher1.id,
-      lesson: 'Algebra Fundamentals',
-      homework: 'Complete exercises 1-10 on page 45',
-      lessonProgress: 92.5,
-      score: 95.0,
-      remarks: 'Excellent work on algebra problems. Shows strong understanding of concepts.',
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Surah Al-Fatihah with Makharij',
+      homework: 'Practice ayat 1-7 slowly with mirror for tongue placement',
+      lessonProgress: 88,
+      remarks: 'Beautiful pronunciation; small pauses needed after ayah 3.',
       attendance: 'PRESENT' as const,
     },
     {
       studentId: student1.id,
-      courseId: scienceCourse.id,
-      teacherId: teacher2.id,
-      lesson: 'Physics - Motion and Forces',
-      homework: 'Read chapter 3 and solve practice problems',
-      lessonProgress: 78.0,
-      score: 82.0,
-      remarks: 'Good progress in physics. Needs more practice with problem-solving.',
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Morning & Evening Duas',
+      homework: 'Memorize dua for waking up and sleeping',
+      lessonProgress: 78,
+      remarks: 'Understands meanings; needs fluency without looking.',
       attendance: 'PRESENT' as const,
     },
     {
       studentId: student2.id,
-      courseId: mathCourse.id,
-      teacherId: teacher1.id,
-      lesson: 'Geometry - Triangles',
-      homework: 'Draw and calculate areas of different triangles',
-      lessonProgress: 85.0,
-      score: 88.0,
-      remarks: 'Improving steadily. Keep up the good work with geometry.',
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Noon Saakin & Tanween (Idghaam)',
+      homework: 'Record 5 ayat applying idghaam with ghunnah',
+      lessonProgress: 82,
+      remarks: 'Good ghunnah length; watch qalqalah after idghaam.',
       attendance: 'LATE' as const,
     },
     {
       studentId: student2.id,
-      courseId: englishCourse.id,
-      teacherId: teacher2.id,
-      lesson: 'Creative Writing - Essay Structure',
-      homework: 'Write a 500-word essay on your favorite book',
-      lessonProgress: 94.0,
-      score: 96.0,
-      remarks: 'Outstanding essay writing skills. Creative and well-structured work.',
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Seerah: Early Life of Rasulullah ﷺ',
+      homework: 'Read the story of the cave Hira and summarize in 5 lines',
+      lessonProgress: 74,
+      remarks: 'Interested and asks good questions; needs concise summaries.',
       attendance: 'PRESENT' as const,
     },
     {
       studentId: student3.id,
-      courseId: scienceCourse.id,
-      teacherId: teacher2.id,
-      lesson: 'Biology - Cell Structure',
-      homework: 'Study cell diagrams and prepare for quiz',
-      lessonProgress: 88.5,
-      score: 90.0,
-      remarks: 'Shows great interest in biology. Participates actively in class.',
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Qaidah review: Heavy vs Light letters',
+      homework: 'Practice letters ص ض ط ظ and record audio',
+      lessonProgress: 70,
+      remarks: 'Tongue placement improving; continue slow-paced drills.',
       attendance: 'PRESENT' as const,
     },
   ];
@@ -437,80 +397,144 @@ async function main() {
     });
   }
 
-  console.log('✅ Sample progress records created');
+  console.log('✅ Progress records created');
 
-  // Create sample fees
-  const fees = [
+  // Test records
+  const testRecords = [
     {
       studentId: student1.id,
-      courseId: mathCourse.id,
-      title: 'Tuition Fee - Mathematics',
-      description: 'Monthly tuition fee for mathematics course',
-      amount: 150.00,
-      currency: 'USD',
-      dueDate: new Date('2024-09-15'),
-      status: 'PENDING' as const,
-      month: 9,
-      year: 2024,
-      isRecurring: true,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      title: 'Tajweed Assessment - Makharij & Ghunnah',
+      type: AssessmentType.EXAM,
+      performedAt: new Date('2024-09-21'),
+      maxMarks: 50,
+      obtainedMarks: 45,
+      percentage: 90,
+      performanceNote: 'Makharij solid; ghunnah duration on point.',
+      remarks: 'Maintain consistency when reading faster.',
     },
     {
       studentId: student1.id,
-      courseId: scienceCourse.id,
-      title: 'Tuition Fee - Science',
-      description: 'Monthly tuition fee for science course',
-      amount: 140.00,
-      currency: 'USD',
-      dueDate: new Date('2024-09-15'),
-      status: 'PAID' as const,
-      paidDate: new Date('2024-09-10'),
-      paidById: parent1.id,
-      paidAmount: 140.00,
-      month: 9,
-      year: 2024,
-      isRecurring: true,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      title: 'Duas & Adab Quiz',
+      type: AssessmentType.QUIZ,
+      performedAt: new Date('2024-09-06'),
+      maxMarks: 30,
+      obtainedMarks: 24,
+      percentage: 80,
+      performanceNote: 'Knows meanings; stumbled on sequence of duas.',
+      remarks: 'Revise Arabic wording daily after Fajr.',
     },
     {
       studentId: student2.id,
-      courseId: mathCourse.id,
-      title: 'Tuition Fee - Mathematics',
-      description: 'Monthly tuition fee for mathematics course',
-      amount: 150.00,
-      currency: 'USD',
-      dueDate: new Date('2024-09-15'),
-      status: 'PENDING' as const,
-      month: 9,
-      year: 2024,
-      isRecurring: true,
-    },
-    {
-      studentId: student2.id,
-      courseId: englishCourse.id,
-      title: 'Tuition Fee - English',
-      description: 'Monthly tuition fee for English literature course',
-      amount: 130.00,
-      currency: 'USD',
-      dueDate: new Date('2024-09-15'),
-      status: 'PROCESSING' as const,
-      paidDate: new Date('2024-09-12'),
-      paidById: parent2.id,
-      paidAmount: 130.00,
-      month: 9,
-      year: 2024,
-      isRecurring: true,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      title: 'Noon Saakin & Tanween Oral Test',
+      type: AssessmentType.EXAM,
+      performedAt: new Date('2024-09-21'),
+      maxMarks: 50,
+      obtainedMarks: 39,
+      percentage: 78,
+      performanceNote: 'Understands rules; minor slips on idghaam without ghunnah.',
+      remarks: 'Listen to recorded examples and mimic pace.',
     },
     {
       studentId: student3.id,
-      courseId: scienceCourse.id,
-      title: 'Lab Fee - Science',
-      description: 'Science laboratory equipment and materials fee',
-      amount: 50.00,
-      currency: 'USD',
-      dueDate: new Date('2024-08-30'),
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      title: 'Qaidah Progress Check',
+      type: AssessmentType.QUIZ,
+      performedAt: new Date('2024-09-10'),
+      maxMarks: 20,
+      obtainedMarks: 15,
+      percentage: 75,
+      performanceNote: 'Heavy letters improving; needs louder projection.',
+      remarks: 'Practice daily with metronome for pacing.',
+    },
+  ];
+
+  for (const test of testRecords) {
+    await prisma.testRecord.create({
+      data: test,
+    });
+  }
+
+  console.log('✅ Test records created');
+
+  // Fees for each student/course
+  const fees = [
+    {
+      studentId: student1.id,
+      courseId: tajweedCourse.id,
+      title: 'Tuition Fee - Tajweed',
+      description: 'Monthly tuition fee for Tajweed ul Quran',
+      amount: 7500.0,
+      currency: 'PKR',
+      dueDate: new Date('2024-10-05'),
+      status: 'PENDING' as const,
+      month: 10,
+      year: 2024,
+      isRecurring: true,
+    },
+    {
+      studentId: student1.id,
+      courseId: basicIslamicEduCourse.id,
+      title: 'Tuition Fee - Basic Islamic Education',
+      description: 'Monthly tuition fee for Islamic basics and duas',
+      amount: 7000.0,
+      currency: 'PKR',
+      dueDate: new Date('2024-10-05'),
+      status: 'PAID' as const,
+      paidDate: new Date('2024-09-28'),
+      paidById: parent1.id,
+      paidAmount: 7000.0,
+      month: 10,
+      year: 2024,
+      isRecurring: true,
+    },
+    {
+      studentId: student2.id,
+      courseId: tajweedCourse.id,
+      title: 'Tuition Fee - Tajweed',
+      description: 'Monthly tuition fee for Tajweed ul Quran',
+      amount: 8000.0,
+      currency: 'PKR',
+      dueDate: new Date('2024-10-05'),
+      status: 'PROCESSING' as const,
+      paidDate: new Date('2024-10-02'),
+      paidById: parent2.id,
+      paidAmount: 8000.0,
+      month: 10,
+      year: 2024,
+      isRecurring: true,
+    },
+    {
+      studentId: student2.id,
+      courseId: basicIslamicEduCourse.id,
+      title: 'Resource Fee - Seerah & Duas',
+      description: 'Books and worksheets for Seerah & Duas',
+      amount: 2500.0,
+      currency: 'PKR',
+      dueDate: new Date('2024-09-25'),
       status: 'OVERDUE' as const,
-      month: 8,
+      month: 9,
       year: 2024,
       isRecurring: false,
+    },
+    {
+      studentId: student3.id,
+      courseId: tajweedCourse.id,
+      title: 'Tuition Fee - Qaidah/Tajweed',
+      description: 'Monthly tuition fee for Qaidah/Tajweed',
+      amount: 60.0,
+      currency: 'USD',
+      dueDate: new Date('2024-10-05'),
+      status: 'PENDING' as const,
+      month: 10,
+      year: 2024,
+      isRecurring: true,
     },
   ];
 
@@ -520,112 +544,75 @@ async function main() {
     });
   }
 
-  console.log('✅ Sample fees created');
+  console.log('✅ Fees created');
 
-  // Create sample salaries for teachers
-  const salaries = [
-    {
-      teacherId: teacher1.id,
-      title: 'Monthly Salary - September 2024',
-      description: 'Monthly salary for teaching mathematics',
-      amount: 3000.00,
-      currency: 'USD',
-      dueDate: new Date('2024-09-30'),
-      status: 'PENDING' as const,
-      month: 9,
+  // Salary for the single teacher
+  await prisma.salary.create({
+    data: {
+      teacherId: teacher.id,
+      title: 'Monthly Salary - October 2024',
+      description: 'Monthly salary for Tajweed and Basic Islamic Education classes',
+      amount: 42000.0,
+      currency: 'PKR',
+      dueDate: new Date('2024-10-30'),
+      status: 'PENDING',
+      month: 10,
       year: 2024,
-      payType: 'MONTHLY' as const,
+      payType: 'MONTHLY',
       isRecurring: true,
     },
-    {
-      teacherId: teacher2.id,
-      title: 'Monthly Salary - September 2024',
-      description: 'Monthly salary for teaching science and English',
-      amount: 3200.00,
-      currency: 'USD',
-      dueDate: new Date('2024-09-30'),
-      status: 'PAID' as const,
-      paidDate: new Date('2024-09-28'),
-      paidById: admin.id,
-      paidAmount: 3200.00,
-      month: 9,
-      year: 2024,
-      payType: 'MONTHLY' as const,
-      isRecurring: true,
-    },
-  ];
+  });
 
-  for (const salary of salaries) {
-    await prisma.salary.create({
-      data: salary,
-    });
-  }
+  console.log('✅ Salary record created');
 
-  console.log('✅ Sample salaries created');
-
-  // Create sample subscription for admin
-  const subscription = await prisma.subscription.create({
+  // Admin subscription
+  await prisma.subscription.create({
     data: {
       adminId: admin.id,
-      plan: 'MONTHLY',
-      amount: 29.99,
+      plan: 'YEARLY',
+      amount: 299.99,
       currency: 'USD',
-      startDate: new Date('2024-08-01'),
-      endDate: new Date('2024-09-01'),
+      startDate: new Date(),
+      endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
       status: 'ACTIVE',
-      paidAmount: 29.99,
-      paidDate: new Date('2024-07-30'),
+      paidAmount: 299.99,
+      paidDate: new Date(),
       paidById: admin.id,
     },
   });
 
-  console.log('✅ Sample subscription created');
+  console.log('✅ Subscription created');
 
-  // Create sample notifications
-  await prisma.notification.create({
-    data: {
-      type: NotificationType.FEE_DUE,
-      title: 'Fee Payment Due',
-      message: 'Mathematics tuition fee is due on September 15, 2024',
-      senderId: admin.id,
-      receiverId: parent1.id,
-    },
+  // Notifications
+  await prisma.notification.createMany({
+    data: [
+      {
+        type: NotificationType.FEE_DUE,
+        title: 'Fee Payment Due',
+        message: 'Tajweed tuition fee is due on October 5, 2024',
+        senderId: admin.id,
+        receiverId: parent1.id,
+      },
+      {
+        type: NotificationType.PROGRESS_UPDATE,
+        title: 'Progress Update',
+        message: 'Zafar has completed Surah Al-Fatihah with excellent pronunciation',
+        senderId: teacher.id,
+        receiverId: parent1.id,
+      },
+      {
+        type: NotificationType.SUBSCRIPTION_DUE,
+        title: 'Subscription Renewal Due',
+        message: 'Your monthly subscription will expire on October 1, 2024. Please renew to continue using the system.',
+        senderId: developer.id,
+        receiverId: admin.id,
+      },
+    ],
   });
 
-  await prisma.notification.create({
-    data: {
-      type: NotificationType.PROGRESS_UPDATE,
-      title: 'Progress Update',
-      message: 'Emma has completed her algebra fundamentals lesson with excellent performance',
-      senderId: teacher1.id,
-      receiverId: parent1.id,
-    },
-  });
+  console.log('✅ Notifications created');
 
-  await prisma.notification.create({
-    data: {
-      type: NotificationType.SALARY_PAID,
-      title: 'Salary Payment Processed',
-      message: 'Your September 2024 salary has been processed and paid',
-      senderId: admin.id,
-      receiverId: teacher2.id,
-      isRead: true,
-    },
-  });
-
-  await prisma.notification.create({
-    data: {
-      type: NotificationType.SUBSCRIPTION_DUE,
-      title: 'Subscription Renewal Due',
-      message: 'Your monthly subscription will expire on October 1, 2024. Please renew to continue using the system.',
-      senderId: developer.id,
-      receiverId: admin.id,
-    },
-  });
-
-  console.log('✅ Sample notifications created');
-
-  // Create user settings for some users
+  // User settings
   const userSettingsData = [
     {
       userId: admin.id,
@@ -646,7 +633,7 @@ async function main() {
       timezone: 'America/New_York',
     },
     {
-      userId: teacher1.id,
+      userId: teacher.id,
       enableNotifications: true,
       emailNotifications: false,
       parentRemarkNotifications: true,
@@ -655,26 +642,26 @@ async function main() {
   ];
 
   for (const userSetting of userSettingsData) {
-    await prisma.userSettings.create({
-      data: userSetting,
+    await prisma.userSettings.upsert({
+      where: { userId: userSetting.userId },
+      update: userSetting,
+      create: userSetting,
     });
   }
 
-  console.log('✅ Sample user settings created');
+  console.log('✅ User settings created');
 
   console.log('🎉 Database seeding completed successfully!');
   console.log('\n📋 Login Credentials:');
   console.log('Developer: info@mmsurdu.pk / developer123');
   console.log('Admin: admin@school.com / admin123');
-  console.log('Teacher 1: john.teacher@school.com / teacher123');
-  console.log('Teacher 2: sarah.teacher@school.com / teacher123');
-  console.log('Parent 1: mike.parent@email.com / parent123');
-  console.log('Parent 2: lisa.parent@email.com / parent123');
-  console.log('Student 1: emma.student@school.com / student123');
-  console.log('Student 2: alex.student@school.com / student123');
-  console.log('Student 3: sophia.student@school.com / student123');
-*/
-  } 
+  console.log('Teacher: teacher1@school.com / teacher123');
+  console.log('Parent 1: parent1@email.com / parent123');
+  console.log('Parent 2: parent2@email.com / parent123');
+  console.log('Student 1: student1@email.com / student123');
+  console.log('Student 2: student2@email.com / student123');
+  console.log('Student 3: student3@email.com / student123');
+  }
 
 main()
   .catch((e) => {
