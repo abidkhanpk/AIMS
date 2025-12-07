@@ -2,20 +2,38 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import formidable from 'formidable';
-import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs';
+import { google } from 'googleapis';
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive.file'];
 
 export const config = {
   api: {
     bodyParser: false,
   },
+};
+
+const getOAuthClient = () => {
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.google_client_id;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.google_client_secret;
+  const redirectUri =
+    process.env.GOOGLE_OAUTH_REDIRECT_URI ||
+    `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/google/oauth2callback`;
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Google OAuth client is not configured');
+  }
+
+  return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+};
+
+const getAuthUrl = () => {
+  const client = getOAuthClient();
+  return client.generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: DRIVE_SCOPE,
+  });
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -34,26 +52,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    // Check if Cloudinary is configured
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      return res.status(500).json({ 
-        message: 'Cloud storage not configured. Please set up Cloudinary credentials in environment variables.',
-        fallbackMessage: 'For Vercel deployment, file uploads require cloud storage. Please configure Cloudinary or use URL-based logo uploads.'
+    // Ensure Drive is configured
+    const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN || process.env.google_drive_refresh_token;
+    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.google_client_id;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.google_client_secret;
+
+    if (!clientId || !clientSecret) {
+      return res.status(500).json({
+        message: 'Cloud storage not configured. Please set Google OAuth client credentials in environment variables.',
+      });
+    }
+    if (!refreshToken) {
+      return res.status(400).json({
+        message: 'Google Drive access not authorized yet. Please authorize and set the refresh token.',
+        authorizeUrl: getAuthUrl(),
       });
     }
 
     const form = formidable({
       maxFileSize: 5 * 1024 * 1024, // 5MB limit
-      //filter: ({ mimetype }) => {
-      //  // Allow only image files
-      //  return mimetype && mimetype.includes('image');
-      //},
-      filter: (part) => {
-        
-        // Allow only image files
-        return Boolean(part.mimetype && part.mimetype.includes('image'));
-      },
-      
+      filter: (part) => Boolean(part.mimetype && part.mimetype.includes('image')),
     });
 
     const [fields, files] = await form.parse(req);
@@ -69,16 +87,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: 'Invalid file type. Please upload JPEG, PNG, GIF, or WebP images only.' });
     }
 
-    // Upload to Cloudinary
-    const uploadResult = await cloudinary.uploader.upload(file.filepath, {
-      folder: 'aims-logos',
-      public_id: `logo-${Date.now()}`,
-      transformation: [
-        { width: 500, height: 300, crop: 'limit' },
-        { quality: 'auto' },
-        { format: 'auto' }
-      ]
+    const oauth2Client = getOAuthClient();
+    oauth2Client.setCredentials({ refresh_token: refreshToken });
+    const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+    const sharedDriveId = process.env.DRIVE_SHARED_ID || process.env.DRIVE_SHARED_DRIVE_ID;
+    const parents = process.env.DRIVE_FOLDER_ID ? [process.env.DRIVE_FOLDER_ID] : undefined;
+
+    const uploadResponse = await drive.files.create({
+      requestBody: {
+        name: `logo-${Date.now()}-${file.originalFilename || 'upload'}`,
+        mimeType: file.mimetype || 'image/png',
+        parents,
+        ...(sharedDriveId ? { driveId: sharedDriveId } : {}),
+      },
+      media: {
+        mimeType: file.mimetype || 'image/png',
+        body: fs.createReadStream(file.filepath),
+      },
+      fields: 'id, name, webViewLink, webContentLink',
+      supportsAllDrives: true,
+      ...(sharedDriveId ? { supportsTeamDrives: true } : {}),
     });
+
+    const fileId = uploadResponse.data.id;
+
+    // Make file accessible via link (viewer)
+    if (fileId) {
+      try {
+        await drive.permissions.create({
+          fileId,
+          requestBody: {
+            role: 'reader',
+            type: 'anyone',
+          },
+          supportsAllDrives: true,
+          ...(sharedDriveId ? { supportsTeamDrives: true } : {}),
+        });
+      } catch (permErr) {
+        console.warn('Failed to set public permission for Drive file', permErr);
+      }
+    }
 
     // Clean up temporary file
     try {
@@ -89,36 +138,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.status(200).json({
       message: 'Logo uploaded successfully',
-      logoUrl: uploadResult.secure_url,
-      publicId: uploadResult.public_id
+      logoUrl: uploadResponse.data.webContentLink || uploadResponse.data.webViewLink || null,
+      fileId,
     });
-
   } catch (error) {
     console.error('Logo upload error:', error);
-    
-    // Provide helpful error messages
-    //if (error.message?.includes('Invalid image file')) {
-    //  return res.status(400).json({ message: 'Invalid image file. Please upload a valid image.' });
-    //}
-    // From inside the 'catch' block
+
     if (error instanceof Error && error.message.includes('Invalid image file')) {
       return res.status(400).json({ message: 'Invalid image file. Please upload a valid image.' });
     }
-    
+
     if (error instanceof Error && error.message.includes('File size too large')) {
       return res.status(400).json({ message: 'File size too large. Please upload images smaller than 5MB.' });
     }
 
-    if (error instanceof Error && error.message.includes('Must supply api_key')) {
-      return res.status(500).json({ 
-        message: 'Cloud storage configuration error. Please contact administrator.',
-        fallbackMessage: 'For Vercel deployment, please use URL-based logo uploads or configure Cloudinary.'
-      });
-    }
-
-    res.status(500).json({ 
-      message: 'Failed to upload logo. Please try again or use URL-based upload.',
-      fallbackMessage: 'If you\'re on Vercel, consider using URL-based logo uploads instead.'
+    const hint = (error as any)?.code === 403
+      ? 'Google Drive rejected the upload (often because the service account lacks storage in this drive). Move the target folder to a Shared Drive, add the service account as a member, and set DRIVE_SHARED_ID/DRIVE_SHARED_DRIVE_ID to that drive ID.'
+      : undefined;
+    res.status(500).json({
+      message: 'Failed to upload logo. Please try again or contact administrator.',
+      hint,
     });
   }
 }
