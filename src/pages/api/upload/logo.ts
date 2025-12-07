@@ -136,9 +136,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn('Failed to cleanup temporary file:', cleanupError);
     }
 
+    const viewUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : null;
+
     res.status(200).json({
       message: 'Logo uploaded successfully',
-      logoUrl: uploadResponse.data.webContentLink || uploadResponse.data.webViewLink || null,
+      logoUrl: viewUrl || uploadResponse.data.webViewLink || uploadResponse.data.webContentLink || null,
       fileId,
     });
   } catch (error) {
