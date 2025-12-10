@@ -200,6 +200,69 @@
   min-width: calc(var(--collapsed-width) - 1.6rem);
 }
 
+@media (max-width: 992px) {
+  .menuLayout {
+    flex-direction: column;
+    min-height: unset;
+  }
+
+  .navbar {
+    position: static;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    padding: 0.5rem 0.75rem 0.75rem;
+    border-bottom: 1px solid hsla(var(--white), 0.08);
+  }
+
+  .navbar:hover {
+    width: 100%;
+    overflow: visible;
+  }
+
+  .navbarItems {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.35rem;
+  }
+
+  .navbarItem {
+    padding: 0;
+  }
+
+  .navbarItemInner {
+    background: hsl(var(--background-secondary-dark));
+    border: 1px solid hsla(var(--white), 0.08);
+  }
+
+  .linkText {
+    opacity: 1;
+  }
+
+  .iconWrapper {
+    width: auto;
+    min-width: unset;
+  }
+
+  .subGroup {
+    padding-left: 0.5rem;
+  }
+
+  .subList {
+    padding-top: 0.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .navbarItems {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .navbarItemInner {
+    font-size: 0.95rem;
+  }
+}
+
 .subItem .navbarItemInnerActive {
   background: hsl(var(--background-secondary-light));
 }
