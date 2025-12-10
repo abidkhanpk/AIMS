@@ -35,16 +35,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       settings = {
         appTitle: appSettings.appName,
         headerImg: appSettings.appLogo,
+        headerImgUrl: appSettings.appLogo,
         enableHomePage: appSettings.enableHomePage,
       };
     } else if (session.user.role === 'ADMIN') {
       // Admin gets their own settings
+      const adminExists = await prisma.user.findUnique({
+        where: { id: session.user.id, role: 'ADMIN' },
+        select: { id: true }
+      });
+
+      if (!adminExists) {
+        return res.status(404).json({ message: 'Admin not found' });
+      }
+
       settings = await prisma.settings.findUnique({
         where: { adminId: session.user.id },
         select: {
           id: true,
           appTitle: true,
           headerImg: true,
+          headerImgUrl: true,
+          tagline: true,
           enableHomePage: true,
         }
       });
@@ -57,12 +69,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               adminId: session.user.id,
               appTitle: 'AIMS',
               headerImg: '/assets/default-logo.png',
+              headerImgUrl: null,
+              tagline: 'Academy Information and Management System',
               enableHomePage: true,
             },
             select: {
               id: true,
               appTitle: true,
               headerImg: true,
+              headerImgUrl: true,
+              tagline: true,
               enableHomePage: true,
             }
           });
@@ -72,6 +88,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             settings = {
               appTitle: 'AIMS',
               headerImg: '/assets/default-logo.png',
+              headerImgUrl: null,
+              tagline: 'Academy Information and Management System',
               enableHomePage: true,
             };
           } else {
@@ -100,6 +118,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             id: true,
             appTitle: true,
             headerImg: true,
+            headerImgUrl: true,
+            tagline: true,
             enableHomePage: true,
           }
         });
@@ -111,12 +131,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               adminId: session.user.adminId,
               appTitle: 'AIMS',
               headerImg: '/assets/default-logo.png',
+              headerImgUrl: null,
+              tagline: 'Academy Information and Management System',
               enableHomePage: true,
             },
             select: {
               id: true,
               appTitle: true,
               headerImg: true,
+              headerImgUrl: true,
+              tagline: true,
               enableHomePage: true,
             }
           });
@@ -127,6 +151,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       settings = {
         appTitle: 'AIMS',
         headerImg: '/assets/default-logo.png',
+        headerImgUrl: null,
+        tagline: 'Academy Information and Management System',
         enableHomePage: true,
       };
     }
@@ -137,6 +163,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (appSettings && !appSettings.enableHomePage) {
         settings.enableHomePage = false;
       }
+    }
+
+    // Prefer an explicit logo URL if provided and fall back to stored header image
+    if (settings?.headerImgUrl) {
+      settings.headerImg = settings.headerImgUrl;
     }
 
     res.status(200).json(settings);

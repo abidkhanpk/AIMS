@@ -39,6 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               select: {
                 appTitle: true,
                 headerImg: true,
+                headerImgUrl: true,
                 tagline: true,
                 enableHomePage: true,
                 defaultCurrency: true,
