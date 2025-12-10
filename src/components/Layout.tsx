@@ -9,6 +9,7 @@ import { useRouter } from 'next/router';
 interface Settings {
   appTitle: string;
   headerImg: string;
+  headerImgUrl?: string | null;
   tagline: string;
 }
 
@@ -59,7 +60,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/settings/my-settings');
       if (res.ok) {
         const data = await res.json();
-        setSettings(data);
+        const logo = data.headerImgUrl || data.headerImg || '/assets/default-logo.png';
+        setSettings({ ...data, headerImg: logo });
+      } else {
+        setSettings({
+          appTitle: 'AIMS',
+          headerImg: '/assets/default-logo.png',
+          tagline: 'Academy Information and Management System',
+        });
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
