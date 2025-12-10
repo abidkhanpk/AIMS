@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dropdown, Badge, Button, Spinner } from 'react-bootstrap';
+import { useRouter } from 'next/router';
 
 interface Notification {
   id: string;
@@ -15,6 +16,7 @@ interface Notification {
 }
 
 export default function NotificationDropdown() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -115,6 +117,42 @@ export default function NotificationDropdown() {
     return `${Math.floor(diffInMinutes / 1440)}d ago`;
   };
 
+  const navigateForNotification = (notification: Notification) => {
+    // Minimal routing: send the user to the most relevant page for this notification type
+    const type = notification.type;
+    if (['FEE_DUE', 'FEE_PAID', 'PAYMENT_PROCESSING', 'PAYMENT_VERIFIED'].includes(type)) {
+      router.push('/dashboard/fees');
+      return;
+    }
+    if (['PARENT_REMARK', 'PROGRESS_UPDATE'].includes(type)) {
+      router.push('/dashboard/parent-remarks');
+      return;
+    }
+    if (['SALARY_PAID'].includes(type)) {
+      router.push('/dashboard/salaries');
+      return;
+    }
+    if (['SUBSCRIPTION_DUE', 'SUBSCRIPTION_PAID'].includes(type)) {
+      router.push('/dashboard');
+      return;
+    }
+    if (['SYSTEM_ALERT'].includes(type)) {
+      router.push('/dashboard');
+      return;
+    }
+
+    // Default: go to dashboard
+    router.push('/dashboard');
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    if (!notification.isRead) {
+      await markAsRead(notification.id);
+    }
+    navigateForNotification(notification);
+    setShow(false);
+  };
+
   return (
     <Dropdown show={show} onToggle={setShow} align="end">
       <Dropdown.Toggle
@@ -178,7 +216,7 @@ export default function NotificationDropdown() {
                   !notification.isRead ? 'bg-light' : ''
                 }`}
                 style={{ cursor: 'pointer' }}
-                onClick={() => !notification.isRead && markAsRead(notification.id)}
+                onClick={() => handleNotificationClick(notification)}
               >
                 <div className="d-flex align-items-start">
                   <div className="me-2 mt-1">

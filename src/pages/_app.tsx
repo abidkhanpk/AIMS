@@ -1,6 +1,7 @@
 import type { AppProps } from 'next/app';
 import { SessionProvider } from 'next-auth/react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import '../styles/mobile.css';
 import Layout from '../components/Layout';
 import Head from 'next/head';
 

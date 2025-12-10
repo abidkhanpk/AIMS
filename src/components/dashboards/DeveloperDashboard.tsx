@@ -16,6 +16,7 @@ interface Admin {
   settings?: {
     appTitle: string;
     headerImg: string;
+    headerImgUrl?: string;
     tagline: string;
     enableHomePage: boolean;
     defaultCurrency: string;
@@ -295,8 +296,9 @@ function AdminManagementTab() {
   const handleShowSettings = (admin: Admin) => {
     setSelectedAdmin(admin);
     setAppTitle(admin.settings?.appTitle || 'AIMS');
-    setHeaderImage(admin.settings?.headerImg || '/assets/default-logo.png');
-    setHeaderImageUrl('');
+    const existingHeader = admin.settings?.headerImgUrl || admin.settings?.headerImg || '/assets/default-logo.png';
+    setHeaderImage(existingHeader);
+    setHeaderImageUrl(admin.settings?.headerImgUrl || admin.settings?.headerImg || '');
     setTagline(admin.settings?.tagline || 'Academy Information and Management System');
     setEnableHomePage(admin.settings?.enableHomePage ?? true);
     setDefaultCurrency(admin.settings?.defaultCurrency || 'USD');
@@ -362,6 +364,7 @@ function AdminManagementTab() {
     setUpdatingSettings(true);
     try {
       const endDate = calculateEndDate(subscriptionStartDate, subscriptionType);
+      const resolvedHeader = headerImageUrl || headerImage || null;
       
       const res = await fetch('/api/settings/update', {
         method: 'POST',
@@ -369,8 +372,8 @@ function AdminManagementTab() {
         body: JSON.stringify({ 
           adminId: selectedAdmin.id, 
           appTitle, 
-          headerImg: headerImageUrl || headerImage,
-          headerImgUrl: headerImageUrl,
+          headerImg: resolvedHeader || '/assets/default-logo.png',
+          headerImgUrl: resolvedHeader,
           tagline,
           enableHomePage,
           defaultCurrency,

@@ -1,0 +1,76 @@
+/* Mobile-only adjustments to keep the existing desktop layout intact */
+
+@media (max-width: 992px) {
+  /* Stack admin layout instead of fixed sidebar */
+  .menuLayout {
+    flex-direction: column;
+    min-height: unset;
+  }
+
+  .navbar {
+    position: static;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    padding: 0.5rem 0.75rem 0.75rem;
+    border-bottom: 1px solid hsla(0, 0%, 100%, 0.08);
+  }
+
+  .navbar:hover {
+    width: 100%;
+    overflow: visible;
+  }
+
+  .navbarItems {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.35rem;
+  }
+
+  .navbarItem {
+    padding: 0;
+  }
+
+  .navbarItemInner {
+    background: hsl(var(--background-secondary-dark));
+    border: 1px solid hsla(0, 0%, 100%, 0.08);
+  }
+
+  .linkText {
+    opacity: 1;
+  }
+
+  .iconWrapper {
+    width: auto;
+    min-width: unset;
+  }
+
+  .subGroup {
+    padding-left: 0.5rem;
+  }
+
+  .subList {
+    padding-top: 0.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Slightly tighter grid for very small screens */
+  .navbarItems {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+
+  .navbarItemInner {
+    font-size: 0.95rem;
+  }
+
+  /* Ensure long tables/cards remain usable by allowing horizontal scroll */
+  .table-responsive,
+  .table-responsive-sm,
+  .table-responsive-md,
+  .table-responsive-lg,
+  .table-responsive-xl,
+  .table-responsive-xxl {
+    margin-bottom: 1rem;
+  }
+}

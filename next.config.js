@@ -13,7 +13,18 @@ const nextConfig = {
     dirs: ['src']
   },
   images: {
-    domains: ['localhost'],
+    domains: [
+      'localhost',
+      'drive.google.com',
+      'lh3.googleusercontent.com',
+      'lh4.googleusercontent.com',
+      'lh5.googleusercontent.com',
+      'lh6.googleusercontent.com'
+    ],
+    remotePatterns: [
+      { protocol: 'https', hostname: '**' },
+      { protocol: 'http', hostname: '**' }
+    ],
     unoptimized: true
   }
 };
