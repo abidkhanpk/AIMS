@@ -38,6 +38,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [updating, setUpdating] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [mobileMenuContent, setMobileMenuContent] = useState<React.ReactNode>(null);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -129,6 +130,48 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       router.events.off('routeChangeComplete', closeOnRoute);
     };
   }, [router.events]);
+
+  // Build a reusable mobile menu body so we don't duplicate menu items
+  useEffect(() => {
+    if (!user) return;
+    setMobileMenuContent(
+      <ListGroup variant="flush">
+        <ListGroup.Item action onClick={() => router.push('/dashboard')}>
+          <i className="bi bi-speedometer2 me-2"></i>
+          Dashboard
+        </ListGroup.Item>
+        {/* Space for role-specific entries if needed */}
+        <ListGroup.Item action onClick={() => setShowSettingsModal(true)}>
+          <i className="bi bi-gear me-2"></i>
+          Settings
+        </ListGroup.Item>
+        <ListGroup.Item action onClick={handleSignOut}>
+          <i className="bi bi-box-arrow-right me-2"></i>
+          Sign Out
+        </ListGroup.Item>
+        <div className="mt-3 pt-2 border-top">
+          <div className="d-flex align-items-center mb-2">
+            <div className="me-3 position-relative">
+              <NotificationDropdown />
+            </div>
+            <Button
+              variant="outline-primary"
+              className="flex-grow-1"
+              onClick={() => router.push('/messages')}
+            >
+              <i className="bi bi-envelope me-2"></i>
+              Messages
+              {unreadMessages > 0 && (
+                <Badge bg="danger" pill className="ms-2">
+                  {unreadMessages}
+                </Badge>
+              )}
+            </Button>
+          </div>
+        </div>
+      </ListGroup>
+    );
+  }, [user, unreadMessages, router]);
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -420,7 +463,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Mobile offcanvas menu */}
       {status === 'authenticated' && (
-        <Offcanvas show={showMobileMenu} onHide={() => setShowMobileMenu(false)} placement="end" className="d-lg-none">
+        <Offcanvas show={showMobileMenu} onHide={() => setShowMobileMenu(false)} placement="start" className="d-lg-none">
           <Offcanvas.Header closeButton>
             <Offcanvas.Title>
               <i className="bi bi-grid me-2"></i>
@@ -428,38 +471,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Offcanvas.Title>
           </Offcanvas.Header>
           <Offcanvas.Body>
-            <div className="d-flex align-items-center mb-3">
-              <div className="me-3 position-relative">
-                <NotificationDropdown />
-              </div>
-              <Button
-                variant="outline-primary"
-                className="flex-grow-1"
-                onClick={() => router.push('/messages')}
-              >
-                <i className="bi bi-envelope me-2"></i>
-                Messages
-                {unreadMessages > 0 && (
-                  <Badge bg="danger" pill className="ms-2">
-                    {unreadMessages}
-                  </Badge>
-                )}
-              </Button>
-            </div>
-            <ListGroup variant="flush">
-              <ListGroup.Item action onClick={() => router.push('/dashboard')}>
-                <i className="bi bi-speedometer2 me-2"></i>
-                Dashboard
-              </ListGroup.Item>
-              <ListGroup.Item action onClick={() => setShowSettingsModal(true)}>
-                <i className="bi bi-gear me-2"></i>
-                Settings
-              </ListGroup.Item>
-              <ListGroup.Item action onClick={handleSignOut}>
-                <i className="bi bi-box-arrow-right me-2"></i>
-                Sign Out
-              </ListGroup.Item>
-            </ListGroup>
+            {mobileMenuContent}
           </Offcanvas.Body>
         </Offcanvas>
       )}
