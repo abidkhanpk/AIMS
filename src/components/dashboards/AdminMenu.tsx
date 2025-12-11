@@ -138,7 +138,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
     );
   };
 
-  const toggleMobileGroup = (key: string, childActive: boolean) => {
+  const toggleMobileGroup = (key: string, childActive: boolean | undefined) => {
     setMobileGroups((prev) => ({
       ...prev,
       [key]: typeof prev[key] === 'boolean' ? !prev[key] : !childActive,
