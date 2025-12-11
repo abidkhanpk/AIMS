@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { Button, Offcanvas, ListGroup } from 'react-bootstrap';
 import styles from './AdminMenu.module.css';
 
 type MenuItem = {
@@ -53,6 +54,7 @@ const menuItems: MenuItem[] = [
 
 export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; onSelect: (key: string) => void }) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     // Keep parent group open when a child is active
@@ -123,18 +125,92 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
   };
 
   return (
-    <nav className={styles.navbar} aria-label="Admin navigation">
-      <ul className={`${styles.navbarItems} ${styles.flexCol}`}>
-        {menuItems.map((item) => renderMenuItem(item))}
-        <li className={styles.navbarItem}>
-          <Link href="/" className={`${styles.navbarItemInner} ${styles.flexLeft}`}>
-            <div className={styles.iconWrapper}>
-              <i className="bi bi-arrow-left-circle" aria-hidden />
-            </div>
-            <span className={styles.linkText}>Back to Site</span>
-          </Link>
-        </li>
-      </ul>
-    </nav>
+    <>
+      <div className="d-lg-none px-3 mb-3">
+        <Button
+          variant="dark"
+          className="w-100 d-flex align-items-center justify-content-between"
+          onClick={() => setShowMobileMenu(true)}
+        >
+          <span className="d-flex align-items-center">
+            <i className="bi bi-list fs-4 me-2"></i>
+            Menu
+          </span>
+          <i className="bi bi-chevron-right"></i>
+        </Button>
+      </div>
+
+      <nav className={`${styles.navbar} d-none d-lg-block`} aria-label="Admin navigation">
+        <ul className={`${styles.navbarItems} ${styles.flexCol}`}>
+          {menuItems.map((item) => renderMenuItem(item))}
+          <li className={styles.navbarItem}>
+            <Link href="/" className={`${styles.navbarItemInner} ${styles.flexLeft}`}>
+              <div className={styles.iconWrapper}>
+                <i className="bi bi-arrow-left-circle" aria-hidden />
+              </div>
+              <span className={styles.linkText}>Back to Site</span>
+            </Link>
+          </li>
+        </ul>
+      </nav>
+
+      <Offcanvas show={showMobileMenu} onHide={() => setShowMobileMenu(false)} className="d-lg-none">
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>
+            <i className="bi bi-list me-2"></i>
+            Menu
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <ListGroup variant="flush">
+            {menuItems.map((item) => (
+              <div key={item.key} className="mb-2">
+                <ListGroup.Item
+                  action
+                  onClick={() => {
+                    if (item.children?.length) return;
+                    onSelect(item.key);
+                    setShowMobileMenu(false);
+                  }}
+                  className="d-flex align-items-center"
+                >
+                  <i className={`bi ${item.icon} me-2`}></i>
+                  {item.label}
+                </ListGroup.Item>
+                {item.children?.length ? (
+                  <ListGroup className="ms-3">
+                    {item.children.map((child) => (
+                      <ListGroup.Item
+                        key={child.key}
+                        action
+                        onClick={() => {
+                          onSelect(child.key);
+                          setShowMobileMenu(false);
+                        }}
+                        className="d-flex align-items-center"
+                      >
+                        <i className={`bi ${child.icon} me-2`}></i>
+                        {child.label}
+                      </ListGroup.Item>
+                    ))}
+                  </ListGroup>
+                ) : null}
+              </div>
+            ))}
+            <ListGroup.Item
+              action
+              onClick={() => {
+                setShowMobileMenu(false);
+                window.location.href = '/';
+              }}
+              className="d-flex align-items-center mt-2"
+            >
+              <i className="bi bi-arrow-left-circle me-2"></i>
+              Back to Site
+            </ListGroup.Item>
+          </ListGroup>
+        </Offcanvas.Body>
+      </Offcanvas>
+    </>
   );
 }
