@@ -52,6 +52,80 @@
   .subList {
     padding-top: 0.25rem;
   }
+
+  /* Global dashboard spacing */
+  main {
+    padding: 0 !important;
+  }
+
+  .container,
+  .container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Cards feel like tappable tiles */
+  .card {
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1rem;
+  }
+
+  .card-header {
+    border-top-left-radius: 14px !important;
+    border-top-right-radius: 14px !important;
+    font-size: 1.05rem;
+    padding: 0.9rem 1rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  /* Touch-friendly buttons/inputs */
+  .btn:not(.btn-link) {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border-radius: 12px;
+  }
+
+  .form-control,
+  .form-select {
+    min-height: 44px;
+    padding: 0.65rem 0.85rem;
+    font-size: 1rem;
+    border-radius: 12px;
+  }
+
+  /* Tabs */
+  .nav-tabs .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  /* Tables scroll nicely on mobile */
+  .table-responsive,
+  .table-responsive-sm,
+  .table-responsive-md,
+  .table-responsive-lg,
+  .table-responsive-xl,
+  .table-responsive-xxl {
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* Lists in dropdowns and menus */
+  .dropdown-menu {
+    border-radius: 14px;
+    padding: 0.5rem;
+  }
+
+  .dropdown-item {
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+  }
 }
 
 @media (max-width: 576px) {
@@ -62,6 +136,23 @@
 
   .navbarItemInner {
     font-size: 0.95rem;
+  }
+
+  /* Make headers and text a bit larger for readability */
+  h1, .h1 { font-size: 1.6rem; }
+  h2, .h2 { font-size: 1.4rem; }
+  h3, .h3 { font-size: 1.25rem; }
+  h4, .h4 { font-size: 1.1rem; }
+
+  /* Stack button groups */
+  .btn-group,
+  .btn-group-vertical {
+    width: 100%;
+  }
+
+  .btn-group .btn,
+  .btn-group-vertical .btn {
+    width: 100%;
   }
 
   /* Ensure long tables/cards remain usable by allowing horizontal scroll */
