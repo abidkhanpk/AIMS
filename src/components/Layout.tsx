@@ -1,5 +1,5 @@
 import { useSession, signOut } from 'next-auth/react';
-import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab, Badge } from 'react-bootstrap';
+import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab, Badge, Offcanvas, ListGroup } from 'react-bootstrap';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import NotificationDropdown from './NotificationDropdown';
@@ -37,6 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [success, setSuccess] = useState('');
   const [updating, setUpdating] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -120,6 +121,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       return () => clearInterval(interval);
     }
   }, [status, fetchSettings, fetchUserSettings, loadUnreadMessages]);
+
+  useEffect(() => {
+    const closeOnRoute = () => setShowMobileMenu(false);
+    router.events.on('routeChangeComplete', closeOnRoute);
+    return () => {
+      router.events.off('routeChangeComplete', closeOnRoute);
+    };
+  }, [router.events]);
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -297,6 +306,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <Container fluid className="px-3">
           <div className="d-flex align-items-center">
+            {status === 'authenticated' && (
+              <Button
+                variant="outline-light"
+                className="d-lg-none me-2"
+                aria-label="Open menu"
+                onClick={() => setShowMobileMenu(true)}
+              >
+                <i className="bi bi-list fs-4"></i>
+              </Button>
+            )}
             {settings?.headerImg && (
               <div className="me-3">
                 <Image 
@@ -328,9 +347,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Toggle aria-controls="basic-navbar-nav" className="d-none d-lg-block" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="d-flex align-items-center ms-auto">
+            <Nav className="d-flex align-items-center ms-auto d-none d-lg-flex">
               {status === 'authenticated' && user && (
                 <>
                   <div className="me-2 position-relative">
@@ -398,6 +417,52 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </Container>
       </main>
+
+      {/* Mobile offcanvas menu */}
+      {status === 'authenticated' && (
+        <Offcanvas show={showMobileMenu} onHide={() => setShowMobileMenu(false)} placement="end" className="d-lg-none">
+          <Offcanvas.Header closeButton>
+            <Offcanvas.Title>
+              <i className="bi bi-grid me-2"></i>
+              Menu
+            </Offcanvas.Title>
+          </Offcanvas.Header>
+          <Offcanvas.Body>
+            <div className="d-flex align-items-center mb-3">
+              <div className="me-3 position-relative">
+                <NotificationDropdown />
+              </div>
+              <Button
+                variant="outline-primary"
+                className="flex-grow-1"
+                onClick={() => router.push('/messages')}
+              >
+                <i className="bi bi-envelope me-2"></i>
+                Messages
+                {unreadMessages > 0 && (
+                  <Badge bg="danger" pill className="ms-2">
+                    {unreadMessages}
+                  </Badge>
+                )}
+              </Button>
+            </div>
+            <ListGroup variant="flush">
+              <ListGroup.Item action onClick={() => router.push('/dashboard')}>
+                <i className="bi bi-speedometer2 me-2"></i>
+                Dashboard
+              </ListGroup.Item>
+              <ListGroup.Item action onClick={() => setShowSettingsModal(true)}>
+                <i className="bi bi-gear me-2"></i>
+                Settings
+              </ListGroup.Item>
+              <ListGroup.Item action onClick={handleSignOut}>
+                <i className="bi bi-box-arrow-right me-2"></i>
+                Sign Out
+              </ListGroup.Item>
+            </ListGroup>
+          </Offcanvas.Body>
+        </Offcanvas>
+      )}
       
       <footer className="bg-dark text-light py-3 mt-auto">
         <Container>
