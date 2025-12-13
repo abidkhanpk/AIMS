@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Button, Offcanvas, ListGroup } from 'react-bootstrap';
+import { Offcanvas, ListGroup } from 'react-bootstrap';
 import { useRouter } from 'next/router';
 import NotificationDropdown from '../NotificationDropdown';
 import styles from './AdminMenu.module.css';
@@ -82,6 +82,19 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
       return Object.keys(defaults).length ? { ...prev, ...defaults } : prev;
     });
   }, [activeKey]);
+
+  // Allow external trigger (header burger) to open the mobile menu
+  useEffect(() => {
+    const handler = () => setShowMobileMenu(true);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('open-admin-menu', handler);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('open-admin-menu', handler);
+      }
+    };
+  }, []);
 
   const renderMenuItem = (item: MenuItem, isChild = false) => {
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
@@ -198,20 +211,6 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
 
   return (
     <>
-      <div className="d-lg-none px-3 mb-3">
-        <Button
-          variant="dark"
-          className="w-100 d-flex align-items-center justify-content-between"
-          onClick={() => setShowMobileMenu(true)}
-        >
-          <span className="d-flex align-items-center">
-            <i className="bi bi-list fs-4 me-2"></i>
-            Menu
-          </span>
-          <i className="bi bi-chevron-right"></i>
-        </Button>
-      </div>
-
       <nav className={`${styles.navbar} d-none d-lg-block`} aria-label="Admin navigation">
         <ul className={`${styles.navbarItems} ${styles.flexCol}`}>
           {menuItems.map((item) => renderMenuItem(item))}

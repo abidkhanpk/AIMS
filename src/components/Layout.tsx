@@ -161,6 +161,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const openMainMenuMobile = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('open-admin-menu'));
+    }
+  };
+
   const handleEmailChange = async () => {
     if (!newEmail || newEmail === user?.email) {
       setError('Please enter a new email address');
@@ -297,6 +303,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <Container fluid className="px-3">
           <div className="d-flex align-items-center">
+            {status === 'authenticated' && (
+              <button
+                className="btn btn-link text-light d-lg-none me-2 p-0"
+                aria-label="Open menu"
+                onClick={openMainMenuMobile}
+              >
+                <i className="bi bi-list fs-3"></i>
+              </button>
+            )}
             {settings?.headerImg && (
               <div className="me-3">
                 <Image 

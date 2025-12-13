@@ -205,6 +205,16 @@
   .navbar {
     display: none;
   }
+
+  .menuLayout {
+    flex-direction: column;
+    min-height: unset;
+  }
+
+  .mainContent {
+    margin-left: 0;
+    width: 100%;
+  }
 }
 
 @media (max-width: 576px) {
