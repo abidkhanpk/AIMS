@@ -185,3 +185,8 @@
     margin-bottom: 1rem;
   }
 }
+
+/* Ensure navbar brand has no underline anywhere */
+.navbar-brand {
+  text-decoration: none !important;
+}
