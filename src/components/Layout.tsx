@@ -332,10 +332,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             )}
             <Link href="/" passHref>
-              <Navbar.Brand className="fw-bold d-flex flex-column">
+              <Navbar.Brand className="fw-bold d-flex flex-column text-decoration-none">
                 <div className="fs-4">{settings?.appTitle || 'AIMS'}</div>
                 {settings?.tagline && (
-                  <small className="text-light opacity-75 fw-normal" style={{ fontSize: '0.75rem', lineHeight: '1' }}>
+                  <small className="text-light opacity-75 fw-normal text-decoration-none" style={{ fontSize: '0.75rem', lineHeight: '1' }}>
                     {settings.tagline}
                   </small>
                 )}
