@@ -313,7 +313,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </button>
             )}
             {settings?.headerImg && (
-              <div className="me-3">
+              <div className="me-3 app-brand-logo">
                 <Image 
                   src={settings.headerImg} 
                   alt="Header Image"
@@ -332,10 +332,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             )}
             <Link href="/" passHref>
-              <Navbar.Brand className="fw-bold d-flex flex-column text-decoration-none">
-                <div className="fs-4">{settings?.appTitle || 'AIMS'}</div>
+              <Navbar.Brand className="fw-bold d-flex flex-column text-decoration-none app-brand">
+                <div className="fs-4 app-brand-text text-truncate">{settings?.appTitle || 'AIMS'}</div>
                 {settings?.tagline && (
-                  <small className="text-light opacity-75 fw-normal text-decoration-none" style={{ fontSize: '0.75rem', lineHeight: '1' }}>
+                  <small className="text-light opacity-75 fw-normal text-decoration-none app-brand-text text-truncate" style={{ fontSize: '0.75rem', lineHeight: '1' }}>
                     {settings.tagline}
                   </small>
                 )}

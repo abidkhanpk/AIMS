@@ -126,6 +126,26 @@
     padding: 0.85rem 1rem;
     border-radius: 10px;
   }
+
+  /* Prevent horizontal scroll when logo/text load */
+  body,
+  html {
+    overflow-x: hidden;
+  }
+
+  .app-brand {
+    max-width: calc(100vw - 90px);
+  }
+
+  .app-brand-logo img {
+    max-width: 90px;
+  }
+
+  .app-brand-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 @media (max-width: 576px) {
