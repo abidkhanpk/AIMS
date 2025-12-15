@@ -37,6 +37,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [success, setSuccess] = useState('');
   const [updating, setUpdating] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -159,6 +162,57 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const openMainMenuMobile = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('open-admin-menu'));
+    }
+  };
+
+  // Track viewport to hide burger on desktop explicitly
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 991.98px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    if (mq.addEventListener) {
+      mq.addEventListener('change', update);
+      return () => mq.removeEventListener('change', update);
+    } else {
+      mq.addListener(update);
+      return () => mq.removeListener(update);
+    }
+  }, []);
+
+  // Track PWA install prompt
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone;
+    if (isStandalone) {
+      setCanInstall(false);
+      return;
+    }
+
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setCanInstall(false);
   };
 
   const handleEmailChange = async () => {
@@ -297,8 +351,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <Container fluid className="px-3">
           <div className="d-flex align-items-center">
+            {status === 'authenticated' && (
+              <button
+                className="btn btn-link text-light me-2 p-0 d-lg-none mobile-menu-button"
+                aria-label="Open menu"
+                onClick={openMainMenuMobile}
+                style={{ display: isMobile ? 'inline-flex' : 'none' }}
+              >
+                <i className="bi bi-list fs-3"></i>
+              </button>
+            )}
             {settings?.headerImg && (
-              <div className="me-3">
+              <div className="me-3 app-brand-logo">
                 <Image 
                   src={settings.headerImg} 
                   alt="Header Image"
@@ -316,21 +380,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 />
               </div>
             )}
-            <Link href="/" passHref>
-              <Navbar.Brand className="fw-bold d-flex flex-column">
-                <div className="fs-4">{settings?.appTitle || 'AIMS'}</div>
+            <Link href="/" passHref legacyBehavior>
+              <Navbar.Brand
+                className="fw-bold d-flex flex-column text-decoration-none app-brand"
+                style={{ textDecoration: 'none' }}
+              >
+                <div className="fs-4 app-brand-text text-truncate">{settings?.appTitle || 'AIMS'}</div>
                 {settings?.tagline && (
-                  <small className="text-light opacity-75 fw-normal" style={{ fontSize: '0.75rem', lineHeight: '1' }}>
+                  <small
+                    className="text-light opacity-75 fw-normal text-decoration-none app-brand-text text-truncate"
+                    style={{ fontSize: '0.75rem', lineHeight: '1', textDecoration: 'none' }}
+                  >
                     {settings.tagline}
                   </small>
                 )}
               </Navbar.Brand>
             </Link>
           </div>
-          
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="d-flex align-items-center ms-auto">
+            <Nav className="d-flex align-items-center ms-auto d-none d-lg-flex">
+              {canInstall && (
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  className="me-3 d-flex align-items-center"
+                  onClick={handleInstall}
+                >
+                  <i className="bi bi-download me-2"></i>
+                  Install
+                </Button>
+              )}
               {status === 'authenticated' && user && (
                 <>
                   <div className="me-2 position-relative">
@@ -398,6 +477,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </Container>
       </main>
+
       
       <footer className="bg-dark text-light py-3 mt-auto">
         <Container>
