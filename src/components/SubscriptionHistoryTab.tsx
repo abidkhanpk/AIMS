@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Table, Spinner, Alert, Badge, Button, Modal, Form, Row, Col } from 'react-bootstrap';
 
 interface SubscriptionHistoryProps {
-  adminId: string;
+  adminId?: string; // if undefined and user is ADMIN, server will use session user
   allowVerify?: boolean; // when true (developer context), show verify actions
 }
 
@@ -65,7 +65,8 @@ export default function SubscriptionHistoryTab({ adminId, allowVerify = false }:
   const fetchSubscriptionHistory = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/subscriptions/history?adminId=${adminId}`);
+      const url = adminId ? `/api/subscriptions/history?adminId=${adminId}` : '/api/subscriptions/history';
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setSubscriptions(data.subscriptions || []);
@@ -81,9 +82,7 @@ export default function SubscriptionHistoryTab({ adminId, allowVerify = false }:
   }, [adminId]);
 
   useEffect(() => {
-    if (adminId) {
-      fetchSubscriptionHistory();
-    }
+    fetchSubscriptionHistory();
   }, [adminId, fetchSubscriptionHistory]);
 
   const handleExtendSubscription = async () => {
@@ -156,14 +155,16 @@ export default function SubscriptionHistoryTab({ adminId, allowVerify = false }:
 
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h6 className="mb-0">Subscription History & Management</h6>
-        <Button 
-          variant="primary" 
-          size="sm"
-          onClick={() => setShowExtendModal(true)}
-        >
-          <i className="bi bi-plus-circle me-2"></i>
-          Extend Subscription
-        </Button>
+        {allowVerify && (
+          <Button 
+            variant="primary" 
+            size="sm"
+            onClick={() => setShowExtendModal(true)}
+          >
+            <i className="bi bi-plus-circle me-2"></i>
+            Extend Subscription
+          </Button>
+        )}
       </div>
 
       {/* Current Subscriptions */}

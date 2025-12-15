@@ -14,7 +14,29 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
   const [paymentDetails, setPaymentDetails] = useState('');
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+
+  const uploadProof = async () => {
+    if (!paymentProof) return undefined;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', paymentProof);
+      const res = await fetch('/api/upload/file?folder=fee-payments&prefix=fee-proof', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to upload proof');
+      }
+      const data = await res.json();
+      return data.url as string | undefined;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,20 +50,18 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
         return;
       }
 
+       let proofUrl: string | undefined;
+       if (paymentProof) {
+         proofUrl = await uploadProof();
+       }
+
       const paymentData = {
         feeId: fee.id,
         amount,
         paidDate,
         paymentDetails,
-        paymentProof: '', // Placeholder for now
+        paymentProof: proofUrl,
       };
-
-      // Handle file upload (this is a simplified example)
-      if (paymentProof) {
-        // You would typically upload the file to a service like S3 or Cloudinary
-        // and get a URL back. For this example, we'll just use the file name.
-        paymentData.paymentProof = paymentProof.name;
-      }
 
       await onPaymentSubmit(paymentData);
       onHide();
@@ -93,6 +113,7 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
               type="file"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentProof(e.target.files ? e.target.files[0] : null)}
             />
+            {uploading && <div className="small text-muted mt-1">Uploading proof...</div>}
           </Form.Group>
           <Button variant="primary" type="submit" disabled={submitting}>
             {submitting ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Submit Payment'}

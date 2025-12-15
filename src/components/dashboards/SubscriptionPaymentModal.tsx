@@ -20,7 +20,29 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
   const [details, setDetails] = useState<string>('');
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+
+  const uploadProof = async () => {
+    if (!proofFile) return undefined;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', proofFile);
+      const res = await fetch('/api/upload/file?folder=subscription-payments&prefix=subscription-proof', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to upload proof');
+      }
+      const data = await res.json();
+      return data.url as string | undefined;
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (subscription) {
@@ -43,18 +65,18 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
         return;
       }
 
+      let proofUrl: string | undefined;
+      if (proofFile) {
+        proofUrl = await uploadProof();
+      }
+
       const payload = {
         subscriptionId: subscription.id,
         paidAmount: parseFloat(amount),
         paidDate,
         paymentDetails: details || undefined,
-        paymentProof: undefined as string | undefined,
+        paymentProof: proofUrl,
       };
-
-      if (proofFile) {
-        // In a real app, upload and use the returned URL. For now, store filename.
-        payload.paymentProof = proofFile.name;
-      }
 
       await onPaymentSubmit(payload);
       onHide();
@@ -111,6 +133,7 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
               type="file"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProofFile(e.target.files ? e.target.files[0] : null)}
             />
+            {uploading && <div className="small text-muted mt-1">Uploading proof...</div>}
           </Form.Group>
           <div className="d-flex justify-content-end">
             <Button variant="secondary" className="me-2" onClick={onHide} disabled={submitting}>Cancel</Button>

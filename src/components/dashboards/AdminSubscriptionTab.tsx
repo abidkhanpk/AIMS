@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Table, Badge, Button, Alert, Spinner, Card, Row, Col, Form } from 'react-bootstrap';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import { SubscriptionStatus, SubscriptionPlan } from '@prisma/client';
+import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
 
 interface SubscriptionRec {
   id: string;
@@ -113,114 +114,125 @@ const AdminSubscriptionTab: React.FC = () => {
   }, [subs, statusFilter]);
 
   return (
-    <Card className="shadow-sm mt-4">
-      <Card.Header className="bg-light d-flex align-items-center justify-content-between">
-        <h6 className="mb-0">
-          <i className="bi bi-wallet2 me-2"></i>
-          Subscription Management
-        </h6>
-        <div className="d-flex align-items-center gap-2">
-          <label className="small text-muted mb-0">Status</label>
-          <Form.Select size="sm" style={{ width: 200 }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
-            {statusOptions.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </Form.Select>
-        </div>
-      </Card.Header>
-      <Card.Body className="p-0">
-        {error && <Alert variant="danger" onClose={() => setError('')} dismissible className="m-3">{error}</Alert>}
-        {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible className="m-3">{success}</Alert>}
-        {loading ? (
-          <div className="text-center py-4"><Spinner animation="border" size="sm" /><p className="mt-2 text-muted small">Loading subscriptions...</p></div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-4"><p className="mt-2 text-muted small">No subscriptions found for selected status</p></div>
-        ) : (
-          <Table hover size="sm" className="mb-0">
-            <thead>
-              <tr>
-                <th>Plan</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Paid Amount</th>
-                <th>Paid Date</th>
-                <th>Payment Details</th>
-                <th>Proof</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((s) => (
-                <tr key={s.id}>
-                  <td><Badge bg="warning" className="text-dark">{s.plan}</Badge></td>
-                  <td className="fw-bold text-success">{s.amount.toFixed(2)} {s.currency}</td>
-                  <td>{getStatusBadge(s.status)}</td>
-                  <td className="small">{new Date(s.startDate).toLocaleDateString()}</td>
-                  <td className="small">{s.endDate ? new Date(s.endDate).toLocaleDateString() : 'Lifetime'}</td>
-                  <td>{s.paidAmount ?? '-'}</td>
-                  <td className="small">{s.paidDate ? new Date(s.paidDate).toLocaleDateString() : '-'}</td>
-                  <td className="small">{s.paymentDetails || '-'}</td>
-                  <td>
-                    {s.paymentProof ? (
-                      <a href={s.paymentProof} target="_blank" rel="noopener noreferrer">View</a>
-                    ) : 'N/A'}
-                  </td>
-                  <td>
-                    {(s.status === 'PENDING' || s.status === 'EXPIRED') && (
-                      <Button size="sm" variant="primary" className="me-2" onClick={() => { setSelectedSub(s); setShowPaymentModal(true); }}>
-                        <i className="bi bi-cash me-1"></i> Mark Paid
-                      </Button>
-                    )}
-                  </td>
-                </tr>
+    <>
+      <Card className="shadow-sm mt-4">
+        <Card.Header className="bg-light d-flex align-items-center justify-content-between">
+          <h6 className="mb-0">
+            <i className="bi bi-wallet2 me-2"></i>
+            Subscription Management
+          </h6>
+          <div className="d-flex align-items-center gap-2">
+            <label className="small text-muted mb-0">Status</label>
+            <Form.Select size="sm" style={{ width: 200 }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
+              {statusOptions.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
               ))}
-            </tbody>
-          </Table>
-        )}
-      </Card.Body>
-
-      <SubscriptionPaymentModal
-        show={showPaymentModal}
-        onHide={() => { setShowPaymentModal(false); setSelectedSub(null); }}
-        subscription={selectedSub}
-        onPaymentSubmit={onSubmitPayment}
-      />
-
-      {/* Payment History */}
-      <Card className="border-0 border-top">
-        <Card.Header className="bg-light"><strong>Payment History</strong></Card.Header>
+            </Form.Select>
+          </div>
+        </Card.Header>
         <Card.Body className="p-0">
-          {payments.length === 0 ? (
-            <div className="text-center py-3 text-muted small">No payment records found</div>
+          {error && <Alert variant="danger" onClose={() => setError('')} dismissible className="m-3">{error}</Alert>}
+          {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible className="m-3">{success}</Alert>}
+          {loading ? (
+            <div className="text-center py-4"><Spinner animation="border" size="sm" /><p className="mt-2 text-muted small">Loading subscriptions...</p></div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-4"><p className="mt-2 text-muted small">No subscriptions found for selected status</p></div>
           ) : (
             <Table hover size="sm" className="mb-0">
-              <thead className="table-light">
+              <thead>
                 <tr>
                   <th>Plan</th>
                   <th>Amount</th>
-                  <th>Payment Date</th>
-                  <th>Expiry Extended</th>
-                  <th>Details</th>
+                  <th>Status</th>
+                  <th>Start</th>
+                  <th>End</th>
+                  <th>Paid Amount</th>
+                  <th>Paid Date</th>
+                  <th>Payment Details</th>
+                  <th>Proof</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {payments.map(p => (
-                  <tr key={p.id}>
-                    <td><Badge bg="warning" className="text-dark">{p.plan}</Badge></td>
-                    <td className="fw-bold text-success">{p.amount.toFixed(2)} {p.currency}</td>
-                    <td className="small">{new Date(p.paymentDate).toLocaleDateString()}</td>
-                    <td className="small">{new Date(p.expiryExtended).toLocaleDateString()}</td>
-                    <td className="small">{p.paymentDetails || '-'}</td>
+                {filtered.map((s) => (
+                  <tr key={s.id}>
+                    <td><Badge bg="warning" className="text-dark">{s.plan}</Badge></td>
+                    <td className="fw-bold text-success">{s.amount.toFixed(2)} {s.currency}</td>
+                    <td>{getStatusBadge(s.status)}</td>
+                    <td className="small">{new Date(s.startDate).toLocaleDateString()}</td>
+                    <td className="small">{s.endDate ? new Date(s.endDate).toLocaleDateString() : 'Lifetime'}</td>
+                    <td>{s.paidAmount ?? '-'}</td>
+                    <td className="small">{s.paidDate ? new Date(s.paidDate).toLocaleDateString() : '-'}</td>
+                    <td className="small">{s.paymentDetails || '-'}</td>
+                    <td>
+                      {s.paymentProof ? (
+                        <a href={s.paymentProof} target="_blank" rel="noopener noreferrer">View</a>
+                      ) : 'N/A'}
+                    </td>
+                    <td>
+                      {(s.status === 'PENDING' || s.status === 'EXPIRED') && (
+                        <Button size="sm" variant="primary" className="me-2" onClick={() => { setSelectedSub(s); setShowPaymentModal(true); }}>
+                          <i className="bi bi-cash me-1"></i> Mark Paid
+                        </Button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </Table>
           )}
         </Card.Body>
+
+        <SubscriptionPaymentModal
+          show={showPaymentModal}
+          onHide={() => { setShowPaymentModal(false); setSelectedSub(null); }}
+          subscription={selectedSub}
+          onPaymentSubmit={onSubmitPayment}
+        />
+
+        {/* Payment History */}
+        <Card className="border-0 border-top">
+          <Card.Header className="bg-light"><strong>Payment History</strong></Card.Header>
+          <Card.Body className="p-0">
+            {payments.length === 0 ? (
+              <div className="text-center py-3 text-muted small">No payment records found</div>
+            ) : (
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Payment Date</th>
+                    <th>Expiry Extended</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map(p => (
+                    <tr key={p.id}>
+                      <td><Badge bg="warning" className="text-dark">{p.plan}</Badge></td>
+                      <td className="fw-bold text-success">{p.amount.toFixed(2)} {p.currency}</td>
+                      <td className="small">{new Date(p.paymentDate).toLocaleDateString()}</td>
+                      <td className="small">{new Date(p.expiryExtended).toLocaleDateString()}</td>
+                      <td className="small">{p.paymentDetails || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            )}
+          </Card.Body>
+        </Card>
       </Card>
-    </Card>
+
+      <Card className="shadow-sm mt-3">
+        <Card.Header className="bg-light">
+          <h6 className="mb-0">Renewal History</h6>
+        </Card.Header>
+        <Card.Body>
+          <SubscriptionHistoryTab />
+        </Card.Body>
+      </Card>
+    </>
   );
 };
 
