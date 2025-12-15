@@ -37,6 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [success, setSuccess] = useState('');
   const [updating, setUpdating] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
 
@@ -168,6 +169,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       window.dispatchEvent(new Event('open-admin-menu'));
     }
   };
+
+  // Track viewport to hide burger on desktop explicitly
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 991.98px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    if (mq.addEventListener) {
+      mq.addEventListener('change', update);
+      return () => mq.removeEventListener('change', update);
+    } else {
+      mq.addListener(update);
+      return () => mq.removeListener(update);
+    }
+  }, []);
 
   // Track PWA install prompt
   useEffect(() => {
@@ -337,9 +353,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="d-flex align-items-center">
             {status === 'authenticated' && (
               <button
-                className="btn btn-link text-light d-lg-none me-2 p-0"
+                className="btn btn-link text-light me-2 p-0 d-lg-none mobile-menu-button"
                 aria-label="Open menu"
                 onClick={openMainMenuMobile}
+                style={{ display: isMobile ? 'inline-flex' : 'none' }}
               >
                 <i className="bi bi-list fs-3"></i>
               </button>
@@ -380,8 +397,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </Navbar.Brand>
             </Link>
           </div>
-          
-          <Navbar.Toggle aria-controls="basic-navbar-nav" className="d-none d-lg-block" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="d-flex align-items-center ms-auto d-none d-lg-flex">
               {canInstall && (
