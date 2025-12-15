@@ -9,22 +9,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  // Only developers can access subscription history
-  if (session.user.role !== 'DEVELOPER') {
-    return res.status(403).json({ message: 'Access denied' });
-  }
-
   if (req.method === 'GET') {
     try {
       const { adminId } = req.query;
 
-      if (!adminId || typeof adminId !== 'string') {
+      if ((!adminId || typeof adminId !== 'string') && session.user.role !== 'ADMIN') {
         return res.status(400).json({ message: 'Admin ID is required' });
       }
 
-      // Get subscription history for the admin
+      // Access control:
+      // - Developer: can view any adminId (must be provided)
+      // - Admin: can only view their own history (adminId optional and defaults to self)
+      const targetAdminId =
+        session.user.role === 'ADMIN' ? session.user.id : (adminId as string | undefined);
+
+      if (session.user.role !== 'DEVELOPER' && session.user.role !== 'ADMIN') {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+      if (session.user.role === 'DEVELOPER' && !targetAdminId) {
+        return res.status(400).json({ message: 'Admin ID is required' });
+      }
+      if (session.user.role === 'ADMIN' && targetAdminId !== session.user.id) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+
       const subscriptions = await prisma.subscription.findMany({
-        where: { adminId },
+        where: { adminId: targetAdminId },
         include: {
           admin: {
             select: {
@@ -44,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Get subscription payments
       const subscriptionPayments = await prisma.subscriptionPayment.findMany({
-        where: { adminId },
+        where: { adminId: targetAdminId },
         orderBy: { createdAt: 'desc' }
       });
 
