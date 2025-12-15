@@ -15,3 +15,7 @@
 /src/generated/prisma
 /.next
 /.qodo
+
+#PWA generated files
+/public/sw.js
+/public/workbox-*.js
