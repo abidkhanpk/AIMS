@@ -17,5 +17,6 @@
 /.qodo
 
 #PWA generated files
-/public/workbox-*.js
+public/workbox-*.js
+public/sw.js
 public/sw.js

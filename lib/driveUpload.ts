@@ -145,9 +145,18 @@ export const uploadFileToDrive = async (
   }
 
   const viewUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : null;
+  const downloadUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
+  // Google hosts public assets on googleusercontent.com; this form works more reliably for images.
+  const cdnUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : null;
   return {
     fileId: fileId || null,
-    url: viewUrl || uploadResponse.data.webViewLink || uploadResponse.data.webContentLink || null,
+    url:
+      cdnUrl ||
+      viewUrl ||
+      downloadUrl ||
+      uploadResponse.data.webViewLink ||
+      uploadResponse.data.webContentLink ||
+      null,
   };
 };
 
