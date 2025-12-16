@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const { enableHomePage, appName, appLogo, tagline, defaultCurrency } = req.body;
+    const { enableHomePage, appName, appLogo, tagline, defaultCurrency, storageProvider, driveFolderId, cloudinaryFolder } = req.body;
 
     try {
       // Get existing settings or create new ones
@@ -56,6 +56,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ...(appLogo && { appLogo }),
             ...(tagline && { tagline }),
             ...(defaultCurrency && { defaultCurrency }),
+            ...(storageProvider && { storageProvider }),
+            ...(driveFolderId !== undefined && { driveFolderId }),
+            ...(cloudinaryFolder !== undefined && { cloudinaryFolder }),
           }
         });
       } else {
@@ -67,6 +70,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             tagline: tagline || 'Academy Information and Management System',
             enableHomePage: enableHomePage !== undefined ? enableHomePage : true,
             defaultCurrency: defaultCurrency || 'USD',
+            storageProvider: storageProvider || 'DRIVE',
+            driveFolderId: driveFolderId || null,
+            cloudinaryFolder: cloudinaryFolder || null,
           }
         });
       }
