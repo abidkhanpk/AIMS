@@ -34,7 +34,8 @@ const AdminSubscriptionTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | SubscriptionStatus>('PROCESSING');
+  // Default to ALL so admins can see previous payments and any subscriptions available to pay.
+  const [statusFilter, setStatusFilter] = useState<'ALL' | SubscriptionStatus>('ALL');
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedSub, setSelectedSub] = useState<SubscriptionRec | null>(null);
@@ -109,8 +110,12 @@ const AdminSubscriptionTab: React.FC = () => {
   };
 
   const filtered = useMemo(() => {
-    if (statusFilter === 'ALL') return subs;
-    return subs.filter(s => s.status === statusFilter);
+    if (statusFilter === 'ALL') {
+      return subs.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    }
+    return subs
+      .filter(s => s.status === statusFilter)
+      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   }, [subs, statusFilter]);
 
   return (
