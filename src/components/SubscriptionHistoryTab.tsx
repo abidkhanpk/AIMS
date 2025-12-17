@@ -4,6 +4,8 @@ import { Table, Spinner, Alert, Badge, Button, Modal, Form, Row, Col } from 'rea
 interface SubscriptionHistoryProps {
   adminId?: string; // if undefined and user is ADMIN, server will use session user
   allowVerify?: boolean; // when true (developer context), show verify actions
+  hideHeaders?: boolean; // when true, hide top headings/labels
+  hidePaymentHistory?: boolean; // when true, skip payment history table
 }
 
 interface SubscriptionRecord {
@@ -33,7 +35,12 @@ interface PaymentRecord {
   createdAt: string;
 }
 
-export default function SubscriptionHistoryTab({ adminId, allowVerify = false }: SubscriptionHistoryProps) {
+export default function SubscriptionHistoryTab({
+  adminId,
+  allowVerify = false,
+  hideHeaders = false,
+  hidePaymentHistory = false,
+}: SubscriptionHistoryProps) {
   const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -153,23 +160,25 @@ export default function SubscriptionHistoryTab({ adminId, allowVerify = false }:
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h6 className="mb-0">Subscription History & Management</h6>
-        {allowVerify && (
-          <Button 
-            variant="primary" 
-            size="sm"
-            onClick={() => setShowExtendModal(true)}
-          >
-            <i className="bi bi-plus-circle me-2"></i>
-            Extend Subscription
-          </Button>
-        )}
-      </div>
+      {!hideHeaders && (
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h6 className="mb-0">Subscription History & Management</h6>
+          {allowVerify && (
+            <Button 
+              variant="primary" 
+              size="sm"
+              onClick={() => setShowExtendModal(true)}
+            >
+              <i className="bi bi-plus-circle me-2"></i>
+              Extend Subscription
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Current Subscriptions */}
       <div className="mb-4">
-        <h6 className="text-muted mb-2">Current Subscriptions</h6>
+        {!hideHeaders && <h6 className="text-muted mb-2">Current Subscriptions</h6>}
         {subscriptions.length === 0 ? (
           <div className="text-center py-3 text-muted">
             <i className="bi bi-calendar-x display-6"></i>
@@ -287,50 +296,52 @@ export default function SubscriptionHistoryTab({ adminId, allowVerify = false }:
       </div>
 
       {/* Payment History */}
-      <div>
-        <h6 className="text-muted mb-2">Payment History</h6>
-        {payments.length === 0 ? (
-          <div className="text-center py-3 text-muted">
-            <i className="bi bi-credit-card display-6"></i>
-            <p className="mt-2 mb-0">No payment records found</p>
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <Table size="sm" className="mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th>Plan</th>
-                  <th>Amount</th>
-                  <th>Payment Date</th>
-                  <th>Expiry Extended</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((payment) => (
-                  <tr key={payment.id}>
-                    <td>
-                      <Badge bg="warning" className="text-dark">{payment.plan}</Badge>
-                    </td>
-                    <td className="fw-bold text-success">
-                      {getCurrencySymbol(payment.currency)}{payment.amount.toFixed(2)}
-                    </td>
-                    <td className="small">
-                      {new Date(payment.paymentDate).toLocaleDateString()}
-                    </td>
-                    <td className="small">
-                      {new Date(payment.expiryExtended).toLocaleDateString()}
-                    </td>
-                    <td className="small">
-                      {payment.paymentDetails || '-'}
-                    </td>
+      {!hidePaymentHistory && (
+        <div>
+          <h6 className="text-muted mb-2">Payment History</h6>
+          {payments.length === 0 ? (
+            <div className="text-center py-3 text-muted">
+              <i className="bi bi-credit-card display-6"></i>
+              <p className="mt-2 mb-0">No payment records found</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Payment Date</th>
+                    <th>Expiry Extended</th>
+                    <th>Details</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody>
+                  {payments.map((payment) => (
+                    <tr key={payment.id}>
+                      <td>
+                        <Badge bg="warning" className="text-dark">{payment.plan}</Badge>
+                      </td>
+                      <td className="fw-bold text-success">
+                        {getCurrencySymbol(payment.currency)}{payment.amount.toFixed(2)}
+                      </td>
+                      <td className="small">
+                        {new Date(payment.paymentDate).toLocaleDateString()}
+                      </td>
+                      <td className="small">
+                        {new Date(payment.expiryExtended).toLocaleDateString()}
+                      </td>
+                      <td className="small">
+                        {payment.paymentDetails || '-'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Extend Subscription Modal */}
       <Modal show={showExtendModal} onHide={() => setShowExtendModal(false)}>

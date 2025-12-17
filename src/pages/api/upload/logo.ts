@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import { driveUploadFormConfig, getDriveAuthUrl, parseUploadForm, uploadFileToDrive } from '../../../../lib/driveUpload';
+import { driveUploadFormConfig, getDriveAuthUrl, parseUploadForm, uploadFileWithProvider } from '../../../../lib/driveUpload';
+import { prisma } from '../../../lib/prisma';
 
 export const config = {
   api: {
@@ -28,7 +29,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Ensure Drive is configured
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     const { file } = await parseUploadForm(req, 'logo', allowedTypes);
-    const uploadResult = await uploadFileToDrive(file, { namePrefix: 'logo' });
+
+    const appSettings = await prisma.appSettings.findFirst();
+    const provider = (appSettings?.storageProvider as 'DRIVE' | 'CLOUDINARY' | null) || 'DRIVE';
+    const cloudinaryFolder = appSettings?.cloudinaryFolder || 'aims-logos';
+    const driveFolder = appSettings?.driveFolderId;
+
+    const uploadResult = await uploadFileWithProvider(file, provider, { namePrefix: 'logo', folderName: provider === 'CLOUDINARY' ? cloudinaryFolder : driveFolder || 'logos' });
 
     res.status(200).json({
       message: 'Logo uploaded successfully',

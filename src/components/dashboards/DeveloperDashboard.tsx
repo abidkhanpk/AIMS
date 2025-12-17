@@ -20,6 +20,9 @@ interface Admin {
     tagline: string;
     enableHomePage: boolean;
     defaultCurrency: string;
+    storageProvider?: 'DRIVE' | 'CLOUDINARY';
+    driveFolderId?: string | null;
+    cloudinaryFolder?: string | null;
     subscriptionType: string;
     subscriptionAmount: number;
     subscriptionStartDate: string;
@@ -43,6 +46,9 @@ interface AppSettings {
   tagline: string;
   enableHomePage: boolean;
   defaultCurrency: string;
+  storageProvider?: 'DRIVE' | 'CLOUDINARY';
+  driveFolderId?: string | null;
+  cloudinaryFolder?: string | null;
 }
 
 interface Subscription {
@@ -105,6 +111,7 @@ function AdminManagementTab() {
   useEffect(() => {
     fetchAdmins();
   }, []);
+
 
   // Calculate subscription end date automatically
   const calculateEndDate = (startDate: string, type: string) => {
@@ -1012,6 +1019,9 @@ function GlobalSettingsTab() {
   const [appLogo, setAppLogo] = useState('');
   const [tagline, setTagline] = useState('');
   const [enableHomePage, setEnableHomePage] = useState(true);
+  const [storageProvider, setStorageProvider] = useState<'DRIVE' | 'CLOUDINARY'>('DRIVE');
+  const [driveFolderId, setDriveFolderId] = useState('');
+  const [cloudinaryFolder, setCloudinaryFolder] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1030,6 +1040,9 @@ function GlobalSettingsTab() {
         setAppLogo(data.appLogo || '/assets/app-logo.png');
         setTagline(data.tagline || 'Academy Information and Management System');
         setEnableHomePage(data.enableHomePage ?? true);
+        setStorageProvider((data.storageProvider as any) || 'DRIVE');
+        setDriveFolderId(data.driveFolderId || '');
+        setCloudinaryFolder(data.cloudinaryFolder || '');
       } else {
         setError('Failed to fetch global settings');
       }
@@ -1101,7 +1114,10 @@ function GlobalSettingsTab() {
           appName, 
           appLogo,
           tagline,
-          enableHomePage
+          enableHomePage,
+          storageProvider,
+          driveFolderId: driveFolderId || null,
+          cloudinaryFolder: cloudinaryFolder || null,
         }),
       });
 
@@ -1163,6 +1179,65 @@ function GlobalSettingsTab() {
                   placeholder="Enter application tagline"
                 />
               </Form.Group>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Storage Provider</Form.Label>
+                <Form.Select
+                  value={storageProvider}
+                  onChange={(e) => setStorageProvider(e.target.value as 'DRIVE' | 'CLOUDINARY')}
+                >
+                  <option value="DRIVE">Google Drive</option>
+                  <option value="CLOUDINARY">Cloudinary</option>
+                </Form.Select>
+                <Form.Text className="text-muted">Choose where uploads (logos/proofs) are stored.</Form.Text>
+              </Form.Group>
+            </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>{storageProvider === 'CLOUDINARY' ? 'Cloudinary Folder' : 'Drive Folder ID'}</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={storageProvider === 'CLOUDINARY' ? cloudinaryFolder : driveFolderId}
+                  onChange={(e) =>
+                    storageProvider === 'CLOUDINARY'
+                      ? setCloudinaryFolder(e.target.value)
+                      : setDriveFolderId(e.target.value)
+                  }
+                  placeholder={storageProvider === 'CLOUDINARY' ? 'e.g. aims-uploads' : 'Drive folder ID (optional)'}
+                />
+                <Form.Text className="text-muted">
+                  {storageProvider === 'CLOUDINARY'
+                    ? 'Optional Cloudinary folder for uploads.'
+                    : 'Optional Drive folder to place uploads under.'}
+                </Form.Text>
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col>
+              <div className="p-3 bg-light rounded border">
+                <div className="fw-semibold mb-2">
+                  Required secrets for {storageProvider === 'CLOUDINARY' ? 'Cloudinary' : 'Google Drive'}
+                </div>
+                {storageProvider === 'CLOUDINARY' ? (
+                  <ul className="mb-0 small">
+                    <li>CLOUDINARY_CLOUD_NAME</li>
+                    <li>CLOUDINARY_API_KEY</li>
+                    <li>CLOUDINARY_API_SECRET</li>
+                  </ul>
+                ) : (
+                  <ul className="mb-0 small">
+                    <li>GOOGLE_CLIENT_ID</li>
+                    <li>GOOGLE_CLIENT_SECRET</li>
+                    <li>GOOGLE_DRIVE_REFRESH_TOKEN</li>
+                    <li>DRIVE_FOLDER_ID (optional)</li>
+                    <li>DRIVE_SHARED_ID / DRIVE_SHARED_DRIVE_ID (optional for shared drive)</li>
+                  </ul>
+                )}
+              </div>
             </Col>
           </Row>
           <Row>

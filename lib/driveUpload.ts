@@ -1,6 +1,7 @@
 import formidable, { File } from 'formidable';
 import fs from 'fs';
 import { google } from 'googleapis';
+import { v2 as cloudinary } from 'cloudinary';
 
 const DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive.file'];
 
@@ -144,8 +145,61 @@ export const uploadFileToDrive = async (
   }
 
   const viewUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : null;
+  const downloadUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
+  // Google hosts public assets on googleusercontent.com; this form works more reliably for images.
+  const cdnUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : null;
   return {
     fileId: fileId || null,
-    url: viewUrl || uploadResponse.data.webViewLink || uploadResponse.data.webContentLink || null,
+    url:
+      cdnUrl ||
+      viewUrl ||
+      downloadUrl ||
+      uploadResponse.data.webViewLink ||
+      uploadResponse.data.webContentLink ||
+      null,
   };
+};
+
+const uploadFileToCloudinary = async (file: File, options: { folderName?: string; namePrefix?: string }) => {
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    throw new Error('Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.');
+  }
+
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
+  const folder = options.folderName ? options.folderName : 'uploads';
+  const uploadResult = await cloudinary.uploader.upload(file.filepath, {
+    folder,
+    public_id: `${options.namePrefix || 'file'}-${Date.now()}`,
+    transformation: [
+      { quality: 'auto' },
+      { fetch_format: 'auto' },
+    ],
+  });
+
+  try {
+    fs.unlinkSync(file.filepath);
+  } catch (cleanupError) {
+    console.warn('Failed to cleanup temporary file:', cleanupError);
+  }
+
+  return {
+    fileId: uploadResult.public_id || null,
+    url: uploadResult.secure_url || uploadResult.url || null,
+  };
+};
+
+export const uploadFileWithProvider = async (
+  file: File,
+  provider: 'DRIVE' | 'CLOUDINARY',
+  options: { folderName?: string; namePrefix?: string }
+) => {
+  if (provider === 'CLOUDINARY') {
+    return uploadFileToCloudinary(file, options);
+  }
+  return uploadFileToDrive(file, options);
 };

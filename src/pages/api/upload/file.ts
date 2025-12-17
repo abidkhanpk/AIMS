@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
-import { driveUploadFormConfig, getDriveAuthUrl, parseUploadForm, uploadFileToDrive } from '../../../../lib/driveUpload';
+import { driveUploadFormConfig, getDriveAuthUrl, parseUploadForm, uploadFileWithProvider } from '../../../../lib/driveUpload';
+import { prisma } from '../../../lib/prisma';
 
 export const config = {
   api: {
@@ -22,11 +23,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Allow all authenticated roles to upload proofs
     const { folder = 'misc', prefix = 'file' } = (req.query || {}) as { folder?: string; prefix?: string };
-
+    const appSettings = await prisma.appSettings.findFirst();
+    const provider = (appSettings?.storageProvider as 'DRIVE' | 'CLOUDINARY' | null) || 'DRIVE';
+    const cloudinaryFolder = appSettings?.cloudinaryFolder;
+    const driveFolder = appSettings?.driveFolderId;
     const { file } = await parseUploadForm(req, 'file');
-    const uploadResult = await uploadFileToDrive(file, {
+    const uploadResult = await uploadFileWithProvider(file, provider, {
       namePrefix: `${prefix}`.toLowerCase(),
-      folderName: `${folder}`.toLowerCase(),
+      folderName: provider === 'CLOUDINARY'
+        ? (cloudinaryFolder || `${folder}`.toLowerCase())
+        : (driveFolder || `${folder}`.toLowerCase()),
     });
 
     res.status(200).json({
