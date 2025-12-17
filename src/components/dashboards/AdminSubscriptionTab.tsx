@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Table, Badge, Button, Alert, Spinner, Card, Row, Col, Form } from 'react-bootstrap';
+import { Table, Badge, Button, Alert, Spinner, Card } from 'react-bootstrap';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import { SubscriptionStatus, SubscriptionPlan } from '@prisma/client';
 import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
@@ -17,16 +17,8 @@ interface SubscriptionRec {
   paidDate?: string | null;
   paymentDetails?: string | null;
   paymentProof?: string | null;
+  paidById?: string | null;
 }
-
-const statusOptions: Array<{ value: 'ALL' | SubscriptionStatus; label: string }> = [
-  { value: 'ALL', label: 'All' },
-  { value: 'PROCESSING', label: 'Processing' },
-  { value: 'PENDING', label: 'Pending' },
-  { value: 'ACTIVE', label: 'Paid' },
-  { value: 'EXPIRED', label: 'Expired' },
-  { value: 'CANCELLED', label: 'Cancelled' },
-];
 
 const AdminSubscriptionTab: React.FC = () => {
   const [subs, setSubs] = useState<SubscriptionRec[]>([]);
@@ -34,8 +26,6 @@ const AdminSubscriptionTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  // Default to ALL so admins can see previous payments and any subscriptions available to pay.
-  const [statusFilter, setStatusFilter] = useState<'ALL' | SubscriptionStatus>('ALL');
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedSub, setSelectedSub] = useState<SubscriptionRec | null>(null);
@@ -111,11 +101,14 @@ const AdminSubscriptionTab: React.FC = () => {
     }
   };
 
-  const filtered = useMemo(() => {
-    const sorted = [...subs].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-    if (statusFilter === 'ALL') return sorted;
-    return sorted.filter(s => s.status === statusFilter);
-  }, [subs, statusFilter]);
+  const sortedSubs = useMemo(
+    () => [...subs].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
+    [subs]
+  );
+  const paymentEntries = useMemo(
+    () => sortedSubs.filter((s) => s.paidById || s.status === 'PROCESSING' || s.paidAmount !== null),
+    [sortedSubs]
+  );
 
   const isNearExpiry = (sub: SubscriptionRec) => {
     if (!sub.endDate) return false;
@@ -134,22 +127,12 @@ const AdminSubscriptionTab: React.FC = () => {
             <i className="bi bi-wallet2 me-2"></i>
             Payment History
           </h6>
-          <div className="d-flex align-items-center gap-2">
-            <label className="small text-muted mb-0">Status</label>
-            <Form.Select size="sm" style={{ width: 200 }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)}>
-              {statusOptions.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </Form.Select>
-          </div>
         </Card.Header>
         <Card.Body className="p-0">
           {error && <Alert variant="danger" onClose={() => setError('')} dismissible className="m-3">{error}</Alert>}
           {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible className="m-3">{success}</Alert>}
           {loading ? (
-            <div className="text-center py-4"><Spinner animation="border" size="sm" /><p className="mt-2 text-muted small">Loading subscriptions...</p></div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-4"><p className="mt-2 text-muted small">No subscriptions found</p></div>
+            <div className="text-center py-4"><Spinner animation="border" size="sm" /><p className="mt-2 text-muted small">Loading payment history...</p></div>
           ) : (
             <Table hover size="sm" className="mb-0">
               <thead>
@@ -157,29 +140,23 @@ const AdminSubscriptionTab: React.FC = () => {
                   <th>Plan</th>
                   <th>Amount</th>
                   <th>Status</th>
-                  <th>Start</th>
-                  <th>End</th>
-                  <th>Paid Amount</th>
                   <th>Paid Date</th>
-                  <th>Payment Details</th>
+                  <th>Details</th>
                   <th>Proof</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((s) => (
+                {paymentEntries.map((s) => (
                   <tr key={s.id}>
                     <td><Badge bg="warning" className="text-dark">{s.plan}</Badge></td>
-                    <td className="fw-bold text-success">{s.amount.toFixed(2)} {s.currency}</td>
+                    <td className="fw-bold text-success">{(s.paidAmount || s.amount).toFixed(2)} {s.currency}</td>
                     <td>
                       {getStatusBadge(s.status)}
                       {isNearExpiry(s) && s.status !== 'PROCESSING' && (
                         <div className="text-danger small">Expiring soon</div>
                       )}
                     </td>
-                    <td className="small">{new Date(s.startDate).toLocaleDateString()}</td>
-                    <td className="small">{s.endDate ? new Date(s.endDate).toLocaleDateString() : 'Lifetime'}</td>
-                    <td>{s.paidAmount ?? '-'}</td>
                     <td className="small">{s.paidDate ? new Date(s.paidDate).toLocaleDateString() : '-'}</td>
                     <td className="small">{s.paymentDetails || '-'}</td>
                     <td>
@@ -190,7 +167,7 @@ const AdminSubscriptionTab: React.FC = () => {
                     <td className="d-flex gap-2">
                       {(s.status === 'PENDING' || s.status === 'EXPIRED' || isNearExpiry(s)) && (
                         <Button size="sm" variant="primary" onClick={() => { setSelectedSub(s); setEditMode(false); setShowPaymentModal(true); }}>
-                          <i className="bi bi-cash me-1"></i> Pay
+                          <i className="bi bi-cash me-1"></i>Pay
                         </Button>
                       )}
                       {s.status === 'PROCESSING' && (
@@ -244,47 +221,10 @@ const AdminSubscriptionTab: React.FC = () => {
 
       <Card className="shadow-sm mt-3">
         <Card.Header className="bg-light">
-          <h6 className="mb-0">Payment History (Verified)</h6>
-        </Card.Header>
-        <Card.Body className="p-0">
-          {payments.length === 0 ? (
-            <div className="text-center py-3 text-muted small">No payment records found</div>
-          ) : (
-            <Table hover size="sm" className="mb-0">
-              <thead className="table-light">
-                <tr>
-                  <th>Plan</th>
-                  <th>Amount</th>
-                  <th>Payment Date</th>
-                  <th>Expiry Extended</th>
-                  <th>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments
-                  .slice()
-                  .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
-                  .map(p => (
-                  <tr key={p.id}>
-                    <td><Badge bg="warning" className="text-dark">{p.plan}</Badge></td>
-                    <td className="fw-bold text-success">{p.amount.toFixed(2)} {p.currency}</td>
-                    <td className="small">{new Date(p.paymentDate).toLocaleDateString()}</td>
-                    <td className="small">{new Date(p.expiryExtended).toLocaleDateString()}</td>
-                    <td className="small">{p.paymentDetails || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          )}
-        </Card.Body>
-      </Card>
-
-      <Card className="shadow-sm mt-3">
-        <Card.Header className="bg-light">
           <h6 className="mb-0">Subscription History</h6>
         </Card.Header>
         <Card.Body>
-          <SubscriptionHistoryTab />
+          <SubscriptionHistoryTab hideHeaders hidePaymentHistory />
         </Card.Body>
       </Card>
     </>
