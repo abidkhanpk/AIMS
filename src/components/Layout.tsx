@@ -698,7 +698,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </Form>
             </Tab>
             {user?.role === 'ADMIN' && (
-              <Tab eventKey="admin-subscriptions" title={<span><i className="bi bi-wallet2 me-2"></i>Admin Subscription</span>}>
+              <Tab eventKey="admin-subscriptions" title={<span><i className="bi bi-wallet2 me-2"></i>Payment History</span>}>
                 <div className="mt-3">
                   <AdminSubscriptionTab />
                 </div>
