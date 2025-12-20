@@ -60,8 +60,9 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
     setError('');
 
     try {
-      if (!amount || !paidDate) {
-        setError('Amount and Paid Date are required');
+      if (!amount || !paidDate || !details.trim()) {
+        setError('Amount, Paid Date, and Payment Details are required');
+        setSubmitting(false);
         return;
       }
 
@@ -125,6 +126,7 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Enter reference, transaction id, or remarks"
+              required
             />
           </Form.Group>
           <Form.Group className="mb-3">

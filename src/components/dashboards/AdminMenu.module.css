@@ -66,6 +66,9 @@
   margin: 0;
   padding: 0;
   list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .navbarItem {
@@ -145,6 +148,10 @@
   opacity: 1;
 }
 
+.navbar:not(:hover) .arrow {
+  display: none;
+}
+
 .parentRow {
   display: flex;
   align-items: center;
@@ -198,6 +205,10 @@
 .navbar:not(:hover) .subItem .iconWrapper {
   width: calc(var(--collapsed-width) - 1.6rem);
   min-width: calc(var(--collapsed-width) - 1.6rem);
+}
+
+.spacer {
+  flex: 1 1 auto;
 }
 
 @media (max-width: 992px) {

@@ -1,4 +1,4 @@
-import { PrismaClient, ClassDay, NotificationType, AssessmentType } from '@prisma/client';
+import { PrismaClient, ClassDay, NotificationType, AssessmentType, SubscriptionStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -338,6 +338,7 @@ async function main() {
   console.log('✅ Class assignments created');
 
   // Progress records
+  // Progress records with explicit dates (spread across days)
   const progressRecords = [
     {
       studentId: student1.id,
@@ -348,6 +349,7 @@ async function main() {
       lessonProgress: 88,
       remarks: 'Beautiful pronunciation; small pauses needed after ayah 3.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-01'),
     },
     {
       studentId: student1.id,
@@ -358,6 +360,18 @@ async function main() {
       lessonProgress: 78,
       remarks: 'Understands meanings; needs fluency without looking.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student1.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Practice Surah An-Naas',
+      homework: 'Recite Surah An-Naas thrice daily',
+      lessonProgress: 90,
+      remarks: 'Good pace; minor tajweed slips on qaf.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-03'),
     },
     {
       studentId: student2.id,
@@ -368,6 +382,7 @@ async function main() {
       lessonProgress: 82,
       remarks: 'Good ghunnah length; watch qalqalah after idghaam.',
       attendance: 'LATE' as const,
+      date: new Date('2024-09-01'),
     },
     {
       studentId: student2.id,
@@ -378,6 +393,7 @@ async function main() {
       lessonProgress: 74,
       remarks: 'Interested and asks good questions; needs concise summaries.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
     },
     {
       studentId: student3.id,
@@ -388,6 +404,18 @@ async function main() {
       lessonProgress: 70,
       remarks: 'Tongue placement improving; continue slow-paced drills.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-01'),
+    },
+    {
+      studentId: student3.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Surah Al-Ikhlas memorization',
+      homework: 'Memorize and recite thrice daily',
+      lessonProgress: 76,
+      remarks: 'Pronunciation improving; keep steady pace.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-04'),
     },
   ];
 
@@ -565,23 +593,56 @@ async function main() {
 
   console.log('✅ Salary record created');
 
-  // Admin subscription
-  await prisma.subscription.create({
-    data: {
+  // Admin subscription history (3-4 months, monthly)
+  // Seed monthly subscriptions: two months of history + current month active
+  const now = new Date();
+  const baseStart = new Date(now.getFullYear(), now.getMonth() - 2, 15); // two months back on the 15th
+  const subsToCreate = [];
+  for (let i = 0; i < 3; i++) {
+    const start = new Date(baseStart);
+    start.setMonth(start.getMonth() + i);
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + 1);
+    subsToCreate.push({
       adminId: admin.id,
-      plan: 'YEARLY',
-      amount: 299.99,
+      plan: 'MONTHLY' as const,
+      amount: 29.99,
       currency: 'USD',
-      startDate: new Date(),
-      endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-      status: 'ACTIVE',
-      paidAmount: 299.99,
-      paidDate: new Date(),
+      startDate: start,
+      endDate: end,
+      status: SubscriptionStatus.ACTIVE,
+      paidAmount: 29.99,
+      paidDate: new Date(start.getFullYear(), start.getMonth(), start.getDate() - 2),
       paidById: admin.id,
-    },
-  });
+      paymentDetails: 'Seeded payment',
+      processedDate: new Date(start.getFullYear(), start.getMonth(), start.getDate() - 1),
+    });
+  }
+  for (const sub of subsToCreate) {
+    await prisma.subscription.create({ data: sub });
+  }
 
-  console.log('✅ Subscription created');
+  // Subscription payments history corresponding to the paid subscriptions
+  for (let i = 0; i < 3; i++) {
+    const start = new Date(baseStart);
+    start.setMonth(start.getMonth() + i);
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + 1);
+    await prisma.subscriptionPayment.create({
+      data: {
+        adminId: admin.id,
+        amount: 29.99,
+        currency: 'USD',
+        plan: 'MONTHLY',
+        paymentDate: new Date(start.getFullYear(), start.getMonth(), start.getDate() - 2),
+        expiryExtended: end,
+        paymentDetails: 'Seeded payment',
+        processedById: developer.id,
+      },
+    });
+  }
+
+  console.log('✅ Subscriptions and payments seeded');
 
   // Notifications
   await prisma.notification.createMany({
