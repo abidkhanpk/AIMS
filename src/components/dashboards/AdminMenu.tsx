@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Offcanvas, ListGroup } from 'react-bootstrap';
 import { useRouter } from 'next/router';
@@ -158,6 +157,13 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
     }));
   };
 
+  const openSettingsModal = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('open-settings-modal'));
+    }
+    setShowMobileMenu(false);
+  };
+
   const renderMobileItem = (item: MenuItem) => {
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
     const childActive = item.children?.some((child) => child.key === activeKey);
@@ -214,13 +220,18 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
       <nav className={`${styles.navbar} d-none d-lg-block`} aria-label="Admin navigation">
         <ul className={`${styles.navbarItems} ${styles.flexCol}`}>
           {menuItems.map((item) => renderMenuItem(item))}
+          <div className={styles.spacer} aria-hidden></div>
           <li className={styles.navbarItem}>
-            <Link href="/" className={`${styles.navbarItemInner} ${styles.flexLeft}`}>
+            <button
+              type="button"
+              className={`${styles.navbarItemInner} ${styles.flexLeft}`}
+              onClick={openSettingsModal}
+            >
               <div className={styles.iconWrapper}>
-                <i className="bi bi-arrow-left-circle" aria-hidden />
+                <i className="bi bi-gear" aria-hidden />
               </div>
-              <span className={styles.linkText}>Back to Site</span>
-            </Link>
+              <span className={styles.linkText}>Settings</span>
+            </button>
           </li>
         </ul>
       </nav>
@@ -237,15 +248,12 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
             {menuItems.map((item) => renderMobileItem(item))}
             <ListGroup.Item
               action
-              onClick={() => {
-                setShowMobileMenu(false);
-                window.location.href = '/';
-              }}
+              onClick={openSettingsModal}
               className="d-flex align-items-center mt-2"
               style={{ fontSize: '1.05rem' }}
             >
-              <i className="bi bi-arrow-left-circle me-2"></i>
-              Back to Site
+              <i className="bi bi-gear me-2"></i>
+              Settings
             </ListGroup.Item>
           </ListGroup>
           <div className="mt-3 pt-3 border-top">

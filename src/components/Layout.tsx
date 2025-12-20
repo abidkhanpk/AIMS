@@ -170,6 +170,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Open settings modal from sidebar trigger
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handler = () => setShowSettingsModal(true);
+    window.addEventListener('open-settings-modal', handler);
+    return () => window.removeEventListener('open-settings-modal', handler);
+  }, []);
+
   // Track viewport to hide burger on desktop explicitly
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -698,7 +706,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </Form>
             </Tab>
             {user?.role === 'ADMIN' && (
-              <Tab eventKey="admin-subscriptions" title={<span><i className="bi bi-wallet2 me-2"></i>Payment History</span>}>
+              <Tab eventKey="admin-subscriptions" title={<span><i className="bi bi-wallet2 me-2"></i>Subscription & Payments</span>}>
                 <div className="mt-3">
                   <AdminSubscriptionTab />
                 </div>
