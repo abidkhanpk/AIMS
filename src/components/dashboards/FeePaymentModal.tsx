@@ -44,16 +44,16 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
     setError('');
 
     try {
-      // Basic validation
-      if (!amount || !paidDate) {
-        setError('Amount and Paid Date are required.');
+      if (!amount || !paidDate || !paymentDetails.trim()) {
+        setError('Amount, Paid Date, and Payment Details are required.');
+        setSubmitting(false);
         return;
       }
 
-       let proofUrl: string | undefined;
-       if (paymentProof) {
-         proofUrl = await uploadProof();
-       }
+      let proofUrl: string | undefined;
+      if (paymentProof) {
+        proofUrl = await uploadProof();
+      }
 
       const paymentData = {
         feeId: fee.id,
@@ -105,6 +105,7 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
               rows={3}
               value={paymentDetails}
               onChange={(e) => setPaymentDetails(e.target.value)}
+              required
             />
           </Form.Group>
           <Form.Group className="mb-3">
