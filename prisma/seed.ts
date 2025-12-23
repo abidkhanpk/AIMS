@@ -419,13 +419,90 @@ async function main() {
     },
   ];
 
+  const createdProgress: Array<{ id: string; studentId: string; courseId: string }> = [];
   for (const progress of progressRecords) {
-    await prisma.progress.create({
+    const created = await prisma.progress.create({
       data: progress,
     });
+    createdProgress.push(created);
   }
 
   console.log('✅ Progress records created');
+
+  // Parent remarks + replies (threads)
+  const remarkTargets = {
+    student1Tajweed: createdProgress.find(
+      (p) => p.studentId === student1.id && p.courseId === tajweedCourse.id
+    ),
+    student2Islamic: createdProgress.find(
+      (p) => p.studentId === student2.id && p.courseId === basicIslamicEduCourse.id
+    ),
+    student3Tajweed: createdProgress.find(
+      (p) => p.studentId === student3.id && p.courseId === tajweedCourse.id
+    ),
+  };
+
+  if (!remarkTargets.student1Tajweed || !remarkTargets.student2Islamic || !remarkTargets.student3Tajweed) {
+    throw new Error('Missing progress records for remark seeding');
+  }
+
+  const parentRemarks = [
+    {
+      progressId: remarkTargets.student1Tajweed.id,
+      parentId: parent1.id,
+      remark: 'Zafar has been practicing Surah Al-Fatihah daily. Please suggest any specific ayat that need extra focus.',
+    },
+    {
+      progressId: remarkTargets.student2Islamic.id,
+      parentId: parent1.id,
+      remark: 'Wajeeha enjoyed today’s Seerah story. Can we get a short reading list for her age?',
+    },
+    {
+      progressId: remarkTargets.student3Tajweed.id,
+      parentId: parent2.id,
+      remark: 'Junaid is shy during recitation. Any tips to build his confidence before class?',
+    },
+  ];
+
+  const createdRemarks: Array<{ id: string }> = [];
+  for (const remark of parentRemarks) {
+    const created = await prisma.parentRemark.create({ data: remark });
+    createdRemarks.push(created);
+  }
+
+  const remarkReplies = [
+    {
+      remarkId: createdRemarks[0].id,
+      authorId: teacher.id,
+      content: 'Great to hear! Focus on ayat 4-5 for smoother transitions. I will review with him tomorrow.',
+    },
+    {
+      remarkId: createdRemarks[0].id,
+      authorId: admin.id,
+      content: 'We will also share a short checklist for home practice tonight.',
+    },
+    {
+      remarkId: createdRemarks[1].id,
+      authorId: teacher.id,
+      content: 'Sharing 3 short Seerah stories in Google Drive shortly. She can narrate one in the next class.',
+    },
+    {
+      remarkId: createdRemarks[2].id,
+      authorId: teacher.id,
+      content: 'I will start the next class with a quick warm-up recitation. Encourage him to record a 1-minute clip at home.',
+    },
+    {
+      remarkId: createdRemarks[2].id,
+      authorId: parent2.id,
+      content: 'Noted, we will practice a short recording this evening. Thank you!',
+    },
+  ];
+
+  for (const reply of remarkReplies) {
+    await prisma.parentRemarkReply.create({ data: reply });
+  }
+
+  console.log('✅ Parent remarks and replies created');
 
   // Test records
   const testRecords = [

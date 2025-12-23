@@ -4704,6 +4704,12 @@ export function RemarksTab() {
   };
 
   const handleDelete = async (type: 'remark' | 'reply', id: string) => {
+    const message =
+      type === 'remark'
+        ? 'Delete this remark and all of its replies? This cannot be undone.'
+        : 'Delete this reply? This cannot be undone.';
+    if (!confirm(message)) return;
+
     try {
       const res = await fetch('/api/remarks/delete', {
         method: 'POST',
