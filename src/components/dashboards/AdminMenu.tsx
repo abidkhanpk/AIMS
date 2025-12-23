@@ -233,6 +233,18 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               <span className={styles.linkText}>Settings</span>
             </button>
           </li>
+          <li className={styles.navbarItem}>
+            <button
+              type="button"
+              className={`${styles.navbarItemInner} ${styles.flexLeft}`}
+              onClick={() => router.push('/api/auth/signout')}
+            >
+              <div className={styles.iconWrapper}>
+                <i className="bi bi-box-arrow-right" aria-hidden />
+              </div>
+              <span className={styles.linkText}>Logout</span>
+            </button>
+          </li>
         </ul>
       </nav>
 
@@ -254,6 +266,18 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
             >
               <i className="bi bi-gear me-2"></i>
               Settings
+            </ListGroup.Item>
+            <ListGroup.Item
+              action
+              onClick={() => {
+                router.push('/api/auth/signout');
+                setShowMobileMenu(false);
+              }}
+              className="d-flex align-items-center mt-2"
+              style={{ fontSize: '1.05rem' }}
+            >
+              <i className="bi bi-box-arrow-right me-2"></i>
+              Logout
             </ListGroup.Item>
           </ListGroup>
           <div className="mt-3 pt-3 border-top">

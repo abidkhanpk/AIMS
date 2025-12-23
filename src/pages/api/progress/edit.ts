@@ -58,17 +58,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Update the progress record
+    const updateData: Record<string, any> = {};
+
+    if (lesson !== undefined) updateData.lesson = lesson || null;
+    if (homework !== undefined) updateData.homework = homework || null;
+    if (lessonProgress !== undefined) {
+      const parsed = lessonProgress === null || lessonProgress === '' ? null : parseFloat(lessonProgress);
+      if (parsed !== null && Number.isNaN(parsed)) {
+        return res.status(400).json({ message: 'Invalid lesson progress value' });
+      }
+      updateData.lessonProgress = parsed;
+    }
+    if (remarks !== undefined) updateData.remarks = remarks || null;
+    if (attendance !== undefined) updateData.attendance = attendance;
+    if (date !== undefined) updateData.date = new Date(date);
+
     const updatedProgress = await prisma.progress.update({
       where: { id },
-      data: {
-        ...(lesson !== undefined && { lesson }),
-        ...(homework !== undefined && { homework }),
-        ...(lessonProgress !== undefined && { lessonProgress: parseFloat(lessonProgress) }),
-        ...(remarks !== undefined && { remarks }),
-        ...(attendance !== undefined && { attendance }),
-        ...(date !== undefined && { date: new Date(date) }),
-        updatedAt: new Date()
-      },
+      data: { ...updateData, updatedAt: new Date() },
       include: {
         student: {
           select: {

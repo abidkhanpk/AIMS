@@ -179,6 +179,7 @@ const AdminSubscriptionTab: React.FC = () => {
                             size="sm"
                             variant="danger"
                             onClick={async () => {
+                              if (!confirm('Delete this payment request? This cannot be undone.')) return;
                               setError('');
                               setSuccess('');
                               try {
