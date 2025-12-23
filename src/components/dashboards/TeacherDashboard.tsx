@@ -436,18 +436,6 @@ export default function TeacherDashboard() {
     }
   };
 
-  const getLatestMyReply = (progress: any) => {
-    if (!progress.parentRemarks || !currentUserId) return null;
-    const replies = progress.parentRemarks.flatMap((r: any) =>
-      (r.replies || []).map((reply: any) => ({ ...reply, remarkId: r.id }))
-    );
-    const mine = replies.filter((r: any) => r.author?.id === currentUserId);
-    if (!mine.length) return null;
-    return mine.sort(
-      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )[0];
-  };
-
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -534,7 +522,6 @@ export default function TeacherDashboard() {
                             <th>Homework</th>
                             <th>Progress %</th>
                             <th>Teacher&apos;s Remarks</th>
-                            <th>Teacher&apos;s Replies</th>
                             <th>Parent&apos;s Remarks</th>
                             <th>Actions</th>
                           </tr>
@@ -576,18 +563,6 @@ export default function TeacherDashboard() {
                                     <td className="small">
                                   <ExpandableText text={progress.remarks} maxLength={30} />
                                 </td>
-                                    <td className="small">
-                                      {(() => {
-                                        const latest = getLatestMyReply(progress);
-                                        return latest ? (
-                                          <span className="text-muted text-truncate d-inline-block" style={{ maxWidth: '160px' }}>
-                                            {latest.content}
-                                          </span>
-                                        ) : (
-                                          <span className="text-muted">-</span>
-                                        );
-                                      })()}
-                                    </td>
                                     <td className="small">
                                       {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                         (() => {
