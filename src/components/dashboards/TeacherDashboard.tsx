@@ -534,8 +534,8 @@ export default function TeacherDashboard() {
                             <th>Homework</th>
                             <th>Progress %</th>
                             <th>Teacher&apos;s Remarks</th>
-                            <th>My Remarks</th>
-                            <th>Parent Remarks</th>
+                            <th>Teacher&apos;s Replies</th>
+                            <th>Parent&apos;s Remarks</th>
                             <th>Actions</th>
                           </tr>
                         </thead>
@@ -606,11 +606,18 @@ export default function TeacherDashboard() {
                                           );
                                         })()
                                       ) : (
-                                        <span className="small text-muted d-inline-block">No parent remark</span>
+                                        <span className="small text-muted d-inline-block">No parent remarks</span>
                                       )}
                                     </td>
                                     <td>
                                       <div className="d-flex gap-2 align-items-center flex-nowrap">
+                                        <Button
+                                          variant="outline-primary"
+                                          size="sm"
+                                          onClick={() => handleEditProgress(student, progress)}
+                                        >
+                                          <i className="bi bi-pencil"></i>
+                                        </Button>
                                         {progress.parentRemarks && progress.parentRemarks.length > 0 && (
                                           <Button
                                             variant="outline-secondary"
@@ -620,13 +627,6 @@ export default function TeacherDashboard() {
                                             <i className="bi bi-chat-dots"></i>
                                           </Button>
                                         )}
-                                        <Button
-                                          variant="outline-primary"
-                                          size="sm"
-                                          onClick={() => handleEditProgress(student, progress)}
-                                        >
-                                          <i className="bi bi-pencil"></i>
-                                        </Button>
                                       </div>
                                     </td>
                                 </tr>

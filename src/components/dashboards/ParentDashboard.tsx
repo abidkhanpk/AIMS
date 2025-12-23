@@ -523,8 +523,8 @@ export default function ParentDashboard() {
                                               <th>Lesson</th>
                                               <th>Homework</th>
                                               <th>Progress</th>
-                                              <th>Teacher Remarks</th>
-                                              <th>My Remarks</th>
+                                              <th>Teacher&apos;s Remarks</th>
+                                              <th>Parent&apos;s Remarks</th>
                                               <th>Action</th>
                                             </tr>
                                           </thead>
@@ -595,7 +595,7 @@ export default function ParentDashboard() {
                                                       );
                                                     })()
                                                   ) : (
-                                                    <span className="small text-muted d-inline-block">No parent remark</span>
+                                                    <span className="small text-muted d-inline-block">No parent remarks</span>
                                                   )}
                                                 </td>
                                                 <td>
