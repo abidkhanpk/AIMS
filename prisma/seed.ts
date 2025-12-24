@@ -338,8 +338,9 @@ async function main() {
   console.log('✅ Class assignments created');
 
   // Progress records
-  // Progress records with explicit dates (spread across days)
+  // Students with multiple subjects have progress for each subject on each day
   const progressRecords = [
+    // Student 1 - Tajweed + Basic Islamic Education across 3 days
     {
       studentId: student1.id,
       courseId: tajweedCourse.id,
@@ -360,7 +361,7 @@ async function main() {
       lessonProgress: 78,
       remarks: 'Understands meanings; needs fluency without looking.',
       attendance: 'PRESENT' as const,
-      date: new Date('2024-09-02'),
+      date: new Date('2024-09-01'),
     },
     {
       studentId: student1.id,
@@ -371,8 +372,43 @@ async function main() {
       lessonProgress: 90,
       remarks: 'Good pace; minor tajweed slips on qaf.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student1.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Adab of greeting & respect',
+      homework: 'List 3 ways to greet elders respectfully',
+      lessonProgress: 81,
+      remarks: 'Polite responses; needs more confidence speaking aloud.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student1.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Surah Al-Ikhlas with madd',
+      homework: 'Record recitation focusing on madd letters',
+      lessonProgress: 84,
+      remarks: 'Madd timing improved; slight stretching on laam.',
+      attendance: 'LATE' as const,
       date: new Date('2024-09-03'),
     },
+    {
+      studentId: student1.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Pillars of Salah review',
+      homework: 'Write pillars in order and memorize first 3',
+      lessonProgress: 86,
+      remarks: 'Remembers sequence; clarify rukn vs sunnah.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-03'),
+    },
+
+    // Student 2 - Tajweed + Basic Islamic Education across 3 days
     {
       studentId: student2.id,
       courseId: tajweedCourse.id,
@@ -393,8 +429,54 @@ async function main() {
       lessonProgress: 74,
       remarks: 'Interested and asks good questions; needs concise summaries.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-01'),
+    },
+    {
+      studentId: student2.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Idghaam without ghunnah practice',
+      homework: 'Highlight examples in Surah Al-Baqarah ayat 6-10',
+      lessonProgress: 79,
+      remarks: 'Misses one example; revisit qalqalah after idghaam.',
+      attendance: 'PRESENT' as const,
       date: new Date('2024-09-02'),
     },
+    {
+      studentId: student2.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Stories of the Sahaba: Abu Bakr (RA)',
+      homework: 'Prepare 3 bullet points on his support in Makkah',
+      lessonProgress: 77,
+      remarks: 'Summaries improving; needs louder voice while presenting.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student2.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Qalqalah sughra vs kubra',
+      homework: 'Practice with 10 example words; send recording',
+      lessonProgress: 83,
+      remarks: 'Clear qalqalah; keep pauses short between words.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-03'),
+    },
+    {
+      studentId: student2.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Taharah basics',
+      homework: 'List items that nullify wudhu',
+      lessonProgress: 80,
+      remarks: 'Understands concepts; confirm with a short quiz next class.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-03'),
+    },
+
+    // Student 3 - Single subject (Tajweed), more records
     {
       studentId: student3.id,
       courseId: tajweedCourse.id,
@@ -414,6 +496,28 @@ async function main() {
       homework: 'Memorize and recite thrice daily',
       lessonProgress: 76,
       remarks: 'Pronunciation improving; keep steady pace.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student3.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Makharij drill: throat letters',
+      homework: 'Record ح خ ع غ repetitions',
+      lessonProgress: 72,
+      remarks: 'ع articulation still soft; practice with mirror.',
+      attendance: 'LATE' as const,
+      date: new Date('2024-09-03'),
+    },
+    {
+      studentId: student3.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Tafkheem vs Tarqeeq (Ra examples)',
+      homework: 'Highlight tafkheem/tarqeeq in short surahs',
+      lessonProgress: 78,
+      remarks: 'Better control on ra; minor slips on connected words.',
       attendance: 'PRESENT' as const,
       date: new Date('2024-09-04'),
     },
