@@ -699,15 +699,36 @@ export default function TeacherDashboard() {
             </Card>
           ) : (
             <Row className="g-4">
-              {students.map((student) => (
-                <Col key={student.id} xl={12}>
-                  <Card className="shadow-sm">
-                    <Card.Header className="bg-light">
-                      <div className="d-flex justify-content-between align-items-center">
+              {filteredStudents.length === 0 && (
+                <Col>
+                  <div className="text-center text-muted py-4">No students match your search</div>
+                </Col>
+              )}
+              {filteredStudents.map((student) => {
+                const parentLabel = student.parents?.length
+                  ? student.parents.map((p) => p.name).join(', ')
+                  : 'No parent listed';
+                const expanded = expandedStudents.has(student.id);
+                return (
+                  <Col key={student.id} xs={12}>
+                    <Card className="shadow-sm">
+                    <Card.Header className="d-flex align-items-center justify-content-between">
+                      <div className="d-flex align-items-center gap-2 flex-wrap">
+                        <Button
+                          variant="link"
+                          className="p-0 text-decoration-none"
+                          onClick={() => toggleStudent(student.id)}
+                          aria-label={expanded ? 'Collapse student' : 'Expand student'}
+                        >
+                          <i className={`bi ${expanded ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                        </Button>
                         <div>
-                          <h5 className="mb-0 fw-bold">{student.name}</h5>
-                          <small className="text-muted">{student.email}</small>
+                          <div className="fw-bold mb-0">
+                            {student.name}
+                            <span className="text-muted small ms-2">({parentLabel})</span>
+                          </div>
                         </div>
+                      </div>
                         <Button
                           variant="primary"
                           size="sm"
@@ -716,90 +737,92 @@ export default function TeacherDashboard() {
                           <i className="bi bi-plus-circle me-1"></i>
                           Add Test / Exam Result
                         </Button>
-                      </div>
                     </Card.Header>
-                    <Card.Body className="p-0">
-                      {!student.studentCourses || student.studentCourses.length === 0 ? (
-                        <div className="text-center py-3">
-                          <small className="text-muted">No subjects assigned</small>
-                        </div>
-                      ) : (
-                        <div className="table-responsive">
-                          <Table className="mb-0">
-                            <thead className="table-light small">
-                              <tr>
-                                <th>Date</th>
-                                <th>Subject</th>
-                                <th>Test/Exam</th>
-                                <th>Type</th>
-                            <th>Score</th>
-                            <th>Percentage</th>
-                            <th>Performance</th>
-                            <th>Remarks</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {!student.testRecords || student.testRecords.length === 0 ? (
-                            <tr>
-                              <td colSpan={9} className="text-center py-3 text-muted">
-                                No tests recorded yet
-                              </td>
-                            </tr>
-                          ) : (
-                            student.testRecords.map((test) => (
-                                  <tr key={test.id}>
-                                    <td className="small">
-                                      {new Date(test.performedAt).toLocaleDateString()}
-                                    </td>
-                                    <td className="fw-medium small">
-                                      {test.course.name}
-                                    </td>
-                                  <td className="small">
-                                    <strong>{test.title}</strong>
-                                  </td>
-                                  <td>
-                                    {(() => {
-                                      const t = formatTestType(test.type);
-                                      return <Badge bg={t.variant}>{t.label}</Badge>;
-                                    })()}
-                                  </td>
-                                    <td>
-                                      <Badge bg="dark">
-                                        {test.obtainedMarks}/{test.maxMarks}
-                                      </Badge>
-                                    </td>
-                                    <td>
-                                      <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
-                                        {test.percentage}%
-                                      </Badge>
-                                    </td>
-                                    <td className="small">
-                                      <ExpandableText text={test.performanceNote || '-'} maxLength={30} />
-                                    </td>
-                                    <td className="small">
-                                      <ExpandableText text={test.remarks || '-'} maxLength={30} />
-                                    </td>
-                                    <td>
-                                      <Button
-                                        variant="outline-primary"
-                                        size="sm"
-                                        onClick={() => handleEditTest(student, test)}
-                                      >
-                                        <i className="bi bi-pencil"></i>
-                                      </Button>
+                    {expanded && (
+                      <Card.Body className="p-0">
+                        {!student.studentCourses || student.studentCourses.length === 0 ? (
+                          <div className="text-center py-3">
+                            <small className="text-muted">No subjects assigned</small>
+                          </div>
+                        ) : (
+                          <div className="table-responsive">
+                            <Table className="mb-0">
+                              <thead className="table-light small">
+                                <tr>
+                                  <th>Date</th>
+                                  <th>Subject</th>
+                                  <th>Test/Exam</th>
+                                  <th>Type</th>
+                                  <th>Score</th>
+                                  <th>Percentage</th>
+                                  <th>Performance</th>
+                                  <th>Remarks</th>
+                                  <th>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {!student.testRecords || student.testRecords.length === 0 ? (
+                                  <tr>
+                                    <td colSpan={9} className="text-center py-3 text-muted">
+                                      No tests recorded yet
                                     </td>
                                   </tr>
-                                ))
-                              )}
-                        </tbody>
-                          </Table>
-                        </div>
-                      )}
-                    </Card.Body>
+                                ) : (
+                                  student.testRecords.map((test) => (
+                                    <tr key={test.id}>
+                                      <td className="small">
+                                        {new Date(test.performedAt).toLocaleDateString()}
+                                      </td>
+                                      <td className="fw-medium small">
+                                        {test.course.name}
+                                      </td>
+                                      <td className="small">
+                                        <strong>{test.title}</strong>
+                                      </td>
+                                      <td>
+                                        {(() => {
+                                          const t = formatTestType(test.type);
+                                          return <Badge bg={t.variant}>{t.label}</Badge>;
+                                        })()}
+                                      </td>
+                                      <td>
+                                        <Badge bg="dark">
+                                          {test.obtainedMarks}/{test.maxMarks}
+                                        </Badge>
+                                      </td>
+                                      <td>
+                                        <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
+                                          {test.percentage}%
+                                        </Badge>
+                                      </td>
+                                      <td className="small">
+                                        <ExpandableText text={test.performanceNote || '-'} maxLength={30} />
+                                      </td>
+                                      <td className="small">
+                                        <ExpandableText text={test.remarks || '-'} maxLength={30} />
+                                      </td>
+                                      <td>
+                                        <Button
+                                          variant="outline-primary"
+                                          size="sm"
+                                          onClick={() => handleEditTest(student, test)}
+                                        >
+                                          <i className="bi bi-pencil"></i>
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </Table>
+                          </div>
+                        )}
+                      </Card.Body>
+                    )}
                   </Card>
-                </Col>
-              ))}
+                  </Col>
+                );
+              })}
             </Row>
           )}
         </Tab>
