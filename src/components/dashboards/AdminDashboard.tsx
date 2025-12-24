@@ -246,6 +246,7 @@ function AssignmentSubform({
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
 
   // Assignment form states
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
@@ -3253,6 +3254,7 @@ function AssignmentsTab() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
 
   // Unified assignment form states
   const [selectedStudent, setSelectedStudent] = useState('');
@@ -3286,6 +3288,22 @@ function AssignmentsTab() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const normalizedStudentSearch = studentSearch.trim().toLowerCase();
+
+  const filteredStudents = !normalizedStudentSearch
+    ? students
+    : students.filter((s) =>
+        (s.name || '').toLowerCase().includes(normalizedStudentSearch) ||
+        (s.email || '').toLowerCase().includes(normalizedStudentSearch)
+      );
+
+  const filteredAssignments = !normalizedStudentSearch
+    ? assignments
+    : assignments.filter((a) =>
+        (a.student.name || '').toLowerCase().includes(normalizedStudentSearch) ||
+        (a.student.email || '').toLowerCase().includes(normalizedStudentSearch)
+      );
 
   const fetchData = async () => {
     try {
@@ -3461,6 +3479,19 @@ function AssignmentsTab() {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
+      <Row className="mb-3">
+        <Col md={6}>
+          <InputGroup>
+            <InputGroup.Text><i className="bi bi-search"></i></InputGroup.Text>
+            <Form.Control
+              placeholder="Search students by name or email"
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+
       <Row className="g-4">
         <Col lg={5}>
           <Card className="shadow-sm">
@@ -3481,9 +3512,12 @@ function AssignmentsTab() {
                     size="sm"
                   >
                     <option value="">Choose a student...</option>
-                    {students.map(s => (
+                    {filteredStudents.map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
+                    {filteredStudents.length === 0 && (
+                      <option value="" disabled>No matching students</option>
+                    )}
                   </Form.Select>
                 </Form.Group>
 
@@ -3657,60 +3691,68 @@ function AssignmentsTab() {
                       </tr>
                     </thead>
                     <tbody>
-                      {assignments.map((assignment) => (
-                        <tr key={assignment.id}>
-                          <td className="fw-medium">{assignment.student?.name}</td>
-                          <td>{assignment.course?.name}</td>
-                          <td className="text-muted">{assignment.teacher?.name}</td>
-                          <td className="small">
-                            {assignment.startTime && (
-                              <div>{assignment.startTime}</div>
-                            )}
-                            {assignment.duration && (
-                              <div className="text-muted">{assignment.duration}min</div>
-                            )}
-                            {assignment.classDays && assignment.classDays.length > 0 && (
-                              <div className="text-muted">
-                                {assignment.classDays.join(', ')}
-                              </div>
-                            )}
-                            {assignment.timezone && (
-                              <div className="text-muted small">
-                                {findTimezone(assignment.timezone)?.label || assignment.timezone}
-                              </div>
-                            )}
-                          </td>
-                          <td>
-                            {assignment.monthlyFee ? (
-                              <Badge bg="success">
-                                {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted">-</span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="d-flex gap-1">
-                              <Button
-                                variant="outline-warning"
-                                size="sm"
-                                onClick={() => handleEditAssignment(assignment)}
-                                title="Edit Assignment"
-                              >
-                                <i className="bi bi-pencil"></i>
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() => handleDeleteAssignment(assignment.id)}
-                                title="Delete Assignment"
-                              >
-                                <i className="bi bi-trash"></i>
-                              </Button>
-                            </div>
+                      {filteredAssignments.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center py-3 text-muted">
+                            No assignments match your search
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        filteredAssignments.map((assignment) => (
+                          <tr key={assignment.id}>
+                            <td className="fw-medium">{assignment.student?.name}</td>
+                            <td>{assignment.course?.name}</td>
+                            <td className="text-muted">{assignment.teacher?.name}</td>
+                            <td className="small">
+                              {assignment.startTime && (
+                                <div>{assignment.startTime}</div>
+                              )}
+                              {assignment.duration && (
+                                <div className="text-muted">{assignment.duration}min</div>
+                              )}
+                              {assignment.classDays && assignment.classDays.length > 0 && (
+                                <div className="text-muted">
+                                  {assignment.classDays.join(', ')}
+                                </div>
+                              )}
+                              {assignment.timezone && (
+                                <div className="text-muted small">
+                                  {findTimezone(assignment.timezone)?.label || assignment.timezone}
+                                </div>
+                              )}
+                            </td>
+                            <td>
+                              {assignment.monthlyFee ? (
+                                <Badge bg="success">
+                                  {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted">-</span>
+                              )}
+                            </td>
+                            <td>
+                              <div className="d-flex gap-1">
+                                <Button
+                                  variant="outline-warning"
+                                  size="sm"
+                                  onClick={() => handleEditAssignment(assignment)}
+                                  title="Edit Assignment"
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  onClick={() => handleDeleteAssignment(assignment.id)}
+                                  title="Delete Assignment"
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </Table>
                 </div>

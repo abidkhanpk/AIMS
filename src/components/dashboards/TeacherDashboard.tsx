@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner, Tabs, Tab, InputGroup } from 'react-bootstrap';
 import { AttendanceStatus, AssessmentType } from '@prisma/client';
 import { useSession } from 'next-auth/react';
@@ -9,6 +9,10 @@ interface Student {
   id: string;
   name: string;
   email: string;
+  parents?: {
+    id: string;
+    name: string;
+  }[];
   studentCourses: {
     course: {
       id: string;
@@ -97,10 +101,12 @@ export default function TeacherDashboard() {
     return null;
   };
   const [students, setStudents] = useState<Student[]>([]);
+  const [studentSearch, setStudentSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState('progress');
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(new Set());
 
   // Progress update modal states
   const [showProgressModal, setShowProgressModal] = useState(false);
@@ -185,6 +191,31 @@ export default function TeacherDashboard() {
     setEditingProgressId(null);
     setShowProgressModal(true);
   };
+
+  const toggleStudent = (id: string) => {
+    setExpandedStudents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const filteredStudents = useMemo(() => {
+    const query = studentSearch.trim().toLowerCase();
+    if (!query) return students;
+    return students.filter((s) => {
+      const parentNames = (s.parents || []).map((p) => p.name.toLowerCase()).join(' ');
+      return (
+        s.name.toLowerCase().includes(query) ||
+        s.email.toLowerCase().includes(query) ||
+        parentNames.includes(query)
+      );
+    });
+  }, [studentSearch, students]);
 
   const handleEditProgress = (student: Student, progress: any) => {
     setSelectedStudent(student);
@@ -457,6 +488,19 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
+      <Row className="mb-3">
+        <Col md={6}>
+          <InputGroup>
+            <InputGroup.Text><i className="bi bi-search"></i></InputGroup.Text>
+            <Form.Control
+              placeholder="Search students by name, email, or parent"
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+            />
+          </InputGroup>
+        </Col>
+      </Row>
+
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
@@ -480,20 +524,30 @@ export default function TeacherDashboard() {
             </Card>
           ) : (
             <Row className="g-4">
-              {students.map((student) => (
-                <Col key={student.id} xl={12}>
-                  <Card className="shadow-sm">
-                    <Card.Header className="bg-light">
-                      <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                          <h5
-                            className="mb-0 fw-bold"
-                            role="button"
-                            onClick={() => openChat(student.id, student.name)}
+              {filteredStudents.map((student) => {
+                const parentLabel = student.parents?.length
+                  ? student.parents.map((p) => p.name).join(', ')
+                  : 'No parent listed';
+                const expanded = expandedStudents.has(student.id);
+                return (
+                  <Col key={student.id} xs={12}>
+                    <Card className="shadow-sm">
+                      <Card.Header className="d-flex align-items-center justify-content-between">
+                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                          <Button
+                            variant="link"
+                            className="p-0 text-decoration-none"
+                            onClick={() => toggleStudent(student.id)}
+                            aria-label={expanded ? 'Collapse student' : 'Expand student'}
                           >
-                            {student.name}
-                          </h5>
-                          <small className="text-muted">{student.email}</small>
+                            <i className={`bi ${expanded ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                          </Button>
+                          <div>
+                            <div className="fw-bold mb-0">
+                              {student.name}
+                              <span className="text-muted small ms-2">({parentLabel})</span>
+                            </div>
+                          </div>
                         </div>
                         <Button
                           variant="success"
@@ -501,120 +555,127 @@ export default function TeacherDashboard() {
                           onClick={() => handleUpdateProgress(student)}
                         >
                           <i className="bi bi-plus-circle me-1"></i>
-                          Add Progress & Attendance
+                          Add Progress
                         </Button>
-                      </div>
-                    </Card.Header>
-                    <Card.Body className="p-0">
-                      {!student.studentCourses || student.studentCourses.length === 0 ? (
-                        <div className="text-center py-3">
-                          <small className="text-muted">No subjects assigned</small>
-                        </div>
-                      ) : (
-                        <div className="table-responsive">
-                          <Table className="mb-0">
-                            <thead className="table-light small">
-                              <tr>
-                                <th>Date</th>
-                                <th>Course</th>
-                                <th>Attendance</th>
-                                <th>Lesson</th>
-                            <th>Homework</th>
-                            <th>Progress %</th>
-                            <th>Teacher&apos;s Remarks</th>
-                            <th>Parent&apos;s Remarks</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {!student.progressRecords || student.progressRecords.length === 0 ? (
-                            <tr>
-                              <td colSpan={9} className="text-center py-3 text-muted">
-                                No progress records yet
-                              </td>
-                            </tr>
+                      </Card.Header>
+                      {expanded && (
+                        <Card.Body className="p-0">
+                          {!student.studentCourses || student.studentCourses.length === 0 ? (
+                            <div className="text-center py-3">
+                              <small className="text-muted">No subjects assigned</small>
+                            </div>
                           ) : (
-                            student.progressRecords.map((progress) => (
-                                  <tr key={progress.id}>
-                                    <td className="small">
-                                      {new Date(progress.date).toLocaleDateString()}
-                                    </td>
-                                    <td className="fw-medium small">
-                                      {progress.course.name}
-                                    </td>
-                                    <td>
-                                      {getAttendanceBadge(progress.attendance)}
-                                    </td>
-                                    <td className="small">
-                                      <ExpandableText text={progress.lesson} maxLength={20} />
-                                    </td>
-                                    <td className="small">
-                                      <ExpandableText text={progress.homework} maxLength={20} />
-                                    </td>
-                                    <td>
-                                      {progress.lessonProgress !== null ? (
-                                        <Badge bg="primary">
-                                          {progress.lessonProgress}%
-                                        </Badge>
-                                      ) : (
-                                        <span className="text-muted small">-</span>
-                                      )}
-                                    </td>
-                                    <td className="small">
-                                  <ExpandableText text={progress.remarks} maxLength={30} />
-                                </td>
-                                    <td className="small">
-                                      {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
-                                        (() => {
-                                          const replyCount = progress.parentRemarks.reduce(
-                                            (sum: number, r: any) => sum + (r.replies?.length || 0),
-                                            0
-                                          );
-                                          return (
-                                            <span className="small text-muted d-inline-block">
-                                              Remark with{' '}
-                                              <span className={replyCount > 0 ? 'text-success' : 'text-danger'}>
-                                                {replyCount > 0 ? replyCount : 'no'}
-                                              </span>{' '}
-                                              comment{replyCount === 1 ? '' : 's'}
-                                            </span>
-                                          );
-                                        })()
-                                      ) : (
-                                        <span className="small text-muted d-inline-block">No parent remarks</span>
-                                      )}
-                                    </td>
-                                    <td>
-                                      <div className="d-flex gap-2 align-items-center flex-nowrap">
-                                        <Button
-                                          variant="outline-primary"
-                                          size="sm"
-                                          onClick={() => handleEditProgress(student, progress)}
-                                        >
-                                          <i className="bi bi-pencil"></i>
-                                        </Button>
-                                        {progress.parentRemarks && progress.parentRemarks.length > 0 && (
-                                          <Button
-                                            variant="outline-secondary"
-                                            size="sm"
-                                            onClick={() => handleViewParentRemarks(progress, student.name)}
-                                          >
-                                            <i className="bi bi-chat-dots"></i>
-                                          </Button>
-                                        )}
-                                      </div>
-                                    </td>
-                                </tr>
-                              ))
-                            )}
-                        </tbody>
-                      </Table>
-                        </div>
+                            <div className="table-responsive">
+                              <Table className="mb-0">
+                                <thead className="table-light small">
+                                  <tr>
+                                    <th>Date</th>
+                                    <th>Course</th>
+                                    <th>Attendance</th>
+                                    <th>Lesson</th>
+                                    <th>Homework</th>
+                                    <th>Progress %</th>
+                                    <th>Teacher&apos;s Remarks</th>
+                                    <th>Parent&apos;s Remarks</th>
+                                    <th>Actions</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {!student.progressRecords || student.progressRecords.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={9} className="text-center py-3 text-muted">
+                                        No progress records yet
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    student.progressRecords.map((progress) => (
+                                      <tr key={progress.id}>
+                                        <td className="small">
+                                          {new Date(progress.date).toLocaleDateString()}
+                                        </td>
+                                        <td className="fw-medium small">
+                                          {progress.course.name}
+                                        </td>
+                                        <td>
+                                          {getAttendanceBadge(progress.attendance)}
+                                        </td>
+                                        <td className="small">
+                                          <ExpandableText text={progress.lesson} maxLength={20} />
+                                        </td>
+                                        <td className="small">
+                                          <ExpandableText text={progress.homework} maxLength={20} />
+                                        </td>
+                                        <td>
+                                          {progress.lessonProgress !== null ? (
+                                            <Badge bg="primary">
+                                              {progress.lessonProgress}%
+                                            </Badge>
+                                          ) : (
+                                            <span className="text-muted small">-</span>
+                                          )}
+                                        </td>
+                                        <td className="small">
+                                          <ExpandableText text={progress.remarks} maxLength={30} />
+                                        </td>
+                                        <td className="small">
+                                          {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
+                                            (() => {
+                                              const replyCount = progress.parentRemarks.reduce(
+                                                (sum: number, r: any) => sum + (r.replies?.length || 0),
+                                                0
+                                              );
+                                              return (
+                                                <span className="small text-muted d-inline-block">
+                                                  Remark with{' '}
+                                                  <span className={replyCount > 0 ? 'text-success' : 'text-danger'}>
+                                                    {replyCount > 0 ? replyCount : 'no'}
+                                                  </span>{' '}
+                                                  comment{replyCount === 1 ? '' : 's'}
+                                                </span>
+                                              );
+                                            })()
+                                          ) : (
+                                            <span className="small text-muted d-inline-block">No parent remarks</span>
+                                          )}
+                                        </td>
+                                        <td>
+                                          <div className="d-flex gap-2 align-items-center flex-nowrap">
+                                            <Button
+                                              variant="outline-primary"
+                                              size="sm"
+                                              onClick={() => handleEditProgress(student, progress)}
+                                            >
+                                              <i className="bi bi-pencil"></i>
+                                            </Button>
+                                            {progress.parentRemarks && progress.parentRemarks.length > 0 && (
+                                              <Button
+                                                variant="outline-secondary"
+                                                size="sm"
+                                                onClick={() => handleViewParentRemarks(progress, student.name)}
+                                              >
+                                                <i className="bi bi-chat-dots"></i>
+                                              </Button>
+                                            )}
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </Table>
+                            </div>
+                          )}
+                        </Card.Body>
                       )}
-                    </Card.Body>
-                  </Card>
+                    </Card>
+                  </Col>
+                );
+              })}
+              {filteredStudents.length === 0 && (
+                <Col>
+                  <div className="text-center text-muted py-4">No students match your search</div>
                 </Col>
-              ))}
+              )}
             </Row>
           )}
         </Tab>
