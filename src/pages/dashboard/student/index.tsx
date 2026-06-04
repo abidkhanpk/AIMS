@@ -1,4 +1,4 @@
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
 import React from 'react';
 import StudentDashboard from '../../../components/dashboards/StudentDashboard';
 import Head from 'next/head';

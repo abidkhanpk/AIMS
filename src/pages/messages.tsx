@@ -1,4 +1,4 @@
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, Table, Alert, Spinner, Badge } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
