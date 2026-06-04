@@ -201,3 +201,45 @@
     display: inline-flex !important;
   }
 }
+
+/* Urdu Language RTL and Font Overrides */
+body.lang-ur {
+  font-family: 'Gulzar', 'Noto Nastaliq Urdu', serif !important;
+  font-size: 1.1rem; /* Nastaliq fonts usually need a slight bump in size */
+  line-height: 1.8;
+}
+
+body.lang-ur h1, 
+body.lang-ur h2, 
+body.lang-ur h3, 
+body.lang-ur h4, 
+body.lang-ur h5, 
+body.lang-ur h6 {
+  font-family: 'Gulzar', 'Noto Nastaliq Urdu', serif !important;
+  line-height: 1.6;
+}
+
+/* Fix some padding/margins for RTL across the app */
+html[dir="rtl"] .me-2 {
+  margin-left: 0.5rem !important;
+  margin-right: 0 !important;
+}
+
+html[dir="rtl"] .ms-2 {
+  margin-right: 0.5rem !important;
+  margin-left: 0 !important;
+}
+
+html[dir="rtl"] .ms-auto {
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+
+html[dir="rtl"] .text-end {
+  text-align: left !important;
+}
+
+html[dir="rtl"] .ps-3 {
+  padding-right: 1rem !important;
+  padding-left: 0 !important;
+}

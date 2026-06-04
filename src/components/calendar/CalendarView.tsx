@@ -146,29 +146,31 @@ export default function CalendarView() {
       </Card.Header>
       <Card.Body>
         {error && <Alert variant="danger">{error}</Alert>}
-        <div style={{ height: 600 }}>
-          <Calendar
-            localizer={localizer}
-            events={events}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: '100%', fontFamily: 'inherit' }}
-            view={view}
-            onView={setView}
-            date={date}
-            onNavigate={setDate}
-            popup
-            eventPropGetter={(event) => ({
-              style: {
-                backgroundColor: '#0d6efd',
-                borderRadius: '4px',
-                opacity: 0.9,
-                color: 'white',
-                border: '0',
-                display: 'block'
-              }
-            })}
-          />
+        <div style={{ height: 600, minWidth: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ minWidth: 800, height: '100%' }}>
+            <Calendar
+              localizer={localizer}
+              events={events}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: '100%', fontFamily: 'inherit' }}
+              view={view}
+              onView={setView}
+              date={date}
+              onNavigate={setDate}
+              popup
+              eventPropGetter={(event) => ({
+                style: {
+                  backgroundColor: '#0d6efd',
+                  borderRadius: '4px',
+                  opacity: 0.9,
+                  color: 'white',
+                  border: '0',
+                  display: 'block'
+                }
+              })}
+            />
+          </div>
         </div>
       </Card.Body>
     </Card>

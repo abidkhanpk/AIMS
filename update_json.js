@@ -1,14 +1,71 @@
-{
-  "greeting": "AIMS میں خوش آمدید",
+const fs = require('fs');
+
+const enKeys = {
   "dashboard": {
-    "0": "ڈ",
-    "1": "ی",
-    "2": "ش",
-    "3": " ",
-    "4": "ب",
-    "5": "و",
-    "6": "ر",
-    "7": "ڈ",
+    "studentDashboard": "Student Dashboard",
+    "trackProgress": "Track your academic progress across all subjects",
+    "progress": "Progress",
+    "welcomeBack": "Welcome back",
+    "overallProgress": "Overall Progress",
+    "noData": "No Data",
+    "noProgressRecorded": "No progress recorded yet",
+    "currentAssignments": "Current Assignments",
+    "noAssignmentsFound": "No Assignments Found",
+    "noAssignmentsMsg": "You don't have any assignments yet. Please contact your administrator to get assigned to subjects and teachers.",
+    "subject": "Subject",
+    "teacher": "Teacher",
+    "schedule": "Schedule",
+    "classDays": "Class Days",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "time": "Time",
+    "duration": "Duration",
+    "minutes": "minutes",
+    "notSpecified": "Not specified",
+    "noSubjectsAssigned": "No Subjects Assigned",
+    "noSubjectsMsg": "You don't have any subjects assigned yet. Please contact your administrator.",
+    "currentProgress": "Current Progress",
+    "noProgressUpdates": "No progress updates yet",
+    "teacherUpdateMsg": "Your teacher will update your progress soon",
+    "progressHistory": "Progress History",
+    "updates": "Updates",
+    "date": "Date",
+    "lesson": "Lesson",
+    "attendance": "Attendance",
+    "remarks": "Remarks",
+    "testsAndExams": "Tests & Exams",
+    "testResults": "Your tests & exam results",
+    "trackMarks": "Track obtained marks, percentages, and remarks",
+    "averageScore": "Average score",
+    "noTestsRecorded": "No Tests Recorded",
+    "teachersWillAddTests": "Your teachers will add test and exam results here once available.",
+    "recentTests": "Recent Tests & Exams",
+    "testExam": "Test/Exam",
+    "type": "Type",
+    "score": "Score",
+    "percentage": "Percentage",
+    "performance": "Performance",
+    "exam": "Exam",
+    "homework": "Homework",
+    "other": "Other",
+    "quiz": "Quiz",
+    "reportCards": "Report Cards",
+    "feeVouchers": "Fee Vouchers",
+    "feeManagement": "Fee Management",
+    "total": "Total",
+    "noFeesFound": "No fees found",
+    "title": "Title",
+    "description": "Description",
+    "amount": "Amount",
+    "dueDate": "Due Date",
+    "action": "Action",
+    "payNow": "Pay Now"
+  }
+};
+
+const urKeys = {
+  "dashboard": {
     "studentDashboard": "سٹوڈنٹ ڈیش بورڈ",
     "trackProgress": "تمام مضامین میں اپنی تعلیمی پیشرفت کو ٹریک کریں",
     "progress": "پیشرفت",
@@ -68,69 +125,20 @@
     "dueDate": "مقررہ تاریخ",
     "action": "عمل",
     "payNow": "ابھی ادا کریں"
-  },
-  "messages": "پیغامات",
-  "settings": "ترتیبات",
-  "logout": "لاگ آؤٹ",
-  "admin_portal": "ایڈمن پورٹل",
-  "teacher_portal": "ٹیچر پورٹل",
-  "student_portal": "سٹوڈنٹ پورٹل",
-  "parent_portal": "پیرنٹ پورٹل",
-  "language": "زبان",
-  "english": "English",
-  "urdu": "اردو",
-  "layout": {
-    "install": "انسٹال کریں",
-    "role": "کردار: ",
-    "signIn": "سائن ان",
-    "allRightsReserved": "جملہ حقوق محفوظ ہیں۔",
-    "userSettings": "صارف کی ترتیبات",
-    "password": "پاس ورڈ",
-    "currentPassword": "موجودہ پاس ورڈ",
-    "newPassword": "نیا پاس ورڈ",
-    "confirmNewPassword": "نئے پاس ورڈ کی تصدیق",
-    "changePassword": "پاس ورڈ تبدیل کریں",
-    "email": "ای میل",
-    "currentEmail": "موجودہ ای میل",
-    "newEmailAddress": "نیا ای میل پتہ",
-    "changeEmail": "ای میل تبدیل کریں",
-    "securityQuestions": "حفاظتی سوالات",
-    "securityQuestion1": "حفاظتی سوال 1",
-    "securityQuestion2": "حفاظتی سوال 2",
-    "selectQuestion": "ایک سوال منتخب کریں...",
-    "answer1": "جواب 1",
-    "answer2": "جواب 2",
-    "timezone": "ٹائم زون",
-    "updateSecuritySettings": "حفاظتی ترتیبات کو اپ ڈیٹ کریں",
-    "notifications": "اطلاعات",
-    "enableNotifications": "اطلاعات کو فعال کریں",
-    "masterSwitch": "تمام اطلاعات کے لیے ماسٹر سوئچ",
-    "emailNotifications": "ای میل کی اطلاعات",
-    "receiveViaEmail": "ای میل کے ذریعے اطلاعات موصول کریں",
-    "parentRemarkNotifications": "والدین کے ریمارکس کی اطلاعات",
-    "getNotified": "جب والدین ریمارکس شامل کریں تو مطلع ہوں",
-    "updateNotificationSettings": "اطلاعات کی ترتیبات کو اپ ڈیٹ کریں",
-    "subscriptionAndPayments": "سبسکرپشن اور ادائیگیاں"
-  },
-  "menu": {
-    "home": "ہوم",
-    "individuals": "افراد",
-    "teachers": "اساتذہ",
-    "parents": "رشتہ دار",
-    "students": "طلباء",
-    "academic": "تعلیمی",
-    "progress": "پیش رفت",
-    "attendanceReports": "حاضری کی رپورٹیں",
-    "reportCards": "رپورٹ کارڈز",
-    "tests": "ٹیسٹ اور امتحانات",
-    "financials": "مالیات",
-    "fees": "فیس",
-    "feeVerification": "فیس کی تصدیق",
-    "salaries": "تنخواہیں",
-    "parentRemarks": "والدین کے ریمارکس",
-    "system": "سسٹم",
-    "auditLogs": "آڈٹ لاگز",
-    "academySettings": "اکیڈمی کی ترتیبات",
-    "menu": "مینو"
   }
+};
+
+function addKeys(filePath, newKeys) {
+  const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  for (const [key, value] of Object.entries(newKeys)) {
+    if (typeof value === 'object' && content[key]) {
+      content[key] = { ...content[key], ...value };
+    } else {
+      content[key] = value;
+    }
+  }
+  fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
 }
+
+addKeys('public/locales/en/common.json', enKeys);
+addKeys('public/locales/ur/common.json', urKeys);

@@ -17,6 +17,7 @@ import AttendanceReportsTab from './AttendanceReportsTab';
 import ReportCardsTab from './ReportCardsTab';
 import AuditLogsTab from './AuditLogsTab';
 import AcademySettingsTab from './AcademySettingsTab';
+import { useTranslation } from 'next-i18next';
 import FeeManagementTab from './FeeManagementTab';
 import Papa from 'papaparse';
 
@@ -5100,6 +5101,8 @@ export function TestsTab() {
 }
 
 export default function AdminDashboard() {
+  const { t } = useTranslation('common');
+  const [tabActiveKey, setTabActiveKey] = useState('home');
   const router = useRouter();
   const disallowedTabs = useMemo(() => new Set([
     'teachers',
@@ -5790,7 +5793,7 @@ export default function AdminDashboard() {
                   title={
                     <span>
                       <i className="bi bi-book me-2"></i>
-                      Subjects
+                      {t('menu.subjects')}
                     </span>
                   }
                 >
@@ -5802,26 +5805,26 @@ export default function AdminDashboard() {
                   title={
                     <span>
                       <i className="bi bi-diagram-3 me-2"></i>
-                      Assignments
+                      {t('menu.assignments')}
                     </span>
                   }
                 >
                   <AssignmentsTab />
                 </Tab>
                 
-                <Tab eventKey="attendance-reports" title={<span><i className="bi bi-file-earmark-spreadsheet me-2"></i>Attendance Reports</span>}>
+                <Tab eventKey="attendance-reports" title={<span><i className="bi bi-file-earmark-spreadsheet me-2"></i>{t('menu.attendanceReports')}</span>}>
                   <AttendanceReportsTab />
                 </Tab>
-                <Tab eventKey="report-cards" title={<span><i className="bi bi-award me-2"></i>Report Cards</span>}>
+                <Tab eventKey="report-cards" title={<span><i className="bi bi-award me-2"></i>{t('menu.reportCards')}</span>}>
                   <ReportCardsTab />
                 </Tab>
-                <Tab eventKey="audit-logs" title={<span><i className="bi bi-file-earmark-code me-2"></i>Audit Logs</span>}>
+                <Tab eventKey="audit-logs" title={<span><i className="bi bi-file-earmark-code me-2"></i>{t('menu.auditLogs', 'Audit Logs')}</span>}>
                   <AuditLogsTab />
                 </Tab>
-                <Tab eventKey="fees" title={<span><i className="bi bi-cash-stack me-2"></i>Fee Management</span>}>
+                <Tab eventKey="fees" title={<span><i className="bi bi-cash-stack me-2"></i>{t('menu.feeManagement', 'Fee Management')}</span>}>
                   <FeeManagementTab />
                 </Tab>
-                <Tab eventKey="academy-settings" title={<span><i className="bi bi-gear-fill me-2"></i>Academy Settings</span>}>
+                <Tab eventKey="academy-settings" title={<span><i className="bi bi-gear-fill me-2"></i>{t('menu.academySettings')}</span>}>
                   <AcademySettingsTab />
                 </Tab>
               </Tabs>

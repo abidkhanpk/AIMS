@@ -6,6 +6,7 @@ import CalendarView from '../calendar/CalendarView';
 import ReportCardsTab from './ReportCardsTab';
 import { getCurrencySymbol } from '../../utils/currencies';
 import { FeeStatus, AssessmentType } from '@prisma/client';
+import { useTranslation } from 'next-i18next';
 
 interface StudentData {
   id: string;
@@ -112,6 +113,7 @@ interface Fee {
 }
 
 export default function StudentDashboard() {
+  const { t } = useTranslation('common');
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
@@ -334,9 +336,9 @@ export default function StudentDashboard() {
         <div className="col-12">
           <h1 className="h2 mb-0">
             <i className="bi bi-mortarboard me-2 text-warning"></i>
-            Student Dashboard
+            {t('dashboard.studentDashboard')}
           </h1>
-          <p className="text-muted">Track your academic progress across all subjects</p>
+          <p className="text-muted">{t('dashboard.trackProgress')}</p>
         </div>
       </div>
 
@@ -346,7 +348,7 @@ export default function StudentDashboard() {
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
       <Tabs defaultActiveKey="progress" id="student-dashboard-tabs" className="mb-4">
-        <Tab eventKey="progress" title="Progress">
+        <Tab eventKey="progress" title={t('dashboard.progress')}>
           {/* Overall Progress Card */}
           <Row className="mb-4">
             <Col>
@@ -363,12 +365,12 @@ export default function StudentDashboard() {
                           <h3 className={`mb-0 text-${getProgressVariant(overallProgress)}`}>
                             {overallProgress}%
                           </h3>
-                          <small className="text-muted">Overall Progress</small>
+                          <small className="text-muted">{t('dashboard.overallProgress')}</small>
                         </div>
                       ) : (
                         <div>
-                          <h5 className="mb-0 text-muted">No Data</h5>
-                          <small className="text-muted">No progress recorded yet</small>
+                          <h5 className="mb-0 text-muted">{t('dashboard.noData')}</h5>
+                          <small className="text-muted">{t('dashboard.noProgressRecorded')}</small>
                         </div>
                       )}
                     </Col>
@@ -386,7 +388,7 @@ export default function StudentDashboard() {
                   <div className="d-flex justify-content-between align-items-center">
                     <h6 className="mb-0">
                       <i className="bi bi-list-task me-2"></i>
-                      Current Assignments
+                      {t('dashboard.currentAssignments')}
                     </h6>
                     <Badge bg="light" text="dark">{assignments.length}</Badge>
                   </div>
@@ -403,11 +405,11 @@ export default function StudentDashboard() {
                       <Table hover className="mb-0">
                         <thead className="table-light">
                           <tr>
-                            <th>Subject</th>
-                            <th>Teacher</th>
-                            <th>Schedule</th>
-                            <th>Class Days</th>
-                            <th>Status</th>
+                            <th>{t('dashboard.subject')}</th>
+                            <th>{t('dashboard.teacher')}</th>
+                            <th>{t('dashboard.schedule')}</th>
+                            <th>{t('dashboard.classDays')}</th>
+                            <th>{t('dashboard.status')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -608,7 +610,7 @@ export default function StudentDashboard() {
             </Row>
           )}
         </Tab>
-        <Tab eventKey="tests" title="Tests & Exams">
+        <Tab eventKey="tests" title={t('dashboard.testsAndExams')}>
           <Row className="mb-4">
             <Col>
               <Card className="shadow-sm">
@@ -720,11 +722,11 @@ export default function StudentDashboard() {
           )}
         </Tab>
         
-        <Tab eventKey="report-cards" title="Report Cards">
+        <Tab eventKey="report-cards" title={t('dashboard.reportCards')}>
           <ReportCardsTab />
         </Tab>
 
-        <Tab eventKey="fees" title="Fee Vouchers">
+        <Tab eventKey="fees" title={t('dashboard.feeVouchers')}>
           <Card className="shadow-sm">
             <Card.Header className="bg-light">
               <div className="d-flex justify-content-between align-items-center">

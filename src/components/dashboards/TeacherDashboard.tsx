@@ -6,6 +6,7 @@ import RemarkThreadModal from '../remarks/RemarkThreadModal';
 import TeacherAnalytics from '../analytics/TeacherAnalytics';
 import CalendarView from '../calendar/CalendarView';
 import DirectMessageModal from '../messages/DirectMessageModal';
+import { useTranslation } from 'next-i18next';
 
 interface Student {
   id: string;
@@ -91,6 +92,7 @@ function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: nu
 }
 
 export default function TeacherDashboard() {
+  const { t } = useTranslation('common');
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
 
@@ -484,9 +486,9 @@ export default function TeacherDashboard() {
         <div className="col-12">
           <h1 className="h2 mb-0">
             <i className="bi bi-person-workspace me-2 text-success"></i>
-            Teacher Dashboard
+            {t('dashboard.teacherDashboard', 'Teacher Dashboard')}
           </h1>
-          <p className="text-muted">Manage your assigned students, track their progress, and record attendance</p>
+          <p className="text-muted">{t('dashboard.manageStudents', 'Manage your assigned students, track their progress, and record attendance')}</p>
         </div>
       </div>
 
@@ -515,7 +517,7 @@ export default function TeacherDashboard() {
           title={
             <span>
               <i className="bi bi-graph-up me-2"></i>
-              Progress & Attendance
+              {t('dashboard.progressAndAttendance', 'Progress & Attendance')}
             </span>
           }
         >
@@ -560,7 +562,7 @@ export default function TeacherDashboard() {
                           onClick={() => handleUpdateProgress(student)}
                         >
                           <i className="bi bi-plus-circle me-1"></i>
-                          Add Progress
+                          {t('dashboard.addProgress', 'Add Progress')}
                         </Button>
                       </Card.Header>
                       {expanded && (
@@ -690,7 +692,7 @@ export default function TeacherDashboard() {
           title={
             <span>
               <i className="bi bi-journal-check me-2"></i>
-              Tests & Exams
+              {t('dashboard.testsAndExams')}
             </span>
           }
         >
@@ -698,8 +700,8 @@ export default function TeacherDashboard() {
             <Card className="text-center py-5">
               <Card.Body>
                 <i className="bi bi-people display-4 text-muted"></i>
-                <h4 className="mt-3 text-muted">No Students Assigned</h4>
-                <p className="text-muted">You don&apos;t have any students assigned to you yet. Please contact your administrator.</p>
+                <h4 className="mt-3 text-muted">{t('dashboard.noStudentsAssigned', 'No Students Assigned')}</h4>
+                <p className="text-muted">{t('dashboard.noStudentsMsg', "You don't have any students assigned to you yet. Please contact your administrator.")}</p>
               </Card.Body>
             </Card>
           ) : (
@@ -740,7 +742,7 @@ export default function TeacherDashboard() {
                           onClick={() => handleAddTest(student)}
                         >
                           <i className="bi bi-plus-circle me-1"></i>
-                          Add Test / Exam Result
+                          {t('dashboard.addTestResult', 'Add Test / Exam Result')}
                         </Button>
                     </Card.Header>
                     {expanded && (

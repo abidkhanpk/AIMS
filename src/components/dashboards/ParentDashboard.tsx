@@ -4,7 +4,9 @@ import { FeeStatus, AttendanceStatus, AssessmentType } from '@prisma/client';
 import FeePaymentModal from './FeePaymentModal';
 import { useSession } from 'next-auth/react';
 import RemarkThreadModal from '../remarks/RemarkThreadModal';
+import RemarkThreadModal from '../remarks/RemarkThreadModal';
 import DirectMessageModal from '../messages/DirectMessageModal';
+import { useTranslation } from 'next-i18next';
 
 interface Child {
   id: string;
@@ -96,6 +98,7 @@ interface Fee {
 }
 
 export default function ParentDashboard() {
+  const { t } = useTranslation('common');
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const [children, setChildren] = useState<Child[]>([]);
@@ -401,9 +404,9 @@ export default function ParentDashboard() {
         <div className="col-12">
           <h1 className="h2 mb-0">
             <i className="bi bi-people me-2 text-info"></i>
-            Parent Dashboard
+            {t('dashboard.parentDashboard', 'Parent Dashboard')}
           </h1>
-          <p className="text-muted">Monitor your children&apos;s academic progress and manage fees</p>
+          <p className="text-muted">{t('dashboard.monitorChildren', "Monitor your children's academic progress and manage fees")}</p>
         </div>
       </div>
 
@@ -425,7 +428,7 @@ export default function ParentDashboard() {
             title={
               <span>
                 <i className="bi bi-graph-up me-2"></i>
-                Progress & Attendance
+                {t('dashboard.progressAndAttendance', 'Progress & Attendance')}
               </span>
             }
           >
@@ -632,7 +635,7 @@ export default function ParentDashboard() {
             title={
               <span>
                 <i className="bi bi-journal-check me-2"></i>
-                Tests & Exams
+                {t('dashboard.testsAndExams')}
               </span>
             }
           >
@@ -747,7 +750,7 @@ export default function ParentDashboard() {
             title={
               <span>
                 <i className="bi bi-cash-coin me-2"></i>
-                Fees {getPendingFees().length > 0 && <Badge bg="danger">{getPendingFees().length}</Badge>}
+                {t('dashboard.feeVouchers')} {getPendingFees().length > 0 && <Badge bg="danger">{getPendingFees().length}</Badge>}
               </span>
             }
           >
