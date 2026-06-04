@@ -1,0 +1,14 @@
+{
+  "messages": "Messages",
+  "inbox": "Inbox",
+  "newMessage": "New Message",
+  "thread": "thread",
+  "noMessages": "No messages",
+  "fromTo": "From / To",
+  "role": "Role",
+  "subject": "Subject",
+  "date": "Date",
+  "status": "Status",
+  "new": "new",
+  "read": "Read"
+}

@@ -6,8 +6,10 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { ProgressTab } from '../../components/dashboards/AdminDashboard';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminProgressPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -58,9 +60,9 @@ export default function AdminProgressPage() {
               <div>
                 <h2 className="h5 mb-1">
                   <i className="bi bi-graph-up me-2"></i>
-                  Student Progress
-                </h2>
-                <p className="text-muted mb-0">Track progress and attendance</p>
+                  {t('auto.studentProgress', `Student Progress`)}
+                                                  </h2>
+                <p className="text-muted mb-0">{t('auto.trackProgressAndAttendance', `Track progress and attendance`)}</p>
               </div>
             </div>
             <ProgressTab />

@@ -6,8 +6,10 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import FeeManagementTab from '../../components/dashboards/FeeManagementTab';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminFeesPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -57,9 +59,9 @@ export default function AdminFeesPage() {
               <div>
                 <h2 className="h5 mb-1">
                   <i className="bi bi-cash-coin me-2"></i>
-                  Fees
-                </h2>
-                <p className="text-muted mb-0">Manage student fees</p>
+                  {t('auto.fees', `Fees`)}
+                                                  </h2>
+                <p className="text-muted mb-0">{t('auto.manageStudentFees', `Manage student fees`)}</p>
               </div>
             </div>
             <FeeManagementTab />

@@ -2,12 +2,14 @@ import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslation
 import React from 'react';
 import ParentDashboard from '../../../components/dashboards/ParentDashboard';
 import Head from 'next/head';
+import { useTranslation } from 'react-i18next';
 
 export default function ParentPage() {
+    const { t } = useTranslation('common');
   return (
     <>
       <Head>
-        <title>Parent Dashboard | AIMS</title>
+        <title>{t('auto.parentDashboardAims', `Parent Dashboard | AIMS`)}</title>
       </Head>
       <ParentDashboard />
     </>

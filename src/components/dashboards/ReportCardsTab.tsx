@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface CourseReport {
   courseName: string;
@@ -21,6 +22,7 @@ interface ReportCard {
 }
 
 export default function ReportCardsTab() {
+    const { t } = useTranslation('common');
   const { data: session } = useSession();
   const [reports, setReports] = useState<ReportCard[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ export default function ReportCardsTab() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2 text-muted">Loading report cards...</p>
+        <p className="mt-2 text-muted">{t('auto.loadingReportCards', `Loading report cards...`)}</p>
       </div>
     );
   }
@@ -94,14 +96,14 @@ export default function ReportCardsTab() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="h4 mb-0">
           <i className="bi bi-award text-primary me-2"></i>
-          Student Report Cards
-        </h2>
+          {t('auto.studentReportCards', `Student Report Cards`)}
+                          </h2>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
 
       {reports.length === 0 ? (
-        <Alert variant="info">No student report cards found.</Alert>
+        <Alert variant="info">{t('auto.noStudentReportCardsFound', `No student report cards found.`)}</Alert>
       ) : (
         <Accordion className="shadow-sm">
           {reports.map((report, idx) => (
@@ -109,29 +111,29 @@ export default function ReportCardsTab() {
               <Accordion.Header>
                 <div className="d-flex justify-content-between w-100 align-items-center pe-3">
                   <span className="fw-bold">{report.studentName}</span>
-                  <Badge bg="secondary">{report.courses.length} Subjects</Badge>
+                  <Badge bg="secondary">{report.courses.length} {t('auto.subjects', `Subjects`)}</Badge>
                 </div>
               </Accordion.Header>
               <Accordion.Body>
                 <div className="d-flex justify-content-end mb-3">
                   <Button variant="outline-primary" size="sm" onClick={() => handleGeneratePDF(report)}>
                     <i className="bi bi-file-earmark-pdf me-2"></i>
-                    Download PDF Report
-                  </Button>
+                    {t('auto.downloadPdfReport', `Download PDF Report`)}
+                                                </Button>
                 </div>
                 <Table responsive hover className="align-middle">
                   <thead className="bg-light">
                     <tr>
-                      <th className="border-0">Subject</th>
-                      <th className="border-0">Teacher</th>
-                      <th className="border-0">Course Progress</th>
-                      <th className="border-0">Avg Test Score</th>
+                      <th className="border-0">{t('auto.subject', `Subject`)}</th>
+                      <th className="border-0">{t('auto.teacher', `Teacher`)}</th>
+                      <th className="border-0">{t('auto.courseProgress', `Course Progress`)}</th>
+                      <th className="border-0">{t('auto.avgTestScore', `Avg Test Score`)}</th>
                     </tr>
                   </thead>
                   <tbody>
                     {report.courses.length === 0 ? (
                       <tr>
-                        <td colSpan={4} className="text-center py-3 text-muted">No courses enrolled.</td>
+                        <td colSpan={4} className="text-center py-3 text-muted">{t('auto.noCoursesEnrolled', `No courses enrolled.`)}</td>
                       </tr>
                     ) : (
                       report.courses.map((c, i) => (
@@ -141,12 +143,12 @@ export default function ReportCardsTab() {
                           <td>
                             {c.latestProgress !== null ? (
                               <Badge bg={getScoreVariant(c.latestProgress)}>{c.latestProgress}%</Badge>
-                            ) : <span className="text-muted small">N/A</span>}
+                            ) : <span className="text-muted small">{t('auto.na', `N/A`)}</span>}
                           </td>
                           <td>
                             {c.averageTestScore !== null ? (
                               <Badge bg={getScoreVariant(c.averageTestScore)}>{c.averageTestScore}%</Badge>
-                            ) : <span className="text-muted small">N/A</span>}
+                            ) : <span className="text-muted small">{t('auto.na', `N/A`)}</span>}
                           </td>
                         </tr>
                       ))

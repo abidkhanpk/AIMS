@@ -70,6 +70,7 @@ interface TestRecord {
 
 // Expandable Text Component
 function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: number }) {
+    const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
   
   if (!text || text.length <= maxLength) {
@@ -446,13 +447,13 @@ export default function TeacherDashboard() {
   const getAttendanceBadge = (attendance: AttendanceStatus) => {
     switch (attendance) {
       case 'PRESENT':
-        return <Badge bg="success">Present</Badge>;
+        return <Badge bg="success">{t('auto.present', `Present`)}</Badge>;
       case 'ABSENT':
-        return <Badge bg="danger">Absent</Badge>;
+        return <Badge bg="danger">{t('auto.absent', `Absent`)}</Badge>;
       case 'LATE':
-        return <Badge bg="warning">Late</Badge>;
+        return <Badge bg="warning">{t('auto.late', `Late`)}</Badge>;
       case 'EXCUSED':
-        return <Badge bg="info">Excused</Badge>;
+        return <Badge bg="info">{t('auto.excused', `Excused`)}</Badge>;
       default:
         return <Badge bg="secondary">{attendance}</Badge>;
     }
@@ -475,7 +476,7 @@ export default function TeacherDashboard() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" />
-        <p className="mt-2 text-muted">Loading your assigned students...</p>
+        <p className="mt-2 text-muted">{t('auto.loadingYourAssignedStudents', `Loading your assigned students...`)}</p>
       </div>
     );
   }
@@ -500,7 +501,7 @@ export default function TeacherDashboard() {
           <InputGroup>
             <InputGroup.Text><i className="bi bi-search"></i></InputGroup.Text>
             <Form.Control
-              placeholder="Search students by name, email, or parent"
+              placeholder={t('auto.searchStudentsByNameEmailOrPar', `Search students by name, email, or parent`)}
               value={studentSearch}
               onChange={(e) => setStudentSearch(e.target.value)}
             />
@@ -525,8 +526,8 @@ export default function TeacherDashboard() {
             <Card className="text-center py-5">
               <Card.Body>
                 <i className="bi bi-people display-4 text-muted"></i>
-                <h4 className="mt-3 text-muted">No Students Assigned</h4>
-                <p className="text-muted">You don&apos;t have any students assigned to you yet. Please contact your administrator.</p>
+                <h4 className="mt-3 text-muted">{t('auto.noStudentsAssigned', `No Students Assigned`)}</h4>
+                <p className="text-muted">{t('auto.youDonapostHaveAnyStudentsAssi', `You don&apos;t have any students assigned to you yet. Please contact your administrator.`)}</p>
               </Card.Body>
             </Card>
           ) : (
@@ -569,30 +570,30 @@ export default function TeacherDashboard() {
                         <Card.Body className="p-0">
                           {!student.studentCourses || student.studentCourses.length === 0 ? (
                             <div className="text-center py-3">
-                              <small className="text-muted">No subjects assigned</small>
+                              <small className="text-muted">{t('auto.noSubjectsAssigned', `No subjects assigned`)}</small>
                             </div>
                           ) : (
                             <div className="table-responsive">
                               <Table className="mb-0">
                                 <thead className="table-light small">
                                   <tr>
-                                    <th>Date</th>
-                                    <th>Course</th>
-                                    <th>Attendance</th>
-                                    <th>Lesson</th>
-                                    <th>Homework</th>
-                                    <th>Progress %</th>
-                                    <th>Teacher&apos;s Remarks</th>
-                                    <th>Parent&apos;s Remarks</th>
-                                    <th>Actions</th>
+                                    <th>{t('auto.date', `Date`)}</th>
+                                    <th>{t('auto.course', `Course`)}</th>
+                                    <th>{t('auto.attendance', `Attendance`)}</th>
+                                    <th>{t('auto.lesson', `Lesson`)}</th>
+                                    <th>{t('auto.homework', `Homework`)}</th>
+                                    <th>{t('auto.progress', `Progress %`)}</th>
+                                    <th>{t('auto.teacherapossRemarks', `Teacher&apos;s Remarks`)}</th>
+                                    <th>{t('auto.parentapossRemarks', `Parent&apos;s Remarks`)}</th>
+                                    <th>{t('auto.actions', `Actions`)}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {!student.progressRecords || student.progressRecords.length === 0 ? (
                                     <tr>
                                       <td colSpan={9} className="text-center py-3 text-muted">
-                                        No progress records yet
-                                      </td>
+                                        {t('auto.noProgressRecordsYet', `No progress records yet`)}
+                                                                                                          </td>
                                     </tr>
                                   ) : (
                                     student.progressRecords.map((progress) => (
@@ -633,16 +634,16 @@ export default function TeacherDashboard() {
                                               );
                                               return (
                                                 <span className="small text-muted d-inline-block">
-                                                  Remark with{' '}
+                                                  {t('auto.remarkWith', `Remark with`)}{' '}
                                                   <span className={replyCount > 0 ? 'text-success' : 'text-danger'}>
                                                     {replyCount > 0 ? replyCount : 'no'}
                                                   </span>{' '}
-                                                  comment{replyCount === 1 ? '' : 's'}
+                                                  {t('auto.comment', `comment`)}{replyCount === 1 ? '' : 's'}
                                                 </span>
                                               );
                                             })()
                                           ) : (
-                                            <span className="small text-muted d-inline-block">No parent remarks</span>
+                                            <span className="small text-muted d-inline-block">{t('auto.noParentRemarks', `No parent remarks`)}</span>
                                           )}
                                         </td>
                                         <td>
@@ -680,7 +681,7 @@ export default function TeacherDashboard() {
               })}
               {filteredStudents.length === 0 && (
                 <Col>
-                  <div className="text-center text-muted py-4">No students match your search</div>
+                  <div className="text-center text-muted py-4">{t('auto.noStudentsMatchYourSearch', `No students match your search`)}</div>
                 </Col>
               )}
             </Row>
@@ -708,7 +709,7 @@ export default function TeacherDashboard() {
             <Row className="g-4">
               {filteredStudents.length === 0 && (
                 <Col>
-                  <div className="text-center text-muted py-4">No students match your search</div>
+                  <div className="text-center text-muted py-4">{t('auto.noStudentsMatchYourSearch', `No students match your search`)}</div>
                 </Col>
               )}
               {filteredStudents.map((student) => {
@@ -749,30 +750,30 @@ export default function TeacherDashboard() {
                       <Card.Body className="p-0">
                         {!student.studentCourses || student.studentCourses.length === 0 ? (
                           <div className="text-center py-3">
-                            <small className="text-muted">No subjects assigned</small>
+                            <small className="text-muted">{t('auto.noSubjectsAssigned', `No subjects assigned`)}</small>
                           </div>
                         ) : (
                           <div className="table-responsive">
                             <Table className="mb-0">
                               <thead className="table-light small">
                                 <tr>
-                                  <th>Date</th>
-                                  <th>Subject</th>
-                                  <th>Test/Exam</th>
-                                  <th>Type</th>
-                                  <th>Score</th>
-                                  <th>Percentage</th>
-                                  <th>Performance</th>
-                                  <th>Remarks</th>
-                                  <th>Actions</th>
+                                  <th>{t('auto.date', `Date`)}</th>
+                                  <th>{t('auto.subject', `Subject`)}</th>
+                                  <th>{t('auto.testexam', `Test/Exam`)}</th>
+                                  <th>{t('auto.type', `Type`)}</th>
+                                  <th>{t('auto.score', `Score`)}</th>
+                                  <th>{t('auto.percentage', `Percentage`)}</th>
+                                  <th>{t('auto.performance', `Performance`)}</th>
+                                  <th>{t('auto.remarks', `Remarks`)}</th>
+                                  <th>{t('auto.actions', `Actions`)}</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {!student.testRecords || student.testRecords.length === 0 ? (
                                   <tr>
                                     <td colSpan={9} className="text-center py-3 text-muted">
-                                      No tests recorded yet
-                                    </td>
+                                      {t('auto.noTestsRecordedYet', `No tests recorded yet`)}
+                                                                                                        </td>
                                   </tr>
                                 ) : (
                                   student.testRecords.map((test) => (
@@ -849,14 +850,14 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Select Subject *</Form.Label>
+                  <Form.Label>{t('auto.selectSubject', `Select Subject *`)}</Form.Label>
                   <Form.Select
                     value={selectedCourse}
                     onChange={(e) => setSelectedCourse(e.target.value)}
                     required
                     disabled={!!editingProgressId}
                   >
-                    <option value="">Choose a subject...</option>
+                    <option value="">{t('auto.chooseASubject', `Choose a subject...`)}</option>
                     {selectedStudent?.studentCourses?.map(({ course }) => (
                       <option key={course.id} value={course.id}>
                         {course.name}
@@ -867,7 +868,7 @@ export default function TeacherDashboard() {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Date</Form.Label>
+                  <Form.Label>{t('auto.date', `Date`)}</Form.Label>
                   <Form.Control
                     type="date"
                     value={progressDate}
@@ -880,30 +881,30 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Attendance Status *</Form.Label>
+                  <Form.Label>{t('auto.attendanceStatus', `Attendance Status *`)}</Form.Label>
                   <Form.Select
                     value={attendance}
                     onChange={(e) => setAttendance(e.target.value as AttendanceStatus)}
                     required
                   >
-                    <option value="PRESENT">Present</option>
-                    <option value="ABSENT">Absent</option>
-                    <option value="LATE">Late</option>
-                    <option value="EXCUSED">Excused</option>
+                    <option value="PRESENT">{t('auto.present', `Present`)}</option>
+                    <option value="ABSENT">{t('auto.absent', `Absent`)}</option>
+                    <option value="LATE">{t('auto.late', `Late`)}</option>
+                    <option value="EXCUSED">{t('auto.excused', `Excused`)}</option>
                   </Form.Select>
                   <Form.Text className="text-muted">
-                    Mark attendance status for this session
-                  </Form.Text>
+                    {t('auto.markAttendanceStatusForThisSes', `Mark attendance status for this session`)}
+                                                        </Form.Text>
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Lesson</Form.Label>
+                  <Form.Label>{t('auto.lesson', `Lesson`)}</Form.Label>
                   <Form.Control
                     type="text"
                     value={lesson}
                     onChange={(e) => setLesson(e.target.value)}
-                    placeholder="Enter lesson topic"
+                    placeholder={t('auto.enterLessonTopic', `Enter lesson topic`)}
                   />
                 </Form.Group>
               </Col>
@@ -912,18 +913,18 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Homework</Form.Label>
+                  <Form.Label>{t('auto.homework', `Homework`)}</Form.Label>
                   <Form.Control
                     type="text"
                     value={homework}
                     onChange={(e) => setHomework(e.target.value)}
-                    placeholder="Enter homework description"
+                    placeholder={t('auto.enterHomeworkDescription', `Enter homework description`)}
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Lesson Progress (%)</Form.Label>
+                  <Form.Label>{t('auto.lessonProgress', `Lesson Progress (%)`)}</Form.Label>
                   <Form.Control
                     type="number"
                     min="0"
@@ -931,20 +932,20 @@ export default function TeacherDashboard() {
                     step="0.1"
                     value={lessonProgress}
                     onChange={(e) => setLessonProgress(e.target.value)}
-                    placeholder="Enter progress percentage"
+                    placeholder={t('auto.enterProgressPercentage', `Enter progress percentage`)}
                     disabled={attendance === 'ABSENT'}
                   />
                   {attendance === 'ABSENT' && (
                     <Form.Text className="text-muted">
-                      Progress cannot be recorded for absent students
-                    </Form.Text>
+                      {t('auto.progressCannotBeRecordedForAbs', `Progress cannot be recorded for absent students`)}
+                                                              </Form.Text>
                   )}
                 </Form.Group>
               </Col>
             </Row>
 
             <Form.Group className="mb-4">
-              <Form.Label>Remarks</Form.Label>
+              <Form.Label>{t('auto.remarks', `Remarks`)}</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
@@ -960,8 +961,8 @@ export default function TeacherDashboard() {
 
             <div className="d-flex justify-content-end gap-2">
               <Button variant="secondary" onClick={() => setShowProgressModal(false)}>
-                Cancel
-              </Button>
+                {t('auto.cancel', `Cancel`)}
+                                            </Button>
               <Button
                 type="submit"
                 variant="success"
@@ -970,8 +971,8 @@ export default function TeacherDashboard() {
                 {updatingProgress ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />
-                    Adding...
-                  </>
+                    {t('auto.adding', `Adding...`)}
+                                                        </>
                 ) : (
                   <>
                     <i className="bi bi-check-circle me-2"></i>
@@ -998,14 +999,14 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Select Subject *</Form.Label>
+                  <Form.Label>{t('auto.selectSubject', `Select Subject *`)}</Form.Label>
                   <Form.Select
                     value={selectedTestCourse}
                     onChange={(e) => setSelectedTestCourse(e.target.value)}
                     required
                     disabled={!!editingTestId}
                   >
-                    <option value="">Choose a subject...</option>
+                    <option value="">{t('auto.chooseASubject', `Choose a subject...`)}</option>
                     {selectedTestStudent?.studentCourses?.map(({ course }) => (
                       <option key={course.id} value={course.id}>
                         {course.name}
@@ -1016,7 +1017,7 @@ export default function TeacherDashboard() {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Date</Form.Label>
+                  <Form.Label>{t('auto.date', `Date`)}</Form.Label>
                   <Form.Control
                     type="date"
                     value={performedAt}
@@ -1029,12 +1030,12 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Title *</Form.Label>
+                  <Form.Label>{t('auto.title', `Title *`)}</Form.Label>
                   <Form.Control
                     type="text"
                     value={testTitle}
                     onChange={(e) => setTestTitle(e.target.value)}
-                    placeholder="Quiz 1, Mid-term exam, Homework check..."
+                    placeholder={t('auto.quiz1MidtermExamHomeworkCheck', `Quiz 1, Mid-term exam, Homework check...`)}
                     required
                   />
                 </Form.Group>
@@ -1044,21 +1045,21 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={4}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Type *</Form.Label>
+                  <Form.Label>{t('auto.type', `Type *`)}</Form.Label>
                   <Form.Select
                     value={testType}
                     onChange={(e) => setTestType(e.target.value as AssessmentType)}
                   >
-                    <option value="QUIZ">Quiz</option>
-                    <option value="EXAM">Exam</option>
-                    <option value="HOMEWORK">Homework</option>
-                    <option value="OTHER">Other</option>
+                    <option value="QUIZ">{t('auto.quiz', `Quiz`)}</option>
+                    <option value="EXAM">{t('auto.exam', `Exam`)}</option>
+                    <option value="HOMEWORK">{t('auto.homework', `Homework`)}</option>
+                    <option value="OTHER">{t('auto.other', `Other`)}</option>
                   </Form.Select>
                 </Form.Group>
               </Col>
               <Col md={4}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Maximum Marks *</Form.Label>
+                  <Form.Label>{t('auto.maximumMarks', `Maximum Marks *`)}</Form.Label>
                   <Form.Control
                     type="number"
                     min="1"
@@ -1071,7 +1072,7 @@ export default function TeacherDashboard() {
               </Col>
               <Col md={4}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Obtained Marks *</Form.Label>
+                  <Form.Label>{t('auto.obtainedMarks', `Obtained Marks *`)}</Form.Label>
                   <Form.Control
                     type="number"
                     min="0"
@@ -1087,18 +1088,18 @@ export default function TeacherDashboard() {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Performance Summary</Form.Label>
+                  <Form.Label>{t('auto.performanceSummary', `Performance Summary`)}</Form.Label>
                   <Form.Control
                     type="text"
                     value={performanceNote}
                     onChange={(e) => setPerformanceNote(e.target.value)}
-                    placeholder="Short note on how the student performed"
+                    placeholder={t('auto.shortNoteOnHowTheStudentPerfor', `Short note on how the student performed`)}
                   />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Percentage</Form.Label>
+                  <Form.Label>{t('auto.percentage', `Percentage`)}</Form.Label>
                   <InputGroup>
                     <Form.Control
                       type="text"
@@ -1106,31 +1107,31 @@ export default function TeacherDashboard() {
                       readOnly
                     />
                     <InputGroup.Text>
-                      auto
-                    </InputGroup.Text>
+                      {t('auto.auto', `auto`)}
+                                                              </InputGroup.Text>
                   </InputGroup>
                   <Form.Text className="text-muted">
-                    Calculated automatically from marks
-                  </Form.Text>
+                    {t('auto.calculatedAutomaticallyFromMar', `Calculated automatically from marks`)}
+                                                        </Form.Text>
                 </Form.Group>
               </Col>
             </Row>
 
             <Form.Group className="mb-4">
-              <Form.Label>Detailed Remarks</Form.Label>
+              <Form.Label>{t('auto.detailedRemarks', `Detailed Remarks`)}</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
                 value={testRemarks}
                 onChange={(e) => setTestRemarks(e.target.value)}
-                placeholder="Any additional remarks or feedback"
+                placeholder={t('auto.anyAdditionalRemarksOrFeedback', `Any additional remarks or feedback`)}
               />
             </Form.Group>
 
             <div className="d-flex justify-content-end gap-2">
               <Button variant="secondary" onClick={() => setShowTestModal(false)}>
-                Cancel
-              </Button>
+                {t('auto.cancel', `Cancel`)}
+                                            </Button>
               <Button
                 type="submit"
                 variant="primary"
@@ -1139,8 +1140,8 @@ export default function TeacherDashboard() {
                 {savingTest ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />
-                    Saving...
-                  </>
+                    {t('auto.saving', `Saving...`)}
+                                                        </>
                 ) : (
                   <>
                     <i className="bi bi-save me-2"></i>

@@ -6,8 +6,10 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { TestsTab } from '../../components/dashboards/AdminDashboard';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminTestsPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -58,9 +60,9 @@ export default function AdminTestsPage() {
               <div>
                 <h2 className="h5 mb-1">
                   <i className="bi bi-journal-check me-2"></i>
-                  Tests & Exams
-                </h2>
-                <p className="text-muted mb-0">Review assessment records</p>
+                  {t('auto.testsExams', `Tests & Exams`)}
+                                                  </h2>
+                <p className="text-muted mb-0">{t('auto.reviewAssessmentRecords', `Review assessment records`)}</p>
               </div>
             </div>
             <TestsTab />

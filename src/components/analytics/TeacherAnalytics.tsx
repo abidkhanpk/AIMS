@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 interface TeacherAnalyticsData {
   averageTestScore: number;
@@ -7,6 +8,7 @@ interface TeacherAnalyticsData {
 }
 
 export default function TeacherAnalytics() {
+    const { t } = useTranslation('common');
   const [data, setData] = useState<TeacherAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,7 +33,7 @@ export default function TeacherAnalytics() {
     return (
       <div className="text-center py-4">
         <Spinner animation="border" variant="primary" size="sm" />
-        <span className="ms-2 text-muted small">Loading analytics...</span>
+        <span className="ms-2 text-muted small">{t('auto.loadingAnalytics', `Loading analytics...`)}</span>
       </div>
     );
   }
@@ -49,7 +51,7 @@ export default function TeacherAnalytics() {
               <i className="bi bi-journal-check"></i>
             </div>
             <div>
-              <h6 className="mb-0 text-uppercase fw-bold opacity-75 small">Avg Test Score</h6>
+              <h6 className="mb-0 text-uppercase fw-bold opacity-75 small">{t('auto.avgTestScore', `Avg Test Score`)}</h6>
               <h3 className="mb-0 fw-bold">{data.averageTestScore}%</h3>
             </div>
           </Card.Body>
@@ -62,7 +64,7 @@ export default function TeacherAnalytics() {
               <i className="bi bi-people-fill"></i>
             </div>
             <div>
-              <h6 className="mb-0 text-uppercase fw-bold opacity-75 small">Class Attendance</h6>
+              <h6 className="mb-0 text-uppercase fw-bold opacity-75 small">{t('auto.classAttendance', `Class Attendance`)}</h6>
               <h3 className="mb-0 fw-bold">{data.attendanceRate}%</h3>
             </div>
           </Card.Body>

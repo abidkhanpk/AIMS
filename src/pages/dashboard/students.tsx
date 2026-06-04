@@ -6,8 +6,10 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { UserManagementTab } from '../../components/dashboards/AdminDashboard';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminStudentsPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -50,9 +52,9 @@ export default function AdminStudentsPage() {
               <div>
                 <h2 className="h5 mb-1">
                   <i className="bi bi-mortarboard me-2"></i>
-                  Students
-                </h2>
-                <p className="text-muted mb-0">Manage student accounts</p>
+                  {t('auto.students', `Students`)}
+                                                  </h2>
+                <p className="text-muted mb-0">{t('auto.manageStudentAccounts', `Manage student accounts`)}</p>
               </div>
             </div>
             <UserManagementTab role="STUDENT" />

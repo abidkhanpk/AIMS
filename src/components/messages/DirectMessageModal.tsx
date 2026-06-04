@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Spinner } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 interface DirectMessageModalProps {
   show: boolean;
@@ -12,6 +13,7 @@ interface DirectMessageModalProps {
 }
 
 export default function DirectMessageModal({ show, onHide, targetId, targetName, onSent, subject, threadId }: DirectMessageModalProps) {
+    const { t } = useTranslation('common');
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -96,15 +98,15 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
         
         {!targetId && (
           <Form.Group className="mb-3">
-            <Form.Label>To</Form.Label>
+            <Form.Label>{t('auto.to', `To`)}</Form.Label>
             {loadingUsers ? (
-              <div><Spinner animation="border" size="sm" className="me-2" /> Loading contacts...</div>
+              <div><Spinner animation="border" size="sm" className="me-2" /> {t('auto.loadingContacts', `Loading contacts...`)}</div>
             ) : (
               <Form.Select 
                 value={selectedUser} 
                 onChange={(e) => setSelectedUser(e.target.value)}
               >
-                <option value="">Select a recipient...</option>
+                <option value="">{t('auto.selectARecipient', `Select a recipient...`)}</option>
                 {users.map(u => (
                   <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
                 ))}
@@ -114,38 +116,38 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
         )}
 
       <Form.Group className="mb-3">
-        <Form.Label>Subject</Form.Label>
+        <Form.Label>{t('auto.subject', `Subject`)}</Form.Label>
         <Form.Control
           type="text"
           value={msgSubject}
           onChange={(e) => setMsgSubject(e.target.value)}
-          placeholder="Enter subject"
+          placeholder={t('auto.enterSubject', `Enter subject`)}
           disabled={!!threadId}
         />
       </Form.Group>
       <Form.Group className="mb-3">
-        <Form.Label>Message</Form.Label>
+        <Form.Label>{t('auto.message', `Message`)}</Form.Label>
         <Form.Control
           as="textarea"
             rows={3}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Type your message..."
+            placeholder={t('auto.typeYourMessage', `Type your message...`)}
           />
         </Form.Group>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>Close</Button>
+        <Button variant="secondary" onClick={onHide}>{t('auto.close', `Close`)}</Button>
         <Button variant="primary" onClick={handleSend} disabled={!text.trim() || sending || !actualTargetId}>
           {sending ? (
             <>
               <Spinner animation="border" size="sm" className="me-2" />
-              Sending...
-            </>
+              {t('auto.sending', `Sending...`)}
+                                      </>
           ) : (
             <>
-              <i className="bi bi-send me-1"></i>Send
-            </>
+              <i className="bi bi-send me-1"></i>{t('auto.send', `Send`)}
+                                          </>
           )}
         </Button>
       </Modal.Footer>

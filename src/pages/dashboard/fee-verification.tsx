@@ -6,8 +6,10 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import FeeVerificationTab from '../../components/dashboards/FeeVerificationTab';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminFeeVerificationPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -57,9 +59,9 @@ export default function AdminFeeVerificationPage() {
               <div>
                 <h2 className="h5 mb-1">
                   <i className="bi bi-check-circle me-2"></i>
-                  Fee Verification
-                </h2>
-                <p className="text-muted mb-0">Verify and reconcile fees</p>
+                  {t('auto.feeVerification', `Fee Verification`)}
+                                                  </h2>
+                <p className="text-muted mb-0">{t('auto.verifyAndReconcileFees', `Verify and reconcile fees`)}</p>
               </div>
             </div>
             <FeeVerificationTab />

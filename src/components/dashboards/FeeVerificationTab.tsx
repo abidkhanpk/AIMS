@@ -2,8 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Badge, Button, Alert, Spinner, Card, Form, Row, Col, Modal } from 'react-bootstrap';
 import { Fee, FeeStatus } from '@prisma/client';
 import { currencies } from '../../utils/currencies';
+import { useTranslation } from 'react-i18next';
 
 const FeeVerificationTab = () => {
+    const { t } = useTranslation('common');
   const [fees, setFees] = useState<Fee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -143,15 +145,15 @@ const FeeVerificationTab = () => {
   const getStatusBadge = (status: FeeStatus) => {
     switch (status) {
       case 'PAID':
-        return <Badge bg="success">Paid</Badge>;
+        return <Badge bg="success">{t('auto.paid', `Paid`)}</Badge>;
       case 'PENDING':
-        return <Badge bg="warning">Pending</Badge>;
+        return <Badge bg="warning">{t('auto.pending', `Pending`)}</Badge>;
       case 'PROCESSING':
-        return <Badge bg="info">Processing</Badge>;
+        return <Badge bg="info">{t('auto.processing', `Processing`)}</Badge>;
       case 'OVERDUE':
-        return <Badge bg="danger">Overdue</Badge>;
+        return <Badge bg="danger">{t('auto.overdue', `Overdue`)}</Badge>;
       case 'CANCELLED':
-        return <Badge bg="secondary">Cancelled</Badge>;
+        return <Badge bg="secondary">{t('auto.cancelled', `Cancelled`)}</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -166,20 +168,20 @@ const FeeVerificationTab = () => {
         <Card.Header className="bg-light d-flex align-items-center justify-content-between">
           <h6 className="mb-0">
             <i className="bi bi-check-circle me-2"></i>
-            Fee Verification & History
-          </h6>
+            {t('auto.feeVerificationHistory', `Fee Verification & History`)}
+                                </h6>
           <div className="d-flex align-items-center gap-2">
-            <label className="small text-muted mb-0">Status</label>
+            <label className="small text-muted mb-0">{t('auto.status', `Status`)}</label>
             <select
               className="form-select form-select-sm"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as any)}
               style={{ width: 180 }}
             >
-              <option value="ALL">All</option>
-              <option value="PROCESSING">Processing</option>
-              <option value="PENDING">Pending</option>
-              <option value="PAID">Paid</option>
+              <option value="ALL">{t('auto.all', `All`)}</option>
+              <option value="PROCESSING">{t('auto.processing', `Processing`)}</option>
+              <option value="PENDING">{t('auto.pending', `Pending`)}</option>
+              <option value="PAID">{t('auto.paid', `Paid`)}</option>
             </select>
           </div>
         </Card.Header>
@@ -187,25 +189,25 @@ const FeeVerificationTab = () => {
           {loading ? (
             <div className="text-center py-4">
               <Spinner animation="border" size="sm" />
-              <p className="mt-2 text-muted small">Loading fees...</p>
+              <p className="mt-2 text-muted small">{t('auto.loadingFees', `Loading fees...`)}</p>
             </div>
           ) : fees.length === 0 ? (
             <div className="text-center py-4">
-              <p className="mt-2 text-muted small">No fees found for selected status</p>
+              <p className="mt-2 text-muted small">{t('auto.noFeesFoundForSelectedStatus', `No fees found for selected status`)}</p>
             </div>
           ) : (
             <Table hover size="sm" className="mb-0">
               <thead>
                 <tr>
-                  <th>Student</th>
-                  <th>Fee Title</th>
-                  <th>Status</th>
-                  <th>Amount</th>
-                  <th>Paid Amount</th>
-                  <th>Paid Date</th>
-                  <th>Payment Details</th>
-                  <th>Proof</th>
-                  <th>Actions</th>
+                  <th>{t('auto.student', `Student`)}</th>
+                  <th>{t('auto.feeTitle', `Fee Title`)}</th>
+                  <th>{t('auto.status', `Status`)}</th>
+                  <th>{t('auto.amount', `Amount`)}</th>
+                  <th>{t('auto.paidAmount', `Paid Amount`)}</th>
+                  <th>{t('auto.paidDate', `Paid Date`)}</th>
+                  <th>{t('auto.paymentDetails', `Payment Details`)}</th>
+                  <th>{t('auto.proof', `Proof`)}</th>
+                  <th>{t('auto.actions', `Actions`)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -220,7 +222,7 @@ const FeeVerificationTab = () => {
                     <td className="small">{fee.paymentDetails || '-'}</td>
                     <td>
                       {fee.paymentProof ? (
-                        <a href={fee.paymentProof} target="_blank" rel="noopener noreferrer">View</a>
+                        <a href={fee.paymentProof} target="_blank" rel="noopener noreferrer">{t('auto.view', `View`)}</a>
                       ) : (
                         'N/A'
                       )}
@@ -232,7 +234,7 @@ const FeeVerificationTab = () => {
                           size="sm"
                           className="me-2"
                           onClick={() => openEditModal(fee)}
-                          title="Edit Fee"
+                          title={t('auto.editFee', `Edit Fee`)}
                         >
                           <i className="bi bi-pencil"></i>
                         </Button>
@@ -248,7 +250,7 @@ const FeeVerificationTab = () => {
                         </>
                       )}
                       {fee.status === 'PAID' && (
-                        <Button variant="outline-warning" size="sm" onClick={() => handleRevert(fee.id)} title="Revert to Pending">
+                        <Button variant="outline-warning" size="sm" onClick={() => handleRevert(fee.id)} title={t('auto.revertToPending', `Revert to Pending`)}>
                           <i className="bi bi-arrow-counterclockwise"></i>
                         </Button>
                       )}
@@ -264,12 +266,12 @@ const FeeVerificationTab = () => {
       {/* Edit Fee Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Edit Fee</Modal.Title>
+          <Modal.Title>{t('auto.editFee', `Edit Fee`)}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleUpdateFee}>
             <Form.Group className="mb-3">
-              <Form.Label>Title</Form.Label>
+              <Form.Label>{t('auto.title', `Title`)}</Form.Label>
               <Form.Control
                 type="text"
                 value={editTitle}
@@ -278,7 +280,7 @@ const FeeVerificationTab = () => {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
+              <Form.Label>{t('auto.description', `Description`)}</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
@@ -289,7 +291,7 @@ const FeeVerificationTab = () => {
             <Row>
               <Col>
                 <Form.Group className="mb-3">
-                  <Form.Label>Amount</Form.Label>
+                  <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
                   <Form.Control
                     type="number"
                     step="0.01"
@@ -301,7 +303,7 @@ const FeeVerificationTab = () => {
               </Col>
               <Col>
                 <Form.Group className="mb-3">
-                  <Form.Label>Currency</Form.Label>
+                  <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                   <Form.Select
                     value={editCurrency}
                     onChange={(e) => setEditCurrency(e.target.value)}
@@ -317,7 +319,7 @@ const FeeVerificationTab = () => {
               </Col>
             </Row>
             <Form.Group className="mb-3">
-              <Form.Label>Due Date</Form.Label>
+              <Form.Label>{t('auto.dueDate', `Due Date`)}</Form.Label>
               <Form.Control
                 type="date"
                 value={editDueDate}
@@ -332,8 +334,8 @@ const FeeVerificationTab = () => {
                 onClick={() => setShowEditModal(false)}
                 disabled={saving}
               >
-                Cancel
-              </Button>
+                {t('auto.cancel', `Cancel`)}
+                                            </Button>
               <Button variant="primary" type="submit" disabled={saving}>
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>

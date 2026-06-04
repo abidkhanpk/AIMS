@@ -21,8 +21,10 @@ interface FeeDefinition {
 const feeTypes = Object.values(FeeType);
 
 import { currencies } from '../../utils/currencies';
+import { useTranslation } from 'react-i18next';
 
 function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange: () => void; }) {
+    const { t } = useTranslation('common');
   const [feeDefinitions, setFeeDefinitions] = useState<FeeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -243,23 +245,23 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
   const renderForm = (handleSubmit: (e: React.FormEvent) => void, isEditing = false) => (
     <Form onSubmit={handleSubmit}>
       <Form.Group className="mb-3">
-        <Form.Label>Title</Form.Label>
+        <Form.Label>{t('auto.title', `Title`)}</Form.Label>
         <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
       </Form.Group>
       <Form.Group className="mb-3">
-        <Form.Label>Description</Form.Label>
+        <Form.Label>{t('auto.description', `Description`)}</Form.Label>
         <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </Form.Group>
       <Row>
         <Col>
           <Form.Group className="mb-3">
-            <Form.Label>Amount</Form.Label>
+            <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
             <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
           </Form.Group>
         </Col>
         <Col>
           <Form.Group className="mb-3">
-            <Form.Label>Currency</Form.Label>
+            <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
             <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
               {currencies.map(curr => (
                 <option key={curr.code} value={curr.code}>
@@ -271,7 +273,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         </Col>
       </Row>
       <Form.Group className="mb-3">
-        <Form.Label>Type</Form.Label>
+        <Form.Label>{t('auto.type', `Type`)}</Form.Label>
         <Form.Select value={type} onChange={(e) => setType(e.target.value as FeeType)} required>
           {feeTypes.map((feeType) => (
             <option key={feeType} value={feeType}>{feeType}</option>
@@ -281,21 +283,21 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       <Row>
         <Col>
           <Form.Group className="mb-3">
-            <Form.Label>Generation Day</Form.Label>
+            <Form.Label>{t('auto.generationDay', `Generation Day`)}</Form.Label>
             <Form.Control type="number" value={generationDay} onChange={(e) => setGenerationDay(e.target.value)} required />
           </Form.Group>
         </Col>
         <Col>
           <Form.Group className="mb-3">
-            <Form.Label>Start Date</Form.Label>
+            <Form.Label>{t('auto.startDate', `Start Date`)}</Form.Label>
             <Form.Control type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
           </Form.Group>
         </Col>
       </Row>
       <Form.Group className="mb-3">
-        <Form.Label>Due Date After (Days)</Form.Label>
+        <Form.Label>{t('auto.dueDateAfterDays', `Due Date After (Days)`)}</Form.Label>
         <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
-        <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
+        <Form.Text className="text-muted">{t('auto.dateAfterTheseNumberOfDaysAfte', `Date after these number of days after generation day is set as due date.`)}</Form.Text>
       </Form.Group>
       <Button variant="primary" type="submit" disabled={isEditing ? editing : creating} className="w-100">
         {isEditing ? (editing ? 'Updating...' : 'Update Fee Definition') : (creating ? 'Creating...' : 'Create Fee Definition')}
@@ -348,10 +350,10 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
           <div className="d-flex justify-content-between align-items-center px-3 pt-3">
             <Nav variant="tabs" className="flex-grow-1">
               <Nav.Item>
-                <Nav.Link eventKey="definitions">Fee Definitions <Badge bg="primary">{feeDefinitions.length}</Badge></Nav.Link>
+                <Nav.Link eventKey="definitions">{t('auto.feeDefinitions', `Fee Definitions`)} <Badge bg="primary">{feeDefinitions.length}</Badge></Nav.Link>
               </Nav.Item>
               <Nav.Item>
-                <Nav.Link eventKey="payments">Fee Payments</Nav.Link>
+                <Nav.Link eventKey="payments">{t('auto.feePayments', `Fee Payments`)}</Nav.Link>
               </Nav.Item>
             </Nav>
             {activeTab === 'definitions' && (
@@ -379,19 +381,19 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                     <Row className="g-3">
                       <Col md={4}>
                         <Form.Group>
-                          <Form.Label>Title</Form.Label>
+                          <Form.Label>{t('auto.title', `Title`)}</Form.Label>
                           <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
                         </Form.Group>
                       </Col>
                       <Col md={4}>
                         <Form.Group>
-                          <Form.Label>Amount</Form.Label>
+                          <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
                           <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
                         </Form.Group>
                       </Col>
                       <Col md={4}>
                         <Form.Group>
-                          <Form.Label>Currency</Form.Label>
+                          <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                           <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
                             {currencies.map(curr => (
                               <option key={curr.code} value={curr.code}>
@@ -403,7 +405,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                       </Col>
                       <Col md={4}>
                         <Form.Group>
-                          <Form.Label>Type</Form.Label>
+                          <Form.Label>{t('auto.type', `Type`)}</Form.Label>
                           <Form.Select value={type} onChange={(e) => setType(e.target.value as FeeType)} required>
                             {feeTypes.map((feeType) => (
                               <option key={feeType} value={feeType}>{feeType}</option>
@@ -413,26 +415,26 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                       </Col>
                       <Col md={4}>
                         <Form.Group>
-                          <Form.Label>Generation Day</Form.Label>
+                          <Form.Label>{t('auto.generationDay', `Generation Day`)}</Form.Label>
                           <Form.Control type="number" value={generationDay} onChange={(e) => setGenerationDay(e.target.value)} required />
                         </Form.Group>
                       </Col>
                       <Col md={4}>
                         <Form.Group>
-                          <Form.Label>Start Date</Form.Label>
+                          <Form.Label>{t('auto.startDate', `Start Date`)}</Form.Label>
                           <Form.Control type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
                         </Form.Group>
                       </Col>
                       <Col md={4}>
                         <Form.Group>
-                          <Form.Label>Due Date After (Days)</Form.Label>
+                          <Form.Label>{t('auto.dueDateAfterDays', `Due Date After (Days)`)}</Form.Label>
                           <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
-                          <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
+                          <Form.Text className="text-muted">{t('auto.dateAfterTheseNumberOfDaysAfte', `Date after these number of days after generation day is set as due date.`)}</Form.Text>
                         </Form.Group>
                       </Col>
                       <Col md={12}>
                         <Form.Group>
-                          <Form.Label>Description</Form.Label>
+                          <Form.Label>{t('auto.description', `Description`)}</Form.Label>
                           <Form.Control as="textarea" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
                         </Form.Group>
                       </Col>
@@ -447,8 +449,8 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                         }}
                         disabled={creating}
                       >
-                        Cancel
-                      </Button>
+                        {t('auto.cancel', `Cancel`)}
+                                                                    </Button>
                       <Button variant="primary" type="submit" disabled={creating}>
                         {creating ? 'Creating...' : 'Save Fee Definition'}
                       </Button>
@@ -461,22 +463,22 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                 {loading ? (
                   <div className="text-center py-3">
                     <Spinner animation="border" size="sm" />
-                    <p className="mt-2 text-muted small">Loading fee definitions...</p>
+                    <p className="mt-2 text-muted small">{t('auto.loadingFeeDefinitions', `Loading fee definitions...`)}</p>
                   </div>
                 ) : feeDefinitions.length === 0 ? (
                   <div className="text-center py-4">
                     <i className="bi bi-list-task display-6 text-muted"></i>
-                    <p className="mt-2 text-muted small">No fee definitions found</p>
+                    <p className="mt-2 text-muted small">{t('auto.noFeeDefinitionsFound', `No fee definitions found`)}</p>
                   </div>
                 ) : (
                   <div className="table-responsive">
                     <Table hover size="sm" className="mb-0">
                       <thead className="table-light">
                         <tr>
-                          <th>Title</th>
-                          <th>Amount</th>
-                          <th>Type</th>
-                          <th>Actions</th>
+                          <th>{t('auto.title', `Title`)}</th>
+                          <th>{t('auto.amount', `Amount`)}</th>
+                          <th>{t('auto.type', `Type`)}</th>
+                          <th>{t('auto.actions', `Actions`)}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -490,7 +492,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                                 variant="outline-warning"
                                 size="sm"
                                 onClick={() => handleEditFeeDefinition(fd)}
-                                title="Edit Fee Definition"
+                                title={t('auto.editFeeDefinition', `Edit Fee Definition`)}
                                 className="me-2"
                               >
                                 <i className="bi bi-pencil"></i>
@@ -499,7 +501,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                                 variant="outline-danger"
                                 size="sm"
                                 onClick={() => askDeleteFeeDefinition(fd)}
-                                title="Delete Fee Definition"
+                                title={t('auto.deleteFeeDefinition', `Delete Fee Definition`)}
                               >
                                 <i className="bi bi-trash"></i>
                               </Button>
@@ -518,23 +520,23 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                 {paymentsLoading ? (
                   <div className="text-center py-3">
                     <Spinner animation="border" size="sm" />
-                    <p className="mt-2 text-muted small">Loading payments...</p>
+                    <p className="mt-2 text-muted small">{t('auto.loadingPayments', `Loading payments...`)}</p>
                   </div>
                 ) : feePayments.length === 0 ? (
                   <div className="text-center py-4">
                     <i className="bi bi-receipt-cutoff display-6 text-muted"></i>
-                    <p className="mt-2 text-muted small">No fee payments found</p>
+                    <p className="mt-2 text-muted small">{t('auto.noFeePaymentsFound', `No fee payments found`)}</p>
                   </div>
                 ) : (
                   <div className="table-responsive">
                     <Table hover size="sm" className="mb-0">
                       <thead className="table-light">
                         <tr>
-                          <th>Title</th>
-                          <th>Amount</th>
-                          <th>Status</th>
-                          <th>Paid Date</th>
-                          <th>Actions</th>
+                          <th>{t('auto.title', `Title`)}</th>
+                          <th>{t('auto.amount', `Amount`)}</th>
+                          <th>{t('auto.status', `Status`)}</th>
+                          <th>{t('auto.paidDate', `Paid Date`)}</th>
+                          <th>{t('auto.actions', `Actions`)}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -561,8 +563,8 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                                   variant="outline-primary"
                                   onClick={() => setVerifyTarget(fee)}
                                 >
-                                  Verify/Reject
-                                </Button>
+                                  {t('auto.verifyreject', `Verify/Reject`)}
+                                                                            </Button>
                               ) : (
                                 <span className="text-muted small">-</span>
                               )}
@@ -582,27 +584,27 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Delete Fee Definition?</Modal.Title>
+          <Modal.Title>{t('auto.deleteFeeDefinition', `Delete Fee Definition?`)}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <div className="text-center">
             <i className="bi bi-exclamation-triangle text-danger" style={{ fontSize: '2rem' }}></i>
             <p className="mt-3">
-              This will permanently remove <strong>{deleteTarget?.title}</strong> for this student.
-            </p>
-            <p className="text-muted small mb-0">This action cannot be undone.</p>
+              {t('auto.thisWillPermanentlyRemove', `This will permanently remove`)} <strong>{deleteTarget?.title}</strong> {t('auto.forThisStudent', `for this student.`)}
+                                      </p>
+            <p className="text-muted small mb-0">{t('auto.thisActionCannotBeUndone', `This action cannot be undone.`)}</p>
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-          <Button variant="danger" onClick={confirmDeleteFeeDefinition}>Delete</Button>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>{t('auto.cancel', `Cancel`)}</Button>
+          <Button variant="danger" onClick={confirmDeleteFeeDefinition}>{t('auto.delete', `Delete`)}</Button>
         </Modal.Footer>
       </Modal>
 
       {/* Edit Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
         <Modal.Header closeButton>
-      <Modal.Title>Edit Fee Definition</Modal.Title>
+      <Modal.Title>{t('auto.editFeeDefinition', `Edit Fee Definition`)}</Modal.Title>
     </Modal.Header>
     <Modal.Body>
       {renderForm(handleUpdateFeeDefinition, true)}
@@ -612,19 +614,19 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       {/* Verify / Reject payment */}
       <Modal show={!!verifyTarget} onHide={() => setVerifyTarget(null)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Verify Payment</Modal.Title>
+          <Modal.Title>{t('auto.verifyPayment', `Verify Payment`)}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {verifyTarget && (
             <>
-              <p className="mb-1"><strong>Fee:</strong> {verifyTarget.feeDefinition?.title || verifyTarget.title}</p>
-              <p className="mb-1"><strong>Amount:</strong> {verifyTarget.feeDefinition?.amount || verifyTarget.amount} {verifyTarget.feeDefinition?.currency || verifyTarget.currency}</p>
-              <p className="mb-0 text-muted small">Approve to mark as paid, or reject to send it back to pending.</p>
+              <p className="mb-1"><strong>{t('auto.fee', `Fee:`)}</strong> {verifyTarget.feeDefinition?.title || verifyTarget.title}</p>
+              <p className="mb-1"><strong>{t('auto.amount', `Amount:`)}</strong> {verifyTarget.feeDefinition?.amount || verifyTarget.amount} {verifyTarget.feeDefinition?.currency || verifyTarget.currency}</p>
+              <p className="mb-0 text-muted small">{t('auto.approveToMarkAsPaidOrRejectToS', `Approve to mark as paid, or reject to send it back to pending.`)}</p>
             </>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setVerifyTarget(null)} disabled={verifying}>Cancel</Button>
+          <Button variant="secondary" onClick={() => setVerifyTarget(null)} disabled={verifying}>{t('auto.cancel', `Cancel`)}</Button>
           <Button variant="danger" onClick={() => handleVerify(false)} disabled={verifying}>
             {verifying ? 'Rejecting...' : 'Reject'}
           </Button>

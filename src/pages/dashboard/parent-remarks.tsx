@@ -6,8 +6,10 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { RemarksTab } from '../../components/dashboards/AdminDashboard';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminParentRemarksPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -56,9 +58,9 @@ export default function AdminParentRemarksPage() {
               <div>
                 <h2 className="h5 mb-1">
                   <i className="bi bi-chat-dots me-2"></i>
-                  Parent Remarks
-                </h2>
-                <p className="text-muted mb-0">Review remarks and threads</p>
+                  {t('auto.parentRemarks', `Parent Remarks`)}
+                                                  </h2>
+                <p className="text-muted mb-0">{t('auto.reviewRemarksAndThreads', `Review remarks and threads`)}</p>
               </div>
             </div>
             <RemarksTab />

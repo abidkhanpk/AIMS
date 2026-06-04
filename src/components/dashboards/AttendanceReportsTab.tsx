@@ -6,6 +6,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { format } from 'date-fns';
 import { AttendanceStatus } from '@prisma/client';
+import { useTranslation } from 'react-i18next';
 
 interface AttendanceRecord {
   id: string;
@@ -18,6 +19,7 @@ interface AttendanceRecord {
 }
 
 export default function AttendanceReportsTab() {
+    const { t } = useTranslation('common');
   const { data: session } = useSession();
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -114,15 +116,15 @@ export default function AttendanceReportsTab() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="h4 mb-0">
           <i className="bi bi-file-earmark-spreadsheet text-primary me-2"></i>
-          Attendance Reports
-        </h2>
+          {t('auto.attendanceReports', `Attendance Reports`)}
+                          </h2>
         <div>
           <Button variant="outline-success" className="me-2" onClick={handleExportCSV} disabled={filteredRecords.length === 0}>
-            <i className="bi bi-filetype-csv me-1"></i> CSV
-          </Button>
+            <i className="bi bi-filetype-csv me-1"></i> {t('auto.csv', `CSV`)}
+                                </Button>
           <Button variant="outline-danger" onClick={handleExportPDF} disabled={filteredRecords.length === 0}>
-            <i className="bi bi-filetype-pdf me-1"></i> PDF
-          </Button>
+            <i className="bi bi-filetype-pdf me-1"></i> {t('auto.pdf', `PDF`)}
+                                </Button>
         </div>
       </div>
 
@@ -132,22 +134,22 @@ export default function AttendanceReportsTab() {
             <Row className="g-3 align-items-end">
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label className="small text-muted mb-1">Start Date</Form.Label>
+                  <Form.Label className="small text-muted mb-1">{t('auto.startDate', `Start Date`)}</Form.Label>
                   <Form.Control type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
                 </Form.Group>
               </Col>
               <Col md={3}>
                 <Form.Group>
-                  <Form.Label className="small text-muted mb-1">End Date</Form.Label>
+                  <Form.Label className="small text-muted mb-1">{t('auto.endDate', `End Date`)}</Form.Label>
                   <Form.Control type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
                 </Form.Group>
               </Col>
               <Col md={4}>
                 <Form.Group>
-                  <Form.Label className="small text-muted mb-1">Search Student/Course</Form.Label>
+                  <Form.Label className="small text-muted mb-1">{t('auto.searchStudentcourse', `Search Student/Course`)}</Form.Label>
                   <Form.Control 
                     type="text" 
-                    placeholder="Search..." 
+                    placeholder={t('auto.search', `Search...`)} 
                     value={studentSearch} 
                     onChange={e => setStudentSearch(e.target.value)} 
                   />
@@ -155,7 +157,7 @@ export default function AttendanceReportsTab() {
               </Col>
               <Col md={2}>
                 <Button variant="primary" type="submit" className="w-100" disabled={loading}>
-                  {loading ? <Spinner size="sm" animation="border" /> : <><i className="bi bi-filter"></i> Filter</>}
+                  {loading ? <Spinner size="sm" animation="border" /> : <><i className="bi bi-filter"></i> {t('auto.filter', `Filter`)}</>}
                 </Button>
               </Col>
             </Row>
@@ -171,11 +173,11 @@ export default function AttendanceReportsTab() {
             <Table hover className="align-middle mb-0 text-nowrap">
               <thead className="bg-light">
                 <tr>
-                  <th className="border-0 text-muted small px-4 py-3">Date</th>
-                  <th className="border-0 text-muted small py-3">Student</th>
-                  <th className="border-0 text-muted small py-3">Course</th>
-                  <th className="border-0 text-muted small py-3">Status</th>
-                  <th className="border-0 text-muted small py-3">Progress</th>
+                  <th className="border-0 text-muted small px-4 py-3">{t('auto.date', `Date`)}</th>
+                  <th className="border-0 text-muted small py-3">{t('auto.student', `Student`)}</th>
+                  <th className="border-0 text-muted small py-3">{t('auto.course', `Course`)}</th>
+                  <th className="border-0 text-muted small py-3">{t('auto.status', `Status`)}</th>
+                  <th className="border-0 text-muted small py-3">{t('auto.progress', `Progress`)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,8 +191,8 @@ export default function AttendanceReportsTab() {
                   <tr>
                     <td colSpan={5} className="text-center py-5 text-muted">
                       <i className="bi bi-folder-x display-6 d-block mb-3"></i>
-                      No attendance records found for the selected criteria.
-                    </td>
+                      {t('auto.noAttendanceRecordsFoundForThe', `No attendance records found for the selected criteria.`)}
+                                                                  </td>
                   </tr>
                 ) : (
                   filteredRecords.map((r) => (

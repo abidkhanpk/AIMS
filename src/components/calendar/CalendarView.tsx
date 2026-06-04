@@ -150,7 +150,7 @@ export default function CalendarView() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2 text-muted">Loading schedule...</p>
+        <p className="mt-2 text-muted">{t('auto.loadingSchedule', `Loading schedule...`)}</p>
       </div>
     );
   }

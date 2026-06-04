@@ -296,15 +296,15 @@ export default function ParentDashboard() {
   const getStatusBadge = (status: FeeStatus) => {
     switch (status) {
       case 'PAID':
-        return <Badge bg="success">Paid</Badge>;
+        return <Badge bg="success">{t('auto.paid', `Paid`)}</Badge>;
       case 'PENDING':
-        return <Badge bg="warning">Pending</Badge>;
+        return <Badge bg="warning">{t('auto.pending', `Pending`)}</Badge>;
       case 'PROCESSING':
-        return <Badge bg="info">Processing</Badge>;
+        return <Badge bg="info">{t('auto.processing', `Processing`)}</Badge>;
       case 'OVERDUE':
-        return <Badge bg="danger">Overdue</Badge>;
+        return <Badge bg="danger">{t('auto.overdue', `Overdue`)}</Badge>;
       case 'CANCELLED':
-        return <Badge bg="secondary">Cancelled</Badge>;
+        return <Badge bg="secondary">{t('auto.cancelled', `Cancelled`)}</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -313,13 +313,13 @@ export default function ParentDashboard() {
   const getAttendanceBadge = (attendance: AttendanceStatus) => {
     switch (attendance) {
       case 'PRESENT':
-        return <Badge bg="success">Present</Badge>;
+        return <Badge bg="success">{t('auto.present', `Present`)}</Badge>;
       case 'ABSENT':
-        return <Badge bg="danger">Absent</Badge>;
+        return <Badge bg="danger">{t('auto.absent', `Absent`)}</Badge>;
       case 'LATE':
-        return <Badge bg="warning">Late</Badge>;
+        return <Badge bg="warning">{t('auto.late', `Late`)}</Badge>;
       case 'EXCUSED':
-        return <Badge bg="info">Excused</Badge>;
+        return <Badge bg="info">{t('auto.excused', `Excused`)}</Badge>;
       default:
         return <Badge bg="secondary">{attendance}</Badge>;
     }
@@ -392,7 +392,7 @@ export default function ParentDashboard() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" />
-        <p className="mt-2 text-muted">Loading your children&apos;s data...</p>
+        <p className="mt-2 text-muted">{t('auto.loadingYourChildrenapossData', `Loading your children&apos;s data...`)}</p>
       </div>
     );
   }
@@ -416,8 +416,8 @@ export default function ParentDashboard() {
         <Card className="text-center py-5">
           <Card.Body>
             <i className="bi bi-person-x display-4 text-muted"></i>
-            <h4 className="mt-3 text-muted">No Children Assigned</h4>
-            <p className="text-muted">You don&apos;t have any children assigned to your account. Please contact your administrator.</p>
+            <h4 className="mt-3 text-muted">{t('auto.noChildrenAssigned', `No Children Assigned`)}</h4>
+            <p className="text-muted">{t('auto.youDonapostHaveAnyChildrenAssi', `You don&apos;t have any children assigned to your account. Please contact your administrator.`)}</p>
           </Card.Body>
         </Card>
       ) : (
@@ -450,12 +450,12 @@ export default function ParentDashboard() {
                                   bg={averageProgress >= 80 ? 'success' : averageProgress >= 60 ? 'warning' : 'danger'}
                                   className="fs-6"
                                 >
-                                  {averageProgress}% Average
-                                </Badge>
-                                <div className="small text-muted mt-1">Overall Progress</div>
+                                  {averageProgress}{t('auto.average', `% Average`)}
+                                                                                    </Badge>
+                                <div className="small text-muted mt-1">{t('auto.overallProgress', `Overall Progress`)}</div>
                               </div>
                             ) : (
-                              <Badge bg="secondary">No Progress Data</Badge>
+                              <Badge bg="secondary">{t('auto.noProgressData', `No Progress Data`)}</Badge>
                             )}
                           </div>
                         </div>
@@ -464,7 +464,7 @@ export default function ParentDashboard() {
                         {!child.studentCourses || child.studentCourses.length === 0 ? (
                           <div className="text-center py-4">
                             <i className="bi bi-book display-6 text-muted"></i>
-                            <p className="mt-2 text-muted">No subjects assigned</p>
+                            <p className="mt-2 text-muted">{t('auto.noSubjectsAssigned', `No subjects assigned`)}</p>
                           </div>
                         ) : (
                           <Accordion flush>
@@ -503,7 +503,7 @@ export default function ParentDashboard() {
                                             </div>
                                           </div>
                                         ) : (
-                                          <Badge bg="secondary">No Progress</Badge>
+                                          <Badge bg="secondary">{t('auto.noProgress', `No Progress`)}</Badge>
                                         )}
                                       </div>
                                     </div>
@@ -512,22 +512,22 @@ export default function ParentDashboard() {
                                     {!allProgress || allProgress.length === 0 ? (
                                       <div className="text-center py-3">
                                         <i className="bi bi-graph-up display-6 text-muted"></i>
-                                        <p className="mt-2 text-muted">No progress updates yet</p>
+                                        <p className="mt-2 text-muted">{t('auto.noProgressUpdatesYet', `No progress updates yet`)}</p>
                                       </div>
                                     ) : (
                                       <div className="table-responsive">
                                         <Table size="sm" className="mb-0">
                                           <thead className="table-light small">
                                             <tr>
-                                              <th>Date</th>
-                                              <th>Teacher</th>
-                                              <th>Attendance</th>
-                                              <th>Lesson</th>
-                                              <th>Homework</th>
-                                              <th>Progress</th>
-                                              <th>Teacher&apos;s Remarks</th>
-                                              <th>Parent&apos;s Remarks</th>
-                                              <th>Action</th>
+                                              <th>{t('auto.date', `Date`)}</th>
+                                              <th>{t('auto.teacher', `Teacher`)}</th>
+                                              <th>{t('auto.attendance', `Attendance`)}</th>
+                                              <th>{t('auto.lesson', `Lesson`)}</th>
+                                              <th>{t('auto.homework', `Homework`)}</th>
+                                              <th>{t('auto.progress', `Progress`)}</th>
+                                              <th>{t('auto.teacherapossRemarks', `Teacher&apos;s Remarks`)}</th>
+                                              <th>{t('auto.parentapossRemarks', `Parent&apos;s Remarks`)}</th>
+                                              <th>{t('auto.action', `Action`)}</th>
                                             </tr>
                                           </thead>
                                           <tbody>
@@ -588,16 +588,16 @@ export default function ParentDashboard() {
                                                       );
                                                       return (
                                                         <span className="small text-muted d-inline-block">
-                                                          Remark with{' '}
+                                                          {t('auto.remarkWith', `Remark with`)}{' '}
                                                           <span className={replyCount > 0 ? 'text-success' : 'text-danger'}>
                                                             {replyCount > 0 ? replyCount : 'no'}
                                                           </span>{' '}
-                                                          comment{replyCount === 1 ? '' : 's'}
+                                                          {t('auto.comment', `comment`)}{replyCount === 1 ? '' : 's'}
                                                         </span>
                                                       );
                                                     })()
                                                   ) : (
-                                                    <span className="small text-muted d-inline-block">No parent remarks</span>
+                                                    <span className="small text-muted d-inline-block">{t('auto.noParentRemarks', `No parent remarks`)}</span>
                                                   )}
                                                 </td>
                                                 <td>
@@ -660,12 +660,12 @@ export default function ParentDashboard() {
                                   bg={averageTests >= 80 ? 'success' : averageTests >= 60 ? 'warning' : 'danger'}
                                   className="fs-6"
                                 >
-                                  {averageTests}% Avg Score
-                                </Badge>
-                                <div className="small text-muted mt-1">Across all tests</div>
+                                  {averageTests}{t('auto.avgScore', `% Avg Score`)}
+                                                                                    </Badge>
+                                <div className="small text-muted mt-1">{t('auto.acrossAllTests', `Across all tests`)}</div>
                               </div>
                             ) : (
-                              <Badge bg="secondary">No Test Data</Badge>
+                              <Badge bg="secondary">{t('auto.noTestData', `No Test Data`)}</Badge>
                             )}
                           </div>
                         </div>
@@ -674,22 +674,22 @@ export default function ParentDashboard() {
                         {!tests || tests.length === 0 ? (
                           <div className="text-center py-4">
                             <i className="bi bi-journal-check display-6 text-muted"></i>
-                            <p className="mt-2 text-muted">No tests recorded yet</p>
+                            <p className="mt-2 text-muted">{t('auto.noTestsRecordedYet', `No tests recorded yet`)}</p>
                           </div>
                         ) : (
                           <div className="table-responsive">
                             <Table hover size="sm" className="mb-0">
                               <thead className="table-light small">
                                 <tr>
-                                  <th>Date</th>
-                                  <th>Subject</th>
-                                  <th>Test/Exam</th>
-                                  <th>Type</th>
-                                  <th>Score</th>
-                                  <th>Percentage</th>
-                                  <th>Performance</th>
-                                  <th>Remarks</th>
-                                  <th>Teacher</th>
+                                  <th>{t('auto.date', `Date`)}</th>
+                                  <th>{t('auto.subject', `Subject`)}</th>
+                                  <th>{t('auto.testexam', `Test/Exam`)}</th>
+                                  <th>{t('auto.type', `Type`)}</th>
+                                  <th>{t('auto.score', `Score`)}</th>
+                                  <th>{t('auto.percentage', `Percentage`)}</th>
+                                  <th>{t('auto.performance', `Performance`)}</th>
+                                  <th>{t('auto.remarks', `Remarks`)}</th>
+                                  <th>{t('auto.teacher', `Teacher`)}</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -758,34 +758,34 @@ export default function ParentDashboard() {
                 <div className="d-flex justify-content-between align-items-center">
                   <h6 className="mb-0">
                     <i className="bi bi-cash-coin me-2"></i>
-                    Fee Management
-                  </h6>
-                  <Badge bg="warning">{fees.length} Total</Badge>
+                    {t('auto.feeManagement', `Fee Management`)}
+                                                            </h6>
+                  <Badge bg="warning">{fees.length} {t('auto.total', `Total`)}</Badge>
                 </div>
               </Card.Header>
               <Card.Body className="p-0">
                 {feesLoading ? (
                   <div className="text-center py-4">
                     <Spinner animation="border" size="sm" />
-                    <p className="mt-2 text-muted small">Loading fees...</p>
+                    <p className="mt-2 text-muted small">{t('auto.loadingFees', `Loading fees...`)}</p>
                   </div>
                 ) : fees.length === 0 ? (
                   <div className="text-center py-4">
                     <i className="bi bi-cash-coin display-6 text-muted"></i>
-                    <p className="mt-2 text-muted small">No fees found</p>
+                    <p className="mt-2 text-muted small">{t('auto.noFeesFound', `No fees found`)}</p>
                   </div>
                 ) : (
                   <div className="table-responsive">
                     <Table hover size="sm" className="mb-0">
                       <thead className="table-light small">
                         <tr>
-                          <th>Student</th>
-                          <th>Title</th>
-                          <th>Description</th>
-                          <th>Amount</th>
-                          <th>Due Date</th>
-                          <th>Status</th>
-                          <th>Action</th>
+                          <th>{t('auto.student', `Student`)}</th>
+                          <th>{t('auto.title', `Title`)}</th>
+                          <th>{t('auto.description', `Description`)}</th>
+                          <th>{t('auto.amount', `Amount`)}</th>
+                          <th>{t('auto.dueDate', `Due Date`)}</th>
+                          <th>{t('auto.status', `Status`)}</th>
+                          <th>{t('auto.action', `Action`)}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -809,8 +809,8 @@ export default function ParentDashboard() {
                                   onClick={() => handlePayFeeClick(fee)}
                                 >
                                   <i className="bi bi-credit-card me-1"></i>
-                                  Pay Now
-                                </Button>
+                                  {t('auto.payNow', `Pay Now`)}
+                                                                            </Button>
                               )}
                             </td>
                           </tr>
@@ -830,41 +830,41 @@ export default function ParentDashboard() {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-chat-dots me-2"></i>
-            Add Your Remark
-          </Modal.Title>
+            {t('auto.addYourRemark', `Add Your Remark`)}
+                                </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedProgress && (
             <div className="mb-3">
               <div className="bg-light p-3 rounded">
-                <strong>Progress Details:</strong>
+                <strong>{t('auto.progressDetails', `Progress Details:`)}</strong>
                 <div className="small text-muted mt-1">
-                  <div><strong>Date:</strong> {new Date(selectedProgress.date).toLocaleDateString()}</div>
-                  <div><strong>Course:</strong> {selectedProgress.course?.name || 'Unknown'}</div>
-                  <div><strong>Teacher:</strong> {selectedProgress.teacher?.name || 'Unknown'}</div>
-                  <div><strong>Attendance:</strong> {getAttendanceBadge(selectedProgress.attendance)}</div>
-                  {selectedProgress.lesson && <div><strong>Lesson:</strong> {selectedProgress.lesson}</div>}
+                  <div><strong>{t('auto.date', `Date:`)}</strong> {new Date(selectedProgress.date).toLocaleDateString()}</div>
+                  <div><strong>{t('auto.course', `Course:`)}</strong> {selectedProgress.course?.name || 'Unknown'}</div>
+                  <div><strong>{t('auto.teacher', `Teacher:`)}</strong> {selectedProgress.teacher?.name || 'Unknown'}</div>
+                  <div><strong>{t('auto.attendance', `Attendance:`)}</strong> {getAttendanceBadge(selectedProgress.attendance)}</div>
+                  {selectedProgress.lesson && <div><strong>{t('auto.lesson', `Lesson:`)}</strong> {selectedProgress.lesson}</div>}
                 </div>
               </div>
             </div>
           )}
           <Form onSubmit={handleSubmitRemark}>
             <Form.Group className="mb-4">
-              <Form.Label>Your Remark</Form.Label>
+              <Form.Label>{t('auto.yourRemark', `Your Remark`)}</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={4}
                 value={remarkText}
                 onChange={(e) => setRemarkText(e.target.value)}
-                placeholder="Enter your remark about your child's progress..."
+                placeholder={t('auto.enterYourRemarkAboutYourChilds', `Enter your remark about your child's progress...`)}
                 required
               />
             </Form.Group>
 
             <div className="d-flex justify-content-end gap-2">
               <Button variant="secondary" onClick={() => setShowRemarkModal(false)}>
-                Cancel
-              </Button>
+                {t('auto.cancel', `Cancel`)}
+                                            </Button>
               <Button
                 type="submit"
                 variant="info"
@@ -873,13 +873,13 @@ export default function ParentDashboard() {
                 {addingRemark ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />
-                    Adding...
-                  </>
+                    {t('auto.adding', `Adding...`)}
+                                                        </>
                 ) : (
                   <>
                     <i className="bi bi-check-circle me-2"></i>
-                    Add Remark
-                  </>
+                    {t('auto.addRemark', `Add Remark`)}
+                                                            </>
                 )}
               </Button>
             </div>

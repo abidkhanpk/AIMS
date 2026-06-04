@@ -5,8 +5,10 @@ import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 
 export default function ForgotPassword() {
+    const { t } = useTranslation('common');
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [questions, setQuestions] = useState({ question1: '', question2: '' });
@@ -114,7 +116,7 @@ export default function ForgotPassword() {
   return (
     <>
       <Head>
-        <title>Reset Password - {settings.appTitle}</title>
+        <title>{t('auto.resetPassword', `Reset Password -`)} {settings.appTitle}</title>
         <meta name="description" content="Reset your AIMS password" />
       </Head>
 
@@ -128,7 +130,7 @@ export default function ForgotPassword() {
                     {settings.headerImg && (
                       <Image
                         src={settings.headerImg || '/assets/app-logo.png'}
-                        alt="Logo"
+                        alt={t('auto.logo', `Logo`)}
                         width={250}
                         height={100}
                         style={{ height: 'auto', width: 'auto', objectFit: 'contain', maxHeight: '100px', maxWidth: '250px' }}
@@ -139,7 +141,7 @@ export default function ForgotPassword() {
                         }}
                       />
                     )}
-                    <h2 className="fw-bold text-dark mb-2">Reset Password</h2>
+                    <h2 className="fw-bold text-dark mb-2">{t('auto.resetPassword', `Reset Password`)}</h2>
                     <p className="text-muted">
                       {step === 1 && "Enter your email to get started"}
                       {step === 2 && "Answer your security questions"}
@@ -164,10 +166,10 @@ export default function ForgotPassword() {
                   {step === 1 && (
                     <Form onSubmit={handleFetchQuestions}>
                       <Form.Group className="mb-4">
-                        <Form.Label className="fw-medium">Email Address</Form.Label>
+                        <Form.Label className="fw-medium">{t('auto.emailAddress', `Email Address`)}</Form.Label>
                         <Form.Control
                           type="email"
-                          placeholder="Enter your registered email"
+                          placeholder={t('auto.enterYourRegisteredEmail', `Enter your registered email`)}
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
@@ -183,7 +185,7 @@ export default function ForgotPassword() {
                         disabled={loading || !email}
                       >
                         {loading ? (
-                          <><Spinner animation="border" size="sm" className="me-2" />Please wait...</>
+                          <><Spinner animation="border" size="sm" className="me-2" />{t('auto.pleaseWait', `Please wait...`)}</>
                         ) : (
                           "Continue"
                         )}
@@ -192,8 +194,8 @@ export default function ForgotPassword() {
                       <div className="text-center">
                         <Link href="/auth/signin" className="text-decoration-none">
                           <i className="bi bi-arrow-left me-1"></i>
-                          Back to Sign In
-                        </Link>
+                          {t('auto.backToSignIn', `Back to Sign In`)}
+                                                                          </Link>
                       </div>
                     </Form>
                   )}
@@ -201,15 +203,15 @@ export default function ForgotPassword() {
                   {step === 2 && (
                     <Form onSubmit={handleResetPassword}>
                       <Alert variant="info" className="small">
-                        Please answer the security questions you set up in your account settings.
-                      </Alert>
+                        {t('auto.pleaseAnswerTheSecurityQuestio', `Please answer the security questions you set up in your account settings.`)}
+                                                                    </Alert>
 
                       <Form.Group className="mb-3">
-                        <Form.Label className="fw-medium small text-muted">Question 1</Form.Label>
+                        <Form.Label className="fw-medium small text-muted">{t('auto.question1', `Question 1`)}</Form.Label>
                         <p className="fw-bold mb-2">{questions.question1}</p>
                         <Form.Control
                           type="text"
-                          placeholder="Your answer"
+                          placeholder={t('auto.yourAnswer', `Your answer`)}
                           value={answers.answer1}
                           onChange={(e) => setAnswers({...answers, answer1: e.target.value})}
                           required
@@ -219,11 +221,11 @@ export default function ForgotPassword() {
                       </Form.Group>
 
                       <Form.Group className="mb-4">
-                        <Form.Label className="fw-medium small text-muted">Question 2</Form.Label>
+                        <Form.Label className="fw-medium small text-muted">{t('auto.question2', `Question 2`)}</Form.Label>
                         <p className="fw-bold mb-2">{questions.question2}</p>
                         <Form.Control
                           type="text"
-                          placeholder="Your answer"
+                          placeholder={t('auto.yourAnswer', `Your answer`)}
                           value={answers.answer2}
                           onChange={(e) => setAnswers({...answers, answer2: e.target.value})}
                           required
@@ -235,10 +237,10 @@ export default function ForgotPassword() {
                       <hr className="my-4" />
 
                       <Form.Group className="mb-3">
-                        <Form.Label className="fw-medium">New Password</Form.Label>
+                        <Form.Label className="fw-medium">{t('auto.newPassword', `New Password`)}</Form.Label>
                         <Form.Control
                           type="password"
-                          placeholder="Enter new password"
+                          placeholder={t('auto.enterNewPassword', `Enter new password`)}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           required
@@ -249,10 +251,10 @@ export default function ForgotPassword() {
                       </Form.Group>
 
                       <Form.Group className="mb-4">
-                        <Form.Label className="fw-medium">Confirm New Password</Form.Label>
+                        <Form.Label className="fw-medium">{t('auto.confirmNewPassword', `Confirm New Password`)}</Form.Label>
                         <Form.Control
                           type="password"
-                          placeholder="Confirm new password"
+                          placeholder={t('auto.confirmNewPassword', `Confirm new password`)}
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           required
@@ -269,7 +271,7 @@ export default function ForgotPassword() {
                         disabled={loading || !answers.answer1 || !answers.answer2 || !newPassword || !confirmPassword}
                       >
                         {loading ? (
-                          <><Spinner animation="border" size="sm" className="me-2" />Resetting...</>
+                          <><Spinner animation="border" size="sm" className="me-2" />{t('auto.resetting', `Resetting...`)}</>
                         ) : (
                           "Reset Password"
                         )}
@@ -282,8 +284,8 @@ export default function ForgotPassword() {
                           onClick={() => setStep(1)}
                           disabled={loading}
                         >
-                          Use a different email
-                        </Button>
+                          {t('auto.useADifferentEmail', `Use a different email`)}
+                                                                          </Button>
                       </div>
                     </Form>
                   )}
@@ -293,14 +295,14 @@ export default function ForgotPassword() {
                       <div className="mb-4">
                         <i className="bi bi-check-circle text-success" style={{ fontSize: '4rem' }}></i>
                       </div>
-                      <p>Redirecting you to sign in...</p>
+                      <p>{t('auto.redirectingYouToSignIn', `Redirecting you to sign in...`)}</p>
                       <Button
                         variant="outline-primary"
                         onClick={() => router.push('/auth/signin')}
                         className="mt-3"
                       >
-                        Sign In Now
-                      </Button>
+                        {t('auto.signInNow', `Sign In Now`)}
+                                                                    </Button>
                     </div>
                   )}
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dropdown, Badge, Button, Spinner } from 'react-bootstrap';
 import { useRouter } from 'next/router';
+import { useTranslation } from 'react-i18next';
 
 interface Notification {
   id: string;
@@ -16,6 +17,7 @@ interface Notification {
 }
 
 export default function NotificationDropdown() {
+    const { t } = useTranslation('common');
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -184,7 +186,7 @@ export default function NotificationDropdown() {
 
       <Dropdown.Menu className="shadow-lg" style={{ width: '350px', maxHeight: '400px', overflowY: 'auto' }}>
         <div className="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-          <h6 className="mb-0">Notifications</h6>
+          <h6 className="mb-0">{t('auto.notifications', `Notifications`)}</h6>
           {unreadCount > 0 && (
             <Button
               variant="link"
@@ -205,7 +207,7 @@ export default function NotificationDropdown() {
         {notifications.length === 0 ? (
           <div className="text-center py-4 text-muted">
             <i className="bi bi-bell-slash display-6"></i>
-            <p className="mt-2 mb-0">No notifications</p>
+            <p className="mt-2 mb-0">{t('auto.noNotifications', `No notifications`)}</p>
           </div>
         ) : (
           <div>
@@ -234,7 +236,7 @@ export default function NotificationDropdown() {
                     <p className="mb-1 small text-muted">{notification.message}</p>
                     <div className="d-flex justify-content-between align-items-center">
                       <small className="text-muted">
-                        From: {notification.sender.name} ({notification.sender.role})
+                        {t('auto.from', `From:`)} {notification.sender.name} ({notification.sender.role})
                       </small>
                       <small className="text-muted">
                         {formatTimeAgo(notification.createdAt)}

@@ -1,11 +1,9 @@
 import { Project, SyntaxKind, Node } from "ts-morph";
 import * as fs from "fs";
 
-const project = new Project({
-  tsConfigFilePath: "tsconfig.json",
-});
-
-const files = project.getSourceFiles(["src/pages/**/*.tsx", "src/components/**/*.tsx"]);
+const project = new Project();
+project.addSourceFilesAtPaths(["src/pages/messages.tsx"]);
+const files = project.getSourceFiles();
 
 const strings: Record<string, string> = {};
 
@@ -19,6 +17,7 @@ function generateKey(text: string) {
 
 for (const sourceFile of files) {
   let modified = false;
+  console.log("Processing", sourceFile.getFilePath());
 
   // We need to collect nodes first to avoid messing up the AST iteration when we replace things
   const textNodesToReplace: Array<{node: Node, text: string, prefix: string, suffix: string, key: string, orig: string}> = [];

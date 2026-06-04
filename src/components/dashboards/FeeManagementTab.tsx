@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Form, Button, Table, Card, Row, Col, Alert, Spinner, Badge, Modal } from 'react-bootstrap';
 import { FeeType, FeeStatus } from '@prisma/client';
+import { useTranslation } from 'react-i18next';
 
 // TODO: These interfaces should be in a central types file
 interface FeeDefinition {
@@ -29,6 +30,7 @@ interface Course {
 const feeTypes = Object.values(FeeType);
 
 const FeeManagementTab = () => {
+    const { t } = useTranslation('common');
   const [feeDefinitions, setFeeDefinitions] = useState<FeeDefinition[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -255,13 +257,13 @@ const FeeManagementTab = () => {
       <Row className="g-3">
         <Col md={4}>
           <Form.Group className="mb-0">
-            <Form.Label>Title</Form.Label>
+            <Form.Label>{t('auto.title', `Title`)}</Form.Label>
             <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </Form.Group>
         </Col>
         <Col md={4}>
           <Form.Group className="mb-0">
-            <Form.Label>Type</Form.Label>
+            <Form.Label>{t('auto.type', `Type`)}</Form.Label>
             <Form.Select value={type} onChange={(e) => setType(e.target.value as FeeType)} required>
               {feeTypes.map((feeType) => (
                 <option key={feeType} value={feeType}>{feeType}</option>
@@ -271,55 +273,55 @@ const FeeManagementTab = () => {
         </Col>
         <Col md={4}>
           <Form.Group className="mb-0">
-            <Form.Label>Currency</Form.Label>
+            <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
             <Form.Select value={currency} onChange={(e) => setCurrency(e.target.value)} required>
-              <option value="USD">$ US Dollar (USD)</option>
-              <option value="EUR">€ Euro (EUR)</option>
-              <option value="GBP">£ British Pound (GBP)</option>
-              <option value="JPY">¥ Japanese Yen (JPY)</option>
-              <option value="CAD">C$ Canadian Dollar (CAD)</option>
-              <option value="AUD">A$ Australian Dollar (AUD)</option>
-              <option value="CHF">CHF Swiss Franc (CHF)</option>
-              <option value="CNY">¥ Chinese Yuan (CNY)</option>
-              <option value="INR">₹ Indian Rupee (INR)</option>
-              <option value="PKR">₨ Pakistani Rupee (PKR)</option>
+              <option value="USD">{t('auto.usDollarUsd', `$ US Dollar (USD)`)}</option>
+              <option value="EUR">{t('auto.euroEur', `€ Euro (EUR)`)}</option>
+              <option value="GBP">{t('auto.britishPoundGbp', `£ British Pound (GBP)`)}</option>
+              <option value="JPY">{t('auto.japaneseYenJpy', `¥ Japanese Yen (JPY)`)}</option>
+              <option value="CAD">{t('auto.cCanadianDollarCad', `C$ Canadian Dollar (CAD)`)}</option>
+              <option value="AUD">{t('auto.aAustralianDollarAud', `A$ Australian Dollar (AUD)`)}</option>
+              <option value="CHF">{t('auto.chfSwissFrancChf', `CHF Swiss Franc (CHF)`)}</option>
+              <option value="CNY">{t('auto.chineseYuanCny', `¥ Chinese Yuan (CNY)`)}</option>
+              <option value="INR">{t('auto.indianRupeeInr', `₹ Indian Rupee (INR)`)}</option>
+              <option value="PKR">{t('auto.pakistaniRupeePkr', `₨ Pakistani Rupee (PKR)`)}</option>
             </Form.Select>
           </Form.Group>
         </Col>
         <Col md={4}>
           <Form.Group className="mb-0">
-            <Form.Label>Amount</Form.Label>
+            <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
             <Form.Control type="number" value={amount} onChange={(e) => setAmount(e.target.value)} required />
           </Form.Group>
         </Col>
         <Col md={4}>
           <Form.Group className="mb-0">
-            <Form.Label>Generation Day</Form.Label>
+            <Form.Label>{t('auto.generationDay', `Generation Day`)}</Form.Label>
             <Form.Control type="number" value={generationDay} onChange={(e) => setGenerationDay(e.target.value)} required />
           </Form.Group>
         </Col>
         <Col md={4}>
           <Form.Group className="mb-0">
-            <Form.Label>Due Date After (Days)</Form.Label>
+            <Form.Label>{t('auto.dueDateAfterDays', `Due Date After (Days)`)}</Form.Label>
             <Form.Control type="number" value={dueAfterDays} onChange={(e) => setDueAfterDays(e.target.value)} required />
-            <Form.Text className="text-muted">Date after these number of days after generation day is set as due date.</Form.Text>
+            <Form.Text className="text-muted">{t('auto.dateAfterTheseNumberOfDaysAfte', `Date after these number of days after generation day is set as due date.`)}</Form.Text>
           </Form.Group>
         </Col>
         <Col md={4}>
           <Form.Group className="mb-0">
-            <Form.Label>Start Date</Form.Label>
+            <Form.Label>{t('auto.startDate', `Start Date`)}</Form.Label>
             <Form.Control type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
           </Form.Group>
         </Col>
         <Col md={8}>
           <Form.Group className="mb-0">
-            <Form.Label>Description</Form.Label>
+            <Form.Label>{t('auto.description', `Description`)}</Form.Label>
             <Form.Control as="textarea" rows={2} value={description} onChange={(e) => setDescription(e.target.value)} />
           </Form.Group>
         </Col>
         <Col md={12}>
           <Form.Group className="mb-0">
-            <Form.Label>Students</Form.Label>
+            <Form.Label>{t('auto.students', `Students`)}</Form.Label>
             <Form.Control
               as="select"
               multiple
@@ -344,8 +346,8 @@ const FeeManagementTab = () => {
             onCancel?.();
           }}
         >
-          Cancel
-        </Button>
+          {t('auto.cancel', `Cancel`)}
+                          </Button>
         <Button variant="primary" type="submit" disabled={isEditing ? editing : creating} size="sm">
           {isEditing ? (editing ? 'Updating...' : 'Update Fee Definition') : (creating ? 'Creating...' : 'Create Fee Definition')}
         </Button>
@@ -361,13 +363,13 @@ const FeeManagementTab = () => {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div className="d-flex align-items-center gap-2">
           <i className="bi bi-list-ul text-primary"></i>
-          <h6 className="mb-0">Fee Definitions</h6>
+          <h6 className="mb-0">{t('auto.feeDefinitions', `Fee Definitions`)}</h6>
           <Badge bg="primary">{feeDefinitions.length}</Badge>
         </div>
         <div className="d-flex gap-2">
             <Button size="sm" variant="outline-primary" onClick={() => setShowGenerateModal(true)}>
-                Bulk Generate
-            </Button>
+                {t('auto.bulkGenerate', `Bulk Generate`)}
+                                  </Button>
             <Button
               size="sm"
               variant={showCreateForm ? 'secondary' : 'primary'}
@@ -383,8 +385,8 @@ const FeeManagementTab = () => {
           <Card.Header className="bg-primary text-white">
             <h6 className="mb-0">
               <i className="bi bi-plus-circle me-2"></i>
-              Create Fee Definition
-            </h6>
+              {t('auto.createFeeDefinition', `Create Fee Definition`)}
+                                      </h6>
           </Card.Header>
           <Card.Body>
             {renderForm(handleCreateFeeDefinition, false, () => setShowCreateForm(false))}
@@ -396,28 +398,28 @@ const FeeManagementTab = () => {
         <Card.Header className="bg-light">
           <h6 className="mb-0">
             <i className="bi bi-list-ul me-2"></i>
-            Fee Definitions
-          </h6>
+            {t('auto.feeDefinitions', `Fee Definitions`)}
+                                </h6>
         </Card.Header>
         <Card.Body className="p-0">
           {loading ? (
             <div className="text-center py-4">
               <Spinner animation="border" size="sm" />
-              <p className="mt-2 text-muted small">Loading fee definitions...</p>
+              <p className="mt-2 text-muted small">{t('auto.loadingFeeDefinitions', `Loading fee definitions...`)}</p>
             </div>
           ) : feeDefinitions.length === 0 ? (
             <div className="text-center py-4">
-              <p className="mt-2 text-muted small">No fee definitions found</p>
+              <p className="mt-2 text-muted small">{t('auto.noFeeDefinitionsFound', `No fee definitions found`)}</p>
             </div>
           ) : (
             <Table hover size="sm" className="mb-0">
               <thead>
                 <tr>
-                  <th>Title</th>
-                  <th>Student</th>
-                  <th>Amount</th>
-                  <th>Type</th>
-                  <th>Actions</th>
+                  <th>{t('auto.title', `Title`)}</th>
+                  <th>{t('auto.student', `Student`)}</th>
+                  <th>{t('auto.amount', `Amount`)}</th>
+                  <th>{t('auto.type', `Type`)}</th>
+                  <th>{t('auto.actions', `Actions`)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -450,7 +452,7 @@ const FeeManagementTab = () => {
       {/* Edit Fee Definition Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
         <Modal.Header closeButton>
-          <Modal.Title>Edit Fee Definition</Modal.Title>
+          <Modal.Title>{t('auto.editFeeDefinition', `Edit Fee Definition`)}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {renderForm(handleUpdateFeeDefinition, true)}
@@ -460,27 +462,27 @@ const FeeManagementTab = () => {
       {/* Bulk Generate Modal */}
       <Modal show={showGenerateModal} onHide={() => setShowGenerateModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Bulk Generate Fees</Modal.Title>
+          <Modal.Title>{t('auto.bulkGenerateFees', `Bulk Generate Fees`)}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>Target Month</Form.Label>
+              <Form.Label>{t('auto.targetMonth', `Target Month`)}</Form.Label>
               <Form.Control
                 type="month"
                 value={targetMonth}
                 onChange={(e) => setTargetMonth(e.target.value)}
               />
               <Form.Text className="text-muted">
-                This will generate fees for all active student assignments for the selected month.
-              </Form.Text>
+                {t('auto.thisWillGenerateFeesForAllActi', `This will generate fees for all active student assignments for the selected month.`)}
+                                            </Form.Text>
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowGenerateModal(false)}>
-            Cancel
-          </Button>
+            {t('auto.cancel', `Cancel`)}
+                                </Button>
           <Button variant="primary" onClick={handleBulkGenerate} disabled={generatingBulk || !targetMonth}>
             {generatingBulk ? <Spinner size="sm" animation="border" /> : 'Generate Fees'}
           </Button>

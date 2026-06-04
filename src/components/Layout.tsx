@@ -377,7 +377,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="me-3 app-brand-logo">
                 <Image 
                   src={settings.headerImg} 
-                  alt="Header Image"
+                  alt={t('auto.headerImage', `Header Image`)}
                   className="rounded"
                   style={{ 
                     maxHeight: '60px',
@@ -433,7 +433,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     size="sm"
                     className="me-2 d-flex align-items-center text-light text-decoration-none p-0 position-relative"
                     onClick={() => router.push('/messages')}
-                    title="Messages"
+                    title={t('auto.messages', `Messages`)}
                   >
                     <i className="bi bi-envelope fs-5"></i>
                     {unreadMessages > 0 && (

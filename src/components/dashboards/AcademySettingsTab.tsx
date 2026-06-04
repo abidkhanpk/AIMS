@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
+import { useTranslation } from 'react-i18next';
 
 export default function AcademySettingsTab() {
+    const { t } = useTranslation('common');
   const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -64,7 +66,7 @@ export default function AcademySettingsTab() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2 text-muted">Loading settings...</p>
+        <p className="mt-2 text-muted">{t('auto.loadingSettings', `Loading settings...`)}</p>
       </div>
     );
   }
@@ -74,8 +76,8 @@ export default function AcademySettingsTab() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="h4 mb-0">
           <i className="bi bi-gear-fill text-primary me-2"></i>
-          Academy Settings
-        </h2>
+          {t('auto.academySettings', `Academy Settings`)}
+                          </h2>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -83,52 +85,52 @@ export default function AcademySettingsTab() {
 
       <Card className="shadow-sm border-0 mb-4">
         <Card.Header className="bg-white py-3">
-          <h5 className="mb-0 fw-bold text-muted">SMTP Configuration</h5>
+          <h5 className="mb-0 fw-bold text-muted">{t('auto.smtpConfiguration', `SMTP Configuration`)}</h5>
         </Card.Header>
         <Card.Body>
           <p className="text-muted small">
-            Configure your Academy&apos;s SMTP credentials here. These will be used for sending progress reports and fee invoices to your students and parents.
-          </p>
+            {t('auto.configureYourAcademyapossSmtpC', `Configure your Academy&apos;s SMTP credentials here. These will be used for sending progress reports and fee invoices to your students and parents.`)}
+                                </p>
           <Form>
             <Form.Group className="mb-3">
-              <Form.Label>SMTP Host</Form.Label>
+              <Form.Label>{t('auto.smtpHost', `SMTP Host`)}</Form.Label>
               <Form.Control 
                 type="text" 
-                placeholder="e.g. smtp.gmail.com" 
+                placeholder={t('auto.egSmtpgmailcom', `e.g. smtp.gmail.com`)} 
                 value={smtpHost}
                 onChange={e => setSmtpHost(e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>SMTP Port</Form.Label>
+              <Form.Label>{t('auto.smtpPort', `SMTP Port`)}</Form.Label>
               <Form.Control 
                 type="text" 
-                placeholder="e.g. 587" 
+                placeholder={t('auto.eg587', `e.g. 587`)} 
                 value={smtpPort}
                 onChange={e => setSmtpPort(e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>SMTP User</Form.Label>
+              <Form.Label>{t('auto.smtpUser', `SMTP User`)}</Form.Label>
               <Form.Control 
                 type="text" 
-                placeholder="e.g. your-academy@gmail.com" 
+                placeholder={t('auto.egYouracademygmailcom', `e.g. your-academy@gmail.com`)} 
                 value={smtpUser}
                 onChange={e => setSmtpUser(e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-4">
-              <Form.Label>SMTP Password</Form.Label>
+              <Form.Label>{t('auto.smtpPassword', `SMTP Password`)}</Form.Label>
               <Form.Control 
                 type="password" 
-                placeholder="App Password or SMTP Secret" 
+                placeholder={t('auto.appPasswordOrSmtpSecret', `App Password or SMTP Secret`)} 
                 value={smtpPass}
                 onChange={e => setSmtpPass(e.target.value)}
               />
             </Form.Group>
             
             <Button variant="primary" onClick={handleSave} disabled={updating}>
-              {updating ? <><Spinner size="sm" animation="border" className="me-2"/>Saving...</> : 'Save SMTP Settings'}
+              {updating ? <><Spinner size="sm" animation="border" className="me-2"/>{t('auto.saving', `Saving...`)}</> : 'Save SMTP Settings'}
             </Button>
           </Form>
         </Card.Body>

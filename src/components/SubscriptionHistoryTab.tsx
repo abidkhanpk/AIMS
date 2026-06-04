@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Table, Spinner, Alert, Badge, Button, Modal, Form, Row, Col } from 'react-bootstrap';
 import { currencies } from '../utils/currencies';
+import { useTranslation } from 'react-i18next';
 
 interface SubscriptionHistoryProps {
   adminId?: string; // if undefined and user is ADMIN, server will use session user
@@ -42,6 +43,7 @@ export default function SubscriptionHistoryTab({
   hideHeaders = false,
   hidePaymentHistory = false,
 }: SubscriptionHistoryProps) {
+    const { t } = useTranslation('common');
   const [subscriptions, setSubscriptions] = useState<SubscriptionRecord[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,13 +119,13 @@ export default function SubscriptionHistoryTab({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge bg="success">Active</Badge>;
+        return <Badge bg="success">{t('auto.active', `Active`)}</Badge>;
       case 'EXPIRED':
-        return <Badge bg="danger">Expired</Badge>;
+        return <Badge bg="danger">{t('auto.expired', `Expired`)}</Badge>;
       case 'PENDING':
-        return <Badge bg="warning">Pending</Badge>;
+        return <Badge bg="warning">{t('auto.pending', `Pending`)}</Badge>;
       case 'CANCELLED':
-        return <Badge bg="secondary">Cancelled</Badge>;
+        return <Badge bg="secondary">{t('auto.cancelled', `Cancelled`)}</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -138,7 +140,7 @@ export default function SubscriptionHistoryTab({
     return (
       <div className="text-center py-4">
         <Spinner animation="border" size="sm" />
-        <p className="mt-2 text-muted small">Loading subscription history...</p>
+        <p className="mt-2 text-muted small">{t('auto.loadingSubscriptionHistory', `Loading subscription history...`)}</p>
       </div>
     );
   }
@@ -150,7 +152,7 @@ export default function SubscriptionHistoryTab({
 
       {!hideHeaders && (
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h6 className="mb-0">Subscription History & Management</h6>
+          <h6 className="mb-0">{t('auto.subscriptionHistoryManagement', `Subscription History & Management`)}</h6>
           {allowVerify && (
             <Button 
               variant="primary" 
@@ -158,32 +160,32 @@ export default function SubscriptionHistoryTab({
               onClick={() => setShowExtendModal(true)}
             >
               <i className="bi bi-plus-circle me-2"></i>
-              Extend Subscription
-            </Button>
+              {t('auto.extendSubscription', `Extend Subscription`)}
+                                      </Button>
           )}
         </div>
       )}
 
       {/* Current Subscriptions */}
       <div className="mb-4">
-        {!hideHeaders && <h6 className="text-muted mb-2">Current Subscriptions</h6>}
+        {!hideHeaders && <h6 className="text-muted mb-2">{t('auto.currentSubscriptions', `Current Subscriptions`)}</h6>}
         {subscriptions.length === 0 ? (
           <div className="text-center py-3 text-muted">
             <i className="bi bi-calendar-x display-6"></i>
-            <p className="mt-2 mb-0">No subscription records found</p>
+            <p className="mt-2 mb-0">{t('auto.noSubscriptionRecordsFound', `No subscription records found`)}</p>
           </div>
         ) : (
           <div className="table-responsive">
             <Table size="sm" className="mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Plan</th>
-                  <th>Amount</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>Status</th>
-                  <th>Paid Date</th>
-                  {allowVerify && <th>Actions</th>}
+                  <th>{t('auto.plan', `Plan`)}</th>
+                  <th>{t('auto.amount', `Amount`)}</th>
+                  <th>{t('auto.startDate', `Start Date`)}</th>
+                  <th>{t('auto.endDate', `End Date`)}</th>
+                  <th>{t('auto.status', `Status`)}</th>
+                  <th>{t('auto.paidDate', `Paid Date`)}</th>
+                  {allowVerify && <th>{t('auto.actions', `Actions`)}</th>}
                 </tr>
               </thead>
               <tbody>
@@ -286,22 +288,22 @@ export default function SubscriptionHistoryTab({
       {/* Payment History */}
       {!hidePaymentHistory && (
         <div>
-          <h6 className="text-muted mb-2">Payment History</h6>
+          <h6 className="text-muted mb-2">{t('auto.paymentHistory', `Payment History`)}</h6>
           {payments.length === 0 ? (
             <div className="text-center py-3 text-muted">
               <i className="bi bi-credit-card display-6"></i>
-              <p className="mt-2 mb-0">No payment records found</p>
+              <p className="mt-2 mb-0">{t('auto.noPaymentRecordsFound', `No payment records found`)}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table size="sm" className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Plan</th>
-                    <th>Amount</th>
-                    <th>Payment Date</th>
-                    <th>Expiry Extended</th>
-                    <th>Details</th>
+                    <th>{t('auto.plan', `Plan`)}</th>
+                    <th>{t('auto.amount', `Amount`)}</th>
+                    <th>{t('auto.paymentDate', `Payment Date`)}</th>
+                    <th>{t('auto.expiryExtended', `Expiry Extended`)}</th>
+                    <th>{t('auto.details', `Details`)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -336,28 +338,28 @@ export default function SubscriptionHistoryTab({
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-calendar-plus me-2"></i>
-            Extend Subscription
-          </Modal.Title>
+            {t('auto.extendSubscription', `Extend Subscription`)}
+                                </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Extension Type</Form.Label>
+                  <Form.Label>{t('auto.extensionType', `Extension Type`)}</Form.Label>
                   <Form.Select 
                     value={extensionType}
                     onChange={(e) => setExtensionType(e.target.value)}
                   >
-                    <option value="MONTHLY">Monthly</option>
-                    <option value="YEARLY">Yearly</option>
-                    <option value="LIFETIME">Lifetime</option>
+                    <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
+                    <option value="YEARLY">{t('auto.yearly', `Yearly`)}</option>
+                    <option value="LIFETIME">{t('auto.lifetime', `Lifetime`)}</option>
                   </Form.Select>
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Currency</Form.Label>
+                  <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                   <Form.Select 
                     value={extensionCurrency}
                     onChange={(e) => setExtensionCurrency(e.target.value)}
@@ -374,7 +376,7 @@ export default function SubscriptionHistoryTab({
             <Row>
               <Col md={12}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Amount</Form.Label>
+                  <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
                   <Form.Control 
                     type="number"
                     step="0.01"
@@ -388,13 +390,13 @@ export default function SubscriptionHistoryTab({
             <Row>
               <Col md={12}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Payment Details</Form.Label>
+                  <Form.Label>{t('auto.paymentDetails', `Payment Details`)}</Form.Label>
                   <Form.Control 
                     as="textarea"
                     rows={3}
                     value={paymentDetails}
                     onChange={(e) => setPaymentDetails(e.target.value)}
-                    placeholder="Enter payment confirmation details, transaction ID, etc."
+                    placeholder={t('auto.enterPaymentConfirmationDetail', `Enter payment confirmation details, transaction ID, etc.`)}
                   />
                 </Form.Group>
               </Col>
@@ -403,8 +405,8 @@ export default function SubscriptionHistoryTab({
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowExtendModal(false)}>
-            Cancel
-          </Button>
+            {t('auto.cancel', `Cancel`)}
+                                </Button>
           <Button 
             variant="primary" 
             onClick={handleExtendSubscription}
@@ -413,13 +415,13 @@ export default function SubscriptionHistoryTab({
             {extending ? (
               <>
                 <Spinner animation="border" size="sm" className="me-2" />
-                Extending...
-              </>
+                {t('auto.extending', `Extending...`)}
+                                            </>
             ) : (
               <>
                 <i className="bi bi-check-circle me-2"></i>
-                Extend Subscription
-              </>
+                {t('auto.extendSubscription', `Extend Subscription`)}
+                                                </>
             )}
           </Button>
         </Modal.Footer>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal, Button, Form, Spinner, Alert } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 interface SubscriptionPaymentModalProps {
   show: boolean;
@@ -15,6 +16,7 @@ interface SubscriptionPaymentModalProps {
 }
 
 export default function SubscriptionPaymentModal({ show, onHide, subscription, onPaymentSubmit }: SubscriptionPaymentModalProps) {
+    const { t } = useTranslation('common');
   const [amount, setAmount] = useState<string>('');
   const [paidDate, setPaidDate] = useState<string>('');
   const [details, setDetails] = useState<string>('');
@@ -92,14 +94,14 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
     <Modal show={show} onHide={onHide}>
       <Modal.Header closeButton>
         <Modal.Title>
-          Pay Subscription: {subscription?.plan}
+          {t('auto.paySubscription', `Pay Subscription:`)} {subscription?.plan}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {error && <Alert variant="danger">{error}</Alert>}
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3">
-            <Form.Label>Amount</Form.Label>
+            <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
             <Form.Control
               type="number"
               step="0.01"
@@ -107,10 +109,10 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
               onChange={(e) => setAmount(e.target.value)}
               required
             />
-            <Form.Text className="text-muted">Currency: {subscription?.currency || 'USD'}</Form.Text>
+            <Form.Text className="text-muted">{t('auto.currency', `Currency:`)} {subscription?.currency || 'USD'}</Form.Text>
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Paid Date</Form.Label>
+            <Form.Label>{t('auto.paidDate', `Paid Date`)}</Form.Label>
             <Form.Control
               type="date"
               value={paidDate}
@@ -119,26 +121,26 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Payment Details / Remarks</Form.Label>
+            <Form.Label>{t('auto.paymentDetailsRemarks', `Payment Details / Remarks`)}</Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              placeholder="Enter reference, transaction id, or remarks"
+              placeholder={t('auto.enterReferenceTransactionIdOrR', `Enter reference, transaction id, or remarks`)}
               required
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Upload Screenshot / Proof</Form.Label>
+            <Form.Label>{t('auto.uploadScreenshotProof', `Upload Screenshot / Proof`)}</Form.Label>
             <Form.Control
               type="file"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProofFile(e.target.files ? e.target.files[0] : null)}
             />
-            {uploading && <div className="small text-muted mt-1">Uploading proof...</div>}
+            {uploading && <div className="small text-muted mt-1">{t('auto.uploadingProof', `Uploading proof...`)}</div>}
           </Form.Group>
           <div className="d-flex justify-content-end">
-            <Button variant="secondary" className="me-2" onClick={onHide} disabled={submitting}>Cancel</Button>
+            <Button variant="secondary" className="me-2" onClick={onHide} disabled={submitting}>{t('auto.cancel', `Cancel`)}</Button>
             <Button variant="primary" type="submit" disabled={submitting}>
               {submitting ? <Spinner as="span" animation="border" size="sm" /> : 'Submit Payment'}
             </Button>

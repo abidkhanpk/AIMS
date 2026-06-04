@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Spinner, Alert, Badge } from 'react-bootstrap';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface AuditLog {
   id: string;
@@ -13,6 +14,7 @@ interface AuditLog {
 }
 
 export default function AuditLogsTab() {
+    const { t } = useTranslation('common');
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -37,7 +39,7 @@ export default function AuditLogsTab() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2 text-muted">Loading audit logs...</p>
+        <p className="mt-2 text-muted">{t('auto.loadingAuditLogs', `Loading audit logs...`)}</p>
       </div>
     );
   }
@@ -47,8 +49,8 @@ export default function AuditLogsTab() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="h4 mb-0">
           <i className="bi bi-shield-lock text-primary me-2"></i>
-          System Audit Logs
-        </h2>
+          {t('auto.systemAuditLogs', `System Audit Logs`)}
+                          </h2>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -59,19 +61,19 @@ export default function AuditLogsTab() {
             <Table hover className="align-middle mb-0 text-nowrap">
               <thead className="bg-light">
                 <tr>
-                  <th className="border-0 text-muted small px-4 py-3">Timestamp</th>
-                  <th className="border-0 text-muted small py-3">User</th>
-                  <th className="border-0 text-muted small py-3">Action</th>
-                  <th className="border-0 text-muted small py-3">Details</th>
-                  <th className="border-0 text-muted small py-3">Resource ID</th>
+                  <th className="border-0 text-muted small px-4 py-3">{t('auto.timestamp', `Timestamp`)}</th>
+                  <th className="border-0 text-muted small py-3">{t('auto.user', `User`)}</th>
+                  <th className="border-0 text-muted small py-3">{t('auto.action', `Action`)}</th>
+                  <th className="border-0 text-muted small py-3">{t('auto.details', `Details`)}</th>
+                  <th className="border-0 text-muted small py-3">{t('auto.resourceId', `Resource ID`)}</th>
                 </tr>
               </thead>
               <tbody>
                 {logs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center py-5 text-muted">
-                      No audit logs recorded yet.
-                    </td>
+                      {t('auto.noAuditLogsRecordedYet', `No audit logs recorded yet.`)}
+                                                              </td>
                   </tr>
                 ) : (
                   logs.map((log) => (
@@ -86,7 +88,7 @@ export default function AuditLogsTab() {
                             <Badge bg="secondary" className="ms-2">{log.user.role}</Badge>
                           </>
                         ) : (
-                          <span className="text-muted fst-italic">System</span>
+                          <span className="text-muted fst-italic">{t('auto.system', `System`)}</span>
                         )}
                       </td>
                       <td>

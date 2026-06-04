@@ -2,12 +2,14 @@ import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslation
 import React from 'react';
 import DeveloperDashboard from '../../../components/dashboards/DeveloperDashboard';
 import Head from 'next/head';
+import { useTranslation } from 'react-i18next';
 
 export default function DeveloperPage() {
+    const { t } = useTranslation('common');
   return (
     <>
       <Head>
-        <title>Developer Dashboard | AIMS</title>
+        <title>{t('auto.developerDashboardAims', `Developer Dashboard | AIMS`)}</title>
       </Head>
       <DeveloperDashboard />
     </>

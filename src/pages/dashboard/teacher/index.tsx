@@ -2,12 +2,14 @@ import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslation
 import React from 'react';
 import TeacherDashboard from '../../../components/dashboards/TeacherDashboard';
 import Head from 'next/head';
+import { useTranslation } from 'react-i18next';
 
 export default function TeacherPage() {
+    const { t } = useTranslation('common');
   return (
     <>
       <Head>
-        <title>Teacher Dashboard | AIMS</title>
+        <title>{t('auto.teacherDashboardAims', `Teacher Dashboard | AIMS`)}</title>
       </Head>
       <TeacherDashboard />
     </>

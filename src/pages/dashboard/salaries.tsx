@@ -6,8 +6,10 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { SalaryManagementTab } from '../../components/dashboards/AdminDashboard';
+import { useTranslation } from 'react-i18next';
 
 export default function AdminSalariesPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -57,9 +59,9 @@ export default function AdminSalariesPage() {
               <div>
                 <h2 className="h5 mb-1">
                   <i className="bi bi-wallet2 me-2"></i>
-                  Salaries
-                </h2>
-                <p className="text-muted mb-0">Manage teacher salaries</p>
+                  {t('auto.salaries', `Salaries`)}
+                                                  </h2>
+                <p className="text-muted mb-0">{t('auto.manageTeacherSalaries', `Manage teacher salaries`)}</p>
               </div>
             </div>
             <SalaryManagementTab />

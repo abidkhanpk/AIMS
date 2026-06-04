@@ -234,6 +234,7 @@ function AssignmentSubform({
   assignments: Assignment[];
   onAssignmentChange: () => void;
 }) {
+    const { t } = useTranslation('common');
   const [teachers, setTeachers] = useState<User[]>([]);
   const [subjects, setSubjects] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
@@ -404,7 +405,7 @@ function AssignmentSubform({
     return (
       <div className="text-center py-3">
         <Spinner animation="border" size="sm" />
-        <p className="mt-2 text-muted small">Loading assignment data...</p>
+        <p className="mt-2 text-muted small">{t('auto.loadingAssignmentData', `Loading assignment data...`)}</p>
       </div>
     );
   }
@@ -418,8 +419,8 @@ function AssignmentSubform({
         <div className="d-flex align-items-center gap-2">
           <h6 className="mb-0">
             <i className="bi bi-list-task me-2"></i>
-            Current Assignments
-          </h6>
+            {t('auto.currentAssignments', `Current Assignments`)}
+                                </h6>
           <Badge bg="primary">{assignments.length}</Badge>
         </div>
         <Button
@@ -438,21 +439,21 @@ function AssignmentSubform({
             {editingAssignment && (
               <Alert variant="info" className="py-2">
                 <i className="bi bi-pencil-square me-2"></i>
-                Editing assignment for {editingAssignment.course?.name || 'subject'}
+                {t('auto.editingAssignmentFor', `Editing assignment for`)} {editingAssignment.course?.name || 'subject'}
               </Alert>
             )}
             <Form onSubmit={handleCreateAssignment}>
               <Row className="g-3">
                 <Col lg={4} md={6}>
                   <Form.Group>
-                    <Form.Label>Subject *</Form.Label>
+                    <Form.Label>{t('auto.subject', `Subject *`)}</Form.Label>
                     <Form.Select 
                       value={selectedSubject}
                       onChange={(e) => setSelectedSubject(e.target.value)}
                       required
                       size="sm"
                     >
-                      <option value="">Choose a subject...</option>
+                      <option value="">{t('auto.chooseASubject', `Choose a subject...`)}</option>
                       {subjects.map(s => (
                         <option key={s.id} value={s.id}>{s.name}</option>
                       ))}
@@ -461,14 +462,14 @@ function AssignmentSubform({
                 </Col>
                 <Col lg={4} md={6}>
                   <Form.Group>
-                    <Form.Label>Teacher *</Form.Label>
+                    <Form.Label>{t('auto.teacher', `Teacher *`)}</Form.Label>
                     <Form.Select 
                       value={selectedTeacher}
                       onChange={(e) => setSelectedTeacher(e.target.value)}
                       required
                       size="sm"
                     >
-                      <option value="">Choose a teacher...</option>
+                      <option value="">{t('auto.chooseATeacher', `Choose a teacher...`)}</option>
                       {teachers.map(t => (
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
@@ -477,7 +478,7 @@ function AssignmentSubform({
                 </Col>
                 <Col lg={4} md={6}>
                   <Form.Group>
-                    <Form.Label>Assignment Date</Form.Label>
+                    <Form.Label>{t('auto.assignmentDate', `Assignment Date`)}</Form.Label>
                     <Form.Control 
                       type="date"
                       value={assignmentDate}
@@ -488,7 +489,7 @@ function AssignmentSubform({
                 </Col>
                 <Col lg={4} md={6}>
                   <Form.Group>
-                    <Form.Label>Start Time</Form.Label>
+                    <Form.Label>{t('auto.startTime', `Start Time`)}</Form.Label>
                     <Form.Control 
                       type="time"
                       value={startTime}
@@ -499,7 +500,7 @@ function AssignmentSubform({
                 </Col>
                 <Col lg={4} md={6}>
                   <Form.Group>
-                    <Form.Label>Duration (minutes)</Form.Label>
+                    <Form.Label>{t('auto.durationMinutes', `Duration (minutes)`)}</Form.Label>
                     <Form.Control 
                       type="number"
                       value={duration}
@@ -511,7 +512,7 @@ function AssignmentSubform({
                 </Col>
                 <Col lg={4} md={6}>
                   <Form.Group>
-                    <Form.Label>Timezone</Form.Label>
+                    <Form.Label>{t('auto.timezone', `Timezone`)}</Form.Label>
                     <Form.Select 
                       value={timezone}
                       onChange={(e) => setTimezone(e.target.value)}
@@ -531,7 +532,7 @@ function AssignmentSubform({
                 </Col>
                 <Col lg={4} md={6}>
                   <Form.Group>
-                    <Form.Label>Monthly Fee</Form.Label>
+                    <Form.Label>{t('auto.monthlyFee', `Monthly Fee`)}</Form.Label>
                     <Form.Control 
                       type="number"
                       step="0.01"
@@ -544,7 +545,7 @@ function AssignmentSubform({
                 </Col>
                 <Col lg={4} md={6}>
                   <Form.Group>
-                    <Form.Label>Currency</Form.Label>
+                    <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                     <Form.Select 
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
@@ -560,7 +561,7 @@ function AssignmentSubform({
                 </Col>
                 <Col lg={4} md={12}>
                   <Form.Group>
-                    <Form.Label>Class Days</Form.Label>
+                    <Form.Label>{t('auto.classDays', `Class Days`)}</Form.Label>
                     <div className="d-flex flex-wrap gap-2">
                       {daysOfWeek.map(day => (
                         <Form.Check
@@ -589,8 +590,8 @@ function AssignmentSubform({
                   }}
                   disabled={creating}
                 >
-                  Cancel
-                </Button>
+                  {t('auto.cancel', `Cancel`)}
+                                                  </Button>
                 <Button 
                   variant="primary" 
                   type="submit" 
@@ -620,8 +621,8 @@ function AssignmentSubform({
           <div className="d-flex justify-content-between align-items-center">
             <h6 className="mb-0">
               <i className="bi bi-list-task me-2"></i>
-              Current Assignments
-            </h6>
+              {t('auto.currentAssignments', `Current Assignments`)}
+                                      </h6>
             <Badge bg="primary">{assignments.length}</Badge>
           </div>
         </Card.Header>
@@ -629,18 +630,18 @@ function AssignmentSubform({
           {assignments.length === 0 ? (
             <div className="text-center py-4">
               <i className="bi bi-list-task display-6 text-muted"></i>
-              <p className="mt-2 text-muted small">No assignments found</p>
+              <p className="mt-2 text-muted small">{t('auto.noAssignmentsFound', `No assignments found`)}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table hover size="sm" className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Subject</th>
-                    <th>Teacher</th>
-                    <th>Schedule</th>
-                    <th>Fee</th>
-                    <th>Actions</th>
+                    <th>{t('auto.subject', `Subject`)}</th>
+                    <th>{t('auto.teacher', `Teacher`)}</th>
+                    <th>{t('auto.schedule', `Schedule`)}</th>
+                    <th>{t('auto.fee', `Fee`)}</th>
+                    <th>{t('auto.actions', `Actions`)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -653,7 +654,7 @@ function AssignmentSubform({
                           <div>{assignment.startTime}</div>
                         )}
                         {assignment.duration && (
-                          <div className="text-muted">{assignment.duration}min</div>
+                          <div className="text-muted">{assignment.duration}{t('auto.min', `min`)}</div>
                         )}
                         {assignment.classDays && assignment.classDays.length > 0 && (
                           <div className="text-muted">
@@ -681,7 +682,7 @@ function AssignmentSubform({
                             variant="outline-primary"
                             size="sm"
                             onClick={() => handleEditAssignment(assignment)}
-                            title="Edit Assignment"
+                            title={t('auto.editAssignment', `Edit Assignment`)}
                           >
                             <i className="bi bi-pencil"></i>
                           </Button>
@@ -689,7 +690,7 @@ function AssignmentSubform({
                             variant="outline-danger"
                             size="sm"
                             onClick={() => handleDeleteAssignment(assignment.id)}
-                            title="Delete Assignment"
+                            title={t('auto.deleteAssignment', `Delete Assignment`)}
                           >
                             <i className="bi bi-trash"></i>
                           </Button>
@@ -709,6 +710,7 @@ function AssignmentSubform({
 
 // Detail View Modal Component
 function DetailViewModal({ show, onHide, title, data }: { show: boolean; onHide: () => void; title: string; data: any }) {
+    const { t } = useTranslation('common');
   return (
     <Modal show={show} onHide={onHide} size="lg">
       <Modal.Header closeButton>
@@ -746,8 +748,8 @@ function DetailViewModal({ show, onHide, title, data }: { show: boolean; onHide:
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>
-          Close
-        </Button>
+          {t('auto.close', `Close`)}
+                          </Button>
       </Modal.Footer>
     </Modal>
   );
@@ -755,6 +757,7 @@ function DetailViewModal({ show, onHide, title, data }: { show: boolean; onHide:
 
 // Expandable Text Component
 function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: number }) {
+    const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
   
   if (!text || text.length <= maxLength) {
@@ -777,6 +780,7 @@ function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: nu
 }
 
 export function UserManagementTab({ role }: { role: Role }) {
+    const { t } = useTranslation('common');
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -1321,47 +1325,47 @@ export function UserManagementTab({ role }: { role: Role }) {
               <Card.Header className={`bg-${config.color} text-white`}>
                 <h6 className="mb-0">
                   <i className={`${config.icon} me-2`}></i>
-                  Create New Teacher
-                </h6>
+                  {t('auto.createNewTeacher', `Create New Teacher`)}
+                                                  </h6>
               </Card.Header>
               <Card.Body>
                 <Form onSubmit={handleCreateUser}>
                   <Row className="g-3">
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Full Name</Form.Label>
+                        <Form.Label>{t('auto.fullName', `Full Name`)}</Form.Label>
                         <Form.Control
                           type="text"
                           value={newName}
                           onChange={(e) => setNewName(e.target.value)}
                           required
-                          placeholder="Enter full name"
+                          placeholder={t('auto.enterFullName', `Enter full name`)}
                           size="sm"
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Email Address</Form.Label>
+                        <Form.Label>{t('auto.emailAddress', `Email Address`)}</Form.Label>
                         <Form.Control
                           type="email"
                           value={newEmail}
                           onChange={(e) => setNewEmail(e.target.value)}
                           required
-                          placeholder="Enter email address"
+                          placeholder={t('auto.enterEmailAddress', `Enter email address`)}
                           size="sm"
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Password</Form.Label>
+                        <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                         <Form.Control
                           type="password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           required
-                          placeholder="Enter password"
+                          placeholder={t('auto.enterPassword', `Enter password`)}
                           minLength={6}
                           size="sm"
                         />
@@ -1369,19 +1373,19 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
                         <Form.Control
                           type="tel"
                           value={newMobile}
                           onChange={(e) => setNewMobile(e.target.value)}
-                          placeholder="Enter mobile number"
+                          placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                           size="sm"
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Date of Birth</Form.Label>
+                        <Form.Label>{t('auto.dateOfBirth', `Date of Birth`)}</Form.Label>
                         <Form.Control
                           type="date"
                           value={newDateOfBirth}
@@ -1392,19 +1396,19 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Qualification</Form.Label>
+                        <Form.Label>{t('auto.qualification', `Qualification`)}</Form.Label>
                         <Form.Control
                           type="text"
                           value={newQualification}
                           onChange={(e) => setNewQualification(e.target.value)}
-                          placeholder="Enter qualification"
+                          placeholder={t('auto.enterQualification', `Enter qualification`)}
                           size="sm"
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Pay Rate</Form.Label>
+                        <Form.Label>{t('auto.payRate', `Pay Rate`)}</Form.Label>
                         <Form.Control
                           type="number"
                           step="0.01"
@@ -1417,22 +1421,22 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Salary Type</Form.Label>
+                        <Form.Label>{t('auto.salaryType', `Salary Type`)}</Form.Label>
                         <Form.Select
                           value={newPayType}
                           onChange={(e) => setNewPayType(e.target.value as PayType)}
                           size="sm"
                         >
-                          <option value="DAILY">Daily</option>
-                          <option value="WEEKLY">Weekly</option>
-                          <option value="FORTNIGHTLY">Fortnightly</option>
-                          <option value="MONTHLY">Monthly</option>
+                          <option value="DAILY">{t('auto.daily', `Daily`)}</option>
+                          <option value="WEEKLY">{t('auto.weekly', `Weekly`)}</option>
+                          <option value="FORTNIGHTLY">{t('auto.fortnightly', `Fortnightly`)}</option>
+                          <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
                         </Form.Select>
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Pay Currency</Form.Label>
+                        <Form.Label>{t('auto.payCurrency', `Pay Currency`)}</Form.Label>
                         <Form.Select
                           value={newPayCurrency}
                           onChange={(e) => setNewPayCurrency(e.target.value)}
@@ -1448,26 +1452,26 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={12}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Address</Form.Label>
+                        <Form.Label>{t('auto.address', `Address`)}</Form.Label>
                         <Form.Control
                           as="textarea"
                           rows={2}
                           value={newAddress}
                           onChange={(e) => setNewAddress(e.target.value)}
-                          placeholder="Enter address"
+                          placeholder={t('auto.enterAddress', `Enter address`)}
                           size="sm"
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Country</Form.Label>
+                        <Form.Label>{t('auto.country', `Country`)}</Form.Label>
                         <Form.Select
                           value={newCountry}
                           onChange={(e) => setNewCountry(e.target.value)}
                           size="sm"
                         >
-                          <option value="">Select country</option>
+                          <option value="">{t('auto.selectCountry', `Select country`)}</option>
                           {countryOptions.map((c) => (
                             <option key={c} value={c}>{c}</option>
                           ))}
@@ -1482,8 +1486,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                       size="sm"
                       onClick={() => setShowCreateForm(false)}
                     >
-                      Cancel
-                    </Button>
+                      {t('auto.cancel', `Cancel`)}
+                                                              </Button>
                     <Button
                       variant={config.color}
                       type="submit"
@@ -1493,13 +1497,13 @@ export function UserManagementTab({ role }: { role: Role }) {
                       {creating ? (
                         <>
                           <Spinner animation="border" size="sm" className="me-2" />
-                          Creating...
-                        </>
+                          {t('auto.creating', `Creating...`)}
+                                                                          </>
                       ) : (
                         <>
                           <i className="bi bi-plus-circle me-2"></i>
-                          Create
-                        </>
+                          {t('auto.create', `Create`)}
+                                                                              </>
                       )}
                     </Button>
                   </div>
@@ -1515,31 +1519,31 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <i className={`${config.icon} me-2`}></i>
                   {config.title}
                 </h6>
-                <Badge bg={config.color}>{users.length} Total</Badge>
+                <Badge bg={config.color}>{users.length} {t('auto.total', `Total`)}</Badge>
               </div>
             </Card.Header>
             <Card.Body className="p-0">
               {loading ? (
                 <div className="text-center py-4">
                   <Spinner animation="border" size="sm" />
-                  <p className="mt-2 text-muted small">Loading {config.title.toLowerCase()}...</p>
+                  <p className="mt-2 text-muted small">{t('auto.loading', `Loading`)} {config.title.toLowerCase()}...</p>
                 </div>
               ) : users.length === 0 ? (
                 <div className="text-center py-4">
                   <i className={`${config.icon} display-6 text-muted`}></i>
-                  <p className="mt-2 text-muted small">No {config.title.toLowerCase()} found</p>
+                  <p className="mt-2 text-muted small">{t('auto.no', `No`)} {config.title.toLowerCase()} {t('auto.found', `found`)}</p>
                 </div>
               ) : (
                 <div className="table-responsive">
                   <Table hover size="sm" className="mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Mobile</th>
-                        <th>Pay Rate</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th>{t('auto.name', `Name`)}</th>
+                        <th>{t('auto.email', `Email`)}</th>
+                        <th>{t('auto.mobile', `Mobile`)}</th>
+                        <th>{t('auto.payRate', `Pay Rate`)}</th>
+                        <th>{t('auto.created', `Created`)}</th>
+                        <th>{t('auto.actions', `Actions`)}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1556,7 +1560,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                                 <small className="ms-1">/{user.payType?.toLowerCase()}</small>
                               </Badge>
                             ) : (
-                              <Badge bg="secondary">N/A</Badge>
+                              <Badge bg="secondary">{t('auto.na', `N/A`)}</Badge>
                             )}
                           </td>
                           <td className="text-muted small">
@@ -1568,7 +1572,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                                 variant="outline-info"
                                 size="sm"
                                 onClick={() => handleViewDetails(user)}
-                                title="View Details"
+                                title={t('auto.viewDetails', `View Details`)}
                               >
                                 <i className="bi bi-eye"></i>
                               </Button>
@@ -1576,7 +1580,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                                 variant="outline-warning"
                                 size="sm"
                                 onClick={() => handleEditUser(user)}
-                                title="Edit User"
+                                title={t('auto.editUser', `Edit User`)}
                               >
                                 <i className="bi bi-pencil"></i>
                               </Button>
@@ -1584,7 +1588,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                                 variant="outline-danger"
                                 size="sm"
                                 onClick={() => handleDeleteUser(user.id)}
-                                title="Delete User"
+                                title={t('auto.deleteUser', `Delete User`)}
                                 disabled={deletingId === user.id}
                               >
                                 <i className="bi bi-trash"></i>
@@ -1608,7 +1612,7 @@ export function UserManagementTab({ role }: { role: Role }) {
             <div className="d-flex align-items-center gap-2">
               <i className={`${config.icon} text-${config.color}`}></i>
               <h6 className="mb-0">{config.title}</h6>
-              <Badge bg={config.color}>{users.length} Total</Badge>
+              <Badge bg={config.color}>{users.length} {t('auto.total', `Total`)}</Badge>
             </div>
             <div className="d-flex gap-2">
               {isStudent && (
@@ -1626,7 +1630,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                     onClick={() => csvInputRef.current?.click()}
                     disabled={importingCsv}
                   >
-                    {importingCsv ? <Spinner size="sm" animation="border" /> : <><i className="bi bi-file-earmark-spreadsheet me-1"></i> Import CSV</>}
+                    {importingCsv ? <Spinner size="sm" animation="border" /> : <><i className="bi bi-file-earmark-spreadsheet me-1"></i> {t('auto.importCsv', `Import CSV`)}</>}
                   </Button>
                 </>
               )}
@@ -1645,7 +1649,7 @@ export function UserManagementTab({ role }: { role: Role }) {
               <Card.Header className={`bg-${config.color} text-white`}>
                 <h6 className="mb-0">
                   <i className={`${config.icon} me-2`}></i>
-                  Create New {roleLabel}
+                  {t('auto.createNew', `Create New`)} {roleLabel}
                 </h6>
               </Card.Header>
               <Card.Body>
@@ -1653,39 +1657,39 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Row className="g-3">
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Full Name</Form.Label>
+                        <Form.Label>{t('auto.fullName', `Full Name`)}</Form.Label>
                         <Form.Control
                           type="text"
                           value={newName}
                           onChange={(e) => setNewName(e.target.value)}
                           required
-                          placeholder="Enter full name"
+                          placeholder={t('auto.enterFullName', `Enter full name`)}
                           size="sm"
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Email Address</Form.Label>
+                        <Form.Label>{t('auto.emailAddress', `Email Address`)}</Form.Label>
                         <Form.Control
                           type="email"
                           value={newEmail}
                           onChange={(e) => setNewEmail(e.target.value)}
                           required
-                          placeholder="Enter email address"
+                          placeholder={t('auto.enterEmailAddress', `Enter email address`)}
                           size="sm"
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Password</Form.Label>
+                        <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                         <Form.Control
                           type="password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           required
-                          placeholder="Enter password"
+                          placeholder={t('auto.enterPassword', `Enter password`)}
                           minLength={6}
                           size="sm"
                         />
@@ -1693,12 +1697,12 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
                         <Form.Control
                           type="tel"
                           value={newMobile}
                           onChange={(e) => setNewMobile(e.target.value)}
-                          placeholder="Enter mobile number"
+                          placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                           size="sm"
                         />
                       </Form.Group>
@@ -1706,7 +1710,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                     {isStudent && (
                       <Col md={4}>
                         <Form.Group className="mb-0">
-                          <Form.Label>Date of Birth</Form.Label>
+                          <Form.Label>{t('auto.dateOfBirth', `Date of Birth`)}</Form.Label>
                           <Form.Control
                             type="date"
                             value={newDateOfBirth}
@@ -1718,26 +1722,26 @@ export function UserManagementTab({ role }: { role: Role }) {
                     )}
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Address</Form.Label>
+                        <Form.Label>{t('auto.address', `Address`)}</Form.Label>
                         <Form.Control
                           as="textarea"
                           rows={2}
                           value={newAddress}
                           onChange={(e) => setNewAddress(e.target.value)}
-                          placeholder="Enter address"
+                          placeholder={t('auto.enterAddress', `Enter address`)}
                           size="sm"
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-0">
-                        <Form.Label>Country</Form.Label>
+                        <Form.Label>{t('auto.country', `Country`)}</Form.Label>
                         <Form.Select
                           value={newCountry}
                           onChange={(e) => setNewCountry(e.target.value)}
                           size="sm"
                         >
-                          <option value="">Select country</option>
+                          <option value="">{t('auto.selectCountry', `Select country`)}</option>
                           {countryOptions.map((c) => (
                             <option key={c} value={c}>{c}</option>
                           ))}
@@ -1756,8 +1760,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                         setShowCreateForm(false);
                       }}
                     >
-                      Cancel
-                    </Button>
+                      {t('auto.cancel', `Cancel`)}
+                                                              </Button>
                     <Button
                       variant={config.color}
                       type="submit"
@@ -1767,13 +1771,13 @@ export function UserManagementTab({ role }: { role: Role }) {
                       {creating ? (
                         <>
                           <Spinner animation="border" size="sm" className="me-2" />
-                          Creating...
-                        </>
+                          {t('auto.creating', `Creating...`)}
+                                                                          </>
                       ) : (
                         <>
                           <i className="bi bi-plus-circle me-2"></i>
-                          Create
-                        </>
+                          {t('auto.create', `Create`)}
+                                                                              </>
                       )}
                     </Button>
                   </div>
@@ -1791,46 +1795,46 @@ export function UserManagementTab({ role }: { role: Role }) {
                 <div className="d-flex align-items-center gap-2">
                   <i className="bi bi-pencil text-warning"></i>
                   <div>
-                    <h6 className="mb-0">Editing Student</h6>
+                    <h6 className="mb-0">{t('auto.editingStudent', `Editing Student`)}</h6>
                     <small className="text-muted">{editingUser.name}</small>
                   </div>
                 </div>
                 <Button variant="outline-secondary" size="sm" onClick={closeEditModal}>
                   <i className="bi bi-arrow-left me-2"></i>
-                  Back to List
-                </Button>
+                  {t('auto.backToList', `Back to List`)}
+                                          </Button>
               </Card.Header>
               <Card.Body className="p-3">
                 <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
                   <Tab eventKey="basic" title={
                     <span>
                       <i className="bi bi-person me-2"></i>
-                      Basic Info
-                    </span>
+                      {t('auto.basicInfo', `Basic Info`)}
+                                                      </span>
                   }>
                     <Form onSubmit={handleUpdateUser} className="mt-3">
                       <Row>
                         <Col md={6}>
                           <Form.Group className="mb-3">
-                            <Form.Label>Full Name</Form.Label>
+                            <Form.Label>{t('auto.fullName', `Full Name`)}</Form.Label>
                             <Form.Control 
                               type="text" 
                               value={name} 
                               onChange={(e) => setName(e.target.value)} 
                               required 
-                              placeholder="Enter full name"
+                              placeholder={t('auto.enterFullName', `Enter full name`)}
                             />
                           </Form.Group>
                         </Col>
                         <Col md={6}>
                           <Form.Group className="mb-3">
-                            <Form.Label>Email Address</Form.Label>
+                            <Form.Label>{t('auto.emailAddress', `Email Address`)}</Form.Label>
                             <Form.Control 
                               type="email" 
                               value={email} 
                               onChange={(e) => setEmail(e.target.value)} 
                               required 
-                              placeholder="Enter email address"
+                              placeholder={t('auto.enterEmailAddress', `Enter email address`)}
                             />
                           </Form.Group>
                         </Col>
@@ -1838,18 +1842,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                       <Row>
                         <Col md={4}>
                           <Form.Group className="mb-3">
-                            <Form.Label>Mobile Number</Form.Label>
+                            <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
                             <Form.Control 
                               type="tel" 
                               value={mobile} 
                               onChange={(e) => setMobile(e.target.value)} 
-                              placeholder="Enter mobile number"
+                              placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                             />
                           </Form.Group>
                         </Col>
                         <Col md={4}>
                           <Form.Group className="mb-3">
-                            <Form.Label>Date of Birth</Form.Label>
+                            <Form.Label>{t('auto.dateOfBirth', `Date of Birth`)}</Form.Label>
                             <Form.Control 
                               type="date" 
                               value={dateOfBirth} 
@@ -1861,24 +1865,24 @@ export function UserManagementTab({ role }: { role: Role }) {
                       <Row className="g-3">
                         <Col md={8}>
                           <Form.Group className="mb-3">
-                            <Form.Label>Address</Form.Label>
+                            <Form.Label>{t('auto.address', `Address`)}</Form.Label>
                             <Form.Control 
                               as="textarea"
                               rows={3}
                               value={address} 
                               onChange={(e) => setAddress(e.target.value)} 
-                              placeholder="Enter address"
+                              placeholder={t('auto.enterAddress', `Enter address`)}
                             />
                           </Form.Group>
                         </Col>
                         <Col md={4}>
                           <Form.Group className="mb-3">
-                            <Form.Label>Country</Form.Label>
+                            <Form.Label>{t('auto.country', `Country`)}</Form.Label>
                             <Form.Select 
                               value={country} 
                               onChange={(e) => setCountry(e.target.value)} 
                             >
-                              <option value="">Select country</option>
+                              <option value="">{t('auto.selectCountry', `Select country`)}</option>
                               {countryOptions.map((c) => (
                                 <option key={c} value={c}>{c}</option>
                               ))}
@@ -1887,22 +1891,22 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Col>
                       </Row>
                       <Form.Group className="mb-4">
-                        <Form.Label>Password</Form.Label>
+                        <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                         <Form.Control 
                           type="password" 
                           value={password} 
                           onChange={(e) => setPassword(e.target.value)} 
-                          placeholder="Leave blank to keep current password"
+                          placeholder={t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
                           minLength={6}
                         />
                         <Form.Text className="text-muted">
-                          Leave blank to keep current password
-                        </Form.Text>
+                          {t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
+                                                                  </Form.Text>
                       </Form.Group>
                       <div className="d-flex justify-content-end gap-2">
                         <Button variant="secondary" onClick={closeEditModal}>
-                          Cancel
-                        </Button>
+                          {t('auto.cancel', `Cancel`)}
+                                                                  </Button>
                         <Button
                           type="submit"
                           variant="warning"
@@ -1911,13 +1915,13 @@ export function UserManagementTab({ role }: { role: Role }) {
                           {editing ? (
                             <>
                               <Spinner animation="border" size="sm" className="me-2" />
-                              Updating...
-                            </>
+                              {t('auto.updating', `Updating...`)}
+                                                                              </>
                           ) : (
                             <>
                               <i className="bi bi-check-circle me-2"></i>
-                              Update
-                            </>
+                              {t('auto.update', `Update`)}
+                                                                                  </>
                           )}
                         </Button>
                       </div>
@@ -1927,8 +1931,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Tab eventKey="parents" title={
                     <span>
                       <i className="bi bi-people me-2"></i>
-                      Parent Associations
-                      {parentAssociations.length > 0 && (
+                      {t('auto.parentAssociations', `Parent Associations`)}
+                                                        {parentAssociations.length > 0 && (
                         <Badge bg="info" className="ms-2">{parentAssociations.length}</Badge>
                       )}
                     </span>
@@ -1943,8 +1947,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Tab eventKey="assignments" title={
                     <span>
                       <i className="bi bi-diagram-3 me-2"></i>
-                      Assignments
-                      {studentAssignments.length > 0 && (
+                      {t('auto.assignments', `Assignments`)}
+                                                        {studentAssignments.length > 0 && (
                         <Badge bg="primary" className="ms-2">{studentAssignments.length}</Badge>
                       )}
                     </span>
@@ -1961,8 +1965,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Tab eventKey="progress" title={
                     <span>
                       <i className="bi bi-graph-up me-2"></i>
-                      Progress
-                      {studentProgress.length > 0 && (
+                      {t('auto.progress', `Progress`)}
+                                                        {studentProgress.length > 0 && (
                         <Badge bg="info" className="ms-2">{studentProgress.length}</Badge>
                       )}
                     </span>
@@ -1978,8 +1982,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Tab eventKey="tests" title={
                     <span>
                       <i className="bi bi-clipboard-data me-2"></i>
-                      Tests & Exams
-                      {studentTests.length > 0 && (
+                      {t('auto.testsExams', `Tests & Exams`)}
+                                                        {studentTests.length > 0 && (
                         <Badge bg="success" className="ms-2">{studentTests.length}</Badge>
                       )}
                     </span>
@@ -1995,8 +1999,8 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Tab eventKey="fees" title={
                     <span>
                       <i className="bi bi-cash-stack me-2"></i>
-                      Fees
-                      {studentFees.length > 0 && (
+                      {t('auto.fees', `Fees`)}
+                                                        {studentFees.length > 0 && (
                         <Badge bg="success" className="ms-2">{studentFees.length}</Badge>
                       )}
                     </span>
@@ -2017,58 +2021,58 @@ export function UserManagementTab({ role }: { role: Role }) {
                 <div className="d-flex align-items-center gap-2">
                   <i className="bi bi-pencil text-warning"></i>
                   <div>
-                    <h6 className="mb-0">Editing Teacher</h6>
+                    <h6 className="mb-0">{t('auto.editingTeacher', `Editing Teacher`)}</h6>
                     <small className="text-muted">{editingUser.name}</small>
                   </div>
                 </div>
                 <Button variant="outline-secondary" size="sm" onClick={closeEditModal}>
                   <i className="bi bi-arrow-left me-2"></i>
-                  Back to List
-                </Button>
+                  {t('auto.backToList', `Back to List`)}
+                                              </Button>
               </Card.Header>
               <Card.Body className="p-3">
                 <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
-                  <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>
+                  <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>{t('auto.basicInfo', `Basic Info`)}</span>}>
                     <Form onSubmit={handleUpdateUser} className="mt-3">
                       <Row className="g-3">
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Full Name</Form.Label>
+                            <Form.Label>{t('auto.fullName', `Full Name`)}</Form.Label>
                             <Form.Control 
                               type="text" 
                               value={name} 
                               onChange={(e) => setName(e.target.value)} 
                               required 
-                              placeholder="Enter full name"
+                              placeholder={t('auto.enterFullName', `Enter full name`)}
                             />
                           </Form.Group>
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Email Address</Form.Label>
+                            <Form.Label>{t('auto.emailAddress', `Email Address`)}</Form.Label>
                             <Form.Control 
                               type="email" 
                               value={email} 
                               onChange={(e) => setEmail(e.target.value)} 
                               required 
-                              placeholder="Enter email address"
+                              placeholder={t('auto.enterEmailAddress', `Enter email address`)}
                             />
                           </Form.Group>
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Mobile Number</Form.Label>
+                            <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
                             <Form.Control 
                               type="tel" 
                               value={mobile} 
                               onChange={(e) => setMobile(e.target.value)} 
-                              placeholder="Enter mobile number"
+                              placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                             />
                           </Form.Group>
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Date of Birth</Form.Label>
+                            <Form.Label>{t('auto.dateOfBirth', `Date of Birth`)}</Form.Label>
                             <Form.Control 
                               type="date" 
                               value={dateOfBirth} 
@@ -2078,24 +2082,24 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Address</Form.Label>
+                            <Form.Label>{t('auto.address', `Address`)}</Form.Label>
                             <Form.Control 
                               as="textarea"
                               rows={2}
                               value={address} 
                               onChange={(e) => setAddress(e.target.value)} 
-                              placeholder="Enter address"
+                              placeholder={t('auto.enterAddress', `Enter address`)}
                             />
                           </Form.Group>
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Country</Form.Label>
+                            <Form.Label>{t('auto.country', `Country`)}</Form.Label>
                             <Form.Select 
                               value={country} 
                               onChange={(e) => setCountry(e.target.value)} 
                             >
-                              <option value="">Select country</option>
+                              <option value="">{t('auto.selectCountry', `Select country`)}</option>
                               {countryOptions.map((c) => (
                                 <option key={c} value={c}>{c}</option>
                               ))}
@@ -2104,18 +2108,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Qualification</Form.Label>
+                            <Form.Label>{t('auto.qualification', `Qualification`)}</Form.Label>
                             <Form.Control 
                               type="text" 
                               value={qualification} 
                               onChange={(e) => setQualification(e.target.value)} 
-                              placeholder="Enter qualification"
+                              placeholder={t('auto.enterQualification', `Enter qualification`)}
                             />
                           </Form.Group>
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Pay Rate</Form.Label>
+                            <Form.Label>{t('auto.payRate', `Pay Rate`)}</Form.Label>
                             <Form.Control 
                               type="number" 
                               step="0.01"
@@ -2127,21 +2131,21 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Salary Type</Form.Label>
+                            <Form.Label>{t('auto.salaryType', `Salary Type`)}</Form.Label>
                             <Form.Select 
                               value={payType}
                               onChange={(e) => setPayType(e.target.value as PayType)}
                             >
-                              <option value="DAILY">Daily</option>
-                              <option value="WEEKLY">Weekly</option>
-                              <option value="FORTNIGHTLY">Fortnightly</option>
-                              <option value="MONTHLY">Monthly</option>
+                              <option value="DAILY">{t('auto.daily', `Daily`)}</option>
+                              <option value="WEEKLY">{t('auto.weekly', `Weekly`)}</option>
+                              <option value="FORTNIGHTLY">{t('auto.fortnightly', `Fortnightly`)}</option>
+                              <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
                             </Form.Select>
                           </Form.Group>
                         </Col>
                         <Col md={4}>
                           <Form.Group>
-                            <Form.Label>Pay Currency</Form.Label>
+                            <Form.Label>{t('auto.payCurrency', `Pay Currency`)}</Form.Label>
                             <Form.Select 
                               value={payCurrency}
                               onChange={(e) => setPayCurrency(e.target.value)}
@@ -2156,56 +2160,56 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Col>
                         <Col md={4}>
                           <Form.Group className="mb-1">
-                            <Form.Label>Password</Form.Label>
+                            <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                             <Form.Control 
                               type="password" 
                               value={password} 
                               onChange={(e) => setPassword(e.target.value)} 
-                              placeholder="Leave blank to keep current password"
+                              placeholder={t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
                               minLength={6}
                             />
                             <Form.Text className="text-muted">
-                              Leave blank to keep current password
-                            </Form.Text>
+                              {t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
+                                                                                  </Form.Text>
                           </Form.Group>
                         </Col>
                       </Row>
                       <div className="d-flex justify-content-end gap-2 mt-3">
                         <Button variant="secondary" onClick={closeEditModal}>
-                          Cancel
-                        </Button>
+                          {t('auto.cancel', `Cancel`)}
+                                                                      </Button>
                         <Button type="submit" variant="warning" disabled={editing}>
                           {editing ? (
-                            <><Spinner animation="border" size="sm" className="me-2" />Updating...</>
+                            <><Spinner animation="border" size="sm" className="me-2" />{t('auto.updating', `Updating...`)}</>
                           ) : (
-                            <><i className="bi bi-check-circle me-2"></i>Update</>
+                            <><i className="bi bi-check-circle me-2"></i>{t('auto.update', `Update`)}</>
                           )}
                         </Button>
                       </div>
                     </Form>
                   </Tab>
-                  <Tab eventKey="salaries" title={<span><i className="bi bi-cash-stack me-2"></i>Salary</span>}>
+                  <Tab eventKey="salaries" title={<span><i className="bi bi-cash-stack me-2"></i>{t('auto.salary', `Salary`)}</span>}>
                     <Row className="g-3">
                       <Col md={6}>
                         <Card>
-                          <Card.Header className="bg-light"><strong>Record Salary Payment</strong></Card.Header>
+                          <Card.Header className="bg-light"><strong>{t('auto.recordSalaryPayment', `Record Salary Payment`)}</strong></Card.Header>
                           <Card.Body>
                             <Row>
                               <Col md={6}>
                                 <Form.Group className="mb-3">
-                                  <Form.Label>Amount</Form.Label>
+                                  <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
                                   <Form.Control type="number" step="0.01" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
                                 </Form.Group>
                               </Col>
                               <Col md={6}>
                                 <Form.Group className="mb-3">
-                                  <Form.Label>Paid Date</Form.Label>
+                                  <Form.Label>{t('auto.paidDate', `Paid Date`)}</Form.Label>
                                   <Form.Control type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
                                 </Form.Group>
                               </Col>
                             </Row>
                             <Form.Group className="mb-3">
-                              <Form.Label>Payment Details/Remarks</Form.Label>
+                              <Form.Label>{t('auto.paymentDetailsremarks', `Payment Details/Remarks`)}</Form.Label>
                               <Form.Control as="textarea" rows={2} value={paymentDetails} onChange={(e) => setPaymentDetails(e.target.value)} />
                             </Form.Group>
                             <div className="d-flex justify-content-end">
@@ -2218,18 +2222,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                       </Col>
                       <Col md={6}>
                         <Card>
-                          <Card.Header className="bg-light"><strong>Create Salary Advance/Loan</strong></Card.Header>
+                          <Card.Header className="bg-light"><strong>{t('auto.createSalaryAdvanceloan', `Create Salary Advance/Loan`)}</strong></Card.Header>
                           <Card.Body>
                             <Row>
                               <Col md={6}>
                                 <Form.Group className="mb-3">
-                                  <Form.Label>Principal</Form.Label>
+                                  <Form.Label>{t('auto.principal', `Principal`)}</Form.Label>
                                   <Form.Control type="number" step="0.01" value={advancePrincipal} onChange={(e) => setAdvancePrincipal(e.target.value)} />
                                 </Form.Group>
                               </Col>
                               <Col md={6}>
                                 <Form.Group className="mb-3">
-                                  <Form.Label>Installments</Form.Label>
+                                  <Form.Label>{t('auto.installments', `Installments`)}</Form.Label>
                                   <Form.Control type="number" value={advanceInstallments} onChange={(e) => setAdvanceInstallments(e.target.value)} />
                                 </Form.Group>
                               </Col>
@@ -2237,18 +2241,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                             <Row>
                               <Col md={6}>
                                 <Form.Group className="mb-3">
-                                  <Form.Label>Repayment Frequency</Form.Label>
+                                  <Form.Label>{t('auto.repaymentFrequency', `Repayment Frequency`)}</Form.Label>
                                   <Form.Select value={advancePayType} onChange={(e) => setAdvancePayType(e.target.value as PayType)}>
-                                    <option value="DAILY">Daily</option>
-                                    <option value="WEEKLY">Weekly</option>
-                                    <option value="FORTNIGHTLY">Fortnightly</option>
-                                    <option value="MONTHLY">Monthly</option>
+                                    <option value="DAILY">{t('auto.daily', `Daily`)}</option>
+                                    <option value="WEEKLY">{t('auto.weekly', `Weekly`)}</option>
+                                    <option value="FORTNIGHTLY">{t('auto.fortnightly', `Fortnightly`)}</option>
+                                    <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
                                   </Form.Select>
                                 </Form.Group>
                               </Col>
                               <Col md={6}>
                                 <Form.Group className="mb-3">
-                                  <Form.Label>Currency</Form.Label>
+                                  <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                                   <Form.Select value={advanceCurrency} onChange={(e) => setAdvanceCurrency(e.target.value)}>
                                     {currencies.map(currency => (
                                       <option key={currency.code} value={currency.code}>{currency.code}</option>
@@ -2258,7 +2262,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                               </Col>
                             </Row>
                             <Form.Group className="mb-3">
-                              <Form.Label>Details/Remarks</Form.Label>
+                              <Form.Label>{t('auto.detailsremarks', `Details/Remarks`)}</Form.Label>
                               <Form.Control as="textarea" rows={2} value={advanceDetails} onChange={(e) => setAdvanceDetails(e.target.value)} />
                             </Form.Group>
                             <div className="d-flex justify-content-end">
@@ -2274,20 +2278,20 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <Row className="g-3 mt-2">
                       <Col md={6}>
                         <Card>
-                          <Card.Header className="bg-light"><strong>Payment History</strong></Card.Header>
+                          <Card.Header className="bg-light"><strong>{t('auto.paymentHistory', `Payment History`)}</strong></Card.Header>
                           <Card.Body className="p-0">
                             <div className="table-responsive">
                               <Table size="sm" className="mb-0">
                                 <thead className="table-light">
                                   <tr>
-                                    <th>Amount</th>
-                                    <th>Date</th>
-                                    <th>Details</th>
+                                    <th>{t('auto.amount', `Amount`)}</th>
+                                    <th>{t('auto.date', `Date`)}</th>
+                                    <th>{t('auto.details', `Details`)}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {teacherPayments.length === 0 ? (
-                                    <tr><td colSpan={3} className="text-center text-muted small py-3">No records</td></tr>
+                                    <tr><td colSpan={3} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                                   ) : teacherPayments.map((p) => (
                                     <tr key={p.id}>
                                       <td className="fw-bold text-success">{getCurrencySymbol(p.currency)}{p.amount.toFixed(2)}</td>
@@ -2303,21 +2307,21 @@ export function UserManagementTab({ role }: { role: Role }) {
                       </Col>
                       <Col md={6}>
                         <Card>
-                          <Card.Header className="bg-light"><strong>Advances/Loans</strong></Card.Header>
+                          <Card.Header className="bg-light"><strong>{t('auto.advancesloans', `Advances/Loans`)}</strong></Card.Header>
                           <Card.Body className="p-0">
                             <div className="table-responsive">
                               <Table size="sm" className="mb-0">
                                 <thead className="table-light">
                                   <tr>
-                                    <th>Principal</th>
-                                    <th>Balance</th>
-                                    <th>Installments</th>
-                                    <th>Status</th>
+                                    <th>{t('auto.principal', `Principal`)}</th>
+                                    <th>{t('auto.balance', `Balance`)}</th>
+                                    <th>{t('auto.installments', `Installments`)}</th>
+                                    <th>{t('auto.status', `Status`)}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {teacherAdvances.length === 0 ? (
-                                    <tr><td colSpan={4} className="text-center text-muted small py-3">No records</td></tr>
+                                    <tr><td colSpan={4} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                                   ) : teacherAdvances.map((a) => (
                                     <tr key={a.id}>
                                       <td className="fw-bold">{getCurrencySymbol(a.currency)}{a.principal.toFixed(2)}</td>
@@ -2343,56 +2347,56 @@ export function UserManagementTab({ role }: { role: Role }) {
                 <div className="d-flex align-items-center gap-2">
                   <i className="bi bi-pencil text-warning"></i>
                   <div>
-                    <h6 className="mb-0">Editing Parent</h6>
+                    <h6 className="mb-0">{t('auto.editingParent', `Editing Parent`)}</h6>
                     <small className="text-muted">{editingUser.name}</small>
                   </div>
                 </div>
                 <Button variant="outline-secondary" size="sm" onClick={closeEditModal}>
                   <i className="bi bi-arrow-left me-2"></i>
-                  Back to List
-                </Button>
+                  {t('auto.backToList', `Back to List`)}
+                                                  </Button>
               </Card.Header>
               <Card.Body>
                 <Form onSubmit={handleUpdateUser}>
                   <Row className="g-3">
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Full Name</Form.Label>
+                        <Form.Label>{t('auto.fullName', `Full Name`)}</Form.Label>
                         <Form.Control 
                           type="text" 
                           value={name} 
                           onChange={(e) => setName(e.target.value)} 
                           required 
-                          placeholder="Enter full name"
+                          placeholder={t('auto.enterFullName', `Enter full name`)}
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Email Address</Form.Label>
+                        <Form.Label>{t('auto.emailAddress', `Email Address`)}</Form.Label>
                         <Form.Control 
                           type="email" 
                           value={email} 
                           onChange={(e) => setEmail(e.target.value)} 
                           required 
-                          placeholder="Enter email address"
+                          placeholder={t('auto.enterEmailAddress', `Enter email address`)}
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Mobile Number</Form.Label>
+                        <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
                         <Form.Control 
                           type="tel" 
                           value={mobile} 
                           onChange={(e) => setMobile(e.target.value)} 
-                          placeholder="Enter mobile number"
+                          placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Date of Birth</Form.Label>
+                        <Form.Label>{t('auto.dateOfBirth', `Date of Birth`)}</Form.Label>
                         <Form.Control 
                           type="date" 
                           value={dateOfBirth} 
@@ -2402,24 +2406,24 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Address</Form.Label>
+                        <Form.Label>{t('auto.address', `Address`)}</Form.Label>
                         <Form.Control 
                           as="textarea"
                           rows={2}
                           value={address} 
                           onChange={(e) => setAddress(e.target.value)} 
-                          placeholder="Enter address"
+                          placeholder={t('auto.enterAddress', `Enter address`)}
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Country</Form.Label>
+                        <Form.Label>{t('auto.country', `Country`)}</Form.Label>
                         <Form.Select 
                           value={country} 
                           onChange={(e) => setCountry(e.target.value)} 
                         >
-                          <option value="">Select country</option>
+                          <option value="">{t('auto.selectCountry', `Select country`)}</option>
                           {countryOptions.map((c) => (
                             <option key={c} value={c}>{c}</option>
                           ))}
@@ -2428,18 +2432,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Qualification</Form.Label>
+                        <Form.Label>{t('auto.qualification', `Qualification`)}</Form.Label>
                         <Form.Control 
                           type="text" 
                           value={qualification} 
                           onChange={(e) => setQualification(e.target.value)} 
-                          placeholder="Enter qualification"
+                          placeholder={t('auto.enterQualification', `Enter qualification`)}
                         />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Pay Rate</Form.Label>
+                        <Form.Label>{t('auto.payRate', `Pay Rate`)}</Form.Label>
                         <Form.Control 
                           type="number" 
                           step="0.01"
@@ -2451,21 +2455,21 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Salary Type</Form.Label>
+                        <Form.Label>{t('auto.salaryType', `Salary Type`)}</Form.Label>
                         <Form.Select 
                           value={payType}
                           onChange={(e) => setPayType(e.target.value as PayType)}
                         >
-                          <option value="DAILY">Daily</option>
-                          <option value="WEEKLY">Weekly</option>
-                          <option value="FORTNIGHTLY">Fortnightly</option>
-                          <option value="MONTHLY">Monthly</option>
+                          <option value="DAILY">{t('auto.daily', `Daily`)}</option>
+                          <option value="WEEKLY">{t('auto.weekly', `Weekly`)}</option>
+                          <option value="FORTNIGHTLY">{t('auto.fortnightly', `Fortnightly`)}</option>
+                          <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
                         </Form.Select>
                       </Form.Group>
                     </Col>
                     <Col md={4}>
                       <Form.Group>
-                        <Form.Label>Pay Currency</Form.Label>
+                        <Form.Label>{t('auto.payCurrency', `Pay Currency`)}</Form.Label>
                         <Form.Select 
                           value={payCurrency}
                           onChange={(e) => setPayCurrency(e.target.value)}
@@ -2480,24 +2484,24 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={4}>
                       <Form.Group className="mb-1">
-                        <Form.Label>Password</Form.Label>
+                        <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                         <Form.Control 
                           type="password" 
                           value={password} 
                           onChange={(e) => setPassword(e.target.value)} 
-                          placeholder="Leave blank to keep current password"
+                          placeholder={t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
                           minLength={6}
                         />
                         <Form.Text className="text-muted">
-                          Leave blank to keep current password
-                        </Form.Text>
+                          {t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
+                                                                          </Form.Text>
                       </Form.Group>
                     </Col>
                   </Row>
                   <div className="d-flex justify-content-end gap-2 mt-3">
                     <Button variant="secondary" onClick={closeEditModal}>
-                      Cancel
-                    </Button>
+                      {t('auto.cancel', `Cancel`)}
+                                                              </Button>
                     <Button
                       type="submit"
                       variant="warning"
@@ -2506,13 +2510,13 @@ export function UserManagementTab({ role }: { role: Role }) {
                       {editing ? (
                         <>
                           <Spinner animation="border" size="sm" className="me-2" />
-                          Updating...
-                        </>
+                          {t('auto.updating', `Updating...`)}
+                                                                          </>
                       ) : (
                         <>
                           <i className="bi bi-check-circle me-2"></i>
-                          Update
-                        </>
+                          {t('auto.update', `Update`)}
+                                                                              </>
                       )}
                     </Button>
                   </div>
@@ -2527,30 +2531,30 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <i className={`${config.icon} me-2`}></i>
                     {config.title}
                   </h6>
-                  <Badge bg={config.color}>{users.length} Total</Badge>
+                  <Badge bg={config.color}>{users.length} {t('auto.total', `Total`)}</Badge>
                 </div>
               </Card.Header>
               <Card.Body className="p-0">
                 {loading ? (
                   <div className="text-center py-4">
                     <Spinner animation="border" size="sm" />
-                    <p className="mt-2 text-muted small">Loading {config.title.toLowerCase()}...</p>
+                    <p className="mt-2 text-muted small">{t('auto.loading', `Loading`)} {config.title.toLowerCase()}...</p>
                   </div>
                 ) : users.length === 0 ? (
                   <div className="text-center py-4">
                     <i className={`${config.icon} display-6 text-muted`}></i>
-                    <p className="mt-2 text-muted small">No {config.title.toLowerCase()} found</p>
+                    <p className="mt-2 text-muted small">{t('auto.no', `No`)} {config.title.toLowerCase()} {t('auto.found', `found`)}</p>
                   </div>
                 ) : (
                   <div className="table-responsive">
                     <Table hover size="sm" className="mb-0">
                       <thead className="table-light">
                         <tr>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Mobile</th>
-                          <th>Created</th>
-                          <th>Actions</th>
+                          <th>{t('auto.name', `Name`)}</th>
+                          <th>{t('auto.email', `Email`)}</th>
+                          <th>{t('auto.mobile', `Mobile`)}</th>
+                          <th>{t('auto.created', `Created`)}</th>
+                          <th>{t('auto.actions', `Actions`)}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2568,7 +2572,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                                   variant="outline-info"
                                   size="sm"
                                   onClick={() => handleViewDetails(user)}
-                                  title="View Details"
+                                  title={t('auto.viewDetails', `View Details`)}
                                 >
                                   <i className="bi bi-eye"></i>
                                 </Button>
@@ -2576,7 +2580,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                                   variant="outline-warning"
                                   size="sm"
                                   onClick={() => handleEditUser(user)}
-                                  title="Edit User"
+                                  title={t('auto.editUser', `Edit User`)}
                                 >
                                   <i className="bi bi-pencil"></i>
                                 </Button>
@@ -2584,7 +2588,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                                   variant="outline-danger"
                                   size="sm"
                                   onClick={() => handleDeleteUser(user.id)}
-                                  title="Delete User"
+                                  title={t('auto.deleteUser', `Delete User`)}
                                   disabled={deletingId === user.id}
                                 >
                                   <i className="bi bi-trash"></i>
@@ -2607,45 +2611,45 @@ export function UserManagementTab({ role }: { role: Role }) {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
-            Edit {roleLabel}
+            {t('auto.edit', `Edit`)} {roleLabel}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {isTeacher ? (
             <Tabs activeKey={activeTab} onSelect={(k) => setActiveTab(k || 'basic')} className="mb-3">
-              <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>Basic Info</span>}>
+              <Tab eventKey="basic" title={<span><i className="bi bi-person me-2"></i>{t('auto.basicInfo', `Basic Info`)}</span>}>
                 <Form onSubmit={handleUpdateUser}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Full Name</Form.Label>
+                    <Form.Label>{t('auto.fullName', `Full Name`)}</Form.Label>
                     <Form.Control 
                       type="text" 
                       value={name} 
                       onChange={(e) => setName(e.target.value)} 
                       required 
-                      placeholder="Enter full name"
+                      placeholder={t('auto.enterFullName', `Enter full name`)}
                     />
                   </Form.Group>
                   <Form.Group className="mb-3">
-                    <Form.Label>Email Address</Form.Label>
+                    <Form.Label>{t('auto.emailAddress', `Email Address`)}</Form.Label>
                     <Form.Control 
                       type="email" 
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)} 
                       required 
-                      placeholder="Enter email address"
+                      placeholder={t('auto.enterEmailAddress', `Enter email address`)}
                     />
                   </Form.Group>
                   <Form.Group className="mb-3">
-                    <Form.Label>Mobile Number</Form.Label>
+                    <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
                     <Form.Control 
                       type="tel" 
                       value={mobile} 
                       onChange={(e) => setMobile(e.target.value)} 
-                      placeholder="Enter mobile number"
+                      placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                     />
                   </Form.Group>
                   <Form.Group className="mb-3">
-                    <Form.Label>Date of Birth</Form.Label>
+                    <Form.Label>{t('auto.dateOfBirth', `Date of Birth`)}</Form.Label>
                     <Form.Control 
                       type="date" 
                       value={dateOfBirth} 
@@ -2653,28 +2657,28 @@ export function UserManagementTab({ role }: { role: Role }) {
                     />
                   </Form.Group>
                   <Form.Group className="mb-3">
-                    <Form.Label>Address</Form.Label>
+                    <Form.Label>{t('auto.address', `Address`)}</Form.Label>
                     <Form.Control 
                       as="textarea"
                       rows={2}
                       value={address} 
                       onChange={(e) => setAddress(e.target.value)} 
-                      placeholder="Enter address"
+                      placeholder={t('auto.enterAddress', `Enter address`)}
                     />
                   </Form.Group>
                   <Form.Group className="mb-3">
-                    <Form.Label>Qualification</Form.Label>
+                    <Form.Label>{t('auto.qualification', `Qualification`)}</Form.Label>
                     <Form.Control 
                       type="text" 
                       value={qualification} 
                       onChange={(e) => setQualification(e.target.value)} 
-                      placeholder="Enter qualification"
+                      placeholder={t('auto.enterQualification', `Enter qualification`)}
                     />
                   </Form.Group>
                   <Row>
                     <Col md={6}>
                       <Form.Group className="mb-3">
-                        <Form.Label>Pay Rate</Form.Label>
+                        <Form.Label>{t('auto.payRate', `Pay Rate`)}</Form.Label>
                         <Form.Control 
                           type="number" 
                           step="0.01"
@@ -2686,21 +2690,21 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Col>
                     <Col md={6}>
                       <Form.Group className="mb-3">
-                        <Form.Label>Salary Type</Form.Label>
+                        <Form.Label>{t('auto.salaryType', `Salary Type`)}</Form.Label>
                         <Form.Select 
                           value={payType}
                           onChange={(e) => setPayType(e.target.value as PayType)}
                         >
-                          <option value="DAILY">Daily</option>
-                          <option value="WEEKLY">Weekly</option>
-                          <option value="FORTNIGHTLY">Fortnightly</option>
-                          <option value="MONTHLY">Monthly</option>
+                          <option value="DAILY">{t('auto.daily', `Daily`)}</option>
+                          <option value="WEEKLY">{t('auto.weekly', `Weekly`)}</option>
+                          <option value="FORTNIGHTLY">{t('auto.fortnightly', `Fortnightly`)}</option>
+                          <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
                         </Form.Select>
                       </Form.Group>
                     </Col>
                   </Row>
                   <Form.Group className="mb-3">
-                    <Form.Label>Pay Currency</Form.Label>
+                    <Form.Label>{t('auto.payCurrency', `Pay Currency`)}</Form.Label>
                     <Form.Select 
                       value={payCurrency}
                       onChange={(e) => setPayCurrency(e.target.value)}
@@ -2713,54 +2717,54 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Form.Select>
                   </Form.Group>
                   <Form.Group className="mb-4">
-                    <Form.Label>Password</Form.Label>
+                    <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                     <Form.Control 
                       type="password" 
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)} 
-                      placeholder="Leave blank to keep current password"
+                      placeholder={t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
                       minLength={6}
                     />
                     <Form.Text className="text-muted">
-                      Leave blank to keep current password
-                    </Form.Text>
+                      {t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
+                                                                  </Form.Text>
                   </Form.Group>
                   <div className="d-flex justify-content-end gap-2">
                     <Button variant="secondary" onClick={closeEditModal}>
-                      Cancel
-                    </Button>
+                      {t('auto.cancel', `Cancel`)}
+                                                                  </Button>
                     <Button type="submit" variant="warning" disabled={editing}>
                       {editing ? (
-                        <><Spinner animation="border" size="sm" className="me-2" />Updating...</>
+                        <><Spinner animation="border" size="sm" className="me-2" />{t('auto.updating', `Updating...`)}</>
                       ) : (
-                        <><i className="bi bi-check-circle me-2"></i>Update</>
+                        <><i className="bi bi-check-circle me-2"></i>{t('auto.update', `Update`)}</>
                       )}
                     </Button>
                   </div>
                 </Form>
               </Tab>
-              <Tab eventKey="salaries" title={<span><i className="bi bi-cash-stack me-2"></i>Salary</span>}>
+              <Tab eventKey="salaries" title={<span><i className="bi bi-cash-stack me-2"></i>{t('auto.salary', `Salary`)}</span>}>
                 <Row className="g-3">
                   <Col md={6}>
                     <Card>
-                      <Card.Header className="bg-light"><strong>Record Salary Payment</strong></Card.Header>
+                      <Card.Header className="bg-light"><strong>{t('auto.recordSalaryPayment', `Record Salary Payment`)}</strong></Card.Header>
                       <Card.Body>
                         <Row>
                           <Col md={6}>
                             <Form.Group className="mb-3">
-                              <Form.Label>Amount</Form.Label>
+                              <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
                               <Form.Control type="number" step="0.01" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
                             </Form.Group>
                           </Col>
                           <Col md={6}>
                             <Form.Group className="mb-3">
-                              <Form.Label>Paid Date</Form.Label>
+                              <Form.Label>{t('auto.paidDate', `Paid Date`)}</Form.Label>
                               <Form.Control type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
                             </Form.Group>
                           </Col>
                         </Row>
                         <Form.Group className="mb-3">
-                          <Form.Label>Payment Details/Remarks</Form.Label>
+                          <Form.Label>{t('auto.paymentDetailsremarks', `Payment Details/Remarks`)}</Form.Label>
                           <Form.Control as="textarea" rows={2} value={paymentDetails} onChange={(e) => setPaymentDetails(e.target.value)} />
                         </Form.Group>
                         <div className="d-flex justify-content-end">
@@ -2773,18 +2777,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                   </Col>
                   <Col md={6}>
                     <Card>
-                      <Card.Header className="bg-light"><strong>Create Salary Advance/Loan</strong></Card.Header>
+                      <Card.Header className="bg-light"><strong>{t('auto.createSalaryAdvanceloan', `Create Salary Advance/Loan`)}</strong></Card.Header>
                       <Card.Body>
                         <Row>
                           <Col md={6}>
                             <Form.Group className="mb-3">
-                              <Form.Label>Principal</Form.Label>
+                              <Form.Label>{t('auto.principal', `Principal`)}</Form.Label>
                               <Form.Control type="number" step="0.01" value={advancePrincipal} onChange={(e) => setAdvancePrincipal(e.target.value)} />
                             </Form.Group>
                           </Col>
                           <Col md={6}>
                             <Form.Group className="mb-3">
-                              <Form.Label>Installments</Form.Label>
+                              <Form.Label>{t('auto.installments', `Installments`)}</Form.Label>
                               <Form.Control type="number" value={advanceInstallments} onChange={(e) => setAdvanceInstallments(e.target.value)} />
                             </Form.Group>
                           </Col>
@@ -2792,18 +2796,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                         <Row>
                           <Col md={6}>
                             <Form.Group className="mb-3">
-                              <Form.Label>Repayment Frequency</Form.Label>
+                              <Form.Label>{t('auto.repaymentFrequency', `Repayment Frequency`)}</Form.Label>
                               <Form.Select value={advancePayType} onChange={(e) => setAdvancePayType(e.target.value as PayType)}>
-                                <option value="DAILY">Daily</option>
-                                <option value="WEEKLY">Weekly</option>
-                                <option value="FORTNIGHTLY">Fortnightly</option>
-                                <option value="MONTHLY">Monthly</option>
+                                <option value="DAILY">{t('auto.daily', `Daily`)}</option>
+                                <option value="WEEKLY">{t('auto.weekly', `Weekly`)}</option>
+                                <option value="FORTNIGHTLY">{t('auto.fortnightly', `Fortnightly`)}</option>
+                                <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
                               </Form.Select>
                             </Form.Group>
                           </Col>
                           <Col md={6}>
                             <Form.Group className="mb-3">
-                              <Form.Label>Currency</Form.Label>
+                              <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                               <Form.Select value={advanceCurrency} onChange={(e) => setAdvanceCurrency(e.target.value)}>
                                 {currencies.map(currency => (
                                   <option key={currency.code} value={currency.code}>{currency.code}</option>
@@ -2813,7 +2817,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                           </Col>
                         </Row>
                         <Form.Group className="mb-3">
-                          <Form.Label>Details/Remarks</Form.Label>
+                          <Form.Label>{t('auto.detailsremarks', `Details/Remarks`)}</Form.Label>
                           <Form.Control as="textarea" rows={2} value={advanceDetails} onChange={(e) => setAdvanceDetails(e.target.value)} />
                         </Form.Group>
                         <div className="d-flex justify-content-end">
@@ -2829,20 +2833,20 @@ export function UserManagementTab({ role }: { role: Role }) {
                 <Row className="g-3 mt-2">
                   <Col md={6}>
                     <Card>
-                      <Card.Header className="bg-light"><strong>Payment History</strong></Card.Header>
+                      <Card.Header className="bg-light"><strong>{t('auto.paymentHistory', `Payment History`)}</strong></Card.Header>
                       <Card.Body className="p-0">
                         <div className="table-responsive">
                           <Table size="sm" className="mb-0">
                             <thead className="table-light">
                               <tr>
-                                <th>Amount</th>
-                                <th>Date</th>
-                                <th>Details</th>
+                                <th>{t('auto.amount', `Amount`)}</th>
+                                <th>{t('auto.date', `Date`)}</th>
+                                <th>{t('auto.details', `Details`)}</th>
                               </tr>
                             </thead>
                             <tbody>
                               {teacherPayments.length === 0 ? (
-                                <tr><td colSpan={3} className="text-center text-muted small py-3">No records</td></tr>
+                                <tr><td colSpan={3} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                               ) : teacherPayments.map((p) => (
                                 <tr key={p.id}>
                                   <td className="fw-bold text-success">{getCurrencySymbol(p.currency)}{p.amount.toFixed(2)}</td>
@@ -2858,21 +2862,21 @@ export function UserManagementTab({ role }: { role: Role }) {
                   </Col>
                   <Col md={6}>
                     <Card>
-                      <Card.Header className="bg-light"><strong>Advances/Loans</strong></Card.Header>
+                      <Card.Header className="bg-light"><strong>{t('auto.advancesloans', `Advances/Loans`)}</strong></Card.Header>
                       <Card.Body className="p-0">
                         <div className="table-responsive">
                           <Table size="sm" className="mb-0">
                             <thead className="table-light">
                               <tr>
-                                <th>Principal</th>
-                                <th>Balance</th>
-                                <th>Installments</th>
-                                <th>Status</th>
+                                <th>{t('auto.principal', `Principal`)}</th>
+                                <th>{t('auto.balance', `Balance`)}</th>
+                                <th>{t('auto.installments', `Installments`)}</th>
+                                <th>{t('auto.status', `Status`)}</th>
                               </tr>
                             </thead>
                             <tbody>
                               {teacherAdvances.length === 0 ? (
-                                <tr><td colSpan={4} className="text-center text-muted small py-3">No records</td></tr>
+                                <tr><td colSpan={4} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                               ) : teacherAdvances.map((a) => (
                                 <tr key={a.id}>
                                   <td className="fw-bold">{getCurrencySymbol(a.currency)}{a.principal.toFixed(2)}</td>
@@ -2893,63 +2897,63 @@ export function UserManagementTab({ role }: { role: Role }) {
           ) : (
             <Form onSubmit={handleUpdateUser}>
               <Form.Group className="mb-3">
-                <Form.Label>Full Name</Form.Label>
+                <Form.Label>{t('auto.fullName', `Full Name`)}</Form.Label>
                 <Form.Control 
                   type="text" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
                   required 
-                  placeholder="Enter full name"
+                  placeholder={t('auto.enterFullName', `Enter full name`)}
                 />
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label>Email Address</Form.Label>
+                <Form.Label>{t('auto.emailAddress', `Email Address`)}</Form.Label>
                 <Form.Control 
                   type="email" 
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)} 
                   required 
-                  placeholder="Enter email address"
+                  placeholder={t('auto.enterEmailAddress', `Enter email address`)}
                 />
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label>Mobile Number</Form.Label>
+                <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
                 <Form.Control 
                   type="tel" 
                   value={mobile} 
                   onChange={(e) => setMobile(e.target.value)} 
-                  placeholder="Enter mobile number"
+                  placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                 />
               </Form.Group>
                             <Form.Group className="mb-3">
-                <Form.Label>Address</Form.Label>
+                <Form.Label>{t('auto.address', `Address`)}</Form.Label>
                 <Form.Control 
                   as="textarea"
                   rows={2}
                   value={address} 
                   onChange={(e) => setAddress(e.target.value)} 
-                  placeholder="Enter address"
+                  placeholder={t('auto.enterAddress', `Enter address`)}
                 />
               </Form.Group>
               
                             
               <Form.Group className="mb-4">
-                <Form.Label>Password</Form.Label>
+                <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                 <Form.Control 
                   type="password" 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
-                  placeholder="Leave blank to keep current password"
+                  placeholder={t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
                   minLength={6}
                 />
                 <Form.Text className="text-muted">
-                  Leave blank to keep current password
-                </Form.Text>
+                  {t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
+                                                          </Form.Text>
               </Form.Group>
               <div className="d-flex justify-content-end gap-2">
                 <Button variant="secondary" onClick={closeEditModal}>
-                  Cancel
-                </Button>
+                  {t('auto.cancel', `Cancel`)}
+                                                          </Button>
                 <Button
                   type="submit"
                   variant="warning"
@@ -2958,13 +2962,13 @@ export function UserManagementTab({ role }: { role: Role }) {
                   {editing ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Updating...
-                    </>
+                      {t('auto.updating', `Updating...`)}
+                                                                      </>
                   ) : (
                     <>
                       <i className="bi bi-check-circle me-2"></i>
-                      Update
-                    </>
+                      {t('auto.update', `Update`)}
+                                                                          </>
                   )}
                 </Button>
               </div>
@@ -2986,6 +2990,7 @@ export function UserManagementTab({ role }: { role: Role }) {
 }
 
 function SubjectManagementTab() {
+    const { t } = useTranslation('common');
   const [subjects, setSubjects] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -3107,30 +3112,30 @@ function SubjectManagementTab() {
             <Card.Header className="bg-primary text-white">
               <h6 className="mb-0">
                 <i className="bi bi-book me-2"></i>
-                Create New Subject
-              </h6>
+                {t('auto.createNewSubject', `Create New Subject`)}
+                                            </h6>
             </Card.Header>
             <Card.Body>
               <Form onSubmit={handleCreateSubject}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Subject Name</Form.Label>
+                  <Form.Label>{t('auto.subjectName', `Subject Name`)}</Form.Label>
                   <Form.Control 
                     type="text" 
                     value={name} 
                     onChange={(e) => setName(e.target.value)} 
                     required 
-                    placeholder="Enter subject name"
+                    placeholder={t('auto.enterSubjectName', `Enter subject name`)}
                     size="sm"
                   />
                 </Form.Group>
                 <Form.Group className="mb-4">
-                  <Form.Label>Description</Form.Label>
+                  <Form.Label>{t('auto.description', `Description`)}</Form.Label>
                   <Form.Control 
                     as="textarea" 
                     rows={3} 
                     value={description} 
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter subject description"
+                    placeholder={t('auto.enterSubjectDescription', `Enter subject description`)}
                     size="sm"
                   />
                 </Form.Group>
@@ -3144,13 +3149,13 @@ function SubjectManagementTab() {
                   {creating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Creating...
-                    </>
+                      {t('auto.creating', `Creating...`)}
+                                                              </>
                   ) : (
                     <>
                       <i className="bi bi-plus-circle me-2"></i>
-                      Create Subject
-                    </>
+                      {t('auto.createSubject', `Create Subject`)}
+                                                                  </>
                   )}
                 </Button>
               </Form>
@@ -3164,32 +3169,32 @@ function SubjectManagementTab() {
               <div className="d-flex justify-content-between align-items-center">
                 <h6 className="mb-0">
                   <i className="bi bi-book me-2"></i>
-                  Subjects
-                </h6>
-                <Badge bg="primary">{subjects.length} Total</Badge>
+                  {t('auto.subjects', `Subjects`)}
+                                                  </h6>
+                <Badge bg="primary">{subjects.length} {t('auto.total', `Total`)}</Badge>
               </div>
             </Card.Header>
             <Card.Body className="p-0">
               {loading ? (
                 <div className="text-center py-4">
                   <Spinner animation="border" size="sm" />
-                  <p className="mt-2 text-muted small">Loading subjects...</p>
+                  <p className="mt-2 text-muted small">{t('auto.loadingSubjects', `Loading subjects...`)}</p>
                 </div>
               ) : subjects.length === 0 ? (
                 <div className="text-center py-4">
                   <i className="bi bi-book display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">No subjects found</p>
+                  <p className="mt-2 text-muted small">{t('auto.noSubjectsFound', `No subjects found`)}</p>
                 </div>
               ) : (
                 <div className="table-responsive">
                   <Table hover size="sm" className="mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Students</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th>{t('auto.name', `Name`)}</th>
+                        <th>{t('auto.description', `Description`)}</th>
+                        <th>{t('auto.students', `Students`)}</th>
+                        <th>{t('auto.created', `Created`)}</th>
+                        <th>{t('auto.actions', `Actions`)}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3216,7 +3221,7 @@ function SubjectManagementTab() {
                                 variant="outline-info"
                                 size="sm"
                                 onClick={() => handleViewDetails(subject)}
-                                title="View Details"
+                                title={t('auto.viewDetails', `View Details`)}
                               >
                                 <i className="bi bi-eye"></i>
                               </Button>
@@ -3224,7 +3229,7 @@ function SubjectManagementTab() {
                                 variant="outline-warning"
                                 size="sm"
                                 onClick={() => handleEditSubject(subject)}
-                                title="Edit Subject"
+                                title={t('auto.editSubject', `Edit Subject`)}
                               >
                                 <i className="bi bi-pencil"></i>
                               </Button>
@@ -3246,35 +3251,35 @@ function SubjectManagementTab() {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
-            Edit Subject
-          </Modal.Title>
+            {t('auto.editSubject', `Edit Subject`)}
+                                </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleUpdateSubject}>
             <Form.Group className="mb-3">
-              <Form.Label>Subject Name</Form.Label>
+              <Form.Label>{t('auto.subjectName', `Subject Name`)}</Form.Label>
               <Form.Control 
                 type="text" 
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
                 required 
-                placeholder="Enter subject name"
+                placeholder={t('auto.enterSubjectName', `Enter subject name`)}
               />
             </Form.Group>
             <Form.Group className="mb-4">
-              <Form.Label>Description</Form.Label>
+              <Form.Label>{t('auto.description', `Description`)}</Form.Label>
               <Form.Control 
                 as="textarea" 
                 rows={3} 
                 value={description} 
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter subject description"
+                placeholder={t('auto.enterSubjectDescription', `Enter subject description`)}
               />
             </Form.Group>
             <div className="d-flex justify-content-end gap-2">
               <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                Cancel
-              </Button>
+                {t('auto.cancel', `Cancel`)}
+                                            </Button>
               <Button
                 type="submit"
                 variant="warning"
@@ -3283,13 +3288,13 @@ function SubjectManagementTab() {
                 {editing ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />
-                    Updating...
-                  </>
+                    {t('auto.updating', `Updating...`)}
+                                                        </>
                 ) : (
                   <>
                     <i className="bi bi-check-circle me-2"></i>
-                    Update
-                  </>
+                    {t('auto.update', `Update`)}
+                                                            </>
                 )}
               </Button>
             </div>
@@ -3301,7 +3306,7 @@ function SubjectManagementTab() {
       <DetailViewModal
         show={showDetailModal}
         onHide={() => setShowDetailModal(false)}
-        title="Subject Details"
+        title={t('auto.subjectDetails', `Subject Details`)}
         data={detailData}
       />
     </div>
@@ -3309,6 +3314,7 @@ function SubjectManagementTab() {
 }
 
 function AssignmentsTab() {
+    const { t } = useTranslation('common');
   const [students, setStudents] = useState<User[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [subjects, setSubjects] = useState<Course[]>([]);
@@ -3529,7 +3535,7 @@ function AssignmentsTab() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" />
-        <p className="mt-2 text-muted">Loading assignment data...</p>
+        <p className="mt-2 text-muted">{t('auto.loadingAssignmentData', `Loading assignment data...`)}</p>
       </div>
     );
   }
@@ -3544,7 +3550,7 @@ function AssignmentsTab() {
           <InputGroup>
             <InputGroup.Text><i className="bi bi-search"></i></InputGroup.Text>
             <Form.Control
-              placeholder="Search students by name or email"
+              placeholder={t('auto.searchStudentsByNameOrEmail', `Search students by name or email`)}
               value={studentSearch}
               onChange={(e) => setStudentSearch(e.target.value)}
             />
@@ -3558,38 +3564,38 @@ function AssignmentsTab() {
             <Card.Header className="bg-primary text-white">
               <h6 className="mb-0">
                 <i className="bi bi-plus-circle me-2"></i>
-                Create New Assignment
-              </h6>
+                {t('auto.createNewAssignment', `Create New Assignment`)}
+                                            </h6>
             </Card.Header>
             <Card.Body>
               <Form onSubmit={handleCreateAssignment}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Select Student *</Form.Label>
+                  <Form.Label>{t('auto.selectStudent', `Select Student *`)}</Form.Label>
                   <Form.Select 
                     value={selectedStudent}
                     onChange={(e) => setSelectedStudent(e.target.value)}
                     required
                     size="sm"
                   >
-                    <option value="">Choose a student...</option>
+                    <option value="">{t('auto.chooseAStudent', `Choose a student...`)}</option>
                     {filteredStudents.map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
                     {filteredStudents.length === 0 && (
-                      <option value="" disabled>No matching students</option>
+                      <option value="" disabled>{t('auto.noMatchingStudents', `No matching students`)}</option>
                     )}
                   </Form.Select>
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Select Subject *</Form.Label>
+                  <Form.Label>{t('auto.selectSubject', `Select Subject *`)}</Form.Label>
                   <Form.Select 
                     value={selectedSubject}
                     onChange={(e) => setSelectedSubject(e.target.value)}
                     required
                     size="sm"
                   >
-                    <option value="">Choose a subject...</option>
+                    <option value="">{t('auto.chooseASubject', `Choose a subject...`)}</option>
                     {subjects.map(s => (
                       <option key={s.id} value={s.id}>{s.name}</option>
                     ))}
@@ -3597,14 +3603,14 @@ function AssignmentsTab() {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Select Teacher *</Form.Label>
+                  <Form.Label>{t('auto.selectTeacher', `Select Teacher *`)}</Form.Label>
                   <Form.Select 
                     value={selectedTeacher}
                     onChange={(e) => setSelectedTeacher(e.target.value)}
                     required
                     size="sm"
                   >
-                    <option value="">Choose a teacher...</option>
+                    <option value="">{t('auto.chooseATeacher', `Choose a teacher...`)}</option>
                     {teachers.map(t => (
                       <option key={t.id} value={t.id}>{t.name}</option>
                     ))}
@@ -3612,7 +3618,7 @@ function AssignmentsTab() {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Assignment Date</Form.Label>
+                  <Form.Label>{t('auto.assignmentDate', `Assignment Date`)}</Form.Label>
                   <Form.Control 
                     type="date"
                     value={assignmentDate}
@@ -3624,7 +3630,7 @@ function AssignmentsTab() {
                 <Row>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Start Time</Form.Label>
+                      <Form.Label>{t('auto.startTime', `Start Time`)}</Form.Label>
                       <Form.Control 
                         type="time"
                         value={startTime}
@@ -3635,7 +3641,7 @@ function AssignmentsTab() {
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Duration (minutes)</Form.Label>
+                      <Form.Label>{t('auto.durationMinutes', `Duration (minutes)`)}</Form.Label>
                       <Form.Control 
                         type="number"
                         value={duration}
@@ -3648,7 +3654,7 @@ function AssignmentsTab() {
                 </Row>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Class Days</Form.Label>
+                  <Form.Label>{t('auto.classDays', `Class Days`)}</Form.Label>
                   <div className="d-flex flex-wrap gap-2">
                     {daysOfWeek.map(day => (
                       <Form.Check
@@ -3667,7 +3673,7 @@ function AssignmentsTab() {
                 <Row>
                   <Col md={8}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Monthly Fee</Form.Label>
+                      <Form.Label>{t('auto.monthlyFee', `Monthly Fee`)}</Form.Label>
                       <Form.Control 
                         type="number"
                         step="0.01"
@@ -3680,7 +3686,7 @@ function AssignmentsTab() {
                   </Col>
                   <Col md={4}>
                     <Form.Group className="mb-3">
-                      <Form.Label>Currency</Form.Label>
+                      <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                       <Form.Select 
                         value={currency}
                         onChange={(e) => setCurrency(e.target.value)}
@@ -3706,13 +3712,13 @@ function AssignmentsTab() {
                   {creating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Creating...
-                    </>
+                      {t('auto.creating', `Creating...`)}
+                                                              </>
                   ) : (
                     <>
                       <i className="bi bi-plus-circle me-2"></i>
-                      Create Assignment
-                    </>
+                      {t('auto.createAssignment', `Create Assignment`)}
+                                                                  </>
                   )}
                 </Button>
               </Form>
@@ -3726,36 +3732,36 @@ function AssignmentsTab() {
               <div className="d-flex justify-content-between align-items-center">
                 <h6 className="mb-0">
                   <i className="bi bi-list-task me-2"></i>
-                  Current Assignments
-                </h6>
-                <Badge bg="primary">{assignments.length} Total</Badge>
+                  {t('auto.currentAssignments', `Current Assignments`)}
+                                                  </h6>
+                <Badge bg="primary">{assignments.length} {t('auto.total', `Total`)}</Badge>
               </div>
             </Card.Header>
             <Card.Body className="p-0">
               {assignments.length === 0 ? (
                 <div className="text-center py-4">
                   <i className="bi bi-list-task display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">No assignments found</p>
+                  <p className="mt-2 text-muted small">{t('auto.noAssignmentsFound', `No assignments found`)}</p>
                 </div>
               ) : (
                 <div className="table-responsive">
                   <Table hover size="sm" className="mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Student</th>
-                        <th>Subject</th>
-                        <th>Teacher</th>
-                        <th>Schedule</th>
-                        <th>Fee</th>
-                        <th>Actions</th>
+                        <th>{t('auto.student', `Student`)}</th>
+                        <th>{t('auto.subject', `Subject`)}</th>
+                        <th>{t('auto.teacher', `Teacher`)}</th>
+                        <th>{t('auto.schedule', `Schedule`)}</th>
+                        <th>{t('auto.fee', `Fee`)}</th>
+                        <th>{t('auto.actions', `Actions`)}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredAssignments.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="text-center py-3 text-muted">
-                            No assignments match your search
-                          </td>
+                            {t('auto.noAssignmentsMatchYourSearch', `No assignments match your search`)}
+                                                                                    </td>
                         </tr>
                       ) : (
                         filteredAssignments.map((assignment) => (
@@ -3768,7 +3774,7 @@ function AssignmentsTab() {
                                 <div>{assignment.startTime}</div>
                               )}
                               {assignment.duration && (
-                                <div className="text-muted">{assignment.duration}min</div>
+                                <div className="text-muted">{assignment.duration}{t('auto.min', `min`)}</div>
                               )}
                               {assignment.classDays && assignment.classDays.length > 0 && (
                                 <div className="text-muted">
@@ -3796,7 +3802,7 @@ function AssignmentsTab() {
                                   variant="outline-warning"
                                   size="sm"
                                   onClick={() => handleEditAssignment(assignment)}
-                                  title="Edit Assignment"
+                                  title={t('auto.editAssignment', `Edit Assignment`)}
                                 >
                                   <i className="bi bi-pencil"></i>
                                 </Button>
@@ -3804,7 +3810,7 @@ function AssignmentsTab() {
                                   variant="outline-danger"
                                   size="sm"
                                   onClick={() => handleDeleteAssignment(assignment.id)}
-                                  title="Delete Assignment"
+                                  title={t('auto.deleteAssignment', `Delete Assignment`)}
                                 >
                                   <i className="bi bi-trash"></i>
                                 </Button>
@@ -3827,15 +3833,15 @@ function AssignmentsTab() {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
-            Edit Assignment
-          </Modal.Title>
+            {t('auto.editAssignment', `Edit Assignment`)}
+                                </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleUpdateAssignment}>
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Start Time</Form.Label>
+                  <Form.Label>{t('auto.startTime', `Start Time`)}</Form.Label>
                   <Form.Control 
                     type="time"
                     value={startTime}
@@ -3845,7 +3851,7 @@ function AssignmentsTab() {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Duration (minutes)</Form.Label>
+                  <Form.Label>{t('auto.durationMinutes', `Duration (minutes)`)}</Form.Label>
                   <Form.Control 
                     type="number"
                     value={duration}
@@ -3857,7 +3863,7 @@ function AssignmentsTab() {
             </Row>
 
             <Form.Group className="mb-3">
-              <Form.Label>Class Days</Form.Label>
+              <Form.Label>{t('auto.classDays', `Class Days`)}</Form.Label>
               <div className="d-flex flex-wrap gap-2">
                 {daysOfWeek.map(day => (
                   <Form.Check
@@ -3876,7 +3882,7 @@ function AssignmentsTab() {
             <Row>
               <Col md={8}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Monthly Fee</Form.Label>
+                  <Form.Label>{t('auto.monthlyFee', `Monthly Fee`)}</Form.Label>
                   <Form.Control 
                     type="number"
                     step="0.01"
@@ -3888,7 +3894,7 @@ function AssignmentsTab() {
               </Col>
               <Col md={4}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Currency</Form.Label>
+                  <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                   <Form.Select 
                     value={currency}
                     onChange={(e) => setCurrency(e.target.value)}
@@ -3906,8 +3912,8 @@ function AssignmentsTab() {
 
             <div className="d-flex justify-content-end gap-2">
               <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                Cancel
-              </Button>
+                {t('auto.cancel', `Cancel`)}
+                                            </Button>
               <Button
                 type="submit"
                 variant="primary"
@@ -3916,13 +3922,13 @@ function AssignmentsTab() {
                 {updating ? (
                   <>
                     <Spinner animation="border" size="sm" className="me-2" />
-                    Updating...
-                  </>
+                    {t('auto.updating', `Updating...`)}
+                                                        </>
                 ) : (
                   <>
                     <i className="bi bi-check-circle me-2"></i>
-                    Update Assignment
-                  </>
+                    {t('auto.updateAssignment', `Update Assignment`)}
+                                                            </>
                 )}
               </Button>
             </div>
@@ -3934,6 +3940,7 @@ function AssignmentsTab() {
 }
 
 export function SalaryManagementTab() {
+    const { t } = useTranslation('common');
   const [salaries, setSalaries] = useState<Salary[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -4084,13 +4091,13 @@ export function SalaryManagementTab() {
   const getStatusBadge = (status: SalaryStatus) => {
     switch (status) {
       case 'PAID':
-        return <Badge bg="success">Paid</Badge>;
+        return <Badge bg="success">{t('auto.paid', `Paid`)}</Badge>;
       case 'PENDING':
-        return <Badge bg="warning">Pending</Badge>;
+        return <Badge bg="warning">{t('auto.pending', `Pending`)}</Badge>;
       case 'OVERDUE':
-        return <Badge bg="danger">Overdue</Badge>;
+        return <Badge bg="danger">{t('auto.overdue', `Overdue`)}</Badge>;
       case 'CANCELLED':
-        return <Badge bg="secondary">Cancelled</Badge>;
+        return <Badge bg="secondary">{t('auto.cancelled', `Cancelled`)}</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -4106,8 +4113,8 @@ export function SalaryManagementTab() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div className="d-flex align-items-center gap-2">
           <i className="bi bi-cash-coin text-success"></i>
-          <h6 className="mb-0">Salary Management</h6>
-          <Badge bg="success">{salaries.length} Total</Badge>
+          <h6 className="mb-0">{t('auto.salaryManagement', `Salary Management`)}</h6>
+          <Badge bg="success">{salaries.length} {t('auto.total', `Total`)}</Badge>
         </div>
         <Button
           size="sm"
@@ -4123,22 +4130,22 @@ export function SalaryManagementTab() {
           <Card.Header className="bg-success text-white">
             <h6 className="mb-0">
               <i className="bi bi-wallet2 me-2"></i>
-              Create New Salary
-            </h6>
+              {t('auto.createNewSalary', `Create New Salary`)}
+                                      </h6>
           </Card.Header>
           <Card.Body>
             <Form onSubmit={handleCreateSalary}>
               <Row className="g-3">
                 <Col md={4}>
                   <Form.Group className="mb-0">
-                    <Form.Label>Select Teacher</Form.Label>
+                    <Form.Label>{t('auto.selectTeacher', `Select Teacher`)}</Form.Label>
                     <Form.Select 
                       value={selectedTeacher}
                       onChange={(e) => setSelectedTeacher(e.target.value)}
                       required
                       size="sm"
                     >
-                      <option value="">Choose a teacher...</option>
+                      <option value="">{t('auto.chooseATeacher', `Choose a teacher...`)}</option>
                       {teachers.map(t => (
                         <option key={t.id} value={t.id}>{t.name}</option>
                       ))}
@@ -4147,20 +4154,20 @@ export function SalaryManagementTab() {
                 </Col>
                 <Col md={4}>
                   <Form.Group className="mb-0">
-                    <Form.Label>Salary Title</Form.Label>
+                    <Form.Label>{t('auto.salaryTitle', `Salary Title`)}</Form.Label>
                     <Form.Control 
                       type="text" 
                       value={salaryTitle} 
                       onChange={(e) => setSalaryTitle(e.target.value)} 
                       required 
-                      placeholder="Enter salary title"
+                      placeholder={t('auto.enterSalaryTitle', `Enter salary title`)}
                       size="sm"
                     />
                   </Form.Group>
                 </Col>
                 <Col md={4}>
                   <Form.Group className="mb-0">
-                    <Form.Label>Due Date</Form.Label>
+                    <Form.Label>{t('auto.dueDate', `Due Date`)}</Form.Label>
                     <Form.Control 
                       type="date" 
                       value={salaryDueDate} 
@@ -4172,7 +4179,7 @@ export function SalaryManagementTab() {
                 </Col>
                 <Col md={4}>
                   <Form.Group className="mb-0">
-                    <Form.Label>Amount</Form.Label>
+                    <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
                     <Form.Control 
                       type="number" 
                       step="0.01"
@@ -4186,7 +4193,7 @@ export function SalaryManagementTab() {
                 </Col>
                 <Col md={4}>
                   <Form.Group className="mb-0">
-                    <Form.Label>Currency</Form.Label>
+                    <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
                     <Form.Select 
                       value={salaryCurrency}
                       onChange={(e) => setSalaryCurrency(e.target.value)}
@@ -4202,13 +4209,13 @@ export function SalaryManagementTab() {
                 </Col>
                 <Col md={12}>
                   <Form.Group className="mb-0">
-                    <Form.Label>Description</Form.Label>
+                    <Form.Label>{t('auto.description', `Description`)}</Form.Label>
                     <Form.Control 
                       as="textarea" 
                       rows={2} 
                       value={salaryDescription} 
                       onChange={(e) => setSalaryDescription(e.target.value)}
-                      placeholder="Optional description"
+                      placeholder={t('auto.optionalDescription', `Optional description`)}
                       size="sm"
                     />
                   </Form.Group>
@@ -4229,8 +4236,8 @@ export function SalaryManagementTab() {
                     setShowCreateForm(false);
                   }}
                 >
-                  Cancel
-                </Button>
+                  {t('auto.cancel', `Cancel`)}
+                                                  </Button>
                 <Button 
                   variant="success" 
                   type="submit" 
@@ -4240,13 +4247,13 @@ export function SalaryManagementTab() {
                   {creating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Creating...
-                    </>
+                      {t('auto.creating', `Creating...`)}
+                                                              </>
                   ) : (
                     <>
                       <i className="bi bi-plus-circle me-2"></i>
-                      Create Salary
-                    </>
+                      {t('auto.createSalary', `Create Salary`)}
+                                                                  </>
                   )}
                 </Button>
               </div>
@@ -4260,33 +4267,33 @@ export function SalaryManagementTab() {
           <div className="d-flex justify-content-between align-items-center">
             <h6 className="mb-0">
               <i className="bi bi-cash-coin me-2"></i>
-              Salary Management
-            </h6>
-            <Badge bg="success">{salaries.length} Total</Badge>
+              {t('auto.salaryManagement', `Salary Management`)}
+                                      </h6>
+            <Badge bg="success">{salaries.length} {t('auto.total', `Total`)}</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           {loading ? (
             <div className="text-center py-4">
               <Spinner animation="border" size="sm" />
-              <p className="mt-2 text-muted small">Loading salaries...</p>
+              <p className="mt-2 text-muted small">{t('auto.loadingSalaries', `Loading salaries...`)}</p>
             </div>
           ) : salaries.length === 0 ? (
             <div className="text-center py-4">
               <i className="bi bi-wallet2 display-6 text-muted"></i>
-              <p className="mt-2 text-muted small">No salaries found</p>
+              <p className="mt-2 text-muted small">{t('auto.noSalariesFound', `No salaries found`)}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table hover size="sm" className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Teacher</th>
-                    <th>Title</th>
-                    <th>Amount</th>
-                    <th>Due Date</th>
-                    <th>Status</th>
-                    <th>Paid By</th>
+                    <th>{t('auto.teacher', `Teacher`)}</th>
+                    <th>{t('auto.title', `Title`)}</th>
+                    <th>{t('auto.amount', `Amount`)}</th>
+                    <th>{t('auto.dueDate', `Due Date`)}</th>
+                    <th>{t('auto.status', `Status`)}</th>
+                    <th>{t('auto.paidBy', `Paid By`)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4317,6 +4324,7 @@ export function SalaryManagementTab() {
 }
 
 function StudentProgressTabContent({ progress, loading }: { progress: Progress[]; loading: boolean }) {
+    const { t } = useTranslation('common');
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailData, setDetailData] = useState<Progress | null>(null);
   const [showParentRemarksModal, setShowParentRemarksModal] = useState(false);
@@ -4326,13 +4334,13 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
   const getAttendanceBadge = (status: AttendanceStatus) => {
     switch (status) {
       case 'PRESENT':
-        return <Badge bg="success">Present</Badge>;
+        return <Badge bg="success">{t('auto.present', `Present`)}</Badge>;
       case 'ABSENT':
-        return <Badge bg="danger">Absent</Badge>;
+        return <Badge bg="danger">{t('auto.absent', `Absent`)}</Badge>;
       case 'LATE':
-        return <Badge bg="warning">Late</Badge>;
+        return <Badge bg="warning">{t('auto.late', `Late`)}</Badge>;
       case 'EXCUSED':
-        return <Badge bg="info">Excused</Badge>;
+        return <Badge bg="info">{t('auto.excused', `Excused`)}</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -4364,36 +4372,36 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
           <div className="d-flex justify-content-between align-items-center">
             <h6 className="mb-0">
               <i className="bi bi-graph-up me-2"></i>
-              Student Progress Overview
-            </h6>
-            <Badge bg="info">{progress.length} Records</Badge>
+              {t('auto.studentProgressOverview', `Student Progress Overview`)}
+                                      </h6>
+            <Badge bg="info">{progress.length} {t('auto.records', `Records`)}</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           {loading ? (
             <div className="text-center py-4">
               <Spinner animation="border" size="sm" />
-              <p className="mt-2 text-muted small">Loading progress data...</p>
+              <p className="mt-2 text-muted small">{t('auto.loadingProgressData', `Loading progress data...`)}</p>
             </div>
           ) : progress.length === 0 ? (
             <div className="text-center py-4">
               <i className="bi bi-graph-up display-6 text-muted"></i>
-              <p className="mt-2 text-muted small">No progress records found</p>
+              <p className="mt-2 text-muted small">{t('auto.noProgressRecordsFound', `No progress records found`)}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table hover size="sm" className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Date</th>
-                    <th>Student</th>
-                    <th>Subject</th>
-                    <th>Teacher</th>
-                    <th>Lesson</th>
-                    <th>Progress</th>
-                    <th>Attendance</th>
-                    <th>Parent Remarks</th>
-                    <th>Actions</th>
+                    <th>{t('auto.date', `Date`)}</th>
+                    <th>{t('auto.student', `Student`)}</th>
+                    <th>{t('auto.subject', `Subject`)}</th>
+                    <th>{t('auto.teacher', `Teacher`)}</th>
+                    <th>{t('auto.lesson', `Lesson`)}</th>
+                    <th>{t('auto.progress', `Progress`)}</th>
+                    <th>{t('auto.attendance', `Attendance`)}</th>
+                    <th>{t('auto.parentRemarks', `Parent Remarks`)}</th>
+                    <th>{t('auto.actions', `Actions`)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4434,11 +4442,11 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
                               );
                               return (
                                 <>
-                                  Remark with{' '}
+                                  {t('auto.remarkWith', `Remark with`)}{' '}
                                   <span className={replyCount > 0 ? 'text-success' : 'text-danger'}>
                                     {replyCount > 0 ? replyCount : 'no'}
                                   </span>{' '}
-                                  comment{replyCount === 1 ? '' : 's'}
+                                  {t('auto.comment', `comment`)}{replyCount === 1 ? '' : 's'}
                                 </>
                               );
                             })() : 'No parent remark'}
@@ -4448,7 +4456,7 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
                               variant="outline-secondary"
                               size="sm"
                               onClick={() => handleViewParentRemarks(item)}
-                              title="View parent remarks"
+                              title={t('auto.viewParentRemarks', `View parent remarks`)}
                             >
                               <i className="bi bi-chat-dots"></i>
                             </Button>
@@ -4460,7 +4468,7 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
                           variant="outline-info"
                           size="sm"
                           onClick={() => handleViewDetails(item)}
-                          title="View Details"
+                          title={t('auto.viewDetails', `View Details`)}
                         >
                           <i className="bi bi-eye"></i>
                         </Button>
@@ -4477,7 +4485,7 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
       <DetailViewModal
         show={showDetailModal}
         onHide={() => setShowDetailModal(false)}
-        title="Progress Details"
+        title={t('auto.progressDetails', `Progress Details`)}
         data={detailData}
       />
       <RemarkThreadModal
@@ -4492,40 +4500,41 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
 }
 
 function StudentTestsTabContent({ tests, loading }: { tests: AdminTestRecord[]; loading: boolean }) {
+    const { t } = useTranslation('common');
   return (
     <div>
       <Card className="shadow-sm">
         <Card.Header className="bg-light d-flex justify-content-between align-items-center">
           <h6 className="mb-0">
             <i className="bi bi-clipboard-data me-2"></i>
-            Latest Test Records
-          </h6>
+            {t('auto.latestTestRecords', `Latest Test Records`)}
+                                </h6>
           <Badge bg="success">{tests.length}</Badge>
         </Card.Header>
         <Card.Body className="p-0">
           {loading ? (
             <div className="text-center py-4">
               <Spinner animation="border" size="sm" />
-              <p className="mt-2 text-muted small">Loading records...</p>
+              <p className="mt-2 text-muted small">{t('auto.loadingRecords', `Loading records...`)}</p>
             </div>
           ) : tests.length === 0 ? (
             <div className="text-center py-4">
               <i className="bi bi-clipboard-check display-6 text-muted"></i>
-              <p className="mt-2 text-muted small">No test records found</p>
+              <p className="mt-2 text-muted small">{t('auto.noTestRecordsFound', `No test records found`)}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table hover size="sm" className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Date</th>
-                    <th>Student</th>
-                    <th>Subject</th>
-                    <th>Title</th>
-                    <th>Type</th>
-                    <th>Score</th>
+                    <th>{t('auto.date', `Date`)}</th>
+                    <th>{t('auto.student', `Student`)}</th>
+                    <th>{t('auto.subject', `Subject`)}</th>
+                    <th>{t('auto.title', `Title`)}</th>
+                    <th>{t('auto.type', `Type`)}</th>
+                    <th>{t('auto.score', `Score`)}</th>
                     <th>%</th>
-                    <th>Teacher</th>
+                    <th>{t('auto.teacher', `Teacher`)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4578,6 +4587,7 @@ function StudentTestsTabContent({ tests, loading }: { tests: AdminTestRecord[]; 
 }
 
 export function ProgressTab() {
+    const { t } = useTranslation('common');
   const [progress, setProgress] = useState<Progress[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -4609,13 +4619,13 @@ export function ProgressTab() {
   const getAttendanceBadge = (status: AttendanceStatus) => {
     switch (status) {
       case 'PRESENT':
-        return <Badge bg="success">Present</Badge>;
+        return <Badge bg="success">{t('auto.present', `Present`)}</Badge>;
       case 'ABSENT':
-        return <Badge bg="danger">Absent</Badge>;
+        return <Badge bg="danger">{t('auto.absent', `Absent`)}</Badge>;
       case 'LATE':
-        return <Badge bg="warning">Late</Badge>;
+        return <Badge bg="warning">{t('auto.late', `Late`)}</Badge>;
       case 'EXCUSED':
-        return <Badge bg="info">Excused</Badge>;
+        return <Badge bg="info">{t('auto.excused', `Excused`)}</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -4636,35 +4646,35 @@ export function ProgressTab() {
           <div className="d-flex justify-content-between align-items-center">
             <h6 className="mb-0">
               <i className="bi bi-graph-up me-2"></i>
-              Student Progress Overview
-            </h6>
-            <Badge bg="info">{progress.length} Records</Badge>
+              {t('auto.studentProgressOverview', `Student Progress Overview`)}
+                                      </h6>
+            <Badge bg="info">{progress.length} {t('auto.records', `Records`)}</Badge>
           </div>
         </Card.Header>
         <Card.Body className="p-0">
           {loading ? (
             <div className="text-center py-4">
               <Spinner animation="border" size="sm" />
-              <p className="mt-2 text-muted small">Loading progress data...</p>
+              <p className="mt-2 text-muted small">{t('auto.loadingProgressData', `Loading progress data...`)}</p>
             </div>
           ) : progress.length === 0 ? (
             <div className="text-center py-4">
               <i className="bi bi-graph-up display-6 text-muted"></i>
-              <p className="mt-2 text-muted small">No progress records found</p>
+              <p className="mt-2 text-muted small">{t('auto.noProgressRecordsFound', `No progress records found`)}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table hover size="sm" className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Date</th>
-                    <th>Student</th>
-                    <th>Subject</th>
-                    <th>Teacher</th>
-                    <th>Lesson</th>
-                    <th>Progress</th>
-                    <th>Attendance</th>
-                    <th>Actions</th>
+                    <th>{t('auto.date', `Date`)}</th>
+                    <th>{t('auto.student', `Student`)}</th>
+                    <th>{t('auto.subject', `Subject`)}</th>
+                    <th>{t('auto.teacher', `Teacher`)}</th>
+                    <th>{t('auto.lesson', `Lesson`)}</th>
+                    <th>{t('auto.progress', `Progress`)}</th>
+                    <th>{t('auto.attendance', `Attendance`)}</th>
+                    <th>{t('auto.actions', `Actions`)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4700,7 +4710,7 @@ export function ProgressTab() {
                           variant="outline-info"
                           size="sm"
                           onClick={() => handleViewDetails(item)}
-                          title="View Details"
+                          title={t('auto.viewDetails', `View Details`)}
                         >
                           <i className="bi bi-eye"></i>
                         </Button>
@@ -4718,7 +4728,7 @@ export function ProgressTab() {
       <DetailViewModal
         show={showDetailModal}
         onHide={() => setShowDetailModal(false)}
-        title="Progress Details"
+        title={t('auto.progressDetails', `Progress Details`)}
         data={detailData}
       />
     </div>
@@ -4726,6 +4736,7 @@ export function ProgressTab() {
 }
 
 export function RemarksTab() {
+    const { t } = useTranslation('common');
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const [remarks, setRemarks] = useState<any[]>([]);
@@ -4873,8 +4884,8 @@ export function RemarksTab() {
         <Card.Header className="bg-light d-flex justify-content-between align-items-center">
           <h6 className="mb-0">
             <i className="bi bi-chat-dots me-2"></i>
-            Parent Remarks & Threads
-          </h6>
+            {t('auto.parentRemarksThreads', `Parent Remarks & Threads`)}
+                                </h6>
           <Badge bg="info">{remarks.length}</Badge>
         </Card.Header>
         <Card.Body>
@@ -4883,7 +4894,7 @@ export function RemarksTab() {
               <Spinner animation="border" size="sm" />
             </div>
           ) : remarks.length === 0 ? (
-            <div className="text-center text-muted py-4">No remarks</div>
+            <div className="text-center text-muted py-4">{t('auto.noRemarks', `No remarks`)}</div>
           ) : (
             <div className="d-flex flex-column gap-3">
               {remarks.map((remark) => (
@@ -4918,11 +4929,11 @@ export function RemarksTab() {
                           </span>
                         </div>
                         <div className="small mt-1 text-muted">
-                          Remark with{' '}
+                          {t('auto.remarkWith', `Remark with`)}{' '}
                           <span className={(remark.replies?.length || 0) > 0 ? 'text-success' : 'text-danger'}>
                             {(remark.replies?.length || 0) > 0 ? remark.replies?.length : 'no'}
                           </span>{' '}
-                          comment{(remark.replies?.length || 0) === 1 ? '' : 's'}
+                          {t('auto.comment', `comment`)}{(remark.replies?.length || 0) === 1 ? '' : 's'}
                         </div>
                       </div>
                       <div className="d-flex align-items-center gap-2">
@@ -4933,8 +4944,8 @@ export function RemarksTab() {
                     <div className="d-flex justify-content-end gap-2 mt-3">
                       <Button variant="outline-secondary" size="sm" onClick={() => handleRefreshThread(remark.id)}>
                         <i className="bi bi-arrow-repeat me-1"></i>
-                        Refresh
-                      </Button>
+                        {t('auto.refresh', `Refresh`)}
+                                                        </Button>
                       <Button
                         variant="outline-primary"
                         size="sm"
@@ -4945,12 +4956,12 @@ export function RemarksTab() {
                         }}
                       >
                         <i className="bi bi-chat-dots me-1"></i>
-                        View Thread
-                      </Button>
+                        {t('auto.viewThread', `View Thread`)}
+                                                        </Button>
                       <Button variant="outline-danger" size="sm" onClick={() => handleDelete('remark', remark.id)}>
                         <i className="bi bi-trash"></i>
-                        Delete
-                      </Button>
+                        {t('auto.delete', `Delete`)}
+                                                        </Button>
                     </div>
                   </Card.Body>
                 </Card>
@@ -4985,6 +4996,7 @@ export function RemarksTab() {
   );
 }
 export function TestsTab() {
+    const { t } = useTranslation('common');
   const [records, setRecords] = useState<AdminTestRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -5021,34 +5033,34 @@ export function TestsTab() {
         <Card.Header className="bg-light d-flex justify-content-between align-items-center">
           <h6 className="mb-0">
             <i className="bi bi-clipboard-data me-2"></i>
-            Latest Test Records
-          </h6>
+            {t('auto.latestTestRecords', `Latest Test Records`)}
+                                </h6>
           <Badge bg="success">{records.length}</Badge>
         </Card.Header>
         <Card.Body className="p-0">
           {loading ? (
             <div className="text-center py-4">
               <Spinner animation="border" size="sm" />
-              <p className="mt-2 text-muted small">Loading records...</p>
+              <p className="mt-2 text-muted small">{t('auto.loadingRecords', `Loading records...`)}</p>
             </div>
           ) : records.length === 0 ? (
             <div className="text-center py-4">
               <i className="bi bi-clipboard-check display-6 text-muted"></i>
-              <p className="mt-2 text-muted small">No test records found</p>
+              <p className="mt-2 text-muted small">{t('auto.noTestRecordsFound', `No test records found`)}</p>
             </div>
           ) : (
             <div className="table-responsive">
               <Table hover size="sm" className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>Date</th>
-                    <th>Student</th>
-                    <th>Subject</th>
-                    <th>Title</th>
-                    <th>Type</th>
-                    <th>Score</th>
+                    <th>{t('auto.date', `Date`)}</th>
+                    <th>{t('auto.student', `Student`)}</th>
+                    <th>{t('auto.subject', `Subject`)}</th>
+                    <th>{t('auto.title', `Title`)}</th>
+                    <th>{t('auto.type', `Type`)}</th>
+                    <th>{t('auto.score', `Score`)}</th>
                     <th>%</th>
-                    <th>Teacher</th>
+                    <th>{t('auto.teacher', `Teacher`)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -5374,7 +5386,7 @@ export default function AdminDashboard() {
                 {homeLoading || !homeSnapshot ? (
                   <div className="text-center py-5">
                     <Spinner animation="border" />
-                    <p className="text-muted mt-2 mb-0">Loading overview...</p>
+                    <p className="text-muted mt-2 mb-0">{t('auto.loadingOverview', `Loading overview...`)}</p>
                   </div>
                 ) : (
                   <>
@@ -5541,8 +5553,8 @@ export default function AdminDashboard() {
                             </div>
                             <Badge bg="primary">
                               {getCurrencySymbol('USD')}
-                              {homeSnapshot.fees.total.toFixed(0)} total
-                            </Badge>
+                              {homeSnapshot.fees.total.toFixed(0)} {t('auto.total', `total`)}
+                                                                                          </Badge>
                           </Card.Header>
                           <Card.Body>
                             <div className="mb-3">
@@ -5751,14 +5763,14 @@ export default function AdminDashboard() {
                           </Card.Header>
                           <Card.Body>
                             {homeSnapshot.progress.topTeachers.length === 0 ? (
-                              <div className="text-muted text-center py-3">No progress data yet</div>
+                              <div className="text-muted text-center py-3">{t('auto.noProgressDataYet', `No progress data yet`)}</div>
                             ) : (
                               <div className="d-flex flex-column gap-3">
                                 {homeSnapshot.progress.topTeachers.map((teacher) => (
                                   <div key={teacher.name}>
                                     <div className="d-flex justify-content-between align-items-center mb-1">
                                       <strong>{teacher.name}</strong>
-                                      <small className="text-muted">{teacher.count} sessions</small>
+                                      <small className="text-muted">{teacher.count} {t('auto.sessions', `sessions`)}</small>
                                     </div>
                                     <div className="progress" style={{ height: '8px' }}>
                                       <div
@@ -5766,7 +5778,7 @@ export default function AdminDashboard() {
                                         style={{ width: `${teacher.avg}%` }}
                                       ></div>
                                     </div>
-                                    <small className="text-muted">{teacher.avg}% average lesson progress</small>
+                                    <small className="text-muted">{teacher.avg}{t('auto.averageLessonProgress', `% average lesson progress`)}</small>
                                   </div>
                                 ))}
                               </div>
