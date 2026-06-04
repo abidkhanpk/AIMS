@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/router';
 import {
   LineChart,
   Line,
@@ -20,6 +21,7 @@ interface AdminAnalyticsData {
 
 export default function AdminAnalytics() {
   const { t } = useTranslation('common');
+  const router = useRouter();
   const [data, setData] = useState<AdminAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -62,7 +64,10 @@ export default function AdminAnalytics() {
     <div className="mb-4">
       <Row className="g-3 mb-4">
         <Col md={4}>
-          <Card className="shadow-sm border-0 bg-primary text-white h-100">
+          <Card 
+            className="shadow-sm border-0 bg-primary text-white h-100 interactive-card"
+            onClick={() => router.push('/dashboard/students')}
+          >
             <Card.Body className="d-flex align-items-center">
               <div className="fs-1 me-3 opacity-75">
                 <i className="bi bi-people-fill"></i>
@@ -75,7 +80,10 @@ export default function AdminAnalytics() {
           </Card>
         </Col>
         <Col md={4}>
-          <Card className="shadow-sm border-0 bg-success text-white h-100">
+          <Card 
+            className="shadow-sm border-0 bg-success text-white h-100 interactive-card"
+            onClick={() => router.push('/dashboard/attendance-reports')}
+          >
             <Card.Body className="d-flex align-items-center">
               <div className="fs-1 me-3 opacity-75">
                 <i className="bi bi-calendar-check-fill"></i>
@@ -88,7 +96,10 @@ export default function AdminAnalytics() {
           </Card>
         </Col>
         <Col md={4}>
-          <Card className="shadow-sm border-0 bg-info text-white h-100">
+          <Card 
+            className="shadow-sm border-0 bg-info text-white h-100 interactive-card"
+            onClick={() => router.push('/dashboard/fees')}
+          >
             <Card.Body className="d-flex align-items-center">
               <div className="fs-1 me-3 opacity-75">
                 <i className="bi bi-cash-stack"></i>

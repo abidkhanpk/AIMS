@@ -493,7 +493,7 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      <TeacherAnalytics />
+      <TeacherAnalytics onTabChange={setActiveTab} />
       <CalendarView />
 
       <Row className="mb-3">

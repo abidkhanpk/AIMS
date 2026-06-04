@@ -5392,7 +5392,10 @@ export default function AdminDashboard() {
                   <>
                     <Row className="g-3 mb-3">
                       <Col md={3} sm={6}>
-                        <Card className="shadow-sm h-100">
+                        <Card 
+                          className="shadow-sm h-100 interactive-card" 
+                          onClick={() => handleSelect('students')}
+                        >
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
@@ -5407,7 +5410,10 @@ export default function AdminDashboard() {
                         </Card>
                       </Col>
                       <Col md={3} sm={6}>
-                        <Card className="shadow-sm h-100">
+                        <Card 
+                          className="shadow-sm h-100 interactive-card"
+                          onClick={() => handleSelect('teachers')}
+                        >
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
@@ -5422,7 +5428,10 @@ export default function AdminDashboard() {
                         </Card>
                       </Col>
                       <Col md={3} sm={6}>
-                        <Card className="shadow-sm h-100">
+                        <Card 
+                          className="shadow-sm h-100 interactive-card"
+                          onClick={() => handleSelect('parents')}
+                        >
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
@@ -5437,7 +5446,10 @@ export default function AdminDashboard() {
                         </Card>
                       </Col>
                       <Col md={3} sm={6}>
-                        <Card className="shadow-sm h-100">
+                        <Card 
+                          className="shadow-sm h-100 interactive-card"
+                          onClick={() => handleSelect('progress')}
+                        >
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
@@ -5494,7 +5506,10 @@ export default function AdminDashboard() {
                         </Card>
                       </Col>
                       <Col lg={6}>
-                        <Card className="shadow-sm h-100">
+                        <Card 
+                          className="shadow-sm h-100 interactive-card"
+                          onClick={() => handleSelect('academy-settings')}
+                        >
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>

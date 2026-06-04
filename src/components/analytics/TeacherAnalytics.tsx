@@ -7,7 +7,11 @@ interface TeacherAnalyticsData {
   attendanceRate: number;
 }
 
-export default function TeacherAnalytics() {
+interface TeacherAnalyticsProps {
+  onTabChange?: (tab: string) => void;
+}
+
+export default function TeacherAnalytics({ onTabChange }: TeacherAnalyticsProps = {}) {
     const { t } = useTranslation('common');
   const [data, setData] = useState<TeacherAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +49,10 @@ export default function TeacherAnalytics() {
   return (
     <Row className="g-3 mb-4">
       <Col md={6}>
-        <Card className="shadow-sm border-0 bg-primary text-white h-100">
+        <Card 
+          className={`shadow-sm border-0 bg-primary text-white h-100 ${onTabChange ? 'interactive-card' : ''}`}
+          onClick={() => onTabChange?.('tests')}
+        >
           <Card.Body className="d-flex align-items-center">
             <div className="fs-2 me-3 opacity-75">
               <i className="bi bi-journal-check"></i>
@@ -58,7 +65,10 @@ export default function TeacherAnalytics() {
         </Card>
       </Col>
       <Col md={6}>
-        <Card className="shadow-sm border-0 bg-success text-white h-100">
+        <Card 
+          className={`shadow-sm border-0 bg-success text-white h-100 ${onTabChange ? 'interactive-card' : ''}`}
+          onClick={() => onTabChange?.('progress')}
+        >
           <Card.Body className="d-flex align-items-center">
             <div className="fs-2 me-3 opacity-75">
               <i className="bi bi-people-fill"></i>
