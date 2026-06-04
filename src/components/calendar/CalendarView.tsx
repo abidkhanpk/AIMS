@@ -83,7 +83,7 @@ export default function CalendarView() {
         const res = await fetch('/api/calendar/schedules');
         if (!res.ok) throw new Error('Failed to fetch schedules');
         const assignments: ScheduleAssignment[] = await res.json();
-        
+
         // Generate concrete events for the current month +/- 1 month
         const generatedEvents: CalendarEvent[] = [];
         const startOfMonth = new Date(date.getFullYear(), date.getMonth() - 1, 1);
@@ -96,7 +96,7 @@ export default function CalendarView() {
 
           assignment.classDays.forEach(day => {
             const targetDayIndex = dayToIndex[day];
-            
+
             // Find the first occurrence of this day of the week on or after startOfMonth
             let current = setDay(startOfMonth, targetDayIndex);
             if (current < startOfMonth) {
@@ -148,7 +148,7 @@ export default function CalendarView() {
 
   const displayEvents = React.useMemo(() => {
     if (view !== Views.MONTH) return events;
-    
+
     // Aggregate events for month view to prevent clutter
     const grouped: Record<string, CalendarEvent[]> = {};
     events.forEach((e) => {
@@ -156,7 +156,7 @@ export default function CalendarView() {
       if (!grouped[dateStr]) grouped[dateStr] = [];
       grouped[dateStr].push(e);
     });
-    
+
     return Object.entries(grouped).map(([dateStr, dayEvents]) => {
       const d = parseISO(dateStr);
       return {
@@ -172,7 +172,7 @@ export default function CalendarView() {
   const MonthEvent = ({ event }: any) => {
     if (!event.resource?.isAggregated) return <span>{event.title}</span>;
     const dayEvents = event.resource.dayEvents as CalendarEvent[];
-    
+
     const popover = (
       <Popover id={`popover-${event.id}`} style={{ maxWidth: '300px' }}>
         <Popover.Header as="h3">{format(event.start, 'MMM d, yyyy')}</Popover.Header>
@@ -222,40 +222,40 @@ export default function CalendarView() {
       <Card.Body>
         {error && <Alert variant="danger">{error}</Alert>}
         <div style={{ height: 600, overflow: 'hidden' }}>
-            <Calendar
-              localizer={localizer}
-              culture={i18n.language === 'ur' ? 'ur' : 'en'}
-              events={displayEvents}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: '100%', fontFamily: 'inherit' }}
-              view={view}
-              onView={setView}
-              date={date}
-              onNavigate={setDate}
-              messages={messages}
-              components={{
-                month: { event: MonthEvent }
-              }}
-              popup
-              eventPropGetter={(event) => {
-                if (view === Views.MONTH) {
-                  return {
-                    style: { backgroundColor: 'transparent', border: 'none' }
-                  };
-                }
+          <Calendar
+            localizer={localizer}
+            culture={i18n.language === 'ur' ? 'ur' : 'en'}
+            events={displayEvents}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: '100%', fontFamily: 'inherit' }}
+            view={view}
+            onView={setView}
+            date={date}
+            onNavigate={setDate}
+            messages={messages}
+            components={{
+              month: { event: MonthEvent }
+            }}
+            popup
+            eventPropGetter={(event) => {
+              if (view === Views.MONTH) {
                 return {
-                  style: {
-                    backgroundColor: '#0d6efd',
-                    borderRadius: '4px',
-                    opacity: 0.9,
-                    color: 'rgba(255, 255, 255, 0.85)',
-                    border: '0',
-                    display: 'block'
-                  }
+                  style: { backgroundColor: 'transparent', border: 'none' }
                 };
-              }}
-            />
+              }
+              return {
+                style: {
+                  backgroundColor: '#0d6efd',
+                  borderRadius: '4px',
+                  opacity: 0.9,
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  border: '0',
+                  display: 'block'
+                }
+              };
+            }}
+          />
         </div>
       </Card.Body>
     </Card>

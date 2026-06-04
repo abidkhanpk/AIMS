@@ -21,8 +21,9 @@ export async function middleware(req: NextRequest) {
     // Ignore the redirector /dashboard
     if (!pathRole) return NextResponse.next();
     
-    // Prevent access if role doesn't match
-    if (role.toLowerCase() !== pathRole) {
+    // Prevent access if role doesn't match for main dashboard pages
+    const validRoles = ['admin', 'teacher', 'student', 'parent', 'developer'];
+    if (validRoles.includes(pathRole) && role.toLowerCase() !== pathRole) {
       const url = req.nextUrl.clone();
       url.pathname = `/dashboard/${role.toLowerCase()}`;
       return NextResponse.redirect(url);
