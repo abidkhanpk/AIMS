@@ -113,10 +113,10 @@ export default function NotificationDropdown() {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
 
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
+    if (diffInMinutes < 1) return t('auto.justNow', 'Just now');
+    if (diffInMinutes < 60) return `${diffInMinutes} ${t('auto.minutesAgo', 'm ago')}`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} ${t('auto.hoursAgo', 'h ago')}`;
+    return `${Math.floor(diffInMinutes / 1440)} ${t('auto.daysAgo', 'd ago')}`;
   };
 
   const navigateForNotification = (notification: Notification) => {
@@ -153,6 +153,25 @@ export default function NotificationDropdown() {
     }
     navigateForNotification(notification);
     setShow(false);
+  };
+
+  const translateDynamicText = (text: string) => {
+    if (!text) return text;
+    let translated = text;
+    // Common titles
+    if (translated === 'Subscription Renewal Due') return t('auto.subRenewalDue', 'Subscription Renewal Due');
+    if (translated === 'Fee Due Reminder') return t('auto.feeDueReminder', 'Fee Due Reminder');
+    if (translated === 'Subscription Renewal Reminder') return t('auto.subRenewalReminder', 'Subscription Renewal Reminder');
+    if (translated === 'System Developer') return t('auto.sysDev', 'System Developer');
+    
+    // Message patterns
+    if (translated.includes('Your monthly subscription will expire on')) {
+      const parts = translated.split('Your monthly subscription will expire on');
+      const datePart = parts[1].split('. Please renew')[0];
+      return `${t('auto.subExpire1', 'Your monthly subscription will expire on')} ${datePart}. ${t('auto.subExpire2', 'Please renew to continue using the system.')}`;
+    }
+    
+    return translated;
   };
 
   return (
@@ -198,7 +217,7 @@ export default function NotificationDropdown() {
               {loading ? (
                 <Spinner animation="border" size="sm" />
               ) : (
-                'Mark all read'
+                t('auto.markAllRead', 'Mark all read')
               )}
             </Button>
           )}
@@ -227,16 +246,16 @@ export default function NotificationDropdown() {
                   <div className="flex-grow-1">
                     <div className="d-flex justify-content-between align-items-start">
                       <h6 className={`mb-1 ${!notification.isRead ? 'fw-bold' : ''}`}>
-                        {notification.title}
+                        {translateDynamicText(notification.title)}
                       </h6>
                       {!notification.isRead && (
                         <div className="bg-primary rounded-circle" style={{ width: '8px', height: '8px' }}></div>
                       )}
                     </div>
-                    <p className="mb-1 small text-muted">{notification.message}</p>
+                    <p className="mb-1 small text-muted">{translateDynamicText(notification.message)}</p>
                     <div className="d-flex justify-content-between align-items-center">
                       <small className="text-muted">
-                        {t('auto.from', `From:`)} {notification.sender.name} ({notification.sender.role})
+                        {t('auto.from', `From:`)} {translateDynamicText(notification.sender.name)} ({t(`auto.roles.${notification.sender.role}`, notification.sender.role)})
                       </small>
                       <small className="text-muted">
                         {formatTimeAgo(notification.createdAt)}
