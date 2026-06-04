@@ -146,8 +146,8 @@ export default function CalendarView() {
       </Card.Header>
       <Card.Body>
         {error && <Alert variant="danger">{error}</Alert>}
-        <div style={{ height: 600, minWidth: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          <div style={{ minWidth: 800, height: '100%' }}>
+        <div className="table-responsive" style={{ height: 600, WebkitOverflowScrolling: 'touch' }}>
+          <div style={{ minWidth: '700px', height: '100%' }}>
             <Calendar
               localizer={localizer}
               events={events}

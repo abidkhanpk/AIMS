@@ -261,7 +261,12 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
         </ul>
       </nav>
 
-      <Offcanvas show={showMobileMenu} onHide={() => setShowMobileMenu(false)} className="d-lg-none">
+      <Offcanvas 
+        show={showMobileMenu} 
+        onHide={() => setShowMobileMenu(false)} 
+        className="d-lg-none"
+        placement={router.locale === 'ur' ? 'end' : 'start'}
+      >
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>
             <i className="bi bi-list me-2"></i>

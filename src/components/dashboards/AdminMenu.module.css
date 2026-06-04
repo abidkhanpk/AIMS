@@ -32,7 +32,7 @@
 
 .navbar {
   top: 80px;
-  left: 0;
+  inset-inline-start: 0;
   padding: 0.35rem 0.25rem 0.75rem;
   width: var(--collapsed-width);
   height: calc(100vh - 80px);
@@ -223,7 +223,7 @@
   }
 
   .mainContent {
-    margin-left: 0;
+    margin-inline-start: 0;
     width: 100%;
   }
 }
@@ -240,10 +240,10 @@
 
 .mainContent {
   flex: 1;
-  margin-left: var(--collapsed-width);
+  margin-inline-start: var(--collapsed-width);
   padding: 1.5rem 1rem 3rem;
   background-color: hsl(var(--background));
-  transition: margin-left .35s cubic-bezier(var(--transition-main), 1);
+  transition: margin-inline-start .35s cubic-bezier(var(--transition-main), 1);
 }
 
 .flexCol {
@@ -312,6 +312,6 @@
   }
 
   .mainContent {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }

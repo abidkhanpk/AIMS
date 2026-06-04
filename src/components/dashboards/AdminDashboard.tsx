@@ -5343,7 +5343,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="h4 mb-1">
                   <i className="bi bi-gear-fill me-2 text-primary"></i>
-                  Admin Dashboard
+                  {t('adminDashboard', 'Admin Dashboard')}
                 </h2>
               </div>
             </div>
@@ -5352,12 +5352,12 @@ export default function AdminDashboard() {
               <div className={`${menuStyles.homePanel} p-3 p-md-4`}>
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <div>
-                    <h3 className="h5 mb-1">Overview</h3>
+                    <h3 className="h5 mb-1">{t('overview', 'Overview')}</h3>
                   </div>
                   <div className="d-flex align-items-center gap-2">
                     <Button variant="outline-secondary" size="sm" onClick={fetchHomeSnapshot} disabled={homeLoading}>
                       <i className="bi bi-arrow-repeat me-1"></i>
-                      Refresh
+                      {t('refresh', 'Refresh')}
                     </Button>
                   </div>
                 </div>
@@ -5384,7 +5384,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">Students</p>
+                                <p className="text-muted mb-1 small">{t('students', 'Students')}</p>
                                 <h3 className="mb-0">{homeSnapshot.counts.students}</h3>
                               </div>
                               <span className="badge bg-primary-subtle text-primary">
@@ -5399,7 +5399,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">Teachers</p>
+                                <p className="text-muted mb-1 small">{t('teachers', 'Teachers')}</p>
                                 <h3 className="mb-0">{homeSnapshot.counts.teachers}</h3>
                               </div>
                               <span className="badge bg-success-subtle text-success">
@@ -5414,7 +5414,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">Parents</p>
+                                <p className="text-muted mb-1 small">{t('parents', 'Parents')}</p>
                                 <h3 className="mb-0">{homeSnapshot.counts.parents}</h3>
                               </div>
                               <span className="badge bg-info-subtle text-info">
@@ -5429,7 +5429,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">Avg Lesson Progress</p>
+                                <p className="text-muted mb-1 small">{t('avgLessonProgress', 'Avg Lesson Progress')}</p>
                                 <h3 className="mb-0">{homeSnapshot.progress.avgLessonProgress}%</h3>
                               </div>
                               <span className="badge bg-warning-subtle text-warning">
@@ -5457,7 +5457,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">Teacher Activity (7d)</p>
+                                <p className="text-muted mb-1 small">{t('teacherActivity', 'Teacher Activity (7d)')}</p>
                                 <h5 className="mb-0">
                                   {homeSnapshot.teacherActivity.activeThisWeek} active
                                   <small className="text-muted ms-2">
@@ -5486,7 +5486,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">Subscription</p>
+                                <p className="text-muted mb-1 small">{t('subscription', 'Subscription')}</p>
                                 <h5 className="mb-0">
                                   {homeSnapshot.subscription.plan ? homeSnapshot.subscription.plan : 'No plan'}
                                   {homeSnapshot.subscription.status && (
