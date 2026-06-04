@@ -113,7 +113,7 @@ export default function AdminAnalytics() {
                 <YAxis axisLine={false} tickLine={false} dx={-10} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                  formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'Revenue']}
                 />
                 <Line 
                   type="monotone" 

@@ -17,13 +17,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const teacherId = session.user.id;
 
     // 1. Average Test Scores
-    const testRecords = await prisma.studentTestRecord.aggregate({
+    const testRecords = await prisma.testRecord.aggregate({
       where: { teacherId },
-      _avg: { marksObtained: true, totalMarks: true },
+      _avg: { obtainedMarks: true, maxMarks: true },
     });
     
-    const avgScore = testRecords._avg.marksObtained && testRecords._avg.totalMarks
-      ? Math.round((testRecords._avg.marksObtained / testRecords._avg.totalMarks) * 100)
+    const avgScore = testRecords._avg.obtainedMarks && testRecords._avg.maxMarks
+      ? Math.round((testRecords._avg.obtainedMarks / testRecords._avg.maxMarks) * 100)
       : 0;
 
     // 2. Class Attendance Rate

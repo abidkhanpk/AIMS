@@ -3,6 +3,7 @@ import { Card, Row, Col, Table, Badge, Alert, Spinner, ProgressBar, Tabs, Tab, B
 import FeePaymentModal from './FeePaymentModal';
 import RemarkThreadModal, { RemarkThread } from '../remarks/RemarkThreadModal';
 import CalendarView from '../calendar/CalendarView';
+import ReportCardsTab from './ReportCardsTab';
 import { getCurrencySymbol } from '../../utils/currencies';
 import { FeeStatus, AssessmentType } from '@prisma/client';
 
@@ -718,7 +719,12 @@ export default function StudentDashboard() {
             </Card>
           )}
         </Tab>
-        <Tab eventKey="fees" title="Fees">
+        
+        <Tab eventKey="report-cards" title="Report Cards">
+          <ReportCardsTab />
+        </Tab>
+
+        <Tab eventKey="fees" title="Fee Vouchers">
           <Card className="shadow-sm">
             <Card.Header className="bg-light">
               <div className="d-flex justify-content-between align-items-center">

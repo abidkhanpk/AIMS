@@ -33,6 +33,8 @@ const menuItems: MenuItem[] = [
     icon: 'bi-mortarboard',
     children: [
       { key: 'progress', label: 'Progress', icon: 'bi-graph-up' },
+      { key: 'attendance-reports', label: 'Attendance Reports', icon: 'bi-file-earmark-spreadsheet' },
+      { key: 'report-cards', label: 'Report Cards', icon: 'bi-award' },
       { key: 'tests', label: 'Tests & Exams', icon: 'bi-journal-check' },
     ],
   },

@@ -13,6 +13,8 @@ import AdminMenu from './AdminMenu';
 import menuStyles from './AdminMenu.module.css';
 import AdminAnalytics from '../analytics/AdminAnalytics';
 import CalendarView from '../calendar/CalendarView';
+import AttendanceReportsTab from './AttendanceReportsTab';
+import ReportCardsTab from './ReportCardsTab';
 
 interface User {
   id: string;
