@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Table, Badge, Button, Alert, Spinner, Card } from 'react-bootstrap';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import { SubscriptionStatus, SubscriptionPlan } from '@prisma/client';
@@ -105,27 +105,29 @@ const AdminSubscriptionTab: React.FC = () => {
     () => [...subs].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
     [subs]
   );
-  const paymentEntries = useMemo(
-    () => sortedSubs.filter((s) => s.paidById || s.status === 'PROCESSING' || s.paidAmount !== null),
-    [sortedSubs]
-  );
-
-  const isNearExpiry = (sub: SubscriptionRec) => {
+  const isNearExpiry = useCallback((sub: SubscriptionRec) => {
     if (!sub.endDate) return false;
     const end = new Date(sub.endDate);
     const now = new Date();
     const diff = end.getTime() - now.getTime();
     const days = diff / (1000 * 60 * 60 * 24);
-    return days <= 10; // show renewal option if expiring within 10 days
-  };
+    return days <= 10;
+  }, []);
+
+  const pendingEntries = useMemo(
+    () => sortedSubs.filter((s) => s.status === 'PENDING' || s.status === 'EXPIRED' || s.status === 'PROCESSING' || isNearExpiry(s)),
+    [sortedSubs, isNearExpiry]
+  );
+
+
 
   return (
     <>
       <Card className="shadow-sm mt-4">
         <Card.Header className="bg-light d-flex align-items-center justify-content-between">
           <h6 className="mb-0">
-            <i className="bi bi-wallet2 me-2"></i>
-            Payment History
+            <i className="bi bi-exclamation-circle me-2"></i>
+            Pending Dues & Renewals
           </h6>
         </Card.Header>
         <Card.Body className="p-0">
@@ -133,6 +135,11 @@ const AdminSubscriptionTab: React.FC = () => {
           {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible className="m-3">{success}</Alert>}
           {loading ? (
             <div className="text-center py-4"><Spinner animation="border" size="sm" /><p className="mt-2 text-muted small">Loading payment history...</p></div>
+          ) : pendingEntries.length === 0 ? (
+            <div className="text-center py-4 text-muted">
+              <i className="bi bi-check-circle display-6 text-success opacity-75"></i>
+              <p className="mt-2 mb-0">No pending dues or renewals</p>
+            </div>
           ) : (
             <Table hover size="sm" className="mb-0">
               <thead>
@@ -147,7 +154,7 @@ const AdminSubscriptionTab: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {paymentEntries.map((s) => (
+                {pendingEntries.map((s) => (
                   <tr key={s.id}>
                     <td><Badge bg="warning" className="text-dark">{s.plan}</Badge></td>
                     <td className="fw-bold text-success">{(s.paidAmount || s.amount).toFixed(2)} {s.currency}</td>
@@ -222,7 +229,7 @@ const AdminSubscriptionTab: React.FC = () => {
 
       <Card className="shadow-sm mt-3">
         <Card.Header className="bg-light">
-          <h6 className="mb-0">Subscription History</h6>
+          <h6 className="mb-0"><i className="bi bi-clock-history me-2"></i>Subscription History</h6>
         </Card.Header>
         <Card.Body>
           <SubscriptionHistoryTab hideHeaders hidePaymentHistory />

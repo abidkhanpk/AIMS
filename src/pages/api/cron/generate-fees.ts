@@ -4,13 +4,21 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).end('Method Not Allowed');
   }
 
-  const { secret } = req.body;
-  if (secret !== process.env.CRON_SECRET) {
+  // Verify cron job authorization
+  const authHeader = req.headers.authorization;
+  const apiKey = req.headers['x-api-key'];
+  const bodySecret = req.body?.secret;
+
+  if (
+    authHeader !== `Bearer ${process.env.CRON_SECRET}` &&
+    apiKey !== process.env.CRON_API_KEY &&
+    bodySecret !== process.env.CRON_SECRET
+  ) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
