@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Badge, Button, Alert, Spinner, Card, Form, Row, Col, Modal } from 'react-bootstrap';
 import { Fee, FeeStatus } from '@prisma/client';
+import { currencies } from '../../utils/currencies';
 
 const FeeVerificationTab = () => {
   const [fees, setFees] = useState<Fee[]>([]);
@@ -18,20 +19,6 @@ const FeeVerificationTab = () => {
   const [editAmount, setEditAmount] = useState('');
   const [editCurrency, setEditCurrency] = useState('USD');
   const [editDueDate, setEditDueDate] = useState('');
-
-  const currencies = [
-    { code: 'USD', symbol: '$', name: 'US Dollar' },
-    { code: 'EUR', symbol: '€', name: 'Euro' },
-    { code: 'GBP', symbol: '£', name: 'British Pound' },
-    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
-    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-  ];
-
   const fetchFees = useCallback(async () => {
     try {
       setLoading(true);
@@ -320,7 +307,7 @@ const FeeVerificationTab = () => {
                     onChange={(e) => setEditCurrency(e.target.value)}
                     required
                   >
-                    {currencies.map((curr) => (
+                    {currencies.map((curr: any) => (
                       <option key={curr.code} value={curr.code}>
                         {curr.symbol} {curr.name} ({curr.code})
                       </option>

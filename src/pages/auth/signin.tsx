@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { Form, Button, Card, Container, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -155,9 +156,12 @@ export default function SignIn() {
                     </Button>
                   </Form>
 
-                  <div className="text-center mt-4">
+                  <div className="d-flex justify-content-between align-items-center mt-4 px-2">
+                    <Link href="/auth/forgot-password" className="text-decoration-none small">
+                      Forgot Password?
+                    </Link>
                     <small className="text-muted">
-                      Need help? Contact your administrator
+                      Need help? Contact admin
                     </small>
                   </div>
                 </Card.Body>

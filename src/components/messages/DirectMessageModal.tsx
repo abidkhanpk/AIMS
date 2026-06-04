@@ -16,17 +16,45 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [msgSubject, setMsgSubject] = useState(subject || '');
+  
+  // New states for recipient selector
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState('');
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   useEffect(() => {
     if (show) {
       setText('');
       setError('');
       setMsgSubject(subject || '');
+      setSelectedUser('');
+      
+      if (!targetId) {
+        fetchUsers();
+      }
     }
-  }, [show, subject]);
+  }, [show, subject, targetId]);
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) {
+        const data = await res.json();
+        // Filter out current user if possible, but backend might not return self anyway
+        setUsers(data);
+      }
+    } catch (err) {
+      console.error('Failed to load users for messaging');
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const actualTargetId = targetId || selectedUser;
 
   const handleSend = async () => {
-    if (!targetId || !text.trim()) return;
+    if (!actualTargetId || !text.trim()) return;
     setSending(true);
     setError('');
     try {
@@ -34,7 +62,7 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          receiverId: targetId,
+          receiverId: actualTargetId,
           content: text.trim(),
           subject: msgSubject?.trim() || 'No subject',
           threadId: threadId || undefined,
@@ -60,11 +88,31 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
       <Modal.Header closeButton>
         <Modal.Title>
           <i className="bi bi-envelope me-2"></i>
-          Message {targetName || 'user'}
+          {targetId ? `Message ${targetName || 'user'}` : 'New Message'}
         </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-    {error && <div className="alert alert-danger py-2">{error}</div>}
+        {error && <div className="alert alert-danger py-2">{error}</div>}
+        
+        {!targetId && (
+          <Form.Group className="mb-3">
+            <Form.Label>To</Form.Label>
+            {loadingUsers ? (
+              <div><Spinner animation="border" size="sm" className="me-2" /> Loading contacts...</div>
+            ) : (
+              <Form.Select 
+                value={selectedUser} 
+                onChange={(e) => setSelectedUser(e.target.value)}
+              >
+                <option value="">Select a recipient...</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                ))}
+              </Form.Select>
+            )}
+          </Form.Group>
+        )}
+
       <Form.Group className="mb-3">
         <Form.Label>Subject</Form.Label>
         <Form.Control
@@ -88,7 +136,7 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>Close</Button>
-        <Button variant="primary" onClick={handleSend} disabled={!text.trim() || sending || !targetId}>
+        <Button variant="primary" onClick={handleSend} disabled={!text.trim() || sending || !actualTargetId}>
           {sending ? (
             <>
               <Spinner animation="border" size="sm" className="me-2" />

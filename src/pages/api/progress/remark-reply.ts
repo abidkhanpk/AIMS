@@ -36,20 +36,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Parent remark not found' });
     }
 
-    // Permissions: teacher of the progress OR admin of the student OR the parent who wrote the remark
+    // Permissions: teacher of the progress OR admin of the student OR any parent linked to the student
     const userRole = session.user.role;
     const userId = session.user.id;
     const adminId = session.user.adminId;
+    const studentAdminId = remark.progress.student.adminId;
 
     let allowed = false;
     if (userRole === 'TEACHER' && remark.progress.teacherId === userId) {
+      // Defense-in-depth: verify teacher belongs to same academy
+      if (adminId === studentAdminId) {
+        allowed = true;
+      }
+    }
+    if (userRole === 'ADMIN' && studentAdminId === userId) {
       allowed = true;
     }
-    if (userRole === 'ADMIN' && remark.progress.student.adminId === userId) {
-      allowed = true;
-    }
-    if (userRole === 'PARENT' && remark.parentId === userId) {
-      allowed = true;
+    if (userRole === 'PARENT') {
+      // Check the parent is linked to the student (same academy)
+      const parentLink = await prisma.parentStudent.findFirst({
+        where: { parentId: userId, studentId: remark.progress.studentId },
+      });
+      if (parentLink) {
+        allowed = true;
+      }
     }
 
     if (!allowed) {

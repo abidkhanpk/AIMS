@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Table, Spinner, Alert, Badge, Button, Modal, Form, Row, Col } from 'react-bootstrap';
+import { currencies } from '../utils/currencies';
 
 interface SubscriptionHistoryProps {
   adminId?: string; // if undefined and user is ADMIN, server will use session user
@@ -55,19 +56,6 @@ export default function SubscriptionHistoryTab({
   const [extensionAmount, setExtensionAmount] = useState(29.99);
   const [extensionCurrency, setExtensionCurrency] = useState('USD');
   const [paymentDetails, setPaymentDetails] = useState('');
-
-  const currencies = [
-    { code: 'USD', symbol: '$', name: 'US Dollar' },
-    { code: 'EUR', symbol: '€', name: 'Euro' },
-    { code: 'GBP', symbol: '£', name: 'British Pound' },
-    { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-    { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-    { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-    { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
-    { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-    { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-    { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-  ];
 
   const fetchSubscriptionHistory = useCallback(async () => {
     try {
@@ -142,7 +130,7 @@ export default function SubscriptionHistoryTab({
   };
 
   const getCurrencySymbol = (currencyCode: string) => {
-    const currency = currencies.find(c => c.code === currencyCode);
+    const currency = currencies.find((c: any) => c.code === currencyCode);
     return currency ? currency.symbol : currencyCode;
   };
 
@@ -374,7 +362,7 @@ export default function SubscriptionHistoryTab({
                     value={extensionCurrency}
                     onChange={(e) => setExtensionCurrency(e.target.value)}
                   >
-                    {currencies.map((currency) => (
+                    {currencies.map((currency: any) => (
                       <option key={currency.code} value={currency.code}>
                         {currency.symbol} {currency.code}
                       </option>

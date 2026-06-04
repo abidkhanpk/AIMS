@@ -170,18 +170,7 @@ interface Progress {
   }>;
 }
 
-const currencies = [
-  { code: 'USD', symbol: '$', name: 'US Dollar' },
-  { code: 'EUR', symbol: '€', name: 'Euro' },
-  { code: 'GBP', symbol: '£', name: 'British Pound' },
-  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-  { code: 'CHF', symbol: 'CHF', name: 'Swiss Franc' },
-  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-  { code: 'PKR', symbol: '₨', name: 'Pakistani Rupee' },
-];
+import { currencies, getCurrencySymbol } from '../../utils/currencies';
 
 const countryOptions = [
   'Afghanistan','Albania','Algeria','Andorra','Angola','Antigua and Barbuda','Argentina','Armenia','Australia','Austria',
@@ -224,11 +213,7 @@ const daysOfWeek = [
   { value: 'SUNDAY', label: 'Sunday' },
 ];
 
-// Global getCurrencySymbol function for the main component
-const getCurrencySymbol = (currencyCode: string) => {
-  const currency = currencies.find(c => c.code === currencyCode);
-  return currency ? currency.symbol : currencyCode;
-};
+// Global getCurrencySymbol function imported from utils
 
 // Assignment Subform Component
 function AssignmentSubform({ 
@@ -3460,10 +3445,7 @@ function AssignmentsTab() {
     );
   };
 
-  const getCurrencySymbol = (currencyCode: string) => {
-    const currency = currencies.find(c => c.code === currencyCode);
-    return currency ? currency.symbol : currencyCode;
-  };
+  // Using global getCurrencySymbol
 
   if (loading) {
     return (
@@ -4036,10 +4018,7 @@ export function SalaryManagementTab() {
     }
   };
 
-  const getCurrencySymbol = (currencyCode: string) => {
-    const currency = currencies.find(c => c.code === currencyCode);
-    return currency ? currency.symbol : currencyCode;
-  };
+  // Using global getCurrencySymbol
 
   return (
     <div>

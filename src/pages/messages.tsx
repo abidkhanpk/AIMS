@@ -155,7 +155,18 @@ export default function MessagesPage() {
 
       <Card>
         <Card.Header className="d-flex justify-content-between align-items-center">
-          <span>Inbox</span>
+          <div>
+            <span className="me-3 fw-bold">Inbox</span>
+            <button 
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setComposerTarget({ id: null, subject: '' });
+                setShowComposer(true);
+              }}
+            >
+              <i className="bi bi-pencil-square me-1"></i> New Message
+            </button>
+          </div>
           <span className="text-muted small">{threads.length} thread{threads.length === 1 ? '' : 's'}</span>
         </Card.Header>
         <Card.Body className="p-0">

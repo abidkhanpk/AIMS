@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Alert, Spinner, ProgressBar, Tabs, Tab, Button } from 'react-bootstrap';
 import FeePaymentModal from './FeePaymentModal';
+import RemarkThreadModal, { RemarkThread } from '../remarks/RemarkThreadModal';
+import { getCurrencySymbol } from '../../utils/currencies';
 import { FeeStatus, AssessmentType } from '@prisma/client';
 
 interface StudentData {
@@ -23,6 +25,7 @@ interface StudentData {
     remarks: string;
     attendance: string;
     createdAt: string;
+    parentRemarks?: RemarkThread[];
     course: {
       id: string;
       name: string;
@@ -114,6 +117,30 @@ export default function StudentDashboard() {
   const [feesLoading, setFeesLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // UI States
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [activeRemarks, setActiveRemarks] = useState<RemarkThread[]>([]);
+
+  const toggleCourseExpanded = (courseId: string) => {
+    setExpandedCourses(prev => {
+      const next = new Set(prev);
+      if (next.has(courseId)) {
+        next.delete(courseId);
+      } else {
+        next.add(courseId);
+      }
+      return next;
+    });
+  };
+
+  const openRemarks = (remarks: RemarkThread[] | undefined) => {
+    if (remarks && remarks.length > 0) {
+      setActiveRemarks(remarks);
+      setShowRemarksModal(true);
+    }
+  };
 
   // Fee payment states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -277,22 +304,7 @@ export default function StudentDashboard() {
     }
   };
 
-  const getCurrencySymbol = (currencyCode: string) => {
-    const currencies = [
-      { code: 'USD', symbol: '$' },
-      { code: 'EUR', symbol: '€' },
-      { code: 'GBP', symbol: '£' },
-      { code: 'JPY', symbol: '¥' },
-      { code: 'CAD', symbol: 'C$' },
-      { code: 'AUD', symbol: 'A$' },
-      { code: 'CHF', symbol: 'CHF' },
-      { code: 'CNY', symbol: '¥' },
-      { code: 'INR', symbol: '₹' },
-      { code: 'PKR', symbol: '₨' },
-    ];
-    const currency = currencies.find(c => c.code === currencyCode);
-    return currency ? currency.symbol : currencyCode;
-  };
+  // Using global getCurrencySymbol imported from utils
 
   if (loading) {
     return (
@@ -507,10 +519,11 @@ export default function StudentDashboard() {
                                     <th>Lesson</th>
                                     <th>Progress</th>
                                     <th>Attendance</th>
+                                    <th>Remarks</th>
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {allProgress.slice(0, 5).map((progress) => (
+                                  {allProgress.slice(0, expandedCourses.has(course.id) ? undefined : 5).map((progress) => (
                                     <tr key={progress.id}>
                                       <td className="text-muted small">
                                         {new Date(progress.date).toLocaleDateString()}
@@ -545,15 +558,39 @@ export default function StudentDashboard() {
                                       <td>
                                         {getAttendanceBadge(progress.attendance)}
                                       </td>
+                                      <td>
+                                        {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
+                                          <Button 
+                                            variant="outline-info" 
+                                            size="sm" 
+                                            className="py-0 px-2 rounded-pill"
+                                            onClick={() => openRemarks(progress.parentRemarks)}
+                                            title="View Remarks"
+                                          >
+                                            <i className="bi bi-chat-dots me-1"></i>
+                                            {progress.parentRemarks.length}
+                                          </Button>
+                                        ) : (
+                                          <span className="text-muted small">-</span>
+                                        )}
+                                      </td>
                                     </tr>
                                   ))}
                                 </tbody>
                               </Table>
                               {allProgress.length > 5 && (
-                                <div className="text-center mt-2">
-                                  <small className="text-muted">
-                                    Showing latest 5 of {allProgress.length} updates
-                                  </small>
+                                <div className="text-center mt-3 mb-1">
+                                  <Button 
+                                    variant="link" 
+                                    className="text-decoration-none text-muted p-0"
+                                    onClick={() => toggleCourseExpanded(course.id)}
+                                  >
+                                    {expandedCourses.has(course.id) ? (
+                                      <><i className="bi bi-chevron-up me-1"></i>Show Less</>
+                                    ) : (
+                                      <><i className="bi bi-chevron-down me-1"></i>Show All {allProgress.length} Updates</>
+                                    )}
+                                  </Button>
                                 </div>
                               )}
                             </div>
@@ -791,6 +828,13 @@ export default function StudentDashboard() {
           </Col>
         </Row>
       )}
+
+      <RemarkThreadModal
+        show={showRemarksModal}
+        onHide={() => setShowRemarksModal(false)}
+        remarks={activeRemarks}
+        title="Parent Remarks & Replies"
+      />
 
       {selectedFee && (
         <FeePaymentModal
