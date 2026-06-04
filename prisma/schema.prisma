@@ -589,6 +589,7 @@ model Settings {
   smtpPort       String?
   smtpUser       String?
   smtpPass       String?
+  smtpSecure     String?
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -631,6 +632,7 @@ model AppSettings {
   smtpPort       String?
   smtpUser       String?
   smtpPass       String?
+  smtpSecure     String?
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

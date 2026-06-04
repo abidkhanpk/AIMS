@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const { enableHomePage, appName, appLogo, tagline, defaultCurrency, storageProvider, driveFolderId, cloudinaryFolder } = req.body;
+    const { enableHomePage, appName, appLogo, tagline, defaultCurrency, storageProvider, driveFolderId, cloudinaryFolder, smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure } = req.body;
 
     try {
       // Get existing settings or create new ones
@@ -59,6 +59,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ...(storageProvider && { storageProvider }),
             ...(driveFolderId !== undefined && { driveFolderId }),
             ...(cloudinaryFolder !== undefined && { cloudinaryFolder }),
+            ...(smtpHost !== undefined && { smtpHost }),
+            ...(smtpPort !== undefined && { smtpPort }),
+            ...(smtpUser !== undefined && { smtpUser }),
+            ...(smtpPass !== undefined && { smtpPass }),
+            ...(smtpSecure !== undefined && { smtpSecure }),
           }
         });
       } else {
@@ -73,6 +78,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             storageProvider: storageProvider || 'DRIVE',
             driveFolderId: driveFolderId || null,
             cloudinaryFolder: cloudinaryFolder || null,
+            smtpHost: smtpHost || null,
+            smtpPort: smtpPort || null,
+            smtpUser: smtpUser || null,
+            smtpPass: smtpPass || null,
+            smtpSecure: smtpSecure || null,
           }
         });
       }

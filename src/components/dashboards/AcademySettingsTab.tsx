@@ -15,6 +15,7 @@ export default function AcademySettingsTab() {
   const [smtpPort, setSmtpPort] = useState('');
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPass, setSmtpPass] = useState('');
+  const [smtpSecure, setSmtpSecure] = useState('');
 
   useEffect(() => {
     async function fetchSettings() {
@@ -27,6 +28,7 @@ export default function AcademySettingsTab() {
           setSmtpPort(data.smtpPort || '');
           setSmtpUser(data.smtpUser || '');
           setSmtpPass(data.smtpPass || '');
+          setSmtpSecure(data.smtpSecure || 'tls');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error fetching settings');
@@ -50,6 +52,7 @@ export default function AcademySettingsTab() {
           smtpPort: smtpPort || null,
           smtpUser: smtpUser || null,
           smtpPass: smtpPass || null,
+          smtpSecure: smtpSecure || null,
         })
       });
 
@@ -127,6 +130,16 @@ export default function AcademySettingsTab() {
                 value={smtpPass}
                 onChange={e => setSmtpPass(e.target.value)}
               />
+            </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label>{t('auto.smtpSecure', `Security Protocol (TLS/SSL)`)}</Form.Label>
+              <Form.Select 
+                value={smtpSecure}
+                onChange={e => setSmtpSecure(e.target.value)}
+              >
+                <option value="tls">TLS/STARTTLS</option>
+                <option value="ssl">SSL/SMTPS</option>
+              </Form.Select>
             </Form.Group>
             
             <Button variant="primary" onClick={handleSave} disabled={updating}>

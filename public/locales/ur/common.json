@@ -170,7 +170,9 @@
     "auditLogs": "آڈٹ لاگز",
     "academySettings": "اکیڈمی کی ترتیبات",
     "menu": "مینو",
-    "feeManagement": "فیس مینجمنٹ"
+    "feeManagement": "فیس مینجمنٹ",
+    "subjects": "مضامین",
+    "assignments": "اسائنمنٹس"
   },
   "calendar": {
     "allDay": "پورا دن",
@@ -732,7 +734,8 @@
       "PARENT": "والدین",
       "STUDENT": "طالب علم",
       "DEVELOPER": "ڈویلپر"
-    }
+    },
+    "smtpSecure": "سیکیورٹی پروٹوکول (TLS/SSL)"
   },
   "adminDashboard": "ایڈمن ڈیش بورڈ",
   "avgLessonProgress": "اسباق کی اوسط پیشرفت",

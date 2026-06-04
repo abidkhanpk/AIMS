@@ -1034,6 +1034,7 @@ function GlobalSettingsTab() {
   const [smtpPort, setSmtpPort] = useState('');
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPass, setSmtpPass] = useState('');
+  const [smtpSecure, setSmtpSecure] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -1058,6 +1059,7 @@ function GlobalSettingsTab() {
         setSmtpPort(data.smtpPort || '');
         setSmtpUser(data.smtpUser || '');
         setSmtpPass(data.smtpPass || '');
+        setSmtpSecure(data.smtpSecure || 'tls');
       } else {
         setError('Failed to fetch global settings');
       }
@@ -1137,6 +1139,7 @@ function GlobalSettingsTab() {
           smtpPort: smtpPort || null,
           smtpUser: smtpUser || null,
           smtpPass: smtpPass || null,
+          smtpSecure: smtpSecure || null,
         }),
       });
 
@@ -1278,6 +1281,21 @@ function GlobalSettingsTab() {
                 <Form.Text className="text-muted">
                   {t('auto.uploadJpegPngGifOrWebpMax5mb', `Upload JPEG, PNG, GIF, or WebP (max 5MB)`)}
                                                   </Form.Text>
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
+            <Col md={12}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.smtpSecure', `Security Protocol (TLS/SSL)`)}</Form.Label>
+                <Form.Select 
+                  value={smtpSecure}
+                  onChange={e => setSmtpSecure(e.target.value)}
+                >
+                  <option value="tls">TLS/STARTTLS</option>
+                  <option value="ssl">SSL/SMTPS</option>
+                </Form.Select>
               </Form.Group>
             </Col>
           </Row>

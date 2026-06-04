@@ -170,7 +170,9 @@
     "auditLogs": "Audit Logs",
     "academySettings": "Academy Settings",
     "menu": "Menu",
-    "feeManagement": "Fee Management"
+    "feeManagement": "Fee Management",
+    "subjects": "Subjects",
+    "assignments": "Assignments"
   },
   "calendar": {
     "allDay": "All Day",
@@ -732,7 +734,8 @@
       "PARENT": "Parent",
       "STUDENT": "Student",
       "DEVELOPER": "Developer"
-    }
+    },
+    "smtpSecure": "Security Protocol (TLS/SSL)"
   },
   "adminDashboard": "Admin Dashboard",
   "avgLessonProgress": "Avg Lesson Progress",
