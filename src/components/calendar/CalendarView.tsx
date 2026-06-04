@@ -3,12 +3,15 @@ import { Calendar, dateFnsLocalizer, View, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addWeeks, setDay, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { Card, Spinner, Alert, Badge } from 'react-bootstrap';
+import { Card, Spinner, Alert } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
+import { useTranslation } from 'react-i18next';
 import { ClassDay } from '@prisma/client';
 
 const locales = {
   'en-US': enUS,
+  'en': enUS,
+  'ur': enUS, // Fallback to enUS because date-fns does not have 'ur'
 };
 
 const localizer = dateFnsLocalizer({
@@ -50,11 +53,28 @@ const dayToIndex: Record<ClassDay, number> = {
 
 export default function CalendarView() {
   const { data: session } = useSession();
+  const { t, i18n } = useTranslation('common');
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [view, setView] = useState<View>(Views.MONTH);
   const [date, setDate] = useState(new Date());
+
+  const messages = {
+    allDay: t('calendar.allDay', 'All Day'),
+    previous: t('calendar.previous', 'Back'),
+    next: t('calendar.next', 'Next'),
+    today: t('calendar.today', 'Today'),
+    month: t('calendar.month', 'Month'),
+    week: t('calendar.week', 'Week'),
+    day: t('calendar.day', 'Day'),
+    agenda: t('calendar.agenda', 'Agenda'),
+    date: t('calendar.date', 'Date'),
+    time: t('calendar.time', 'Time'),
+    event: t('calendar.event', 'Event'),
+    noEventsInRange: t('calendar.noEventsInRange', 'There are no events in this range.'),
+    showMore: (total: number) => `+${total} ${t('calendar.more', 'more')}`
+  };
 
   useEffect(() => {
     async function fetchSchedules() {
@@ -140,7 +160,7 @@ export default function CalendarView() {
       <Card.Header className="bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
         <h5 className="fw-bold text-muted mb-0">
           <i className="bi bi-calendar-week me-2 text-primary"></i>
-          Class Schedule
+          {t('calendar.classSchedule', 'Class Schedule')}
         </h5>
         {loading && <Spinner animation="border" size="sm" variant="primary" />}
       </Card.Header>
@@ -149,6 +169,7 @@ export default function CalendarView() {
         <div style={{ height: 600, overflow: 'hidden' }}>
             <Calendar
               localizer={localizer}
+              culture={i18n.language === 'ur' ? 'ur' : 'en'}
               events={events}
               startAccessor="start"
               endAccessor="end"
@@ -157,6 +178,7 @@ export default function CalendarView() {
               onView={setView}
               date={date}
               onNavigate={setDate}
+              messages={messages}
               popup
               eventPropGetter={(event) => ({
                 style: {

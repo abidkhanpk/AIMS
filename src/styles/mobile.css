@@ -259,3 +259,38 @@ html[dir="rtl"] .ps-3 {
 .rbc-row {
   overflow: hidden;
 }
+
+/* Dropdown Menu RTL Fixes */
+html[dir="rtl"] .dropdown-menu {
+  text-align: right;
+}
+
+html[dir="rtl"] .dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: right;
+}
+
+html[dir="rtl"] .dropdown-item i {
+  margin-left: 0.5rem !important;
+  margin-right: 0 !important;
+}
+
+html[dir="rtl"] .dropdown-item .text-muted {
+  margin-right: auto;
+}
+
+/* Fix Nastaliq button text clipping */
+html[dir="rtl"] .btn {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.5rem !important;
+  line-height: 1.6 !important;
+}
+
+html[dir="rtl"] .btn-sm {
+  padding-top: 0.4rem !important;
+  padding-bottom: 0.3rem !important;
+}
+
+

@@ -5350,14 +5350,14 @@ export default function AdminDashboard() {
 
             {showHome ? (
               <div className={`${menuStyles.homePanel} p-3 p-md-4`}>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <div>
-                    <h3 className="h5 mb-1">{t('overview', 'Overview')}</h3>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <div className="d-flex align-items-center">
+                    <h3 className="h5 mb-1">{t('dashboard.overview', 'Overview')}</h3>
                   </div>
-                  <div className="d-flex align-items-center gap-2">
+                  <div>
                     <Button variant="outline-secondary" size="sm" onClick={fetchHomeSnapshot} disabled={homeLoading}>
-                      <i className="bi bi-arrow-repeat me-1"></i>
-                      {t('refresh', 'Refresh')}
+                      <i className="bi bi-arrow-clockwise me-1"></i>
+                      {t('dashboard.refresh', 'Refresh')}
                     </Button>
                   </div>
                 </div>
@@ -5384,8 +5384,8 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">{t('students', 'Students')}</p>
-                                <h3 className="mb-0">{homeSnapshot.counts.students}</h3>
+                                <p className="text-muted mb-1 small">{t('menu.students', 'Students')}</p>
+                                <h4 className="mb-0 fw-bold">{homeSnapshot.counts.students}</h4>
                               </div>
                               <span className="badge bg-primary-subtle text-primary">
                                 <i className="bi bi-mortarboard-fill"></i>
@@ -5399,7 +5399,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">{t('teachers', 'Teachers')}</p>
+                                <p className="text-muted mb-1 small">{t('menu.teachers', 'Teachers')}</p>
                                 <h3 className="mb-0">{homeSnapshot.counts.teachers}</h3>
                               </div>
                               <span className="badge bg-success-subtle text-success">
@@ -5414,7 +5414,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">{t('parents', 'Parents')}</p>
+                                <p className="text-muted mb-1 small">{t('menu.parents', 'Parents')}</p>
                                 <h3 className="mb-0">{homeSnapshot.counts.parents}</h3>
                               </div>
                               <span className="badge bg-info-subtle text-info">
@@ -5457,11 +5457,11 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">{t('teacherActivity', 'Teacher Activity (7d)')}</p>
+                                <p className="text-muted mb-1 small">{t('dashboard.teacherActivity', 'Teacher Activity (7d)')}</p>
                                 <h5 className="mb-0">
-                                  {homeSnapshot.teacherActivity.activeThisWeek} active
+                                  {homeSnapshot.teacherActivity.activeThisWeek} {t('dashboard.activeThisWeek', 'active')}
                                   <small className="text-muted ms-2">
-                                    / {homeSnapshot.teacherActivity.totalTeachers} teachers
+                                    / {homeSnapshot.teacherActivity.totalTeachers} {t('dashboard.teachers', 'teachers')}
                                   </small>
                                 </h5>
                               </div>
@@ -5476,7 +5476,7 @@ export default function AdminDashboard() {
                               ></div>
                             </div>
                             <small className="text-muted d-block mt-2">
-                              {homeSnapshot.teacherActivity.entriesThisWeek} progress entries logged this week.
+                              {homeSnapshot.teacherActivity.entriesThisWeek} {t('dashboard.progressEntriesLogged', 'progress entries logged this week.')}
                             </small>
                           </Card.Body>
                         </Card>
@@ -5486,9 +5486,9 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">
                               <div>
-                                <p className="text-muted mb-1 small">{t('subscription', 'Subscription')}</p>
+                                <p className="text-muted mb-1 small">{t('dashboard.subscription', 'Subscription')}</p>
                                 <h5 className="mb-0">
-                                  {homeSnapshot.subscription.plan ? homeSnapshot.subscription.plan : 'No plan'}
+                                  {homeSnapshot.subscription.plan ? homeSnapshot.subscription.plan : t('dashboard.noPlan', 'No plan')}
                                   {homeSnapshot.subscription.status && (
                                     <Badge
                                       bg={homeSnapshot.subscription.status === 'ACTIVE' ? 'success' : homeSnapshot.subscription.warning ? 'danger' : 'secondary'}
@@ -5509,21 +5509,21 @@ export default function AdminDashboard() {
                             <div className="mt-2">
                               <small className="text-muted d-block">
                                 {homeSnapshot.subscription.endDate
-                                  ? `Renews on ${new Date(homeSnapshot.subscription.endDate).toLocaleDateString()}`
-                                  : 'No expiry date set'}
+                                  ? `${t('dashboard.renewsOn', 'Renews on')} ${new Date(homeSnapshot.subscription.endDate).toLocaleDateString()}`
+                                  : t('dashboard.noExpiryDateSet', 'No expiry date set')}
                               </small>
                               {typeof homeSnapshot.subscription.daysLeft === 'number' && (
                                 <small className={homeSnapshot.subscription.warning ? 'text-danger' : 'text-success'}>
                                   {homeSnapshot.subscription.daysLeft >= 0
-                                    ? `${homeSnapshot.subscription.daysLeft} day(s) left`
-                                    : `Expired ${Math.abs(homeSnapshot.subscription.daysLeft)} day(s) ago`}
+                                    ? `${homeSnapshot.subscription.daysLeft} ${t('dashboard.daysLeft', 'day(s) left')}`
+                                    : t('dashboard.expiredDaysAgo', 'Expired day(s) ago').replace('day(s)', Math.abs(homeSnapshot.subscription.daysLeft).toString())}
                                 </small>
                               )}
                             </div>
                             {homeSnapshot.subscription.warning && (
                               <div className="alert alert-warning py-2 px-3 mt-3 mb-0">
                                 <i className="bi bi-exclamation-triangle me-1"></i>
-                                Subscription ends soon. Please renew within 7 days.
+                                {t('dashboard.subscriptionEndsSoon', 'Subscription ends soon. Please renew within 7 days.')}
                               </div>
                             )}
                           </Card.Body>
@@ -5536,8 +5536,8 @@ export default function AdminDashboard() {
                         <Card className="shadow-sm h-100">
                           <Card.Header className="bg-light d-flex justify-content-between align-items-center">
                             <div>
-                              <h6 className="mb-0">Fee Summary</h6>
-                              <small className="text-muted">Paid vs pending</small>
+                              <h6 className="mb-0">{t('dashboard.feeSummary', 'Fee Summary')}</h6>
+                              <small className="text-muted">{t('dashboard.paidVsPending', 'Paid vs pending')}</small>
                             </div>
                             <Badge bg="primary">
                               {getCurrencySymbol('USD')}
@@ -5547,7 +5547,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="mb-3">
                               <div className="d-flex justify-content-between small text-muted mb-1">
-                                <span>Paid</span>
+                                <span>{t('dashboard.paid', 'Paid')}</span>
                                 <span>
                                   {getCurrencySymbol('USD')}
                                   {homeSnapshot.fees.paid.toFixed(0)}
@@ -5564,7 +5564,7 @@ export default function AdminDashboard() {
                             </div>
                             <div className="mb-3">
                               <div className="d-flex justify-content-between small text-muted mb-1">
-                                <span>Pending</span>
+                                <span>{t('dashboard.pending', 'Pending')}</span>
                                 <span>
                                   {getCurrencySymbol('USD')}
                                   {homeSnapshot.fees.pending.toFixed(0)}
@@ -5581,7 +5581,7 @@ export default function AdminDashboard() {
                             </div>
                             <div>
                               <div className="d-flex justify-content-between small text-muted mb-1">
-                                <span>Overdue</span>
+                                <span>{t('dashboard.overdue', 'Overdue')}</span>
                                 <span>
                                   {getCurrencySymbol('USD')}
                                   {homeSnapshot.fees.overdue.toFixed(0)}
@@ -5600,10 +5600,10 @@ export default function AdminDashboard() {
                           <Card.Footer className="bg-light">
                             <div className="d-flex gap-2">
                               <Button size="sm" variant="outline-primary" onClick={() => handleSelect('fees')}>
-                                Manage Fees
+                                {t('dashboard.manageFees', 'Manage Fees')}
                               </Button>
                               <Button size="sm" variant="outline-secondary" onClick={() => handleSelect('fee-verification')}>
-                                Verify Payments
+                                {t('dashboard.verifyPayments', 'Verify Payments')}
                               </Button>
                             </div>
                           </Card.Footer>
@@ -5613,8 +5613,8 @@ export default function AdminDashboard() {
                         <Card className="shadow-sm h-100">
                           <Card.Header className="bg-light d-flex justify-content-between align-items-center">
                             <div>
-                              <h6 className="mb-0">Salary Snapshot</h6>
-                              <small className="text-muted">Upcoming teacher payouts</small>
+                              <h6 className="mb-0">{t('dashboard.salarySnapshot', 'Salary Snapshot')}</h6>
+                              <small className="text-muted">{t('dashboard.upcomingTeacherPayouts', 'Upcoming teacher payouts')}</small>
                             </div>
                             <Badge bg="success">
                               {getCurrencySymbol('USD')}
@@ -5624,7 +5624,7 @@ export default function AdminDashboard() {
                           <Card.Body>
                             <div className="mb-3">
                               <div className="d-flex justify-content-between small text-muted mb-1">
-                                <span>Pending</span>
+                                <span>{t('dashboard.pending', 'Pending')}</span>
                                 <span>
                                   {getCurrencySymbol('USD')}
                                   {homeSnapshot.salaries.pending.toFixed(0)}
@@ -5641,7 +5641,7 @@ export default function AdminDashboard() {
                             </div>
                             <div>
                               <div className="d-flex justify-content-between small text-muted mb-1">
-                                <span>Paid</span>
+                                <span>{t('dashboard.paid', 'Paid')}</span>
                                 <span>
                                   {getCurrencySymbol('USD')}
                                   {homeSnapshot.salaries.paid.toFixed(0)}
@@ -5659,7 +5659,7 @@ export default function AdminDashboard() {
                           </Card.Body>
                           <Card.Footer className="bg-light">
                             <Button size="sm" variant="outline-success" onClick={() => handleSelect('salaries')}>
-                              Go to Salaries
+                              {t('dashboard.goToSalaries', 'Go to Salaries')}
                             </Button>
                           </Card.Footer>
                         </Card>
@@ -5667,19 +5667,19 @@ export default function AdminDashboard() {
                       <Col lg={4}>
                         <Card className="shadow-sm h-100">
                           <Card.Header className="bg-light d-flex justify-content-between align-items-center">
-                            <h6 className="mb-0">Remarks & Threads</h6>
+                            <h6 className="mb-0">{t('dashboard.remarksAndThreads', 'Remarks & Threads')}</h6>
                             <Badge bg="info">{homeSnapshot.remarks.total}</Badge>
                           </Card.Header>
                           <Card.Body>
                             <p className="text-muted small mb-3">
-                              Keep an eye on parent conversations and follow-ups.
+                              {t('dashboard.keepAnEyeOnConversations', 'Keep an eye on parent conversations and follow-ups.')}
                             </p>
                             <div className="d-flex flex-column gap-2">
                               <Button size="sm" variant="outline-primary" onClick={() => handleSelect('parent-remarks')}>
-                                View Remarks
+                                {t('dashboard.viewRemarks', 'View Remarks')}
                               </Button>
                               <Button size="sm" variant="outline-secondary" onClick={() => handleSelect('tests')}>
-                                Tests & Exams
+                                {t('dashboard.testsAndExams', 'Tests & Exams')}
                               </Button>
                             </div>
                           </Card.Body>
@@ -5691,22 +5691,22 @@ export default function AdminDashboard() {
                       <Col lg={7}>
                         <Card className="shadow-sm h-100">
                           <Card.Header className="bg-light d-flex justify-content-between align-items-center">
-                            <h6 className="mb-0">Recent Progress</h6>
-                            <Badge bg="info">{homeSnapshot.progress.records} records</Badge>
+                            <h6 className="mb-0">{t('dashboard.recentProgress', 'Recent Progress')}</h6>
+                            <Badge bg="info">{homeSnapshot.progress.records} {t('dashboard.records', 'records')}</Badge>
                           </Card.Header>
                           <Card.Body className="p-0">
                             {homeSnapshot.progress.recent.length === 0 ? (
-                              <div className="text-center text-muted py-4">No recent progress</div>
+                              <div className="text-center text-muted py-4">{t('dashboard.noRecentProgress', 'No recent progress')}</div>
                             ) : (
                               <div className="table-responsive">
                                 <Table hover size="sm" className="mb-0">
                                   <thead className="table-light">
                                     <tr>
-                                      <th>Date</th>
-                                      <th>Student</th>
-                                      <th>Subject</th>
-                                      <th>Teacher</th>
-                                      <th>Progress</th>
+                                      <th>{t('dashboard.date', 'Date')}</th>
+                                      <th>{t('menu.students', 'Student')}</th>
+                                      <th>{t('dashboard.subject', 'Subject')}</th>
+                                      <th>{t('menu.teachers', 'Teacher')}</th>
+                                      <th>{t('dashboard.progress', 'Progress')}</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -5738,7 +5738,7 @@ export default function AdminDashboard() {
                           </Card.Body>
                           <Card.Footer className="bg-light">
                             <Button size="sm" variant="outline-info" onClick={() => handleSelect('progress')}>
-                              View Full Progress
+                              {t('dashboard.viewFullProgress', 'View Full Progress')}
                             </Button>
                           </Card.Footer>
                         </Card>
@@ -5746,8 +5746,8 @@ export default function AdminDashboard() {
                       <Col lg={5}>
                         <Card className="shadow-sm h-100">
                           <Card.Header className="bg-light d-flex justify-content-between align-items-center">
-                            <h6 className="mb-0">Top Teacher Progress</h6>
-                            <Badge bg="secondary">Avg %</Badge>
+                            <h6 className="mb-0">{t('dashboard.topTeacherProgress', 'Top Teacher Progress')}</h6>
+                            <Badge bg="secondary">{t('dashboard.avgPercentage', 'Avg %')}</Badge>
                           </Card.Header>
                           <Card.Body>
                             {homeSnapshot.progress.topTeachers.length === 0 ? (

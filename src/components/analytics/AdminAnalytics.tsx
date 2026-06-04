@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Spinner } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart,
   Line,
@@ -18,6 +19,7 @@ interface AdminAnalyticsData {
 }
 
 export default function AdminAnalytics() {
+  const { t } = useTranslation('common');
   const [data, setData] = useState<AdminAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,7 +44,7 @@ export default function AdminAnalytics() {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2 text-muted">Loading analytics...</p>
+        <p className="mt-2 text-muted">{t('loadingAnalytics', 'Loading analytics...')}</p>
       </div>
     );
   }
@@ -51,7 +53,7 @@ export default function AdminAnalytics() {
     return (
       <div className="text-center py-5 text-danger">
         <i className="bi bi-exclamation-triangle display-4"></i>
-        <p className="mt-2">Failed to load analytics: {error}</p>
+        <p className="mt-2">{t('failedToLoadAnalytics', 'Failed to load analytics: ')} {error}</p>
       </div>
     );
   }
@@ -66,7 +68,7 @@ export default function AdminAnalytics() {
                 <i className="bi bi-people-fill"></i>
               </div>
               <div>
-                <h6 className="mb-0 text-uppercase fw-bold opacity-75">Total Students</h6>
+                <h6 className="mb-0 text-uppercase fw-bold opacity-75">{t('dashboard.totalStudents', 'Total Students')}</h6>
                 <h2 className="mb-0 fw-bold">{data.totalStudents}</h2>
               </div>
             </Card.Body>
@@ -79,7 +81,7 @@ export default function AdminAnalytics() {
                 <i className="bi bi-calendar-check-fill"></i>
               </div>
               <div>
-                <h6 className="mb-0 text-uppercase fw-bold opacity-75">Attendance Rate</h6>
+                <h6 className="mb-0 text-uppercase fw-bold opacity-75">{t('dashboard.attendanceRate', 'Attendance Rate')}</h6>
                 <h2 className="mb-0 fw-bold">{data.attendanceRate}%</h2>
               </div>
             </Card.Body>
@@ -92,7 +94,7 @@ export default function AdminAnalytics() {
                 <i className="bi bi-cash-stack"></i>
               </div>
               <div>
-                <h6 className="mb-0 text-uppercase fw-bold opacity-75">Fee Collection</h6>
+                <h6 className="mb-0 text-uppercase fw-bold opacity-75">{t('dashboard.feeCollection', 'Fee Collection')}</h6>
                 <h2 className="mb-0 fw-bold">{data.feeCollectionRate}%</h2>
               </div>
             </Card.Body>
@@ -102,7 +104,7 @@ export default function AdminAnalytics() {
 
       <Card className="shadow-sm border-0">
         <Card.Header className="bg-white border-0 pt-4 pb-0">
-          <h5 className="fw-bold text-muted mb-0">Revenue Overview (Last 6 Months)</h5>
+          <h5 className="fw-bold text-muted mb-0">{t('dashboard.revenueOverview', 'Revenue Overview (Last 6 Months)')}</h5>
         </Card.Header>
         <Card.Body>
           <div style={{ height: 300, width: '100%' }}>

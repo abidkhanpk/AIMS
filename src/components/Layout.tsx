@@ -473,7 +473,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     align="end"
                   >
                     <NavDropdown.Item disabled className="text-muted small">
-                      {t('layout.role')}{user.role}
+                      {t('layout.role')} <bdi>{user.role}</bdi>
                     </NavDropdown.Item>
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShowSettingsModal(true)}>
