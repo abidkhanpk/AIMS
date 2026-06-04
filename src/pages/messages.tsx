@@ -1,3 +1,4 @@
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, Table, Alert, Spinner, Badge } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
@@ -249,3 +250,9 @@ export default function MessagesPage() {
     </div>
   );
 }
+
+export const getStaticProps = async ({ locale }: any) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'en', ['common'])),
+  },
+});
