@@ -6,7 +6,7 @@ import NotificationDropdown from './NotificationDropdown';
 import AdminSubscriptionTab from './dashboards/AdminSubscriptionTab';
 import { useRouter } from 'next/router';
 import { useTheme } from '../context/ThemeContext';
-import { useTranslation } from 'next-i18next/pages';
+import { useTranslation } from 'react-i18next';
 
 interface Settings {
   appTitle: string;

@@ -6,7 +6,7 @@ import CalendarView from '../calendar/CalendarView';
 import ReportCardsTab from './ReportCardsTab';
 import { getCurrencySymbol } from '../../utils/currencies';
 import { FeeStatus, AssessmentType } from '@prisma/client';
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from 'react-i18next';
 
 interface StudentData {
   id: string;

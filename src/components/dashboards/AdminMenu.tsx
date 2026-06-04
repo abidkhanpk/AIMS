@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Offcanvas, ListGroup } from 'react-bootstrap';
 import { useRouter } from 'next/router';
 import NotificationDropdown from '../NotificationDropdown';
-import { useTranslation } from 'next-i18next/pages';
+import { useTranslation } from 'react-i18next';
 import styles from './AdminMenu.module.css';
 
 type MenuItem = {

@@ -17,7 +17,7 @@ import AttendanceReportsTab from './AttendanceReportsTab';
 import ReportCardsTab from './ReportCardsTab';
 import AuditLogsTab from './AuditLogsTab';
 import AcademySettingsTab from './AcademySettingsTab';
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from 'react-i18next';
 import FeeManagementTab from './FeeManagementTab';
 import Papa from 'papaparse';
 
@@ -5102,7 +5102,6 @@ export function TestsTab() {
 
 export default function AdminDashboard() {
   const { t } = useTranslation('common');
-  const [tabActiveKey, setTabActiveKey] = useState('home');
   const router = useRouter();
   const disallowedTabs = useMemo(() => new Set([
     'teachers',

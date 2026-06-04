@@ -4,9 +4,8 @@ import { FeeStatus, AttendanceStatus, AssessmentType } from '@prisma/client';
 import FeePaymentModal from './FeePaymentModal';
 import { useSession } from 'next-auth/react';
 import RemarkThreadModal from '../remarks/RemarkThreadModal';
-import RemarkThreadModal from '../remarks/RemarkThreadModal';
 import DirectMessageModal from '../messages/DirectMessageModal';
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from 'react-i18next';
 
 interface Child {
   id: string;

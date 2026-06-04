@@ -6,7 +6,7 @@ import RemarkThreadModal from '../remarks/RemarkThreadModal';
 import TeacherAnalytics from '../analytics/TeacherAnalytics';
 import CalendarView from '../calendar/CalendarView';
 import DirectMessageModal from '../messages/DirectMessageModal';
-import { useTranslation } from 'next-i18next';
+import { useTranslation } from 'react-i18next';
 
 interface Student {
   id: string;
