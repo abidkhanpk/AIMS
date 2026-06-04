@@ -15,6 +15,10 @@ import AdminAnalytics from '../analytics/AdminAnalytics';
 import CalendarView from '../calendar/CalendarView';
 import AttendanceReportsTab from './AttendanceReportsTab';
 import ReportCardsTab from './ReportCardsTab';
+import AuditLogsTab from './AuditLogsTab';
+import AcademySettingsTab from './AcademySettingsTab';
+import FeeManagementTab from './FeeManagementTab';
+import Papa from 'papaparse';
 
 interface User {
   id: string;
@@ -798,6 +802,10 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [address, setAddress] = useState('');
   const [country, setCountry] = useState('');
   
+  // Bulk import state
+  const [importingCsv, setImportingCsv] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  
   // Teacher-specific fields
   const [qualification, setQualification] = useState('');
   const [payRate, setPayRate] = useState('');
@@ -1242,6 +1250,50 @@ export function UserManagementTab({ role }: { role: Role }) {
     }
   };
 
+  const handleImportCsv = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportingCsv(true);
+    setError('');
+    setSuccess('');
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const res = await fetch('/api/bulk/students', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ students: results.data }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setSuccess(data.message);
+            if (data.errors && data.errors.length > 0) {
+              setError(`Some rows failed: ${data.errors.join(', ')}`);
+            }
+            fetchUsers();
+          } else {
+            const err = await res.json();
+            setError(err.message || 'Failed to import students');
+          }
+        } catch (e) {
+          setError('Error importing CSV');
+        } finally {
+          setImportingCsv(false);
+          if (csvInputRef.current) csvInputRef.current.value = '';
+        }
+      },
+      error: (error) => {
+        setError(`CSV Parse Error: ${error.message}`);
+        setImportingCsv(false);
+        if (csvInputRef.current) csvInputRef.current.value = '';
+      }
+    });
+  };
+
   return (
     <div>
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
@@ -1557,13 +1609,34 @@ export function UserManagementTab({ role }: { role: Role }) {
               <h6 className="mb-0">{config.title}</h6>
               <Badge bg={config.color}>{users.length} Total</Badge>
             </div>
-            <Button
-              size="sm"
-              variant={showCreateForm ? 'secondary' : config.color}
-              onClick={() => setShowCreateForm((v) => !v)}
-            >
-              {showCreateForm ? 'Hide Form' : `Add New ${isStudent ? 'Student' : isParent ? 'Parent' : roleLabel}`}
-            </Button>
+            <div className="d-flex gap-2">
+              {isStudent && (
+                <>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    ref={csvInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleImportCsv}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline-success"
+                    onClick={() => csvInputRef.current?.click()}
+                    disabled={importingCsv}
+                  >
+                    {importingCsv ? <Spinner size="sm" animation="border" /> : <><i className="bi bi-file-earmark-spreadsheet me-1"></i> Import CSV</>}
+                  </Button>
+                </>
+              )}
+              <Button
+                size="sm"
+                variant={showCreateForm ? 'secondary' : config.color}
+                onClick={() => setShowCreateForm((v) => !v)}
+              >
+                {showCreateForm ? 'Hide Form' : `Add New ${isStudent ? 'Student' : isParent ? 'Parent' : roleLabel}`}
+              </Button>
+            </div>
           </div>
 
           {showCreateForm && (
@@ -5736,6 +5809,21 @@ export default function AdminDashboard() {
                   <AssignmentsTab />
                 </Tab>
                 
+                <Tab eventKey="attendance-reports" title={<span><i className="bi bi-file-earmark-spreadsheet me-2"></i>Attendance Reports</span>}>
+                  <AttendanceReportsTab />
+                </Tab>
+                <Tab eventKey="report-cards" title={<span><i className="bi bi-award me-2"></i>Report Cards</span>}>
+                  <ReportCardsTab />
+                </Tab>
+                <Tab eventKey="audit-logs" title={<span><i className="bi bi-file-earmark-code me-2"></i>Audit Logs</span>}>
+                  <AuditLogsTab />
+                </Tab>
+                <Tab eventKey="fees" title={<span><i className="bi bi-cash-stack me-2"></i>Fee Management</span>}>
+                  <FeeManagementTab />
+                </Tab>
+                <Tab eventKey="academy-settings" title={<span><i className="bi bi-gear-fill me-2"></i>Academy Settings</span>}>
+                  <AcademySettingsTab />
+                </Tab>
               </Tabs>
             )}
           </div>

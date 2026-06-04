@@ -6,8 +6,11 @@ const withPWA = require('next-pwa')({
   buildExcludes: [/middleware-manifest\.json$/]
 });
 
+const { i18n } = require('./next-i18next.config.js');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  i18n,
   reactStrictMode: true,
   eslint: {
     ignoreDuringBuilds: false,

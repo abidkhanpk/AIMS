@@ -74,6 +74,10 @@ export default function MessagesPage() {
 
   useEffect(() => {
     fetchMessages();
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const threads = useMemo(() => buildThreads(messages, currentUserId), [messages, currentUserId]);

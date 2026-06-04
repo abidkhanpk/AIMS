@@ -50,8 +50,11 @@ const FeeManagementTab = () => {
   const [dueAfterDays, setDueAfterDays] = useState('7');
   const [studentIds, setStudentIds] = useState<string[]>([]);
 
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [targetMonth, setTargetMonth] = useState('');
+  const [generatingBulk, setGeneratingBulk] = useState(false);
   const [editingFeeDefinition, setEditingFeeDefinition] = useState<FeeDefinition | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const fetchFeeDefinitions = useCallback(async () => {
     try {
@@ -204,6 +207,37 @@ const FeeManagementTab = () => {
     }
   };
 
+  const handleBulkGenerate = async () => {
+    if (!targetMonth) {
+      setError('Please select a target month');
+      return;
+    }
+    setGeneratingBulk(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const res = await fetch('/api/bulk/fees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetMonth })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setSuccess(data.message);
+        fetchFeeDefinitions();
+        setShowGenerateModal(false);
+      } else {
+        setError(data.message || 'Failed to bulk generate fees');
+      }
+    } catch (e) {
+      setError('Error bulk generating fees');
+    } finally {
+      setGeneratingBulk(false);
+    }
+  };
+
   const resetForm = () => {
     setTitle('');
     setDescription('');
@@ -330,13 +364,18 @@ const FeeManagementTab = () => {
           <h6 className="mb-0">Fee Definitions</h6>
           <Badge bg="primary">{feeDefinitions.length}</Badge>
         </div>
-        <Button
-          size="sm"
-          variant={showCreateForm ? 'secondary' : 'primary'}
-          onClick={() => setShowCreateForm((v) => !v)}
-        >
-          {showCreateForm ? 'Hide Form' : 'Add New Fee Definition'}
-        </Button>
+        <div className="d-flex gap-2">
+            <Button size="sm" variant="outline-primary" onClick={() => setShowGenerateModal(true)}>
+                Bulk Generate
+            </Button>
+            <Button
+              size="sm"
+              variant={showCreateForm ? 'secondary' : 'primary'}
+              onClick={() => setShowCreateForm((v) => !v)}
+            >
+              {showCreateForm ? 'Hide Form' : 'Add New Fee Definition'}
+            </Button>
+        </div>
       </div>
 
       {showCreateForm && (
@@ -416,6 +455,36 @@ const FeeManagementTab = () => {
         <Modal.Body>
           {renderForm(handleUpdateFeeDefinition, true)}
         </Modal.Body>
+      </Modal>
+
+      {/* Bulk Generate Modal */}
+      <Modal show={showGenerateModal} onHide={() => setShowGenerateModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Bulk Generate Fees</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Target Month</Form.Label>
+              <Form.Control
+                type="month"
+                value={targetMonth}
+                onChange={(e) => setTargetMonth(e.target.value)}
+              />
+              <Form.Text className="text-muted">
+                This will generate fees for all active student assignments for the selected month.
+              </Form.Text>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowGenerateModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleBulkGenerate} disabled={generatingBulk || !targetMonth}>
+            {generatingBulk ? <Spinner size="sm" animation="border" /> : 'Generate Fees'}
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

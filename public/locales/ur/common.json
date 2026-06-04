@@ -1,0 +1,14 @@
+{
+  "greeting": "AIMS میں خوش آمدید",
+  "dashboard": "ڈیش بورڈ",
+  "messages": "پیغامات",
+  "settings": "ترتیبات",
+  "logout": "لاگ آؤٹ",
+  "admin_portal": "ایڈمن پورٹل",
+  "teacher_portal": "ٹیچر پورٹل",
+  "student_portal": "اسٹوڈنٹ پورٹل",
+  "parent_portal": "پیرنٹ پورٹل",
+  "language": "زبان",
+  "english": "انگریزی",
+  "urdu": "اردو"
+}

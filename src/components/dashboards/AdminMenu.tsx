@@ -53,6 +53,15 @@ const menuItems: MenuItem[] = [
     label: 'Parent Remarks',
     icon: 'bi-chat-dots',
   },
+  {
+    key: 'system',
+    label: 'System',
+    icon: 'bi-shield-lock',
+    children: [
+      { key: 'audit-logs', label: 'Audit Logs', icon: 'bi-file-earmark-code' },
+      { key: 'academy-settings', label: 'Academy Settings', icon: 'bi-gear-fill' },
+    ],
+  },
 ];
 
 export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; onSelect: (key: string) => void }) {

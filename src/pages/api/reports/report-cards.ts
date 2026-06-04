@@ -40,8 +40,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         id: true,
         name: true,
         email: true,
-        // Include assignments to get the courses
-        studentCourses: {
+        studentAssignments2: {
+          where: { isActive: true },
           include: {
             course: { select: { id: true, name: true } },
             teacher: { select: { name: true } }
@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           orderBy: { createdAt: 'desc' },
           take: 50 // latest progress
         },
-        testRecords: {
+        studentTestRecords: {
           orderBy: { performedAt: 'desc' }
         }
       }
@@ -59,11 +59,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Map students into Report Cards
     const reportCards = students.map(student => {
-      const courses = student.studentCourses.map(sc => {
+      const courses = student.studentAssignments2.map(sc => {
         // Find latest progress
         const latestProgress = student.progressRecords.find(p => p.courseId === sc.course.id);
         // Find tests for this course
-        const tests = student.testRecords.filter(t => t.courseId === sc.course.id);
+        const tests = student.studentTestRecords.filter(t => t.courseId === sc.course.id);
         const avgScore = tests.length > 0 
           ? tests.reduce((sum, t) => sum + ((t.obtainedMarks / t.maxMarks) * 100), 0) / tests.length
           : null;

@@ -1,0 +1,14 @@
+{
+  "greeting": "Welcome to AIMS",
+  "dashboard": "Dashboard",
+  "messages": "Messages",
+  "settings": "Settings",
+  "logout": "Log Out",
+  "admin_portal": "Admin Portal",
+  "teacher_portal": "Teacher Portal",
+  "student_portal": "Student Portal",
+  "parent_portal": "Parent Portal",
+  "language": "Language",
+  "english": "English",
+  "urdu": "Urdu"
+}

@@ -49,6 +49,10 @@ interface AppSettings {
   storageProvider?: 'DRIVE' | 'CLOUDINARY';
   driveFolderId?: string | null;
   cloudinaryFolder?: string | null;
+  smtpHost?: string | null;
+  smtpPort?: string | null;
+  smtpUser?: string | null;
+  smtpPass?: string | null;
 }
 
 interface Subscription {
@@ -1023,6 +1027,10 @@ function GlobalSettingsTab() {
   const [driveFolderId, setDriveFolderId] = useState('');
   const [cloudinaryFolder, setCloudinaryFolder] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState('');
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPass, setSmtpPass] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -1043,6 +1051,10 @@ function GlobalSettingsTab() {
         setStorageProvider((data.storageProvider as any) || 'DRIVE');
         setDriveFolderId(data.driveFolderId || '');
         setCloudinaryFolder(data.cloudinaryFolder || '');
+        setSmtpHost(data.smtpHost || '');
+        setSmtpPort(data.smtpPort || '');
+        setSmtpUser(data.smtpUser || '');
+        setSmtpPass(data.smtpPass || '');
       } else {
         setError('Failed to fetch global settings');
       }
@@ -1118,6 +1130,10 @@ function GlobalSettingsTab() {
           storageProvider,
           driveFolderId: driveFolderId || null,
           cloudinaryFolder: cloudinaryFolder || null,
+          smtpHost: smtpHost || null,
+          smtpPort: smtpPort || null,
+          smtpUser: smtpUser || null,
+          smtpPass: smtpPass || null,
         }),
       });
 

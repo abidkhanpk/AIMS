@@ -5,6 +5,7 @@ import '../styles/mobile.css';
 import Layout from '../components/Layout';
 import Head from 'next/head';
 import { ThemeProvider } from '../context/ThemeContext';
+import { appWithTranslation } from 'next-i18next/pages';
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   return (
@@ -30,4 +31,4 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   );
 }
 
-export default MyApp;
+export default appWithTranslation(MyApp);

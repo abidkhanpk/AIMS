@@ -6,6 +6,7 @@ import NotificationDropdown from './NotificationDropdown';
 import AdminSubscriptionTab from './dashboards/AdminSubscriptionTab';
 import { useRouter } from 'next/router';
 import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'next-i18next/pages';
 
 interface Settings {
   appTitle: string;
@@ -20,6 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState<Settings | null>(null);
+  const { t } = useTranslation('common');
 
   // User settings modal states
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -450,6 +452,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </Button>
                   
                   <NavDropdown 
+                    title={<i className="bi bi-globe fs-5 text-light"></i>} 
+                    id="language-dropdown" 
+                    align="end" 
+                    className="me-2"
+                  >
+                    <NavDropdown.Item onClick={() => router.push(router.pathname, router.asPath, { locale: 'en' })}>
+                      {t('english', 'English')}
+                    </NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => router.push(router.pathname, router.asPath, { locale: 'ur' })}>
+                      {t('urdu', 'Urdu (اردو)')}
+                    </NavDropdown.Item>
+                  </NavDropdown>
+                  
+                  <NavDropdown 
                     title={
                       <span className="text-light">
                         <i className="bi bi-person-circle me-1"></i>
@@ -465,11 +481,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShowSettingsModal(true)}>
                       <i className="bi bi-gear me-2"></i>
-                      Settings
+                      {t('settings', 'Settings')}
                     </NavDropdown.Item>
                     <NavDropdown.Item onClick={handleSignOut}>
                       <i className="bi bi-box-arrow-right me-2"></i>
-                      Sign Out
+                      {t('logout', 'Sign Out')}
                     </NavDropdown.Item>
                   </NavDropdown>
                 </>
