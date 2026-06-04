@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Alert, Spinner, ProgressBar, Tabs, Tab, Button } from 'react-bootstrap';
 import FeePaymentModal from './FeePaymentModal';
 import RemarkThreadModal, { RemarkThread } from '../remarks/RemarkThreadModal';
+import CalendarView from '../calendar/CalendarView';
 import { getCurrencySymbol } from '../../utils/currencies';
 import { FeeStatus, AssessmentType } from '@prisma/client';
 
@@ -337,6 +338,8 @@ export default function StudentDashboard() {
           <p className="text-muted">Track your academic progress across all subjects</p>
         </div>
       </div>
+
+      <CalendarView />
 
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}

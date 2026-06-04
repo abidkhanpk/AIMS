@@ -3,6 +3,8 @@ import { Card, Row, Col, Table, Badge, Form, Button, Modal, Alert, Spinner, Tabs
 import { AttendanceStatus, AssessmentType } from '@prisma/client';
 import { useSession } from 'next-auth/react';
 import RemarkThreadModal from '../remarks/RemarkThreadModal';
+import TeacherAnalytics from '../analytics/TeacherAnalytics';
+import CalendarView from '../calendar/CalendarView';
 import DirectMessageModal from '../messages/DirectMessageModal';
 
 interface Student {
@@ -487,6 +489,9 @@ export default function TeacherDashboard() {
           <p className="text-muted">Manage your assigned students, track their progress, and record attendance</p>
         </div>
       </div>
+
+      <TeacherAnalytics />
+      <CalendarView />
 
       <Row className="mb-3">
         <Col md={6}>

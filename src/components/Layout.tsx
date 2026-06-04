@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import NotificationDropdown from './NotificationDropdown';
 import AdminSubscriptionTab from './dashboards/AdminSubscriptionTab';
 import { useRouter } from 'next/router';
+import { useTheme } from '../context/ThemeContext';
 
 interface Settings {
   appTitle: string;
@@ -17,6 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const user = session?.user;
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState<Settings | null>(null);
 
   // User settings modal states
@@ -420,6 +422,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               )}
               {status === 'authenticated' && user && (
                 <>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="me-2 d-flex align-items-center text-light text-decoration-none p-0 position-relative"
+                    onClick={toggleTheme}
+                    title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                  >
+                    {theme === 'light' ? <i className="bi bi-moon-stars fs-5"></i> : <i className="bi bi-sun-fill fs-5 text-warning"></i>}
+                  </Button>
                   <div className="me-2 position-relative">
                     <NotificationDropdown />
                   </div>

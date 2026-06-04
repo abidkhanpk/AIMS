@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/mobile.css';
 import Layout from '../components/Layout';
 import Head from 'next/head';
+import { ThemeProvider } from '../context/ThemeContext';
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   return (
@@ -19,9 +20,11 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <meta name="theme-color" content="#0d6efd" />
       </Head>
       <SessionProvider session={session}>
-        <Layout>
-          <Component {...pageProps} />
-        </Layout>
+        <ThemeProvider>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </ThemeProvider>
       </SessionProvider>
     </>
   );

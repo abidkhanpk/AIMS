@@ -11,6 +11,8 @@ import RemarkThreadModal from '../remarks/RemarkThreadModal';
 import DirectMessageModal from '../messages/DirectMessageModal';
 import AdminMenu from './AdminMenu';
 import menuStyles from './AdminMenu.module.css';
+import AdminAnalytics from '../analytics/AdminAnalytics';
+import CalendarView from '../calendar/CalendarView';
 
 interface User {
   id: string;
@@ -5288,6 +5290,9 @@ export default function AdminDashboard() {
                     {homeError}
                   </Alert>
                 )}
+
+                <AdminAnalytics />
+                <CalendarView />
 
                 {homeLoading || !homeSnapshot ? (
                   <div className="text-center py-5">
