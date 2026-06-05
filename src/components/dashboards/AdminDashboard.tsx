@@ -20,7 +20,7 @@ import AcademySettingsTab from './AcademySettingsTab';
 import { useTranslation } from 'react-i18next';
 import Papa from 'papaparse';
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -36,7 +36,7 @@ interface User {
   payCurrency?: string;
 }
 
-interface Course {
+export interface Course {
   id: string;
   name: string;
   description: string;
@@ -46,7 +46,7 @@ interface Course {
   };
 }
 
-interface Assignment {
+export interface Assignment {
   id: string;
   studentId: string;
   courseId: string;
@@ -708,7 +708,7 @@ function AssignmentSubform({
 }
 
 // Detail View Modal Component
-function DetailViewModal({ show, onHide, title, data }: { show: boolean; onHide: () => void; title: string; data: any }) {
+export function DetailViewModal({ show, onHide, title, data }: { show: boolean; onHide: () => void; title: string; data: any }) {
     const { t } = useTranslation('common');
   return (
     <Modal show={show} onHide={onHide} size="lg">
@@ -755,7 +755,7 @@ function DetailViewModal({ show, onHide, title, data }: { show: boolean; onHide:
 }
 
 // Expandable Text Component
-function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: number }) {
+export function ExpandableText({ text, maxLength = 50 }: { text: string; maxLength?: number }) {
     const { t } = useTranslation('common');
   const [expanded, setExpanded] = useState(false);
   
@@ -2988,7 +2988,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   );
 }
 
-function SubjectManagementTab() {
+export function SubjectManagementTab() {
     const { t } = useTranslation('common');
   const [subjects, setSubjects] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -3334,7 +3334,7 @@ function SubjectManagementTab() {
   );
 }
 
-function AssignmentsTab() {
+export function AssignmentsTab() {
     const { t } = useTranslation('common');
   const [students, setStudents] = useState<User[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
@@ -5172,6 +5172,10 @@ export default function AdminDashboard() {
     'fees',
     'fee-verification',
     'salaries',
+    'subjects',
+    'assignments',
+    'attendance-reports',
+    'report-cards',
   ]), []);
   const initialTab = typeof router.query.tab === 'string' && !disallowedTabs.has(router.query.tab)
     ? router.query.tab
@@ -5380,6 +5384,10 @@ export default function AdminDashboard() {
       fees: '/dashboard/fees',
       'fee-verification': '/dashboard/fee-verification',
       salaries: '/dashboard/salaries',
+      subjects: '/dashboard/subjects',
+      assignments: '/dashboard/assignments',
+      'attendance-reports': '/dashboard/attendance-reports',
+      'report-cards': '/dashboard/report-cards',
     };
 
     if (routeMap[next]) {
@@ -5859,37 +5867,6 @@ export default function AdminDashboard() {
                 className={`${menuStyles.hiddenTabsNav} mb-4`}
                 variant="pills"
               >
-                
-                <Tab 
-                  eventKey="subjects" 
-                  title={
-                    <span>
-                      <i className="bi bi-book me-2"></i>
-                      {t('menu.subjects')}
-                    </span>
-                  }
-                >
-                  <SubjectManagementTab />
-                </Tab>
-                
-                <Tab 
-                  eventKey="assignments" 
-                  title={
-                    <span>
-                      <i className="bi bi-diagram-3 me-2"></i>
-                      {t('menu.assignments')}
-                    </span>
-                  }
-                >
-                  <AssignmentsTab />
-                </Tab>
-                
-                <Tab eventKey="attendance-reports" title={<span><i className="bi bi-file-earmark-spreadsheet me-2"></i>{t('menu.attendanceReports')}</span>}>
-                  <AttendanceReportsTab />
-                </Tab>
-                <Tab eventKey="report-cards" title={<span><i className="bi bi-award me-2"></i>{t('menu.reportCards')}</span>}>
-                  <ReportCardsTab />
-                </Tab>
                 <Tab eventKey="audit-logs" title={<span><i className="bi bi-file-earmark-code me-2"></i>{t('menu.auditLogs', 'Audit Logs')}</span>}>
                   <AuditLogsTab />
                 </Tab>

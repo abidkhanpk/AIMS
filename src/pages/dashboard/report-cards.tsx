@@ -5,11 +5,11 @@ import { useSession } from 'next-auth/react';
 import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
-import FeeVerificationTab from '../../components/dashboards/FeeVerificationTab';
+import ReportCardsTab from '../../components/dashboards/ReportCardsTab';
 import { useTranslation } from 'react-i18next';
 
-export default function AdminFeeVerificationPage() {
-    const { t } = useTranslation('common');
+export default function AdminReportCardsPage() {
+  const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -22,7 +22,11 @@ export default function AdminFeeVerificationPage() {
   }, [status, session, router]);
 
   if (status === 'loading') {
-    return <Spinner animation="border" />;
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+        <Spinner animation="border" variant="primary" />
+      </div>
+    );
   }
 
   if (status !== 'authenticated' || session?.user?.role !== 'ADMIN') {
@@ -30,7 +34,7 @@ export default function AdminFeeVerificationPage() {
   }
 
   const handleSelect = (key?: string | null) => {
-    if (!key || key === 'fee-verification') return;
+    if (!key || key === 'report-cards') return;
     if (key === 'home') {
       router.push('/dashboard');
       return;
@@ -43,12 +47,12 @@ export default function AdminFeeVerificationPage() {
       tests: '/dashboard/tests',
       'parent-remarks': '/dashboard/parent-remarks',
       remarks: '/dashboard/parent-remarks',
-      salaries: '/dashboard/salaries',
       fees: '/dashboard/fees',
+      'fee-verification': '/dashboard/fee-verification',
+      salaries: '/dashboard/salaries',
       subjects: '/dashboard/subjects',
       assignments: '/dashboard/assignments',
       'attendance-reports': '/dashboard/attendance-reports',
-      'report-cards': '/dashboard/report-cards',
     };
     router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };
@@ -56,19 +60,19 @@ export default function AdminFeeVerificationPage() {
   return (
     <div className={menuStyles.menuShell}>
       <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="fee-verification" onSelect={handleSelect} />
+        <AdminMenu activeKey="report-cards" onSelect={handleSelect} />
         <div className={menuStyles.mainContent}>
           <div className="container-fluid py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div>
                 <h2 className="h5 mb-1">
-                  <i className="bi bi-check-circle me-2"></i>
-                  {t('auto.feeVerification', `Fee Verification`)}
-                                                  </h2>
-                <p className="text-muted mb-0">{t('auto.verifyAndReconcileFees', `Verify and reconcile fees`)}</p>
+                  <i className="bi bi-award me-2"></i>
+                  {t('menu.reportCards', `Report Cards`)}
+                </h2>
+                <p className="text-muted mb-0">{t('auto.studentReportCards', `Student Report Cards`)}</p>
               </div>
             </div>
-            <FeeVerificationTab />
+            <ReportCardsTab />
           </div>
         </div>
       </div>

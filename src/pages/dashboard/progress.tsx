@@ -42,10 +42,13 @@ export default function AdminProgressPage() {
       'parent-remarks': '/dashboard/parent-remarks',
       remarks: '/dashboard/parent-remarks',
       tests: '/dashboard/tests',
-      progress: '/dashboard/progress',
       fees: '/dashboard/fees',
       'fee-verification': '/dashboard/fee-verification',
       salaries: '/dashboard/salaries',
+      subjects: '/dashboard/subjects',
+      assignments: '/dashboard/assignments',
+      'attendance-reports': '/dashboard/attendance-reports',
+      'report-cards': '/dashboard/report-cards',
     };
     router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };

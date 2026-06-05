@@ -45,6 +45,10 @@ export default function AdminSalariesPage() {
       remarks: '/dashboard/parent-remarks',
       fees: '/dashboard/fees',
       'fee-verification': '/dashboard/fee-verification',
+      subjects: '/dashboard/subjects',
+      assignments: '/dashboard/assignments',
+      'attendance-reports': '/dashboard/attendance-reports',
+      'report-cards': '/dashboard/report-cards',
     };
     router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };

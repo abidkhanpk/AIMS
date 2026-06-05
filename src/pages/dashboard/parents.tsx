@@ -35,11 +35,22 @@ export default function AdminParentsPage() {
       router.push('/dashboard');
       return;
     }
-    if (key === 'teachers' || key === 'students') {
-      router.push(`/dashboard/${key}`);
-      return;
-    }
-    router.push(key ? `/dashboard?tab=${key}` : '/dashboard');
+    const routeMap: Record<string, string> = {
+      teachers: '/dashboard/teachers',
+      students: '/dashboard/students',
+      progress: '/dashboard/progress',
+      tests: '/dashboard/tests',
+      'parent-remarks': '/dashboard/parent-remarks',
+      remarks: '/dashboard/parent-remarks',
+      fees: '/dashboard/fees',
+      'fee-verification': '/dashboard/fee-verification',
+      salaries: '/dashboard/salaries',
+      subjects: '/dashboard/subjects',
+      assignments: '/dashboard/assignments',
+      'attendance-reports': '/dashboard/attendance-reports',
+      'report-cards': '/dashboard/report-cards',
+    };
+    router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };
 
   return (
