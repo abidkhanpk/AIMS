@@ -3003,6 +3003,7 @@ function SubjectManagementTab() {
   const [editingSubject, setEditingSubject] = useState<Course | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailData, setDetailData] = useState<any>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   useEffect(() => {
     fetchSubjects();
@@ -3043,6 +3044,7 @@ function SubjectManagementTab() {
         fetchSubjects();
         setName('');
         setDescription('');
+        setShowCreateForm(false);
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create subject');
@@ -3106,145 +3108,165 @@ function SubjectManagementTab() {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Row className="g-4">
-        <Col lg={4}>
-          <Card className="h-100 shadow-sm">
-            <Card.Header className="bg-primary text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-book me-2"></i>
-                {t('auto.createNewSubject', `Create New Subject`)}
-                                            </h6>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleCreateSubject}>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.subjectName', `Subject Name`)}</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    required 
-                    placeholder={t('auto.enterSubjectName', `Enter subject name`)}
-                    size="sm"
-                  />
-                </Form.Group>
-                <Form.Group className="mb-4">
-                  <Form.Label>{t('auto.description', `Description`)}</Form.Label>
-                  <Form.Control 
-                    as="textarea" 
-                    rows={3} 
-                    value={description} 
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder={t('auto.enterSubjectDescription', `Enter subject description`)}
-                    size="sm"
-                  />
-                </Form.Group>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h5 className="mb-0">
+            <i className="bi bi-book me-2"></i>
+            {t('auto.subjects', `Subjects`)}
+          </h5>
+        </div>
+        <Button 
+          size="sm" 
+          variant={showCreateForm ? 'secondary' : 'primary'}
+          onClick={() => setShowCreateForm(v => !v)}
+        >
+          {showCreateForm ? t('auto.cancel', `Cancel`) : t('auto.createNewSubject', `Create New Subject`)}
+        </Button>
+      </div>
+
+      {showCreateForm && (
+        <Card className="shadow-sm mb-4">
+          <Card.Header className="bg-primary text-white">
+            <h6 className="mb-0">
+              <i className="bi bi-plus-circle me-2"></i>
+              {t('auto.createNewSubject', `Create New Subject`)}
+            </h6>
+          </Card.Header>
+          <Card.Body>
+            <Form onSubmit={handleCreateSubject}>
+              <Row className="g-3 mb-3">
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.subjectName', `Subject Name`)}</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      value={name} 
+                      onChange={(e) => setName(e.target.value)} 
+                      required 
+                      placeholder={t('auto.enterSubjectName', `Enter subject name`)}
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.description', `Description`)}</Form.Label>
+                    <Form.Control 
+                      as="textarea" 
+                      rows={1} 
+                      value={description} 
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder={t('auto.enterSubjectDescription', `Enter subject description`)}
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <div className="text-end">
                 <Button 
                   variant="primary" 
                   type="submit" 
                   disabled={creating}
-                  className="w-100"
                   size="sm"
+                  className="px-4"
                 >
                   {creating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
                       {t('auto.creating', `Creating...`)}
-                                                              </>
+                    </>
                   ) : (
                     <>
                       <i className="bi bi-plus-circle me-2"></i>
                       {t('auto.createSubject', `Create Subject`)}
-                                                                  </>
+                    </>
                   )}
                 </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col lg={8}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-light">
-              <div className="d-flex justify-content-between align-items-center">
-                <h6 className="mb-0">
-                  <i className="bi bi-book me-2"></i>
-                  {t('auto.subjects', `Subjects`)}
-                                                  </h6>
-                <Badge bg="primary">{subjects.length} {t('auto.total', `Total`)}</Badge>
               </div>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {loading ? (
-                <div className="text-center py-4">
-                  <Spinner animation="border" size="sm" />
-                  <p className="mt-2 text-muted small">{t('auto.loadingSubjects', `Loading subjects...`)}</p>
-                </div>
-              ) : subjects.length === 0 ? (
-                <div className="text-center py-4">
-                  <i className="bi bi-book display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">{t('auto.noSubjectsFound', `No subjects found`)}</p>
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>{t('auto.name', `Name`)}</th>
-                        <th>{t('auto.description', `Description`)}</th>
-                        <th>{t('auto.students', `Students`)}</th>
-                        <th>{t('auto.created', `Created`)}</th>
-                        <th>{t('auto.actions', `Actions`)}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {subjects.map((subject) => (
-                        <tr key={subject.id}>
-                          <td className="fw-medium">{subject.name}</td>
-                          <td className="text-muted">
-                            <ExpandableText 
-                              text={subject.description || 'No description'} 
-                              maxLength={50} 
-                            />
-                          </td>
-                          <td>
-                            <Badge bg="secondary">
-                              {subject._count?.studentCourses || 0}
-                            </Badge>
-                          </td>
-                          <td className="text-muted small">
-                            {new Date(subject.createdAt).toLocaleDateString()}
-                          </td>
-                          <td>
-                            <div className="d-flex gap-1">
-                              <Button
-                                variant="outline-info"
-                                size="sm"
-                                onClick={() => handleViewDetails(subject)}
-                                title={t('auto.viewDetails', `View Details`)}
-                              >
-                                <i className="bi bi-eye"></i>
-                              </Button>
-                              <Button
-                                variant="outline-warning"
-                                size="sm"
-                                onClick={() => handleEditSubject(subject)}
-                                title={t('auto.editSubject', `Edit Subject`)}
-                              >
-                                <i className="bi bi-pencil"></i>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+            </Form>
+          </Card.Body>
+        </Card>
+      )}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">
+              <i className="bi bi-book me-2"></i>
+              {t('auto.subjects', `Subjects`)}
+            </h6>
+            <Badge bg="primary">{subjects.length} {t('auto.total', `Total`)}</Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" size="sm" />
+              <p className="mt-2 text-muted small">{t('auto.loadingSubjects', `Loading subjects...`)}</p>
+            </div>
+          ) : subjects.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-book display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">{t('auto.noSubjectsFound', `No subjects found`)}</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>{t('auto.name', `Name`)}</th>
+                    <th>{t('auto.description', `Description`)}</th>
+                    <th>{t('auto.students', `Students`)}</th>
+                    <th>{t('auto.created', `Created`)}</th>
+                    <th>{t('auto.actions', `Actions`)}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subjects.map((subject) => (
+                    <tr key={subject.id}>
+                      <td className="fw-medium">{subject.name}</td>
+                      <td className="text-muted">
+                        <ExpandableText 
+                          text={subject.description || 'No description'} 
+                          maxLength={50} 
+                        />
+                      </td>
+                      <td>
+                        <Badge bg="secondary">
+                          {subject._count?.studentCourses || 0}
+                        </Badge>
+                      </td>
+                      <td className="text-muted small">
+                        {new Date(subject.createdAt).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <Button
+                            variant="outline-info"
+                            size="sm"
+                            onClick={() => handleViewDetails(subject)}
+                            title={t('auto.viewDetails', `View Details`)}
+                          >
+                            <i className="bi bi-eye"></i>
+                          </Button>
+                          <Button
+                            variant="outline-warning"
+                            size="sm"
+                            onClick={() => handleEditSubject(subject)}
+                            title={t('auto.editSubject', `Edit Subject`)}
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
 
       {/* Edit Subject Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
@@ -3324,6 +3346,7 @@ function AssignmentsTab() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Unified assignment form states
   const [selectedStudent, setSelectedStudent] = useState('');
@@ -3422,6 +3445,7 @@ function AssignmentsTab() {
         setSuccess('Assignment created successfully!');
         fetchData();
         resetForm();
+        setShowCreateForm(false);
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create assignment');
@@ -3545,8 +3569,8 @@ function AssignmentsTab() {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Row className="mb-3">
-        <Col md={6}>
+      <Row className="mb-4 align-items-center">
+        <Col md={8}>
           <InputGroup>
             <InputGroup.Text><i className="bi bi-search"></i></InputGroup.Text>
             <Form.Control
@@ -3556,277 +3580,300 @@ function AssignmentsTab() {
             />
           </InputGroup>
         </Col>
+        <Col md={4} className="text-end mt-2 mt-md-0">
+          <Button 
+            size="sm" 
+            variant={showCreateForm ? 'secondary' : 'primary'}
+            onClick={() => setShowCreateForm(v => !v)}
+          >
+            {showCreateForm ? t('auto.cancel', `Cancel`) : t('auto.createNewAssignment', `Create New Assignment`)}
+          </Button>
+        </Col>
       </Row>
 
-      <Row className="g-4">
-        <Col lg={5}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-primary text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-plus-circle me-2"></i>
-                {t('auto.createNewAssignment', `Create New Assignment`)}
-                                            </h6>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleCreateAssignment}>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.selectStudent', `Select Student *`)}</Form.Label>
-                  <Form.Select 
-                    value={selectedStudent}
-                    onChange={(e) => setSelectedStudent(e.target.value)}
-                    required
-                    size="sm"
-                  >
-                    <option value="">{t('auto.chooseAStudent', `Choose a student...`)}</option>
-                    {filteredStudents.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                    {filteredStudents.length === 0 && (
-                      <option value="" disabled>{t('auto.noMatchingStudents', `No matching students`)}</option>
-                    )}
-                  </Form.Select>
-                </Form.Group>
+      {showCreateForm && (
+        <Card className="shadow-sm mb-4">
+          <Card.Header className="bg-primary text-white">
+            <h6 className="mb-0">
+              <i className="bi bi-plus-circle me-2"></i>
+              {t('auto.createNewAssignment', `Create New Assignment`)}
+            </h6>
+          </Card.Header>
+          <Card.Body>
+            <Form onSubmit={handleCreateAssignment}>
+              <Row className="g-3 mb-3">
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.selectStudent', `Select Student *`)}</Form.Label>
+                    <Form.Select 
+                      value={selectedStudent}
+                      onChange={(e) => setSelectedStudent(e.target.value)}
+                      required
+                      size="sm"
+                    >
+                      <option value="">{t('auto.chooseAStudent', `Choose a student...`)}</option>
+                      {filteredStudents.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                      {filteredStudents.length === 0 && (
+                        <option value="" disabled>{t('auto.noMatchingStudents', `No matching students`)}</option>
+                      )}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.selectSubject', `Select Subject *`)}</Form.Label>
-                  <Form.Select 
-                    value={selectedSubject}
-                    onChange={(e) => setSelectedSubject(e.target.value)}
-                    required
-                    size="sm"
-                  >
-                    <option value="">{t('auto.chooseASubject', `Choose a subject...`)}</option>
-                    {subjects.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.selectSubject', `Select Subject *`)}</Form.Label>
+                    <Form.Select 
+                      value={selectedSubject}
+                      onChange={(e) => setSelectedSubject(e.target.value)}
+                      required
+                      size="sm"
+                    >
+                      <option value="">{t('auto.chooseASubject', `Choose a subject...`)}</option>
+                      {subjects.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.selectTeacher', `Select Teacher *`)}</Form.Label>
-                  <Form.Select 
-                    value={selectedTeacher}
-                    onChange={(e) => setSelectedTeacher(e.target.value)}
-                    required
-                    size="sm"
-                  >
-                    <option value="">{t('auto.chooseATeacher', `Choose a teacher...`)}</option>
-                    {teachers.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.selectTeacher', `Select Teacher *`)}</Form.Label>
+                    <Form.Select 
+                      value={selectedTeacher}
+                      onChange={(e) => setSelectedTeacher(e.target.value)}
+                      required
+                      size="sm"
+                    >
+                      <option value="">{t('auto.chooseATeacher', `Choose a teacher...`)}</option>
+                      {teachers.map(t => (
+                        <option key={t.id} value={t.id}>{t.name}</option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.assignmentDate', `Assignment Date`)}</Form.Label>
-                  <Form.Control 
-                    type="date"
-                    value={assignmentDate}
-                    onChange={(e) => setAssignmentDate(e.target.value)}
-                    size="sm"
-                  />
-                </Form.Group>
+              <Row className="g-3 mb-3">
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.assignmentDate', `Assignment Date`)}</Form.Label>
+                    <Form.Control 
+                      type="date"
+                      value={assignmentDate}
+                      onChange={(e) => setAssignmentDate(e.target.value)}
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.startTime', `Start Time`)}</Form.Label>
+                    <Form.Control 
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.durationMinutes', `Duration (minutes)`)}</Form.Label>
+                    <Form.Control 
+                      type="number"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      placeholder="60"
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
 
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('auto.startTime', `Start Time`)}</Form.Label>
-                      <Form.Control 
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        size="sm"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('auto.durationMinutes', `Duration (minutes)`)}</Form.Label>
-                      <Form.Control 
-                        type="number"
-                        value={duration}
-                        onChange={(e) => setDuration(e.target.value)}
-                        placeholder="60"
-                        size="sm"
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
+              <Row className="g-3 mb-4">
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.monthlyFee', `Monthly Fee`)}</Form.Label>
+                    <Form.Control 
+                      type="number"
+                      step="0.01"
+                      value={monthlyFee}
+                      onChange={(e) => setMonthlyFee(e.target.value)}
+                      placeholder="0.00"
+                      size="sm"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
+                    <Form.Select 
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      size="sm"
+                    >
+                      {currencies.map(curr => (
+                        <option key={curr.code} value={curr.code}>
+                          {curr.code} - {curr.name}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.classDays', `Class Days`)}</Form.Label>
+                    <div className="d-flex flex-wrap gap-2 pt-2">
+                      {daysOfWeek.map(day => (
+                        <Form.Check
+                          key={day.value}
+                          type="checkbox"
+                          id={`day-${day.value}`}
+                          label={day.label}
+                          checked={classDays.includes(day.value)}
+                          onChange={() => handleDayToggle(day.value)}
+                          className="me-2 mb-1"
+                        />
+                      ))}
+                    </div>
+                  </Form.Group>
+                </Col>
+              </Row>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.classDays', `Class Days`)}</Form.Label>
-                  <div className="d-flex flex-wrap gap-2">
-                    {daysOfWeek.map(day => (
-                      <Form.Check
-                        key={day.value}
-                        type="checkbox"
-                        id={`day-${day.value}`}
-                        label={day.label}
-                        checked={classDays.includes(day.value)}
-                        onChange={() => handleDayToggle(day.value)}
-                        className="me-3"
-                      />
-                    ))}
-                  </div>
-                </Form.Group>
-
-                <Row>
-                  <Col md={8}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('auto.monthlyFee', `Monthly Fee`)}</Form.Label>
-                      <Form.Control 
-                        type="number"
-                        step="0.01"
-                        value={monthlyFee}
-                        onChange={(e) => setMonthlyFee(e.target.value)}
-                        placeholder="0.00"
-                        size="sm"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={4}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
-                      <Form.Select 
-                        value={currency}
-                        onChange={(e) => setCurrency(e.target.value)}
-                        size="sm"
-                      >
-                        {currencies.map(curr => (
-                          <option key={curr.code} value={curr.code}>
-                            {curr.code} - {curr.name}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                </Row>
-
+              <div className="text-end">
                 <Button 
                   variant="primary" 
                   type="submit" 
                   disabled={creating}
-                  className="w-100"
                   size="sm"
+                  className="px-4"
                 >
                   {creating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
                       {t('auto.creating', `Creating...`)}
-                                                              </>
+                    </>
                   ) : (
                     <>
                       <i className="bi bi-plus-circle me-2"></i>
                       {t('auto.createAssignment', `Create Assignment`)}
-                                                                  </>
+                    </>
                   )}
                 </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col lg={7}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-light">
-              <div className="d-flex justify-content-between align-items-center">
-                <h6 className="mb-0">
-                  <i className="bi bi-list-task me-2"></i>
-                  {t('auto.currentAssignments', `Current Assignments`)}
-                                                  </h6>
-                <Badge bg="primary">{assignments.length} {t('auto.total', `Total`)}</Badge>
               </div>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {assignments.length === 0 ? (
-                <div className="text-center py-4">
-                  <i className="bi bi-list-task display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">{t('auto.noAssignmentsFound', `No assignments found`)}</p>
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>{t('auto.student', `Student`)}</th>
-                        <th>{t('auto.subject', `Subject`)}</th>
-                        <th>{t('auto.teacher', `Teacher`)}</th>
-                        <th>{t('auto.schedule', `Schedule`)}</th>
-                        <th>{t('auto.fee', `Fee`)}</th>
-                        <th>{t('auto.actions', `Actions`)}</th>
+            </Form>
+          </Card.Body>
+        </Card>
+      )}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">
+              <i className="bi bi-list-task me-2"></i>
+              {t('auto.currentAssignments', `Current Assignments`)}
+            </h6>
+            <Badge bg="primary">{assignments.length} {t('auto.total', `Total`)}</Badge>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {assignments.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-list-task display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">{t('auto.noAssignmentsFound', `No assignments found`)}</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>{t('auto.student', `Student`)}</th>
+                    <th>{t('auto.subject', `Subject`)}</th>
+                    <th>{t('auto.teacher', `Teacher`)}</th>
+                    <th>{t('auto.schedule', `Schedule`)}</th>
+                    <th>{t('auto.fee', `Fee`)}</th>
+                    <th>{t('auto.actions', `Actions`)}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAssignments.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-3 text-muted">
+                        {t('auto.noAssignmentsMatchYourSearch', `No assignments match your search`)}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAssignments.map((assignment) => (
+                      <tr key={assignment.id}>
+                        <td className="fw-medium">{assignment.student.name}</td>
+                        <td className="text-muted">{assignment.course.name}</td>
+                        <td className="text-muted">{assignment.teacher.name}</td>
+                        <td className="small">
+                          {assignment.assignmentDate && (
+                            <div>
+                              <strong>{t('auto.created', `Created`)}:</strong>{' '}
+                              {new Date(assignment.assignmentDate).toLocaleDateString()}
+                            </div>
+                          )}
+                          {assignment.startTime && (
+                            <div>{assignment.startTime}</div>
+                          )}
+                          {assignment.duration && (
+                            <div className="text-muted">{assignment.duration}{t('auto.min', `min`)}</div>
+                          )}
+                          {assignment.classDays && assignment.classDays.length > 0 && (
+                            <div className="text-muted">
+                              {assignment.classDays.join(', ')}
+                            </div>
+                          )}
+                          {assignment.timezone && (
+                            <div className="text-muted small">
+                              {findTimezone(assignment.timezone)?.label || assignment.timezone}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          {assignment.monthlyFee ? (
+                            <Badge bg="success">
+                              {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted">-</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="d-flex gap-1">
+                            <Button
+                              variant="outline-warning"
+                              size="sm"
+                              onClick={() => handleEditAssignment(assignment)}
+                              title={t('auto.editAssignment', `Edit Assignment`)}
+                            >
+                              <i className="bi bi-pencil"></i>
+                            </Button>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => handleDeleteAssignment(assignment.id)}
+                              title={t('auto.deleteAssignment', `Delete Assignment`)}
+                            >
+                              <i className="bi bi-trash"></i>
+                            </Button>
+                          </div>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {filteredAssignments.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="text-center py-3 text-muted">
-                            {t('auto.noAssignmentsMatchYourSearch', `No assignments match your search`)}
-                                                                                    </td>
-                        </tr>
-                      ) : (
-                        filteredAssignments.map((assignment) => (
-                          <tr key={assignment.id}>
-                            <td className="fw-medium">{assignment.student?.name}</td>
-                            <td>{assignment.course?.name}</td>
-                            <td className="text-muted">{assignment.teacher?.name}</td>
-                            <td className="small">
-                              {assignment.startTime && (
-                                <div>{assignment.startTime}</div>
-                              )}
-                              {assignment.duration && (
-                                <div className="text-muted">{assignment.duration}{t('auto.min', `min`)}</div>
-                              )}
-                              {assignment.classDays && assignment.classDays.length > 0 && (
-                                <div className="text-muted">
-                                  {assignment.classDays.join(', ')}
-                                </div>
-                              )}
-                              {assignment.timezone && (
-                                <div className="text-muted small">
-                                  {findTimezone(assignment.timezone)?.label || assignment.timezone}
-                                </div>
-                              )}
-                            </td>
-                            <td>
-                              {assignment.monthlyFee ? (
-                                <Badge bg="success">
-                                  {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
-                                </Badge>
-                              ) : (
-                                <span className="text-muted">-</span>
-                              )}
-                            </td>
-                            <td>
-                              <div className="d-flex gap-1">
-                                <Button
-                                  variant="outline-warning"
-                                  size="sm"
-                                  onClick={() => handleEditAssignment(assignment)}
-                                  title={t('auto.editAssignment', `Edit Assignment`)}
-                                >
-                                  <i className="bi bi-pencil"></i>
-                                </Button>
-                                <Button
-                                  variant="outline-danger"
-                                  size="sm"
-                                  onClick={() => handleDeleteAssignment(assignment.id)}
-                                  title={t('auto.deleteAssignment', `Delete Assignment`)}
-                                >
-                                  <i className="bi bi-trash"></i>
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </Table>
-                </div>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                    ))
+                  )}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
 
       {/* Edit Assignment Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
