@@ -365,6 +365,58 @@ async function main() {
 
   console.log('✅ Class assignments created');
 
+  // Seeding Fee Definitions
+  console.log('Generating fee definitions...');
+  const pkrFeeDef = await prisma.feeDefinition.upsert({
+    where: { id: 'f17446b1-acfa-4c15-b587-64d8428a53b6' },
+    update: {},
+    create: {
+      id: 'f17446b1-acfa-4c15-b587-64d8428a53b6',
+      adminId: admin.id,
+      title: 'Tuition Fee',
+      description: 'Monthly tuition fee in PKR',
+      amount: 5000.0,
+      currency: 'PKR',
+      type: 'MONTHLY',
+      generationDay: 1,
+      startDate: new Date('2026-06-01'),
+      dueAfterDays: 10,
+    },
+  });
+
+  const usdFeeDef = await prisma.feeDefinition.upsert({
+    where: { id: 'usd-tuition-fee-def-id' },
+    update: {},
+    create: {
+      id: 'usd-tuition-fee-def-id',
+      adminId: admin.id,
+      title: 'Tuition Fee (USD)',
+      description: 'Monthly tuition fee in USD',
+      amount: 60.0,
+      currency: 'USD',
+      type: 'MONTHLY',
+      generationDay: 1,
+      startDate: new Date('2026-06-01'),
+      dueAfterDays: 7,
+    },
+  });
+
+  // Link Definitions to Students
+  const studentFeeDefs = [
+    { studentId: student1.id, feeDefinitionId: pkrFeeDef.id },
+    { studentId: student2.id, feeDefinitionId: pkrFeeDef.id },
+    { studentId: student3.id, feeDefinitionId: usdFeeDef.id },
+  ];
+
+  for (const sfd of studentFeeDefs) {
+    await prisma.studentFeeDefinition.upsert({
+      where: { studentId_feeDefinitionId: { studentId: sfd.studentId, feeDefinitionId: sfd.feeDefinitionId } },
+      update: {},
+      create: sfd,
+    });
+  }
+  console.log('✅ Fee definitions seeded');
+
   // Progress records
   // Students with multiple subjects have progress for each subject on each day
   const progressRecords = [
@@ -741,22 +793,28 @@ async function main() {
 
       const txnId = 'TXN-' + y + String(m).padStart(2, '0') + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
+      const isLastMonth = offset === 0;
+      const feeDefId = assoc.currency === 'USD' ? 'usd-tuition-fee-def-id' : 'f17446b1-acfa-4c15-b587-64d8428a53b6';
+
       await prisma.fee.create({
         data: {
           studentId: assoc.studentId,
           courseId: assoc.courseId,
+          feeDefinitionId: feeDefId,
           title: `Tuition Fee - ${assoc.course?.name || 'Quran Education'}`,
           description: `Monthly tuition fee for ${assoc.course?.name || 'Quran Education'} (${getMonthName(m)} ${y})`,
           amount: assoc.monthlyFee || 0.0,
           currency: assoc.currency,
           dueDate,
-          status: 'PAID',
+          status: isLastMonth ? 'PROCESSING' : 'PAID',
           paidDate,
           paidById: parentId,
           paidAmount: assoc.monthlyFee || 0.0,
-          paymentDetails: `Paid via Online Banking Transfer. Ref: ${txnId}`,
+          paymentDetails: isLastMonth 
+            ? `${getMonthName(m)} ${y} payment submitted. Please verify uploaded evidence.`
+            : `Paid via Online Banking Transfer. Ref: ${txnId}`,
           paymentProof: 'https://res.cloudinary.com/demo/image/upload/v1580226922/sample.jpg',
-          processedDate,
+          processedDate: isLastMonth ? null : processedDate,
           month: m,
           year: y,
           isRecurring: true,
