@@ -63,15 +63,6 @@ export default function AdminAttendanceReportsPage() {
         <AdminMenu activeKey="attendance-reports" onSelect={handleSelect} />
         <div className={menuStyles.mainContent}>
           <div className="container-fluid py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h2 className="h5 mb-1">
-                  <i className="bi bi-file-earmark-spreadsheet me-2"></i>
-                  {t('menu.attendanceReports', `Attendance Reports`)}
-                </h2>
-                <p className="text-muted mb-0">{t('auto.attendanceReports', `View attendance reports`)}</p>
-              </div>
-            </div>
             <AttendanceReportsTab />
           </div>
         </div>

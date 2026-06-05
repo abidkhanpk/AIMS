@@ -63,15 +63,6 @@ export default function AdminReportCardsPage() {
         <AdminMenu activeKey="report-cards" onSelect={handleSelect} />
         <div className={menuStyles.mainContent}>
           <div className="container-fluid py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h2 className="h5 mb-1">
-                  <i className="bi bi-award me-2"></i>
-                  {t('menu.reportCards', `Report Cards`)}
-                </h2>
-                <p className="text-muted mb-0">{t('auto.studentReportCards', `Student Report Cards`)}</p>
-              </div>
-            </div>
             <ReportCardsTab />
           </div>
         </div>
