@@ -84,6 +84,7 @@ function AdminManagementTab() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -196,6 +197,7 @@ function AdminManagementTab() {
         setSubscriptionAmount(29.99);
         setSubscriptionCurrency('USD');
         setSubscriptionStartDate('');
+        setShowCreateForm(false);
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create admin');
@@ -418,17 +420,19 @@ function AdminManagementTab() {
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Row className="g-4">
-        <Col lg={4}>
-          <Card className="h-100 shadow-sm">
-            <Card.Header className="bg-primary text-white">
-              <h5 className="mb-0">
-                <i className="bi bi-person-plus me-2"></i>
-                {t('auto.createNewAdmin', `Create New Admin`)}
-                                            </h5>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleCreateAdmin}>
+      {showCreateForm && (
+        <Card className="shadow-sm mb-4">
+          <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">
+              <i className="bi bi-person-plus me-2"></i>
+              {t('auto.createNewAdmin', `Create New Admin`)}
+            </h5>
+            <Button variant="outline-light" size="sm" onClick={() => setShowCreateForm(false)}>
+              {t('auto.cancel', `Cancel`)}
+            </Button>
+          </Card.Header>
+          <Card.Body>
+            <Form onSubmit={handleCreateAdmin}>
                 <Form.Group className="mb-3">
                   <Form.Label>{t('auto.fullName', `Full Name *`)}</Form.Label>
                   <Form.Control 
@@ -580,17 +584,26 @@ function AdminManagementTab() {
               </Form>
             </Card.Body>
           </Card>
-        </Col>
+        )}
 
-        <Col lg={8}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-light">
+        <Card className="shadow-sm">
+          <Card.Header className="bg-light">
               <div className="d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">
                   <i className="bi bi-people me-2"></i>
                   {t('auto.systemAdministrators', `System Administrators`)}
-                                                  </h5>
-                <Badge bg="secondary">{admins.length} {t('auto.total', `Total`)}</Badge>
+                </h5>
+                <div className="d-flex align-items-center gap-2">
+                  <Badge bg="secondary">{admins.length} {t('auto.total', `Total`)}</Badge>
+                  <Button
+                    size="sm"
+                    variant={showCreateForm ? 'secondary' : 'primary'}
+                    onClick={() => setShowCreateForm((v) => !v)}
+                  >
+                    <i className="bi bi-person-plus me-1"></i>
+                    {showCreateForm ? t('auto.cancel', 'Cancel') : t('auto.addNewAdmin', 'Add New Admin')}
+                  </Button>
+                </div>
               </div>
             </Card.Header>
             <Card.Body className="p-0">
@@ -700,8 +713,6 @@ function AdminManagementTab() {
               )}
             </Card.Body>
           </Card>
-        </Col>
-      </Row>
 
       {/* Edit Admin Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
