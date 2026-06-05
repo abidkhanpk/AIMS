@@ -88,6 +88,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
+    // Notify all associated parents
+    const parentStudents = await prisma.parentStudent.findMany({
+      where: { studentId: existing.studentId },
+      include: { parent: true }
+    });
+
+    for (const parentStudent of parentStudents) {
+      await prisma.notification.create({
+        data: {
+          type: 'PROGRESS_UPDATE',
+          title: 'Test Score Updated',
+          message: `The test record "${resolvedTitle}" for ${existing.student.name} in ${existing.course.name} has been updated. Score: ${resolvedObtained}/${resolvedMax} (${percentage.toFixed(2)}%).`,
+          senderId: session.user.id,
+          receiverId: parentStudent.parent.id,
+        }
+      });
+    }
+
     res.status(200).json(updated);
   } catch (error) {
     console.error('Error editing test record:', error);

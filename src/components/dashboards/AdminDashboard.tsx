@@ -820,6 +820,8 @@ export function UserManagementTab({ role }: { role: Role }) {
   // Salary management states for teacher edit
   const [teacherPayments, setTeacherPayments] = useState<any[]>([]);
   const [teacherAdvances, setTeacherAdvances] = useState<any[]>([]);
+  const [teacherSalaries, setTeacherSalaries] = useState<any[]>([]);
+  const [selectedPendingSalaryId, setSelectedPendingSalaryId] = useState<string>('');
   const [recordingPayment, setRecordingPayment] = useState(false);
   const [creatingAdvance, setCreatingAdvance] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -969,6 +971,8 @@ export function UserManagementTab({ role }: { role: Role }) {
     setStudentTestsLoading(false);
     setTeacherPayments([]);
     setTeacherAdvances([]);
+    setTeacherSalaries([]);
+    setSelectedPendingSalaryId('');
     setRecordingPayment(false);
     setCreatingAdvance(false);
     setPaymentAmount('');
@@ -1074,6 +1078,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         const data = await res.json();
         setTeacherPayments(data.payments || []);
         setTeacherAdvances(data.advances || []);
+        setTeacherSalaries(data.salaries || []);
       }
     } catch (e) {
       // ignore
@@ -1091,6 +1096,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           teacherId: editingUser.id,
+          salaryId: selectedPendingSalaryId || undefined,
           amount: parseFloat(paymentAmount),
           paidDate: paymentDate || undefined,
           paymentDetails: paymentDetails || undefined
@@ -1101,6 +1107,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         setPaymentAmount('');
         setPaymentDate('');
         setPaymentDetails('');
+        setSelectedPendingSalaryId('');
         fetchTeacherSalaryData(editingUser.id);
       } else {
         const errorData = await res.json();
@@ -2195,6 +2202,37 @@ export function UserManagementTab({ role }: { role: Role }) {
                           <Card.Header className="bg-light"><strong>{t('auto.recordSalaryPayment', `Record Salary Payment`)}</strong></Card.Header>
                           <Card.Body>
                             <Row>
+                              <Col md={12}>
+                                <Form.Group className="mb-3">
+                                  <Form.Label>{t('auto.linkToSalary', `Link to Pending Salary`)}</Form.Label>
+                                  <Form.Select
+                                    value={selectedPendingSalaryId}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setSelectedPendingSalaryId(val);
+                                      if (val) {
+                                        const s = teacherSalaries.find((item) => item.id === val);
+                                        if (s) {
+                                          setPaymentAmount(s.amount.toString());
+                                          setPaymentDetails(`Paying salary: ${s.title}`);
+                                        }
+                                      } else {
+                                        setPaymentAmount('');
+                                        setPaymentDetails('');
+                                      }
+                                    }}
+                                  >
+                                    <option value="">{t('auto.noSpecificSalary', `General payment / No specific salary`)}</option>
+                                    {teacherSalaries.filter(s => s.status !== 'PAID').map(s => (
+                                      <option key={s.id} value={s.id}>
+                                        {s.title} - {getCurrencySymbol(s.currency)}{s.amount.toFixed(2)} (Due: {new Date(s.dueDate).toLocaleDateString()})
+                                      </option>
+                                    ))}
+                                  </Form.Select>
+                                </Form.Group>
+                              </Col>
+                            </Row>
+                            <Row>
                               <Col md={6}>
                                 <Form.Group className="mb-3">
                                   <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
@@ -2212,6 +2250,37 @@ export function UserManagementTab({ role }: { role: Role }) {
                               <Form.Label>{t('auto.paymentDetailsremarks', `Payment Details/Remarks`)}</Form.Label>
                               <Form.Control as="textarea" rows={2} value={paymentDetails} onChange={(e) => setPaymentDetails(e.target.value)} />
                             </Form.Group>
+                            
+                            {(() => {
+                              const activeAdvList = teacherAdvances.filter(a => a.status === 'ACTIVE');
+                              if (activeAdvList.length > 0 && paymentAmount) {
+                                const parsedAmt = parseFloat(paymentAmount) || 0;
+                                let totalDeduction = 0;
+                                for (const adv of activeAdvList) {
+                                  totalDeduction += Math.min(adv.installmentAmount, adv.balance);
+                                }
+                                const netPay = Math.max(0, parsedAmt - totalDeduction);
+                                return (
+                                  <Alert variant="info" className="py-2 px-3 mb-3 small">
+                                    <div className="d-flex justify-content-between">
+                                      <span><strong>Gross Recorded:</strong></span>
+                                      <span>{getCurrencySymbol(editingUser?.payCurrency || 'USD')}{parsedAmt.toFixed(2)}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between text-danger">
+                                      <span><strong>Loan Deductions:</strong></span>
+                                      <span>-{getCurrencySymbol(editingUser?.payCurrency || 'USD')}{totalDeduction.toFixed(2)}</span>
+                                    </div>
+                                    <hr className="my-1" />
+                                    <div className="d-flex justify-content-between fw-bold text-success">
+                                      <span><strong>Net Paid (Estimated Cash):</strong></span>
+                                      <span>{getCurrencySymbol(editingUser?.payCurrency || 'USD')}{netPay.toFixed(2)}</span>
+                                    </div>
+                                  </Alert>
+                                );
+                              }
+                              return null;
+                            })()}
+
                             <div className="d-flex justify-content-end">
                               <Button variant="primary" size="sm" onClick={handleRecordPayment} disabled={recordingPayment}>
                                 {recordingPayment ? 'Recording...' : 'Record Payment'}
@@ -2269,6 +2338,46 @@ export function UserManagementTab({ role }: { role: Role }) {
                               <Button variant="warning" size="sm" onClick={handleCreateAdvance} disabled={creatingAdvance}>
                                 {creatingAdvance ? 'Creating...' : 'Create Advance'}
                               </Button>
+                            </div>
+                          </Card.Body>
+                        </Card>
+                      </Col>
+                    </Row>
+
+                    <Row className="g-3 mt-2">
+                      <Col md={12}>
+                        <Card>
+                          <Card.Header className="bg-light"><strong>{t('auto.salarySchedule', `Salary Schedule`)}</strong></Card.Header>
+                          <Card.Body className="p-0">
+                            <div className="table-responsive">
+                              <Table size="sm" className="mb-0" hover>
+                                <thead className="table-light">
+                                  <tr>
+                                    <th>{t('auto.title', `Title`)}</th>
+                                    <th>{t('auto.amount', `Amount`)}</th>
+                                    <th>{t('auto.dueDate', `Due Date`)}</th>
+                                    <th>{t('auto.status', `Status`)}</th>
+                                    <th>{t('auto.paidBy', `Paid By`)}</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {teacherSalaries.length === 0 ? (
+                                    <tr><td colSpan={5} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
+                                  ) : teacherSalaries.map((s) => (
+                                    <tr key={s.id}>
+                                      <td className="fw-medium">{s.title}</td>
+                                      <td className="fw-bold">{getCurrencySymbol(s.currency)}{s.amount.toFixed(2)}</td>
+                                      <td className="small">{new Date(s.dueDate).toLocaleDateString()}</td>
+                                      <td>
+                                        <Badge bg={s.status === 'PAID' ? 'success' : s.status === 'PENDING' ? 'warning' : 'danger'}>
+                                          {s.status}
+                                        </Badge>
+                                      </td>
+                                      <td className="small">{s.paidBy?.name || '-'}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </Table>
                             </div>
                           </Card.Body>
                         </Card>
@@ -4041,6 +4150,33 @@ export function SalaryManagementTab() {
     }
   };
 
+  const [payingSalaryId, setPayingSalaryId] = useState<string | null>(null);
+
+  const handlePaySalary = async (salaryId: string) => {
+    if (!confirm('Are you sure you want to mark this salary as paid? This will deduct any active advance installments for this teacher.')) return;
+    setPayingSalaryId(salaryId);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await fetch('/api/salaries/pay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ salaryId })
+      });
+      if (res.ok) {
+        setSuccess('Salary paid successfully and logged to payments.');
+        fetchData();
+      } else {
+        const data = await res.json();
+        setError(data.message || 'Failed to pay salary');
+      }
+    } catch (err) {
+      setError('Error paying salary');
+    } finally {
+      setPayingSalaryId(null);
+    }
+  };
+
   const handleCreateSalary = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
@@ -4341,6 +4477,7 @@ export function SalaryManagementTab() {
                     <th>{t('auto.dueDate', `Due Date`)}</th>
                     <th>{t('auto.status', `Status`)}</th>
                     <th>{t('auto.paidBy', `Paid By`)}</th>
+                    <th>{t('auto.actions', `Actions`)}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4357,6 +4494,25 @@ export function SalaryManagementTab() {
                       <td>{getStatusBadge(salary.status)}</td>
                       <td className="text-muted small">
                         {salary.paidBy ? salary.paidBy.name : '-'}
+                      </td>
+                      <td>
+                        {salary.status !== 'PAID' && salary.status !== 'CANCELLED' && (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            disabled={payingSalaryId === salary.id}
+                            onClick={() => handlePaySalary(salary.id)}
+                          >
+                            {payingSalaryId === salary.id ? (
+                              <Spinner animation="border" size="sm" />
+                            ) : (
+                              <>
+                                <i className="bi bi-cash me-1"></i>
+                                {t('auto.markPaid', `Mark Paid`)}
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}

@@ -38,7 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           orderBy: { createdAt: 'desc' }
         });
 
-        return res.status(200).json({ payments, advances });
+        const salaries = await prisma.salary.findMany({
+          where: {
+            teacherId,
+            teacher: { adminId: session.user.id }
+          },
+          orderBy: { dueDate: 'desc' }
+        });
+
+        return res.status(200).json({ payments, advances, salaries });
       } else if (session.user.role === 'TEACHER' && session.user.id === teacherId) {
         const payments = await prisma.salaryPayment.findMany({
           where: { teacherId },
@@ -50,7 +58,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           include: { repayments: true },
           orderBy: { createdAt: 'desc' }
         });
-        return res.status(200).json({ payments, advances });
+        const salaries = await prisma.salary.findMany({
+          where: { teacherId },
+          orderBy: { dueDate: 'desc' }
+        });
+        return res.status(200).json({ payments, advances, salaries });
       }
 
       return res.status(403).json({ message: 'Access denied' });

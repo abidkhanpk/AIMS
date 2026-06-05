@@ -55,15 +55,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      // Notify payer if available
-      if (fee.paidById) {
+      // Notify all associated parents
+      const parentStudents = await prisma.parentStudent.findMany({
+        where: { studentId: fee.studentId },
+        include: { parent: true }
+      });
+
+      for (const parentStudent of parentStudents) {
         await prisma.notification.create({
           data: {
             type: 'PAYMENT_VERIFIED',
             title: 'Fee Payment Verified',
-            message: `Your fee payment for ${fee.title} has been verified.`,
+            message: `Fee payment for "${fee.title}" has been verified for ${fee.student.name}.`,
             senderId: session.user.id,
-            receiverId: fee.paidById,
+            receiverId: parentStudent.parent.id,
           },
         });
       }
@@ -82,14 +87,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      if (fee.paidById) {
+      const parentStudents = await prisma.parentStudent.findMany({
+        where: { studentId: fee.studentId },
+        include: { parent: true }
+      });
+
+      for (const parentStudent of parentStudents) {
         await prisma.notification.create({
           data: {
             type: 'SYSTEM_ALERT',
             title: 'Fee Payment Rejected',
-            message: `Your fee payment for ${fee.title} was rejected. Please review details and resubmit.`,
+            message: `Fee payment for "${fee.title}" for ${fee.student.name} was rejected. Please review details and resubmit.`,
             senderId: session.user.id,
-            receiverId: fee.paidById,
+            receiverId: parentStudent.parent.id,
           },
         });
       }
