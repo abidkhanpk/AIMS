@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Spinner, Alert, Button, Table, Badge, Accordion } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 
@@ -71,7 +71,7 @@ export default function ReportCardsTab() {
       ]);
     });
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 55,
       head: [['Subject', 'Teacher', 'Course Progress', 'Avg Test Score']],
       body: tableData,
@@ -79,7 +79,7 @@ export default function ReportCardsTab() {
       headStyles: { fillColor: [13, 110, 253] }
     });
 
-    doc.save(`${report.studentName.replace(/\\s+/g, '_')}_ReportCard.pdf`);
+    doc.save(`${report.studentName.replace(/\s+/g, '_')}_ReportCard.pdf`);
   };
 
   if (loading) {

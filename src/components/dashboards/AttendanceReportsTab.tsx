@@ -3,7 +3,7 @@ import { Container, Card, Row, Col, Form, Button, Table, Spinner, Alert, Badge }
 import { useSession } from 'next-auth/react';
 import Papa from 'papaparse';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { AttendanceStatus } from '@prisma/client';
 import { useTranslation } from 'react-i18next';
@@ -97,7 +97,7 @@ export default function AttendanceReportsTab() {
       `${r.lessonProgress}%`
     ]);
 
-    (doc as any).autoTable({
+    autoTable(doc, {
       startY: 25,
       head: [['Date', 'Student', 'Course', 'Status', 'Progress']],
       body: tableData,
