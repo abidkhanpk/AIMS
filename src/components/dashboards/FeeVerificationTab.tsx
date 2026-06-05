@@ -21,6 +21,15 @@ const FeeVerificationTab = () => {
   const [editAmount, setEditAmount] = useState('');
   const [editCurrency, setEditCurrency] = useState('USD');
   const [editDueDate, setEditDueDate] = useState('');
+
+  // Details/Verification modal state
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedFee, setSelectedFee] = useState<any>(null);
+  const [verifyingFeeId, setVerifyingFeeId] = useState<string | null>(null);
+
+  const getCurrencySymbol = (code: string) => {
+    return currencies.find((c: any) => c.code === code)?.symbol || code;
+  };
   const fetchFees = useCallback(async () => {
     try {
       setLoading(true);
@@ -222,12 +231,34 @@ const FeeVerificationTab = () => {
                     <td className="small">{fee.paymentDetails || '-'}</td>
                     <td>
                       {fee.paymentProof ? (
-                        <a href={fee.paymentProof} target="_blank" rel="noopener noreferrer">{t('auto.view', `View`)}</a>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 text-decoration-none"
+                          onClick={() => {
+                            setSelectedFee(fee);
+                            setShowDetailsModal(true);
+                          }}
+                        >
+                          {t('auto.view', `View`)}
+                        </Button>
                       ) : (
                         'N/A'
                       )}
                     </td>
                     <td>
+                      <Button
+                        variant="outline-info"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => {
+                          setSelectedFee(fee);
+                          setShowDetailsModal(true);
+                        }}
+                        title={t('auto.viewDetails', `View Details`)}
+                      >
+                        <i className="bi bi-eye"></i>
+                      </Button>
                       {fee.status !== 'PAID' && (
                         <Button
                           variant="outline-primary"
@@ -342,6 +373,156 @@ const FeeVerificationTab = () => {
             </div>
           </Form>
         </Modal.Body>
+      </Modal>
+
+      {/* View Details Modal */}
+      <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-file-earmark-text me-2"></i>
+            {t('auto.feePaymentDetailsTitle', 'Fee Payment Details')}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedFee && (
+            <div>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.studentLabel', 'Student:')}</strong>{' '}
+                  <span className="fw-medium">{selectedFee.student?.name || '-'}</span>
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.statusLabel', 'Status:')}</strong>{' '}
+                  {getStatusBadge(selectedFee.status)}
+                </Col>
+              </Row>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.feeTitleLabel', 'Fee Title:')}</strong>{' '}
+                  <span className="fw-medium">{selectedFee.title || selectedFee.feeDefinition?.title || 'N/A'}</span>
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.dueDateLabel', 'Due Date:')}</strong>{' '}
+                  {selectedFee.dueDate ? new Date(selectedFee.dueDate).toLocaleDateString() : '-'}
+                </Col>
+              </Row>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.amountLabel', 'Expected Amount:')}</strong>{' '}
+                  <span className="fw-bold text-success">
+                    {getCurrencySymbol(selectedFee.currency || selectedFee.feeDefinition?.currency || 'USD')}
+                    {(selectedFee.amount || selectedFee.feeDefinition?.amount || 0).toFixed(2)}
+                  </span>
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.paidAmountLabel', 'Paid Amount:')}</strong>{' '}
+                  <span className="fw-bold text-success">
+                    {selectedFee.paidAmount !== undefined && selectedFee.paidAmount !== null ? (
+                      `${getCurrencySymbol(selectedFee.currency || selectedFee.feeDefinition?.currency || 'USD')}${selectedFee.paidAmount.toFixed(2)}`
+                    ) : (
+                      '-'
+                    )}
+                  </span>
+                </Col>
+              </Row>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.paidDateLabel', 'Submitted/Paid Date:')}</strong>{' '}
+                  {selectedFee.paidDate ? new Date(selectedFee.paidDate).toLocaleDateString() : '-'}
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.paidByLabel', 'Paid By:')}</strong>{' '}
+                  {selectedFee.paidBy ? `${selectedFee.paidBy.name} (${selectedFee.paidBy.email})` : '-'}
+                </Col>
+              </Row>
+              {selectedFee.description && (
+                <div className="mb-3 border-bottom pb-2">
+                  <strong>{t('auto.descriptionLabel', 'Description:')}</strong>
+                  <p className="bg-light p-2 rounded mt-1 border" style={{ whiteSpace: 'pre-wrap' }}>
+                    {selectedFee.description}
+                  </p>
+                </div>
+              )}
+              <div className="mb-3 border-bottom pb-2">
+                <strong>{t('auto.detailsLabel', 'Payment Details/Remarks:')}</strong>
+                <p className="bg-light p-2 rounded mt-1 border" style={{ whiteSpace: 'pre-wrap' }}>
+                  {selectedFee.paymentDetails || t('auto.noDetailsSubmitted', 'No details submitted')}
+                </p>
+              </div>
+              <div className="mb-3">
+                <strong>{t('auto.paymentProof', 'Payment Proof:')}</strong>
+                {selectedFee.paymentProof ? (
+                  <div className="mt-2 border rounded p-2 bg-light text-center">
+                    <div className="mb-2">
+                      <a
+                        href={selectedFee.paymentProof}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm btn-outline-primary"
+                      >
+                        <i className="bi bi-box-arrow-up-right me-1"></i>
+                        {t('auto.openInNewTab', 'Open Image in New Tab')}
+                      </a>
+                    </div>
+                    <img
+                      src={selectedFee.paymentProof}
+                      alt={t('auto.paymentProofAlt', 'Payment Proof Screenshot')}
+                      className="img-fluid rounded border shadow-sm"
+                      style={{ maxHeight: '400px', objectFit: 'contain', cursor: 'pointer' }}
+                      onClick={() => window.open(selectedFee.paymentProof, '_blank')}
+                      onError={(e) => {
+                        const img = e.currentTarget as HTMLImageElement;
+                        img.style.display = 'none';
+                        const msg = img.nextSibling as HTMLElement | null;
+                        if (msg) msg.style.display = 'block';
+                      }}
+                    />
+                    <p className="text-danger small mt-1" style={{ display: 'none' }}>
+                      {t('auto.imageLoadError', 'Could not load image. Use "Open Image in New Tab" to view it.')}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-muted mt-1">{t('auto.noProofUploaded', 'No proof screenshot uploaded')}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          {selectedFee && selectedFee.status === 'PROCESSING' && (
+            <div className="d-flex gap-2 me-auto">
+              <Button
+                variant="success"
+                disabled={verifyingFeeId === selectedFee.id}
+                onClick={async () => {
+                  setVerifyingFeeId(selectedFee.id);
+                  await handleVerification(selectedFee.id, true);
+                  setVerifyingFeeId(null);
+                  setShowDetailsModal(false);
+                }}
+              >
+                {verifyingFeeId === selectedFee.id ? <Spinner animation="border" size="sm" className="me-1" /> : <i className="bi bi-check-lg me-1"></i>}
+                {t('auto.approve', 'Approve')}
+              </Button>
+              <Button
+                variant="danger"
+                disabled={verifyingFeeId === selectedFee.id}
+                onClick={async () => {
+                  setVerifyingFeeId(selectedFee.id);
+                  await handleVerification(selectedFee.id, false);
+                  setVerifyingFeeId(null);
+                  setShowDetailsModal(false);
+                }}
+              >
+                {verifyingFeeId === selectedFee.id ? <Spinner animation="border" size="sm" className="me-1" /> : <i className="bi bi-x-lg me-1"></i>}
+                {t('auto.reject', 'Reject')}
+              </Button>
+            </div>
+          )}
+          <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+            {t('auto.close', 'Close')}
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );
