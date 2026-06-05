@@ -511,7 +511,7 @@ export default function SubscriptionHistoryTab({
                 </p>
               </div>
               <div className="mb-3">
-                <strong>{t('auto.screenshotProof', 'Screenshot Proof:')}</strong>
+                <strong>{t('auto.paymentProof', 'Payment Proof:')}</strong>
                 {selectedSub.paymentProof ? (
                   <div className="mt-2 border rounded p-2 bg-light text-center">
                     <div className="mb-2">
@@ -532,9 +532,15 @@ export default function SubscriptionHistoryTab({
                       style={{ maxHeight: '400px', objectFit: 'contain', cursor: 'pointer' }}
                       onClick={() => window.open(selectedSub.paymentProof, '_blank')}
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '/assets/default-logo.png';
+                        const img = e.currentTarget as HTMLImageElement;
+                        img.style.display = 'none';
+                        const msg = img.nextSibling as HTMLElement | null;
+                        if (msg) msg.style.display = 'block';
                       }}
                     />
+                    <p className="text-danger small mt-1" style={{ display: 'none' }}>
+                      {t('auto.imageLoadError', 'Could not load image. Use "Open Image in New Tab" to view it.')}
+                    </p>
                   </div>
                 ) : (
                   <p className="text-muted mt-1">{t('auto.noProofUploaded', 'No proof screenshot uploaded')}</p>
