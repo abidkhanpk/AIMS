@@ -31,7 +31,7 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
     try {
       const formData = new FormData();
       formData.append('file', proofFile);
-      const res = await fetch('/api/upload/file?folder=subscription-payments&prefix=subscription-proof', {
+      const res = await fetch('/api/upload/file?folder=payment-proofs-temp&prefix=subscription-proof', {
         method: 'POST',
         body: formData,
       });

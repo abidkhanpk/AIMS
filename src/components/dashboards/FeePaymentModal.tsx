@@ -25,7 +25,7 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
     try {
       const formData = new FormData();
       formData.append('file', paymentProof);
-      const res = await fetch('/api/upload/file?folder=fee-payments&prefix=fee-proof', {
+      const res = await fetch('/api/upload/file?folder=payment-proofs-temp&prefix=fee-proof', {
         method: 'POST',
         body: formData,
       });
