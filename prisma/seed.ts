@@ -7,6 +7,7 @@ async function main() {
   console.log('🌱 Starting database seeding...');
 
   const today = new Date();
+  const subscriptionEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5, 10, 0, 0);
 
   function getRelativeDate(monthsOffset: number, dayOfMonth: number, hours = 10): Date {
     // Return safe day of month matching month length boundaries
@@ -57,6 +58,8 @@ async function main() {
       defaultCurrency: 'PKR',
       subscriptionAmount: 5000.0,
       subscriptionType: 'MONTHLY',
+      subscriptionStartDate: getRelativeDate(-2, 1, 0),
+      subscriptionEndDate: subscriptionEndDate,
     },
     create: {
       adminId: admin.id,
@@ -65,6 +68,8 @@ async function main() {
       defaultCurrency: 'PKR',
       subscriptionAmount: 5000.0,
       subscriptionType: 'MONTHLY',
+      subscriptionStartDate: getRelativeDate(-2, 1, 0),
+      subscriptionEndDate: subscriptionEndDate,
     },
   });
 
@@ -819,39 +824,42 @@ async function main() {
 
     const start = getRelativeDate(offset, 1, 0);
     const end = getRelativeDate(offset + 1, 1, 0); // end is first of next month
-    const paidDate = getRelativeDate(offset, 1, 10); // paid on start date
-    const processedDate = getRelativeDate(offset, 1, 12);
 
-    const sub = await prisma.subscription.create({
-      data: {
-        adminId: admin.id,
-        plan: 'MONTHLY',
-        amount: 5000.0,
-        currency: 'PKR',
-        startDate: start,
-        endDate: end,
-        status: SubscriptionStatus.ACTIVE,
-        paidAmount: 5000.0,
-        paidDate,
-        paidById: admin.id,
-        paymentDetails: 'Seeded monthly renewal payment in PKR',
-        processedDate,
-      },
-    });
+    const isCurrentMonth = offset === 0;
 
-    await prisma.subscriptionPayment.create({
-      data: {
-        adminId: admin.id,
-        subscriptionId: sub.id,
-        amount: 5000.0,
-        currency: 'PKR',
-        plan: 'MONTHLY',
-        paymentDate: paidDate,
-        expiryExtended: end,
-        paymentDetails: 'Seeded payment in PKR',
-        processedById: developer.id,
-      },
-    });
+    if (isCurrentMonth) {
+      // Seed a single subscription record representing the current billing period as active but expiring in 5 days (so they can log in but must renew)
+      await prisma.subscription.create({
+        data: {
+          adminId: admin.id,
+          plan: 'MONTHLY',
+          amount: 5000.0,
+          currency: 'PKR',
+          startDate: start,
+          endDate: subscriptionEndDate,
+          status: SubscriptionStatus.ACTIVE,
+          paidAmount: null,
+          paidDate: null,
+          paidById: null,
+          paymentDetails: null,
+          processedDate: null,
+        },
+      });
+    } else {
+      // Seed the payment history for previous months directly in the payment records table
+      await prisma.subscriptionPayment.create({
+        data: {
+          adminId: admin.id,
+          amount: 5000.0,
+          currency: 'PKR',
+          plan: 'MONTHLY',
+          paymentDate: getRelativeDate(offset, 1, 10),
+          expiryExtended: end,
+          paymentDetails: 'Seeded payment in PKR',
+          processedById: developer.id,
+        },
+      });
+    }
   }
 
   console.log('✅ Subscriptions and payments seeded');
