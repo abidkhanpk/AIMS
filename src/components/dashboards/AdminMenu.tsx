@@ -33,6 +33,8 @@ const menuItems: MenuItem[] = [
     label: 'menu.academic',
     icon: 'bi-mortarboard',
     children: [
+      { key: 'subjects', label: 'menu.subjects', icon: 'bi-book' },
+      { key: 'assignments', label: 'menu.assignments', icon: 'bi-diagram-3' },
       { key: 'progress', label: 'menu.progress', icon: 'bi-graph-up' },
       { key: 'attendance-reports', label: 'menu.attendanceReports', icon: 'bi-file-earmark-spreadsheet' },
       { key: 'report-cards', label: 'menu.reportCards', icon: 'bi-award' },
@@ -47,6 +49,7 @@ const menuItems: MenuItem[] = [
       { key: 'fees', label: 'menu.fees', icon: 'bi-cash-coin' },
       { key: 'fee-verification', label: 'menu.feeVerification', icon: 'bi-check-circle' },
       { key: 'salaries', label: 'menu.salaries', icon: 'bi-wallet2' },
+      { key: 'subscription-management', label: 'menu.subscriptionManagement', icon: 'bi-credit-card' },
     ],
   },
   {
@@ -61,7 +64,6 @@ const menuItems: MenuItem[] = [
     children: [
       { key: 'audit-logs', label: 'menu.auditLogs', icon: 'bi-file-earmark-code' },
       { key: 'academy-settings', label: 'menu.academySettings', icon: 'bi-gear-fill' },
-      { key: 'subscription-management', label: 'menu.subscriptionManagement', icon: 'bi-credit-card' },
     ],
   },
 ];

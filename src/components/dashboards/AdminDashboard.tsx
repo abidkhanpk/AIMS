@@ -5388,7 +5388,7 @@ export default function AdminDashboard() {
     }
     setActiveTab(next);
     const query = next === 'home' ? {} : { tab: next };
-    router.replace({ pathname: '/dashboard', query }, undefined, { shallow: true });
+    router.replace({ pathname: '/dashboard/admin', query }, undefined, { shallow: true });
   };
 
   return (
