@@ -23,6 +23,9 @@ interface SubscriptionRecord {
     name: string;
     email: string;
   };
+  paidAmount?: number;
+  paymentDetails?: string;
+  paymentProof?: string;
   createdAt: string;
 }
 
@@ -52,6 +55,8 @@ export default function SubscriptionHistoryTab({
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [extending, setExtending] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedSub, setSelectedSub] = useState<SubscriptionRecord | null>(null);
 
   // Extension form states
   const [extensionType, setExtensionType] = useState('MONTHLY');
@@ -185,6 +190,7 @@ export default function SubscriptionHistoryTab({
                   <th>{t('auto.endDate', `End Date`)}</th>
                   <th>{t('auto.status', `Status`)}</th>
                   <th>{t('auto.paidDate', `Paid Date`)}</th>
+                  <th>{t('auto.details', `Details`)}</th>
                   {allowVerify && <th>{t('auto.actions', `Actions`)}</th>}
                 </tr>
               </thead>
@@ -206,6 +212,18 @@ export default function SubscriptionHistoryTab({
                     <td>{getStatusBadge(sub.status)}</td>
                     <td className="small">
                       {sub.paidDate ? new Date(sub.paidDate).toLocaleDateString() : '-'}
+                    </td>
+                    <td>
+                      <Button
+                        size="sm"
+                        variant="outline-secondary"
+                        onClick={() => {
+                          setSelectedSub(sub);
+                          setShowDetailsModal(true);
+                        }}
+                      >
+                        <i className="bi bi-eye"></i>
+                      </Button>
                     </td>
                     {allowVerify && (
                       <td>
@@ -423,6 +441,177 @@ export default function SubscriptionHistoryTab({
                 {t('auto.extendSubscription', `Extend Subscription`)}
                                                 </>
             )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* View Details Modal */}
+      <Modal show={showDetailsModal} onHide={() => setShowDetailsModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-file-earmark-text me-2"></i>
+            {t('auto.paymentDetailsTitle', 'Subscription Payment Details')}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedSub && (
+            <div>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.planLabel', 'Plan:')}</strong>{' '}
+                  <Badge bg="info">{selectedSub.plan}</Badge>
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.statusLabel', 'Status:')}</strong>{' '}
+                  {getStatusBadge(selectedSub.status)}
+                </Col>
+              </Row>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.amountLabel', 'Expected Amount:')}</strong>{' '}
+                  <span className="fw-bold text-success">
+                    {getCurrencySymbol(selectedSub.currency)}{selectedSub.amount.toFixed(2)}
+                  </span>
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.paidAmountLabel', 'Paid Amount:')}</strong>{' '}
+                  <span className="fw-bold text-success">
+                    {selectedSub.paidAmount !== undefined && selectedSub.paidAmount !== null ? (
+                      `${getCurrencySymbol(selectedSub.currency)}${selectedSub.paidAmount.toFixed(2)}`
+                    ) : (
+                      '-'
+                    )}
+                  </span>
+                </Col>
+              </Row>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.startDateLabel', 'Start Date:')}</strong>{' '}
+                  {new Date(selectedSub.startDate).toLocaleDateString()}
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.endDateLabel', 'End Date:')}</strong>{' '}
+                  {selectedSub.endDate ? new Date(selectedSub.endDate).toLocaleDateString() : 'Lifetime'}
+                </Col>
+              </Row>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.paidDateLabel', 'Submitted/Paid Date:')}</strong>{' '}
+                  {selectedSub.paidDate ? new Date(selectedSub.paidDate).toLocaleDateString() : '-'}
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.paidByLabel', 'Paid By:')}</strong>{' '}
+                  {selectedSub.paidBy ? `${selectedSub.paidBy.name} (${selectedSub.paidBy.email})` : '-'}
+                </Col>
+              </Row>
+              <div className="mb-3 border-bottom pb-2">
+                <strong>{t('auto.detailsLabel', 'Payment Details/Remarks:')}</strong>
+                <p className="bg-light p-2 rounded mt-1 border" style={{ whiteSpace: 'pre-wrap' }}>
+                  {selectedSub.paymentDetails || t('auto.noDetailsSubmitted', 'No details submitted')}
+                </p>
+              </div>
+              <div className="mb-3">
+                <strong>{t('auto.screenshotProof', 'Screenshot Proof:')}</strong>
+                {selectedSub.paymentProof ? (
+                  <div className="mt-2 border rounded p-2 bg-light text-center">
+                    <div className="mb-2">
+                      <a
+                        href={selectedSub.paymentProof}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm btn-outline-primary"
+                      >
+                        <i className="bi bi-box-arrow-up-right me-1"></i>
+                        {t('auto.openInNewTab', 'Open Image in New Tab')}
+                      </a>
+                    </div>
+                    <img
+                      src={selectedSub.paymentProof}
+                      alt={t('auto.paymentProofAlt', 'Payment Proof Screenshot')}
+                      className="img-fluid rounded border shadow-sm"
+                      style={{ maxHeight: '400px', objectFit: 'contain', cursor: 'pointer' }}
+                      onClick={() => window.open(selectedSub.paymentProof, '_blank')}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/assets/default-logo.png';
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-muted mt-1">{t('auto.noProofUploaded', 'No proof screenshot uploaded')}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          {allowVerify && selectedSub && selectedSub.status === 'PROCESSING' && (
+            <div className="d-flex gap-2 me-auto">
+              <Button
+                variant="success"
+                disabled={verifyingId === selectedSub.id}
+                onClick={async () => {
+                  setVerifyingId(selectedSub.id);
+                  setError('');
+                  setSuccess('');
+                  try {
+                    const res = await fetch('/api/subscriptions/verify', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ subscriptionId: selectedSub.id, approved: true })
+                    });
+                    if (res.ok) {
+                      setSuccess('Subscription payment approved');
+                      setShowDetailsModal(false);
+                      fetchSubscriptionHistory();
+                    } else {
+                      const err = await res.json();
+                      setError(err.message || 'Failed to approve');
+                    }
+                  } catch (e) {
+                    setError('Error approving payment');
+                  } finally {
+                    setVerifyingId(null);
+                  }
+                }}
+              >
+                {verifyingId === selectedSub.id ? <Spinner animation="border" size="sm" className="me-1" /> : <i className="bi bi-check-lg me-1"></i>}
+                {t('auto.approve', 'Approve')}
+              </Button>
+              <Button
+                variant="danger"
+                disabled={verifyingId === selectedSub.id}
+                onClick={async () => {
+                  setVerifyingId(selectedSub.id);
+                  setError('');
+                  setSuccess('');
+                  try {
+                    const res = await fetch('/api/subscriptions/verify', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ subscriptionId: selectedSub.id, approved: false })
+                    });
+                    if (res.ok) {
+                      setSuccess('Subscription payment rejected');
+                      setShowDetailsModal(false);
+                      fetchSubscriptionHistory();
+                    } else {
+                      const err = await res.json();
+                      setError(err.message || 'Failed to reject');
+                    }
+                  } catch (e) {
+                    setError('Error rejecting payment');
+                  } finally {
+                    setVerifyingId(null);
+                  }
+                }}
+              >
+                {verifyingId === selectedSub.id ? <Spinner animation="border" size="sm" className="me-1" /> : <i className="bi bi-x-lg me-1"></i>}
+                {t('auto.reject', 'Reject')}
+              </Button>
+            </div>
+          )}
+          <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
+            {t('auto.close', 'Close')}
           </Button>
         </Modal.Footer>
       </Modal>

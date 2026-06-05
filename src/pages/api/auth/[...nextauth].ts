@@ -42,19 +42,23 @@ export const authOptions: NextAuthOptions = {
 
           // Check subscription status for admins and their users
           if (user.role === 'ADMIN') {
-            // Check admin's own subscription
+            // Check admin's own subscription (look for ACTIVE, PROCESSING, or PENDING)
             const subscription = await prisma.subscription.findFirst({
               where: {
                 adminId: user.id,
-                status: 'ACTIVE'
+                status: {
+                  in: ['ACTIVE', 'PROCESSING', 'PENDING']
+                }
               },
               orderBy: {
                 createdAt: 'desc'
               }
             });
 
-            // Check if subscription is expired (except lifetime)
-            if (subscription && subscription.endDate && subscription.endDate < new Date()) {
+            const now = new Date();
+            const isExpired = subscription && subscription.endDate && subscription.endDate < now;
+
+            if (isExpired && subscription.status !== 'PROCESSING') {
               // Mark subscription as expired
               await prisma.subscription.update({
                 where: { id: subscription.id },
@@ -70,7 +74,7 @@ export const authOptions: NextAuthOptions = {
               throw new Error('Subscription expired');
             }
 
-            if (!subscription || (subscription.endDate && subscription.endDate < new Date())) {
+            if (!subscription || (isExpired && subscription.status !== 'PROCESSING')) {
               throw new Error('Subscription expired');
             }
           } else if (user.role !== 'DEVELOPER' && user.adminId) {
@@ -81,7 +85,9 @@ export const authOptions: NextAuthOptions = {
                 isActive: true,
                 subscriptions: {
                   where: {
-                    status: 'ACTIVE'
+                    status: {
+                      in: ['ACTIVE', 'PROCESSING', 'PENDING']
+                    }
                   },
                   orderBy: {
                     createdAt: 'desc'
@@ -97,7 +103,10 @@ export const authOptions: NextAuthOptions = {
 
             // Check admin's subscription
             const adminSubscription = admin.subscriptions[0];
-            if (adminSubscription && adminSubscription.endDate && adminSubscription.endDate < new Date()) {
+            const now = new Date();
+            const isExpired = adminSubscription && adminSubscription.endDate && adminSubscription.endDate < now;
+
+            if (isExpired && adminSubscription.status !== 'PROCESSING') {
               // Mark admin subscription as expired and disable admin
               await prisma.subscription.update({
                 where: { id: adminSubscription.id },
@@ -112,7 +121,7 @@ export const authOptions: NextAuthOptions = {
               throw new Error('Account disabled - Admin subscription expired');
             }
 
-            if (!adminSubscription || (adminSubscription.endDate && adminSubscription.endDate < new Date())) {
+            if (!adminSubscription || (isExpired && adminSubscription.status !== 'PROCESSING')) {
               throw new Error('Account disabled - Admin subscription expired');
             }
           }

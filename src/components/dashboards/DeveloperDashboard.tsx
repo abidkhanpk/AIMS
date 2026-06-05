@@ -622,7 +622,15 @@ function AdminManagementTab() {
                     <tbody>
                       {admins.map((admin) => (
                         <tr key={admin.id}>
-                          <td className="fw-medium">{admin.name}</td>
+                          <td className="fw-medium">
+                            {admin.name}
+                            {admin.subscriptions?.some(sub => sub.status === 'PROCESSING') && (
+                              <Badge bg="danger" className="ms-2 align-middle">
+                                <i className="bi bi-exclamation-triangle-fill me-1"></i>
+                                {t('auto.actionRequired', 'Action Required')}
+                              </Badge>
+                            )}
+                          </td>
                           <td className="text-muted">{admin.email}</td>
                           <td>
                             <Badge bg={admin.isActive ? 'success' : 'danger'}>
