@@ -7,6 +7,7 @@ import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import FeeVerificationTab from '../../components/dashboards/FeeVerificationTab';
 import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminFeeVerificationPage() {
     const { t } = useTranslation('common');
@@ -54,25 +55,30 @@ export default function AdminFeeVerificationPage() {
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="fee-verification" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h2 className="h5 mb-1">
-                  <i className="bi bi-check-circle me-2"></i>
-                  {t('auto.feeVerification', `Fee Verification`)}
-                                                  </h2>
-                <p className="text-muted mb-0">{t('auto.verifyAndReconcileFees', `Verify and reconcile fees`)}</p>
+    <>
+      <Head>
+        <title>{t('menu.feeVerification', 'Fee Verification') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="fee-verification" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <h2 className="h5 mb-1">
+                    <i className="bi bi-check-circle me-2"></i>
+                    {t('auto.feeVerification', `Fee Verification`)}
+                  </h2>
+                  <p className="text-muted mb-0">{t('auto.verifyAndReconcileFees', `Verify and reconcile fees`)}</p>
+                </div>
               </div>
+              <FeeVerificationTab />
             </div>
-            <FeeVerificationTab />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

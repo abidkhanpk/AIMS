@@ -7,6 +7,7 @@ import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { ProgressTab } from '../../components/dashboards/AdminDashboard';
 import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminProgressPage() {
     const { t } = useTranslation('common');
@@ -54,25 +55,30 @@ export default function AdminProgressPage() {
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="progress" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h2 className="h5 mb-1">
-                  <i className="bi bi-graph-up me-2"></i>
-                  {t('auto.studentProgress', `Student Progress`)}
-                                                  </h2>
-                <p className="text-muted mb-0">{t('auto.trackProgressAndAttendance', `Track progress and attendance`)}</p>
+    <>
+      <Head>
+        <title>{t('auto.studentProgress', 'Student Progress') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="progress" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <h2 className="h5 mb-1">
+                    <i className="bi bi-graph-up me-2"></i>
+                    {t('auto.studentProgress', `Student Progress`)}
+                  </h2>
+                  <p className="text-muted mb-0">{t('auto.trackProgressAndAttendance', `Track progress and attendance`)}</p>
+                </div>
               </div>
+              <ProgressTab />
             </div>
-            <ProgressTab />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

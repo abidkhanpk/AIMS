@@ -7,6 +7,7 @@ import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import ReportCardsTab from '../../components/dashboards/ReportCardsTab';
 import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminReportCardsPage() {
   const { t } = useTranslation('common');
@@ -58,16 +59,21 @@ export default function AdminReportCardsPage() {
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="report-cards" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <ReportCardsTab />
+    <>
+      <Head>
+        <title>{t('menu.reportCards', 'Report Cards') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="report-cards" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <ReportCardsTab />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

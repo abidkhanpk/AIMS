@@ -7,6 +7,7 @@ import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import FeeManagementTab from '../../components/dashboards/FeeManagementTab';
 import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminFeesPage() {
     const { t } = useTranslation('common');
@@ -54,25 +55,30 @@ export default function AdminFeesPage() {
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="fees" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h2 className="h5 mb-1">
-                  <i className="bi bi-cash-coin me-2"></i>
-                  {t('auto.fees', `Fees`)}
-                                                  </h2>
-                <p className="text-muted mb-0">{t('auto.manageStudentFees', `Manage student fees`)}</p>
+    <>
+      <Head>
+        <title>{t('menu.fees', 'Fee') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="fees" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <h2 className="h5 mb-1">
+                    <i className="bi bi-cash-coin me-2"></i>
+                    {t('auto.fees', `Fees`)}
+                  </h2>
+                  <p className="text-muted mb-0">{t('auto.manageStudentFees', `Manage student fees`)}</p>
+                </div>
               </div>
+              <FeeManagementTab />
             </div>
-            <FeeManagementTab />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

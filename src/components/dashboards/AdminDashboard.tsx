@@ -19,6 +19,7 @@ import AuditLogsTab from './AuditLogsTab';
 import AcademySettingsTab from './AcademySettingsTab';
 import { useTranslation } from 'react-i18next';
 import Papa from 'papaparse';
+import Head from 'next/head';
 
 export interface User {
   id: string;
@@ -5399,8 +5400,15 @@ export default function AdminDashboard() {
     router.replace({ pathname: '/dashboard/admin', query }, undefined, { shallow: true });
   };
 
+  const pageTitle = showHome 
+    ? t('auto.adminDashboardAims', 'Admin Dashboard | AIMS')
+    : `${t('menu.system', 'System')} ${t('settings', 'Settings')} | AIMS`;
+
   return (
     <div className={menuStyles.menuShell}>
+      <Head>
+        <title>{pageTitle}</title>
+      </Head>
       <div className={menuStyles.menuLayout}>
         <AdminMenu activeKey={activeTab} onSelect={(key) => handleSelect(key)} />
         <div className={menuStyles.mainContent}>
@@ -5408,8 +5416,10 @@ export default function AdminDashboard() {
             <div className="d-flex justify-content-between align-items-center mb-4">
               <div>
                 <h2 className="h4 mb-1">
-                  <i className="bi bi-gear-fill me-2 text-primary"></i>
-                  {t('adminDashboard', 'Admin Dashboard')}
+                  <i className={`bi ${showHome ? 'bi-house' : 'bi-shield-lock'} me-2 text-primary`}></i>
+                  {showHome 
+                    ? t('adminDashboard', 'Admin Dashboard') 
+                    : `${t('menu.system', 'System')} ${t('settings', 'Settings')}`}
                 </h2>
               </div>
             </div>

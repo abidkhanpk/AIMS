@@ -8,11 +8,11 @@ async function main() {
 
   // Create Developer
   const developer = await prisma.user.upsert({
-    where: { email: 'info@mmsurdu.pk' },
+    where: { email: 'info@absons.net' },
     update: {},
     create: {
-      name: 'System Developer',
-      email: 'info@mmsurdu.pk',
+      name: 'Developer',
+      email: 'info@absons.net',
       password: bcrypt.hashSync('developer123', 10),
       role: 'DEVELOPER',
     },
@@ -895,7 +895,7 @@ async function main() {
 
   console.log('🎉 Database seeding completed successfully!');
   console.log('\n📋 Login Credentials:');
-  console.log('Developer: info@mmsurdu.pk / developer123');
+  console.log('Developer: info@absons.net / developer123');
   console.log('Admin: admin@school.com / admin123');
   console.log('Teacher: teacher1@school.com / teacher123');
   console.log('Parent 1: parent1@email.com / parent123');
@@ -903,7 +903,7 @@ async function main() {
   console.log('Student 1: student1@email.com / student123');
   console.log('Student 2: student2@email.com / student123');
   console.log('Student 3: student3@email.com / student123');
-  }
+}
 
 main()
   .catch((e) => {

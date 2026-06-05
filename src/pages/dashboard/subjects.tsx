@@ -6,8 +6,11 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { SubjectManagementTab } from '../../components/dashboards/AdminDashboard';
+import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminSubjectsPage() {
+  const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -56,16 +59,21 @@ export default function AdminSubjectsPage() {
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="subjects" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <SubjectManagementTab />
+    <>
+      <Head>
+        <title>{t('menu.subjects', 'Subjects') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="subjects" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <SubjectManagementTab />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

@@ -477,7 +477,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShowSettingsModal(true)}>
                       <i className="bi bi-gear me-2"></i>
-                      {t('settings', 'Settings')}
+                      {t('layout.userSettings', 'User Settings')}
                     </NavDropdown.Item>
                     <NavDropdown.Item onClick={handleSignOut}>
                       <i className="bi bi-box-arrow-right me-2"></i>

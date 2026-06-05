@@ -246,7 +246,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               <div className={styles.iconWrapper}>
                 <i className="bi bi-gear" aria-hidden />
               </div>
-              <span className={styles.linkText}>{t('settings')}</span>
+              <span className={styles.linkText}>{t('layout.userSettings')}</span>
             </button>
           </li>
           <li className={styles.navbarItem}>
@@ -286,7 +286,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               style={{ fontSize: '1.05rem' }}
             >
               <i className="bi bi-gear me-2"></i>
-              {t('settings')}
+              {t('layout.userSettings')}
             </ListGroup.Item>
             <ListGroup.Item
               action

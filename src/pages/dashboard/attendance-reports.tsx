@@ -7,6 +7,7 @@ import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import AttendanceReportsTab from '../../components/dashboards/AttendanceReportsTab';
 import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminAttendanceReportsPage() {
   const { t } = useTranslation('common');
@@ -58,16 +59,21 @@ export default function AdminAttendanceReportsPage() {
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="attendance-reports" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <AttendanceReportsTab />
+    <>
+      <Head>
+        <title>{t('menu.attendanceReports', 'Attendance Reports') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="attendance-reports" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <AttendanceReportsTab />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { RemarksTab } from '../../components/dashboards/AdminDashboard';
 import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminParentRemarksPage() {
     const { t } = useTranslation('common');
@@ -53,25 +54,30 @@ export default function AdminParentRemarksPage() {
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="parent-remarks" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h2 className="h5 mb-1">
-                  <i className="bi bi-chat-dots me-2"></i>
-                  {t('auto.parentRemarks', `Parent Remarks`)}
-                                                  </h2>
-                <p className="text-muted mb-0">{t('auto.reviewRemarksAndThreads', `Review remarks and threads`)}</p>
+    <>
+      <Head>
+        <title>{t('menu.parentRemarks', 'Parent Remarks') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="parent-remarks" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <h2 className="h5 mb-1">
+                    <i className="bi bi-chat-dots me-2"></i>
+                    {t('auto.parentRemarks', `Parent Remarks`)}
+                  </h2>
+                  <p className="text-muted mb-0">{t('auto.reviewRemarksAndThreads', `Review remarks and threads`)}</p>
+                </div>
               </div>
+              <RemarksTab />
             </div>
-            <RemarksTab />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
