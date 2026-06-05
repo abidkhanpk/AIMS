@@ -1286,6 +1286,55 @@ function GlobalSettingsTab() {
           </Row>
 
           <Row>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.smtpHost', `SMTP Host`)}</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={smtpHost}
+                  onChange={e => setSmtpHost(e.target.value)}
+                  placeholder="e.g. smtp.gmail.com"
+                />
+              </Form.Group>
+            </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.smtpPort', `SMTP Port`)}</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={smtpPort}
+                  onChange={e => setSmtpPort(e.target.value)}
+                  placeholder="e.g. 587 or 465"
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.smtpUser', `SMTP User / Email`)}</Form.Label>
+                <Form.Control
+                  type="email"
+                  value={smtpUser}
+                  onChange={e => setSmtpUser(e.target.value)}
+                  placeholder="e.g. your-email@gmail.com"
+                />
+              </Form.Group>
+            </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.smtpPass', `SMTP Password`)}</Form.Label>
+                <Form.Control
+                  type="password"
+                  value={smtpPass}
+                  onChange={e => setSmtpPass(e.target.value)}
+                  placeholder="SMTP server password"
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row>
             <Col md={12}>
               <Form.Group className="mb-3">
                 <Form.Label>{t('auto.smtpSecure', `Security Protocol (TLS/SSL)`)}</Form.Label>
