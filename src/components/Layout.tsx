@@ -3,7 +3,6 @@ import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert,
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import NotificationDropdown from './NotificationDropdown';
-import AdminSubscriptionTab from './dashboards/AdminSubscriptionTab';
 import { useRouter } from 'next/router';
 import { useTheme } from '../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -729,13 +728,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Button>
               </Form>
             </Tab>
-            {user?.role === 'ADMIN' && (
-              <Tab eventKey="admin-subscriptions" title={<span><i className="bi bi-wallet2 me-2"></i>{t('layout.subscriptionAndPayments')}</span>}>
-                <div className="mt-3">
-                  <AdminSubscriptionTab />
-                </div>
-              </Tab>
-            )}
           </Tabs>
         </Modal.Body>
       </Modal>

@@ -172,7 +172,8 @@
     "menu": "Menu",
     "feeManagement": "Fee Management",
     "subjects": "Subjects",
-    "assignments": "Assignments"
+    "assignments": "Assignments",
+    "subscriptionManagement": "Subscription Management"
   },
   "calendar": {
     "allDay": "All Day",

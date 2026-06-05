@@ -61,6 +61,7 @@ const menuItems: MenuItem[] = [
     children: [
       { key: 'audit-logs', label: 'menu.auditLogs', icon: 'bi-file-earmark-code' },
       { key: 'academy-settings', label: 'menu.academySettings', icon: 'bi-gear-fill' },
+      { key: 'subscription-management', label: 'menu.subscriptionManagement', icon: 'bi-credit-card' },
     ],
   },
 ];

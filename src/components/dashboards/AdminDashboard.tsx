@@ -18,7 +18,6 @@ import ReportCardsTab from './ReportCardsTab';
 import AuditLogsTab from './AuditLogsTab';
 import AcademySettingsTab from './AcademySettingsTab';
 import { useTranslation } from 'react-i18next';
-import FeeManagementTab from './FeeManagementTab';
 import Papa from 'papaparse';
 
 interface User {
@@ -5894,11 +5893,11 @@ export default function AdminDashboard() {
                 <Tab eventKey="audit-logs" title={<span><i className="bi bi-file-earmark-code me-2"></i>{t('menu.auditLogs', 'Audit Logs')}</span>}>
                   <AuditLogsTab />
                 </Tab>
-                <Tab eventKey="fees" title={<span><i className="bi bi-cash-stack me-2"></i>{t('menu.feeManagement', 'Fee Management')}</span>}>
-                  <FeeManagementTab />
-                </Tab>
                 <Tab eventKey="academy-settings" title={<span><i className="bi bi-gear-fill me-2"></i>{t('menu.academySettings')}</span>}>
                   <AcademySettingsTab />
+                </Tab>
+                <Tab eventKey="subscription-management" title={<span><i className="bi bi-credit-card me-2"></i>{t('menu.subscriptionManagement')}</span>}>
+                  <AdminSubscriptionTab />
                 </Tab>
               </Tabs>
             )}
