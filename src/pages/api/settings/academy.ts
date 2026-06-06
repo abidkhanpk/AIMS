@@ -21,7 +21,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpPort: true,
           smtpUser: true,
           smtpPass: true,
-          smtpSecure: true
+          smtpSecure: true,
+          smtpReplyTo: true,
+          smtpFrom: true
         }
       });
       return res.status(200).json(settings || {});
@@ -33,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure } = req.body;
+      const { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom } = req.body;
       
       const updatedSettings = await prisma.settings.upsert({
         where: { adminId },
@@ -42,7 +44,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpPort,
           smtpUser,
           smtpPass,
-          smtpSecure
+          smtpSecure,
+          smtpReplyTo,
+          smtpFrom
         },
         create: {
           adminId,
@@ -50,7 +54,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpPort,
           smtpUser,
           smtpPass,
-          smtpSecure
+          smtpSecure,
+          smtpReplyTo,
+          smtpFrom
         }
       });
       

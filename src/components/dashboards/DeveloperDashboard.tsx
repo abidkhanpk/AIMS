@@ -54,6 +54,9 @@ interface AppSettings {
   smtpPort?: string | null;
   smtpUser?: string | null;
   smtpPass?: string | null;
+  smtpSecure?: string | null;
+  smtpReplyTo?: string | null;
+  smtpFrom?: string | null;
 }
 
 interface Subscription {
@@ -1054,6 +1057,11 @@ function GlobalSettingsTab() {
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPass, setSmtpPass] = useState('');
   const [smtpSecure, setSmtpSecure] = useState('');
+  const [smtpReplyTo, setSmtpReplyTo] = useState('');
+  const [smtpFrom, setSmtpFrom] = useState('');
+  const [testEmail, setTestEmail] = useState('');
+  const [testingSmtp, setTestingSmtp] = useState(false);
+  const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -1079,6 +1087,8 @@ function GlobalSettingsTab() {
         setSmtpUser(data.smtpUser || '');
         setSmtpPass(data.smtpPass || '');
         setSmtpSecure(data.smtpSecure || 'tls');
+        setSmtpReplyTo(data.smtpReplyTo || '');
+        setSmtpFrom(data.smtpFrom || '');
       } else {
         setError('Failed to fetch global settings');
       }
@@ -1159,6 +1169,8 @@ function GlobalSettingsTab() {
           smtpUser: smtpUser || null,
           smtpPass: smtpPass || null,
           smtpSecure: smtpSecure || null,
+          smtpReplyTo: smtpReplyTo || null,
+          smtpFrom: smtpFrom || null,
         }),
       });
 
@@ -1173,6 +1185,43 @@ function GlobalSettingsTab() {
       setError('Error updating global settings');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleTestSmtp = async () => {
+    if (!testEmail) {
+      alert('Please enter a destination email address to test.');
+      return;
+    }
+    setTestingSmtp(true);
+    setSmtpTestResult(null);
+    try {
+      const res = await fetch('/api/settings/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          smtpHost,
+          smtpPort,
+          smtpUser,
+          smtpPass,
+          smtpSecure,
+          smtpReplyTo,
+          smtpFrom,
+          testEmail
+        })
+      });
+      const data = await res.json();
+      setSmtpTestResult({
+        success: res.ok && data.success,
+        message: data.message
+      });
+    } catch (err: any) {
+      setSmtpTestResult({
+        success: false,
+        message: err.message || 'An error occurred during testing.'
+      });
+    } finally {
+      setTestingSmtp(false);
     }
   };
 
@@ -1354,7 +1403,7 @@ function GlobalSettingsTab() {
           </Row>
 
           <Row>
-            <Col md={12}>
+            <Col md={4}>
               <Form.Group className="mb-3">
                 <Form.Label>{t('auto.smtpSecure', `Security Protocol (TLS/SSL)`)}</Form.Label>
                 <Form.Select 
@@ -1365,6 +1414,69 @@ function GlobalSettingsTab() {
                   <option value="ssl">SSL/SMTPS</option>
                 </Form.Select>
               </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.smtpFrom', `SMTP From Email`)}</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={smtpFrom}
+                  onChange={e => setSmtpFrom(e.target.value)}
+                  placeholder="e.g. AIMS <no-reply@aims.com>"
+                />
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group className="mb-3">
+                 <Form.Label>{t('auto.smtpReplyTo', `SMTP Reply-To Email`)}</Form.Label>
+                 <Form.Control
+                   type="email"
+                   value={smtpReplyTo}
+                   onChange={e => setSmtpReplyTo(e.target.value)}
+                   placeholder="e.g. support@aims.com"
+                 />
+               </Form.Group>
+             </Col>
+           </Row>
+
+          <Row className="mb-4">
+            <Col md={12}>
+              <div className="p-3 bg-light border rounded">
+                <h6 className="fw-bold"><i className="bi bi-envelope-fill me-2 text-secondary"></i>{t('auto.testSmtpConfiguration', 'Test SMTP Configuration')}</h6>
+                <p className="text-muted small mb-3">{t('auto.testSmtpDesc', 'Enter a destination email address to verify SMTP connectivity and credentials.')}</p>
+                <div className="d-flex gap-2">
+                  <Form.Control
+                    type="email"
+                    placeholder={t('auto.enterTestEmail', 'Enter test destination email')}
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    style={{ maxWidth: '300px' }}
+                    className="bg-white"
+                  />
+                  <Button 
+                    variant="outline-primary" 
+                    onClick={handleTestSmtp}
+                    disabled={testingSmtp || !testEmail}
+                  >
+                    {testingSmtp ? (
+                      <>
+                        <Spinner size="sm" animation="border" className="me-2"/>
+                        {t('auto.testing', 'Testing...')}
+                      </>
+                    ) : (
+                      t('auto.sendTestEmail', 'Send Test Email')
+                    )}
+                  </Button>
+                </div>
+                {smtpTestResult && (
+                  <Alert 
+                    variant={smtpTestResult.success ? 'success' : 'danger'} 
+                    className="mt-3 mb-0 py-2 small"
+                  >
+                    {smtpTestResult.message}
+                  </Alert>
+                )}
+              </div>
             </Col>
           </Row>
 

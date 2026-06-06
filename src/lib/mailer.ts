@@ -12,7 +12,7 @@ interface SendMailOptions {
 }
 
 export async function sendEmail({ to, subject, html, category, academyAdminId }: SendMailOptions) {
-  let host, port, user, pass;
+  let host, port, user, pass, replyTo, from;
 
   if (category === 'SYSTEM') {
     const appSettings = await prisma.appSettings.findFirst();
@@ -24,6 +24,8 @@ export async function sendEmail({ to, subject, html, category, academyAdminId }:
     port = appSettings.smtpPort ? parseInt(appSettings.smtpPort, 10) : 587;
     user = appSettings.smtpUser;
     pass = appSettings.smtpPass;
+    replyTo = appSettings.smtpReplyTo || undefined;
+    from = appSettings.smtpFrom || user;
   } else if (category === 'ACADEMY') {
     if (!academyAdminId) {
       throw new Error('academyAdminId is required for ACADEMY category emails');
@@ -39,6 +41,8 @@ export async function sendEmail({ to, subject, html, category, academyAdminId }:
     port = adminSettings.smtpPort ? parseInt(adminSettings.smtpPort, 10) : 587;
     user = adminSettings.smtpUser;
     pass = adminSettings.smtpPass;
+    replyTo = adminSettings.smtpReplyTo || undefined;
+    from = adminSettings.smtpFrom || user;
   } else {
     throw new Error(`Invalid email category: ${category}`);
   }
@@ -53,12 +57,20 @@ export async function sendEmail({ to, subject, html, category, academyAdminId }:
     },
   });
 
+  // Gmail SMTP protection workaround: if sending via Gmail and From address differs from authenticated user,
+  // we set it as the display name (e.g. "no-reply@abc.com" <user>) to avoid Gmail overriding it completely.
+  let finalFrom = from;
+  if (host && host.includes('gmail.com') && from && !from.includes('<') && from !== user) {
+    finalFrom = `"${from}" <${user}>`;
+  }
+
   try {
     const info = await transporter.sendMail({
-      from: user,
+      from: finalFrom,
       to,
       subject,
       html,
+      ...(replyTo ? { replyTo } : {}),
     });
     console.log(`Message sent: ${info.messageId}`);
     return true;
