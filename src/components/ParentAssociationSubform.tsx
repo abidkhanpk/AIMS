@@ -79,6 +79,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
   const [success, setSuccess] = useState('');
 
   // Form states
+  const [showAddForm, setShowAddForm] = useState(false);
   const [selectedParent, setSelectedParent] = useState('');
   const [relationType, setRelationType] = useState<RelationType>('GUARDIAN');
 
@@ -145,6 +146,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
         onAssociationChange();
         setSelectedParent('');
         setRelationType('GUARDIAN');
+        setShowAddForm(false);
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to create parent association');
@@ -239,149 +241,164 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
-      <Row className="g-3">
-        <Col lg={5}>
-          <Card className="h-100">
-            <Card.Header className="bg-info text-white">
-              <h6 className="mb-0">
-                <i className="bi bi-person-plus me-2"></i>
-                {t('auto.addParentAssociation', `Add Parent Association`)}
-                                            </h6>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handleCreateAssociation}>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.selectParent', `Select Parent *`)}</Form.Label>
-                  <Form.Select 
-                    value={selectedParent}
-                    onChange={(e) => setSelectedParent(e.target.value)}
-                    required
-                    size="sm"
-                  >
-                    <option value="">{t('auto.chooseAParent', `Choose a parent...`)}</option>
-                    {availableParents.map(parent => (
-                      <option key={parent.id} value={parent.id}>
-                        {parent.name} ({parent.email})
-                      </option>
-                    ))}
-                  </Form.Select>
-                  {availableParents.length === 0 && (
-                    <Form.Text className="text-muted">
-                      {t('auto.allAvailableParentsAreAlreadyA', `All available parents are already associated with this student.`)}
-                                                              </Form.Text>
-                  )}
-                </Form.Group>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <div className="d-flex align-items-center gap-2">
+          <i className="bi bi-people text-info"></i>
+          <h6 className="mb-0">{t('auto.associatedParents', `Associated Parents`)} <Badge bg="info">{associations.length}</Badge></h6>
+        </div>
+        <Button
+          size="sm"
+          variant={showAddForm ? 'secondary' : 'info'}
+          onClick={() => setShowAddForm((v) => !v)}
+        >
+          {showAddForm ? t('auto.hideForm', 'Hide Form') : (
+            <>
+              <i className="bi bi-person-plus me-1"></i>
+              {t('auto.addParentAssociation', 'Add Parent Association')}
+            </>
+          )}
+        </Button>
+      </div>
 
-                <Form.Group className="mb-4">
-                  <Form.Label>{t('auto.relationType', `Relation Type *`)}</Form.Label>
-                  <Form.Select 
-                    value={relationType}
-                    onChange={(e) => setRelationType(e.target.value as RelationType)}
-                    required
-                    size="sm"
-                  >
-                    {relationTypeOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-
-                <Button 
-                  variant="info" 
-                  type="submit" 
-                  disabled={creating || availableParents.length === 0}
-                  className="w-100"
-                  size="sm"
-                >
-                  {creating ? (
-                    <>
-                      <Spinner animation="border" size="sm" className="me-2" />
-                      {t('auto.adding', `Adding...`)}
-                                                              </>
-                  ) : (
-                    <>
-                      <i className="bi bi-person-plus me-2"></i>
-                      {t('auto.addAssociation', `Add Association`)}
-                                                                  </>
-                  )}
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col lg={7}>
-          <Card className="h-100">
-            <Card.Header className="bg-light">
-              <div className="d-flex justify-content-between align-items-center">
-                <h6 className="mb-0">
-                  <i className="bi bi-people me-2"></i>
-                  {t('auto.associatedParents', `Associated Parents`)}
-                                                  </h6>
-                <Badge bg="info">{associations.length}</Badge>
-              </div>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {associations.length === 0 ? (
-                <div className="text-center py-4">
-                  <i className="bi bi-people display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">{t('auto.noParentAssociationsFound', `No parent associations found`)}</p>
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>{t('auto.parentName', `Parent Name`)}</th>
-                        <th>{t('auto.email', `Email`)}</th>
-                        <th>{t('auto.mobile', `Mobile`)}</th>
-                        <th>{t('auto.relation', `Relation`)}</th>
-                        <th>{t('auto.actions', `Actions`)}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {associations.map((association) => (
-                        <tr key={association.id}>
-                          <td className="fw-medium">{association.parent.name}</td>
-                          <td className="text-muted">{association.parent.email}</td>
-                          <td className="text-muted">{association.parent.mobile || '-'}</td>
-                          <td>
-                            <Badge bg={getRelationTypeBadgeColor(association.relationType)}>
-                              {getRelationTypeLabel(association.relationType)}
-                            </Badge>
-                          </td>
-                          <td>
-                            <div className="d-flex gap-1">
-                              <Button
-                                variant="outline-warning"
-                                size="sm"
-                                onClick={() => handleEditAssociation(association)}
-                                title={t('auto.editRelation', `Edit Relation`)}
-                              >
-                                <i className="bi bi-pencil"></i>
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() => handleDeleteAssociation(association.id)}
-                                title={t('auto.removeAssociation', `Remove Association`)}
-                              >
-                                <i className="bi bi-person-dash"></i>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
+      {showAddForm && (
+        <Card className="shadow-sm mb-4">
+          <Card.Header className="bg-info text-white">
+            <h6 className="mb-0">
+              <i className="bi bi-person-plus me-2"></i>
+              {t('auto.addParentAssociation', `Add Parent Association`)}
+            </h6>
+          </Card.Header>
+          <Card.Body>
+            <Form onSubmit={handleCreateAssociation}>
+              <Row className="g-3 align-items-end">
+                <Col md={5}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.selectParent', `Select Parent *`)}</Form.Label>
+                    <Form.Select 
+                      value={selectedParent}
+                      onChange={(e) => setSelectedParent(e.target.value)}
+                      required
+                      size="sm"
+                    >
+                      <option value="">{t('auto.chooseAParent', `Choose a parent...`)}</option>
+                      {availableParents.map(parent => (
+                        <option key={parent.id} value={parent.id}>
+                          {parent.name} ({parent.email})
+                        </option>
                       ))}
-                    </tbody>
-                  </Table>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                
+                <Col md={4}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.relationType', `Relation Type *`)}</Form.Label>
+                    <Form.Select 
+                      value={relationType}
+                      onChange={(e) => setRelationType(e.target.value as RelationType)}
+                      required
+                      size="sm"
+                    >
+                      {relationTypeOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                <Col md={3}>
+                  <Button 
+                    variant="info" 
+                    type="submit" 
+                    disabled={creating || availableParents.length === 0}
+                    className="w-100"
+                    size="sm"
+                  >
+                    {creating ? (
+                      <>
+                        <Spinner animation="border" size="sm" className="me-2" />
+                        {t('auto.adding', `Adding...`)}
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-check-circle me-2"></i>
+                        {t('auto.addAssociation', `Add Association`)}
+                      </>
+                    )}
+                  </Button>
+                </Col>
+              </Row>
+              
+              {availableParents.length === 0 && (
+                <div className="mt-2 text-muted small">
+                  {t('auto.allAvailableParentsAreAlreadyA', `All available parents are already associated with this student.`)}
                 </div>
               )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+            </Form>
+          </Card.Body>
+        </Card>
+      )}
+
+      <Card className="shadow-sm">
+        <Card.Body className="p-0">
+          {associations.length === 0 ? (
+            <div className="text-center py-4">
+              <i className="bi bi-people display-6 text-muted"></i>
+              <p className="mt-2 text-muted small">{t('auto.noParentAssociationsFound', `No parent associations found`)}</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover size="sm" className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>{t('auto.parentName', `Parent Name`)}</th>
+                    <th>{t('auto.email', `Email`)}</th>
+                    <th>{t('auto.mobile', `Mobile`)}</th>
+                    <th>{t('auto.relation', `Relation`)}</th>
+                    <th>{t('auto.actions', `Actions`)}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {associations.map((association) => (
+                    <tr key={association.id}>
+                      <td className="fw-medium">{association.parent.name}</td>
+                      <td className="text-muted">{association.parent.email}</td>
+                      <td className="text-muted">{association.parent.mobile || '-'}</td>
+                      <td>
+                        <Badge bg={getRelationTypeBadgeColor(association.relationType)}>
+                          {getRelationTypeLabel(association.relationType)}
+                        </Badge>
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <Button
+                            variant="outline-warning"
+                            size="sm"
+                            onClick={() => handleEditAssociation(association)}
+                            title={t('auto.editRelation', `Edit Relation`)}
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDeleteAssociation(association.id)}
+                            title={t('auto.removeAssociation', `Remove Association`)}
+                          >
+                            <i className="bi bi-person-dash"></i>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
 
       {/* Edit Association Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>

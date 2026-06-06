@@ -20,6 +20,9 @@ interface ScheduleAssignment {
   classDays: ClassDay[];
   startTime: string;
   duration?: number;
+  assignmentDate: string;
+  isActive: boolean;
+  updatedAt: string;
 }
 
 interface CalendarEvent {
@@ -276,13 +279,14 @@ export default function CalendarView() {
     async function fetchSchedules() {
       try {
         setLoading(true);
-        const res = await fetch('/api/calendar/schedules');
+        const startOfRange = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+        const endOfRange   = new Date(date.getFullYear(), date.getMonth() + 2, 0);
+
+        const res = await fetch(`/api/calendar/schedules?start=${startOfRange.toISOString()}&end=${endOfRange.toISOString()}`);
         if (!res.ok) throw new Error('Failed to fetch schedules');
         const assignments: ScheduleAssignment[] = await res.json();
 
         const generatedEvents: CalendarEvent[] = [];
-        const startOfRange = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-        const endOfRange   = new Date(date.getFullYear(), date.getMonth() + 2, 0);
 
         assignments.forEach(assignment => {
           if (!assignment.startTime) return;
@@ -294,9 +298,29 @@ export default function CalendarView() {
             let current = setDay(startOfRange, targetDayIndex);
             if (current < startOfRange) current = addWeeks(current, 1);
 
+            const assignmentStartDate = new Date(assignment.assignmentDate);
+            assignmentStartDate.setHours(0, 0, 0, 0);
+            
+            let assignmentEndDate: Date | null = null;
+            if (!assignment.isActive) {
+              assignmentEndDate = new Date(assignment.updatedAt);
+              assignmentEndDate.setHours(23, 59, 59, 999);
+            }
+
             while (current <= endOfRange) {
               const eventStart = new Date(current);
               eventStart.setHours(hours, minutes, 0, 0);
+              
+              if (eventStart < assignmentStartDate) {
+                current = addWeeks(current, 1);
+                continue;
+              }
+              
+              if (assignmentEndDate && eventStart > assignmentEndDate) {
+                current = addWeeks(current, 1);
+                continue;
+              }
+
               const eventEnd = new Date(eventStart);
               eventEnd.setMinutes(eventEnd.getMinutes() + durationMins);
 

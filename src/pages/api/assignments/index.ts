@@ -139,7 +139,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       duration,
       classDays,
       monthlyFee,
-      currency
+      currency,
+      isActive
     } = req.body;
 
     if (!studentId || !courseId || !teacherId) {
@@ -220,6 +221,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           classDays: classDays || [],
           monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
           currency: assignmentCurrency,
+          isActive: isActive !== undefined ? isActive : true,
         },
         include: {
           student: {
