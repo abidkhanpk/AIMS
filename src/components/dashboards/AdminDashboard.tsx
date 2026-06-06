@@ -5820,7 +5820,7 @@ export default function AdminDashboard() {
                       <Col lg={6}>
                         <Card 
                           className="shadow-sm h-100 interactive-card"
-                          onClick={() => handleSelect('academy-settings')}
+                          onClick={() => handleSelect('subscription-management')}
                         >
                           <Card.Body>
                             <div className="d-flex justify-content-between align-items-center">

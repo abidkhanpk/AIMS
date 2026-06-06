@@ -5,6 +5,9 @@ import { useSession } from 'next-auth/react';
 import MessageThreadModal, { MessageItem } from '../components/messages/MessageThreadModal';
 import DirectMessageModal from '../components/messages/DirectMessageModal';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/router';
+import AdminMenu from '../components/dashboards/AdminMenu';
+import menuStyles from '../components/dashboards/AdminMenu.module.css';
 
 function buildThreads(messagesList: any[], currentUserId?: string | null) {
   const map = new Map<
@@ -45,6 +48,8 @@ export default function MessagesPage() {
     const { t } = useTranslation('common');
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
+  const userRole = session?.user?.role;
+  const router = useRouter();
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -151,8 +156,32 @@ export default function MessagesPage() {
     }
   };
 
-  return (
-    <div className="container py-4">
+  const handleSelect = (key?: string | null) => {
+    if (!key || key === 'messages') return;
+    if (key === 'home') {
+      router.push('/dashboard');
+      return;
+    }
+    const routeMap: Record<string, string> = {
+      teachers: '/dashboard/teachers',
+      parents: '/dashboard/parents',
+      students: '/dashboard/students',
+      progress: '/dashboard/progress',
+      tests: '/dashboard/tests',
+      'parent-remarks': '/dashboard/parent-remarks',
+      remarks: '/dashboard/parent-remarks',
+      fees: '/dashboard/fees',
+      'fee-verification': '/dashboard/fee-verification',
+      salaries: '/dashboard/salaries',
+      subjects: '/dashboard/subjects',
+      'attendance-reports': '/dashboard/attendance-reports',
+      'report-cards': '/dashboard/report-cards',
+    };
+    router.push(routeMap[key] || `/dashboard?tab=${key}`);
+  };
+
+  const pageContent = (
+    <div className={userRole === 'ADMIN' ? 'container-fluid py-4' : 'container py-4'}>
       <h1 className="h4 mb-4">
         <i className="bi bi-envelope me-2"></i>
         {t('auto.messages', `Messages`)}
@@ -251,6 +280,21 @@ export default function MessagesPage() {
       />
     </div>
   );
+
+  if (userRole === 'ADMIN') {
+    return (
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="messages" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            {pageContent}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return pageContent;
 }
 
 export const getStaticProps = async ({ locale }: any) => ({
