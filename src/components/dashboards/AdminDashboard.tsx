@@ -255,6 +255,7 @@ function AssignmentSubform({
   const [timezone, setTimezone] = useState('UTC');
   const [monthlyFee, setMonthlyFee] = useState('');
   const [currency, setCurrency] = useState('USD');
+  const [isActive, setIsActive] = useState(true);
 
   const timezonesByRegion = getTimezonesByRegion();
 
@@ -298,6 +299,7 @@ function AssignmentSubform({
       timezone,
       monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
       currency,
+      isActive,
     };
 
     try {
@@ -337,6 +339,7 @@ function AssignmentSubform({
     setTimezone('UTC');
     setMonthlyFee('');
     setCurrency('USD');
+    setIsActive(true);
     setEditingAssignment(null);
   };
 
@@ -398,6 +401,7 @@ function AssignmentSubform({
     setTimezone(assignment.timezone || 'UTC');
     setMonthlyFee(assignment.monthlyFee?.toString() || '');
     setCurrency(assignment.currency || 'USD');
+    setIsActive(assignment.isActive ?? true);
     setShowCreateForm(true);
   };
 
@@ -574,6 +578,20 @@ function AssignmentSubform({
                           className="me-2"
                         />
                       ))}
+                    </div>
+                  </Form.Group>
+                </Col>
+                <Col lg={4} md={6}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.status', `Status`)}</Form.Label>
+                    <div className="pt-2">
+                      <Form.Check 
+                        type="switch"
+                        id="student-assignment-active-switch"
+                        label={isActive ? t('auto.active', 'Active') : t('auto.inactive', 'Inactive')}
+                        checked={isActive}
+                        onChange={(e) => setIsActive(e.target.checked)}
+                      />
                     </div>
                   </Form.Group>
                 </Col>
@@ -3502,6 +3520,7 @@ export function AssignmentsTab() {
   const [classDays, setClassDays] = useState<string[]>([]);
   const [monthlyFee, setMonthlyFee] = useState('');
   const [currency, setCurrency] = useState('USD');
+  const [isActive, setIsActive] = useState(true);
 
   // Edit assignment modal
   const [showEditModal, setShowEditModal] = useState(false);
@@ -3582,6 +3601,7 @@ export function AssignmentsTab() {
           classDays,
           monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
           currency,
+          isActive,
         }),
       });
 
@@ -3611,6 +3631,7 @@ export function AssignmentsTab() {
     setClassDays([]);
     setMonthlyFee('');
     setCurrency('USD');
+    setIsActive(true);
   };
 
   const handleEditAssignment = (assignment: Assignment) => {
@@ -3624,6 +3645,7 @@ export function AssignmentsTab() {
     setClassDays(assignment.classDays || []);
     setMonthlyFee(assignment.monthlyFee?.toString() || '');
     setCurrency(assignment.currency || 'USD');
+    setIsActive(assignment.isActive ?? true);
     setShowEditModal(true);
   };
 
@@ -3646,6 +3668,7 @@ export function AssignmentsTab() {
           classDays,
           monthlyFee: monthlyFee ? parseFloat(monthlyFee) : null,
           currency,
+          isActive,
         }),
       });
 
@@ -3887,6 +3910,23 @@ export function AssignmentsTab() {
                   </Form.Group>
                 </Col>
               </Row>
+              
+              <Row className="mb-4">
+                <Col md={12}>
+                  <Form.Group>
+                    <Form.Label>{t('auto.status', `Status`)}</Form.Label>
+                    <div className="pt-2">
+                      <Form.Check 
+                        type="switch"
+                        id="tab-assignment-active-switch"
+                        label={isActive ? t('auto.active', 'Active') : t('auto.inactive', 'Inactive')}
+                        checked={isActive}
+                        onChange={(e) => setIsActive(e.target.checked)}
+                      />
+                    </div>
+                  </Form.Group>
+                </Col>
+              </Row>
 
               <div className="text-end">
                 <Button 
@@ -4101,7 +4141,24 @@ export function AssignmentsTab() {
               </Col>
             </Row>
 
-            <div className="d-flex justify-content-end gap-2">
+            <Row className="mt-2">
+              <Col md={12}>
+                <Form.Group className="mb-3">
+                  <Form.Label>{t('auto.status', `Status`)}</Form.Label>
+                  <div className="pt-2">
+                    <Form.Check 
+                      type="switch"
+                      id="edit-assignment-active-switch"
+                      label={isActive ? t('auto.active', 'Active') : t('auto.inactive', 'Inactive')}
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                    />
+                  </div>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <div className="d-flex justify-content-end gap-2 mt-4">
               <Button variant="secondary" onClick={() => setShowEditModal(false)}>
                 {t('auto.cancel', `Cancel`)}
                                             </Button>
