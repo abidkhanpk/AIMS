@@ -2,6 +2,8 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import nodemailer from 'nodemailer';
+import { prisma } from '../../../lib/prisma';
+import { decrypt } from '../../../lib/crypto';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -20,9 +22,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ message: 'Forbidden' });
   }
 
-  const { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom, testEmail } = req.body;
+  let { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom, testEmail } = req.body;
 
-  if (!smtpHost || !smtpUser || !smtpPass || !testEmail) {
+  if (smtpPass === '********') {
+    // Need to fetch the actual password from DB and decrypt it
+    if (role === 'DEVELOPER') {
+      const appSettings = await prisma.appSettings.findFirst();
+      if (appSettings && appSettings.smtpPass) {
+        smtpPass = decrypt(appSettings.smtpPass);
+      }
+    } else if (role === 'ADMIN') {
+      const adminSettings = await prisma.settings.findUnique({
+        where: { adminId: session.user.id }
+      });
+      if (adminSettings && adminSettings.smtpPass) {
+        smtpPass = decrypt(adminSettings.smtpPass);
+      }
+    }
+  }
+
+  if (!smtpHost || !smtpUser || !smtpPass || !testEmail || smtpPass === '********') {
     return res.status(400).json({ message: 'SMTP Host, User, Pass, and Destination Email are required.' });
   }
 

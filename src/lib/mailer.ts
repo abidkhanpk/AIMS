@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { prisma } from './prisma';
+import { decrypt } from './crypto';
 
 export type EmailCategory = 'SYSTEM' | 'ACADEMY';
 
@@ -23,7 +24,7 @@ export async function sendEmail({ to, subject, html, category, academyAdminId }:
     host = appSettings.smtpHost;
     port = appSettings.smtpPort ? parseInt(appSettings.smtpPort, 10) : 587;
     user = appSettings.smtpUser;
-    pass = appSettings.smtpPass;
+    pass = decrypt(appSettings.smtpPass);
     replyTo = appSettings.smtpReplyTo || undefined;
     from = appSettings.smtpFrom || user;
   } else if (category === 'ACADEMY') {
@@ -40,7 +41,7 @@ export async function sendEmail({ to, subject, html, category, academyAdminId }:
     host = adminSettings.smtpHost;
     port = adminSettings.smtpPort ? parseInt(adminSettings.smtpPort, 10) : 587;
     user = adminSettings.smtpUser;
-    pass = adminSettings.smtpPass;
+    pass = decrypt(adminSettings.smtpPass);
     replyTo = adminSettings.smtpReplyTo || undefined;
     from = adminSettings.smtpFrom || user;
   } else {

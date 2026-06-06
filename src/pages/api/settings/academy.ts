@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
+import { encrypt } from '../../../lib/crypto';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
@@ -26,7 +27,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpFrom: true
         }
       });
-      return res.status(200).json(settings || {});
+      
+      const responseData = settings || {};
+      if (responseData.smtpPass) {
+        responseData.smtpPass = '********';
+      }
+
+      return res.status(200).json(responseData);
     } catch (error) {
       console.error('Error fetching academy settings:', error);
       return res.status(500).json({ message: 'Internal server error' });
@@ -37,13 +44,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom } = req.body;
       
+      let finalSmtpPass: string | null | undefined = undefined;
+      if (smtpPass !== undefined) {
+        if (smtpPass === '********') {
+          finalSmtpPass = undefined; // unchanged
+        } else if (smtpPass === '' || smtpPass === null) {
+          finalSmtpPass = null;
+        } else {
+          finalSmtpPass = encrypt(smtpPass);
+        }
+      }
+      
       const updatedSettings = await prisma.settings.upsert({
         where: { adminId },
         update: {
           smtpHost,
           smtpPort,
           smtpUser,
-          smtpPass,
+          ...(finalSmtpPass !== undefined && { smtpPass: finalSmtpPass }),
           smtpSecure,
           smtpReplyTo,
           smtpFrom
@@ -53,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpHost,
           smtpPort,
           smtpUser,
-          smtpPass,
+          smtpPass: finalSmtpPass !== undefined ? finalSmtpPass : null,
           smtpSecure,
           smtpReplyTo,
           smtpFrom
