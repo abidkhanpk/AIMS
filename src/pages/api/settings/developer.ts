@@ -40,12 +40,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const { enableHomePage, appName, appLogo, tagline, defaultCurrency, storageProvider, driveFolderId, cloudinaryFolder, smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure } = req.body;
-
+    const { enableHomePage, appName, appLogo, tagline, defaultCurrency, storageProvider, driveFolderId, cloudinaryFolder, smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom } = req.body;
+ 
     try {
       // Get existing settings or create new ones
       let appSettings = await prisma.appSettings.findFirst();
-
+ 
       if (appSettings) {
         // Update existing settings
         appSettings = await prisma.appSettings.update({
@@ -64,6 +64,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ...(smtpUser !== undefined && { smtpUser }),
             ...(smtpPass !== undefined && { smtpPass }),
             ...(smtpSecure !== undefined && { smtpSecure }),
+            ...(smtpReplyTo !== undefined && { smtpReplyTo }),
+            ...(smtpFrom !== undefined && { smtpFrom }),
           }
         });
       } else {
@@ -83,6 +85,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             smtpUser: smtpUser || null,
             smtpPass: smtpPass || null,
             smtpSecure: smtpSecure || null,
+            smtpReplyTo: smtpReplyTo || null,
+            smtpFrom: smtpFrom || null,
           }
         });
       }

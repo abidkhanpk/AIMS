@@ -16,6 +16,8 @@ export default function AcademySettingsTab() {
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPass, setSmtpPass] = useState('');
   const [smtpSecure, setSmtpSecure] = useState('');
+  const [smtpReplyTo, setSmtpReplyTo] = useState('');
+  const [smtpFrom, setSmtpFrom] = useState('');
 
   useEffect(() => {
     async function fetchSettings() {
@@ -29,6 +31,8 @@ export default function AcademySettingsTab() {
           setSmtpUser(data.smtpUser || '');
           setSmtpPass(data.smtpPass || '');
           setSmtpSecure(data.smtpSecure || 'tls');
+          setSmtpReplyTo(data.smtpReplyTo || '');
+          setSmtpFrom(data.smtpFrom || '');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error fetching settings');
@@ -53,6 +57,8 @@ export default function AcademySettingsTab() {
           smtpUser: smtpUser || null,
           smtpPass: smtpPass || null,
           smtpSecure: smtpSecure || null,
+          smtpReplyTo: smtpReplyTo || null,
+          smtpFrom: smtpFrom || null,
         })
       });
 
@@ -140,6 +146,24 @@ export default function AcademySettingsTab() {
                 <option value="tls">TLS/STARTTLS</option>
                 <option value="ssl">SSL/SMTPS</option>
               </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label>{t('auto.smtpFrom', `SMTP From Email`)}</Form.Label>
+              <Form.Control 
+                type="text" 
+                placeholder={t('auto.egAimsAdminnoReplyaimsCom', `e.g. AIMS Admin <no-reply@aims.com>`)} 
+                value={smtpFrom}
+                onChange={e => setSmtpFrom(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label>{t('auto.smtpReplyTo', `SMTP Reply-To Email`)}</Form.Label>
+              <Form.Control 
+                type="email" 
+                placeholder={t('auto.egSupportaimscom', `e.g. support@aims.com`)} 
+                value={smtpReplyTo}
+                onChange={e => setSmtpReplyTo(e.target.value)}
+              />
             </Form.Group>
             
             <Button variant="primary" onClick={handleSave} disabled={updating}>

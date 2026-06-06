@@ -54,6 +54,9 @@ interface AppSettings {
   smtpPort?: string | null;
   smtpUser?: string | null;
   smtpPass?: string | null;
+  smtpSecure?: string | null;
+  smtpReplyTo?: string | null;
+  smtpFrom?: string | null;
 }
 
 interface Subscription {
@@ -1054,6 +1057,8 @@ function GlobalSettingsTab() {
   const [smtpUser, setSmtpUser] = useState('');
   const [smtpPass, setSmtpPass] = useState('');
   const [smtpSecure, setSmtpSecure] = useState('');
+  const [smtpReplyTo, setSmtpReplyTo] = useState('');
+  const [smtpFrom, setSmtpFrom] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -1079,6 +1084,8 @@ function GlobalSettingsTab() {
         setSmtpUser(data.smtpUser || '');
         setSmtpPass(data.smtpPass || '');
         setSmtpSecure(data.smtpSecure || 'tls');
+        setSmtpReplyTo(data.smtpReplyTo || '');
+        setSmtpFrom(data.smtpFrom || '');
       } else {
         setError('Failed to fetch global settings');
       }
@@ -1159,6 +1166,8 @@ function GlobalSettingsTab() {
           smtpUser: smtpUser || null,
           smtpPass: smtpPass || null,
           smtpSecure: smtpSecure || null,
+          smtpReplyTo: smtpReplyTo || null,
+          smtpFrom: smtpFrom || null,
         }),
       });
 
@@ -1354,7 +1363,7 @@ function GlobalSettingsTab() {
           </Row>
 
           <Row>
-            <Col md={12}>
+            <Col md={4}>
               <Form.Group className="mb-3">
                 <Form.Label>{t('auto.smtpSecure', `Security Protocol (TLS/SSL)`)}</Form.Label>
                 <Form.Select 
@@ -1364,6 +1373,28 @@ function GlobalSettingsTab() {
                   <option value="tls">TLS/STARTTLS</option>
                   <option value="ssl">SSL/SMTPS</option>
                 </Form.Select>
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.smtpFrom', `SMTP From Email`)}</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={smtpFrom}
+                  onChange={e => setSmtpFrom(e.target.value)}
+                  placeholder="e.g. AIMS <no-reply@aims.com>"
+                />
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.smtpReplyTo', `SMTP Reply-To Email`)}</Form.Label>
+                <Form.Control
+                  type="email"
+                  value={smtpReplyTo}
+                  onChange={e => setSmtpReplyTo(e.target.value)}
+                  placeholder="e.g. support@aims.com"
+                />
               </Form.Group>
             </Col>
           </Row>

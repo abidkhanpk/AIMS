@@ -158,6 +158,8 @@ model User {
   adminId   String?  // All users except DEVELOPER belong to an admin
   isActive  Boolean  @default(true) // For disabling users
   disabledByDeveloper Boolean @default(false) // Track manual disable by developer
+  resetToken       String?
+  resetTokenExpiry DateTime?
   
   // Additional user details
   mobile    String?
@@ -590,6 +592,8 @@ model Settings {
   smtpUser       String?
   smtpPass       String?
   smtpSecure     String?
+  smtpReplyTo    String?
+  smtpFrom       String?
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -633,6 +637,8 @@ model AppSettings {
   smtpUser       String?
   smtpPass       String?
   smtpSecure     String?
+  smtpReplyTo    String?
+  smtpFrom       String?
   
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
