@@ -16,11 +16,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { role, id, adminId } = session.user;
 
   try {
+    const { start, end } = req.query;
+
     let whereClause: any = {
-      isActive: true,
       classDays: { isEmpty: false },
       startTime: { not: null }
     };
+
+    if (start && end) {
+      // Must have started before the end of the viewed range
+      whereClause.assignmentDate = { lte: new Date(end as string) };
+      // Must either be active, or have ended (updatedAt) after the start of the viewed range
+      whereClause.OR = [
+        { isActive: true },
+        { updatedAt: { gte: new Date(start as string) } }
+      ];
+    } else {
+      whereClause.isActive = true;
+    }
 
     if (role === 'ADMIN') {
       whereClause.student = { adminId: id };
