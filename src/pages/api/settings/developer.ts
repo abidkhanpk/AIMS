@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]';
 import { prisma } from '../../../lib/prisma';
+import { encrypt } from '../../../lib/crypto';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Public GET: anyone (even unauthenticated) can read app settings
@@ -20,6 +21,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             defaultCurrency: 'USD',
           }
         });
+      }
+
+      // Mask password before sending to frontend
+      if (appSettings.smtpPass) {
+        appSettings.smtpPass = '********';
       }
 
       return res.status(200).json(appSettings);
@@ -42,6 +48,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     const { enableHomePage, appName, appLogo, tagline, defaultCurrency, storageProvider, driveFolderId, cloudinaryFolder, smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom } = req.body;
  
+    let finalSmtpPass = undefined;
+    if (smtpPass !== undefined) {
+      if (smtpPass === '********') {
+        // Password wasn't changed, ignore it
+        finalSmtpPass = undefined;
+      } else if (smtpPass === '' || smtpPass === null) {
+        finalSmtpPass = null;
+      } else {
+        finalSmtpPass = encrypt(smtpPass);
+      }
+    }
+
     try {
       // Get existing settings or create new ones
       let appSettings = await prisma.appSettings.findFirst();
@@ -62,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ...(smtpHost !== undefined && { smtpHost }),
             ...(smtpPort !== undefined && { smtpPort }),
             ...(smtpUser !== undefined && { smtpUser }),
-            ...(smtpPass !== undefined && { smtpPass }),
+            ...(finalSmtpPass !== undefined && { smtpPass: finalSmtpPass }),
             ...(smtpSecure !== undefined && { smtpSecure }),
             ...(smtpReplyTo !== undefined && { smtpReplyTo }),
             ...(smtpFrom !== undefined && { smtpFrom }),
@@ -83,7 +101,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             smtpHost: smtpHost || null,
             smtpPort: smtpPort || null,
             smtpUser: smtpUser || null,
-            smtpPass: smtpPass || null,
+            smtpPass: finalSmtpPass !== undefined ? finalSmtpPass : null,
             smtpSecure: smtpSecure || null,
             smtpReplyTo: smtpReplyTo || null,
             smtpFrom: smtpFrom || null,
