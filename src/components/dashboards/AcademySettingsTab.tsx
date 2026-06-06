@@ -18,6 +18,9 @@ export default function AcademySettingsTab() {
   const [smtpSecure, setSmtpSecure] = useState('');
   const [smtpReplyTo, setSmtpReplyTo] = useState('');
   const [smtpFrom, setSmtpFrom] = useState('');
+  const [testEmail, setTestEmail] = useState('');
+  const [testingSmtp, setTestingSmtp] = useState(false);
+  const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
   useEffect(() => {
     async function fetchSettings() {
@@ -68,6 +71,43 @@ export default function AcademySettingsTab() {
       setError(err instanceof Error ? err.message : 'Error updating settings');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleTestSmtp = async () => {
+    if (!testEmail) {
+      alert('Please enter a destination email address to test.');
+      return;
+    }
+    setTestingSmtp(true);
+    setSmtpTestResult(null);
+    try {
+      const res = await fetch('/api/settings/test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          smtpHost,
+          smtpPort,
+          smtpUser,
+          smtpPass,
+          smtpSecure,
+          smtpReplyTo,
+          smtpFrom,
+          testEmail
+        })
+      });
+      const data = await res.json();
+      setSmtpTestResult({
+        success: res.ok && data.success,
+        message: data.message
+      });
+    } catch (err: any) {
+      setSmtpTestResult({
+        success: false,
+        message: err.message || 'An error occurred during testing.'
+      });
+    } finally {
+      setTestingSmtp(false);
     }
   };
 
@@ -165,6 +205,43 @@ export default function AcademySettingsTab() {
                 onChange={e => setSmtpReplyTo(e.target.value)}
               />
             </Form.Group>
+            
+            <div className="p-3 bg-light border rounded mb-4">
+              <h6 className="fw-bold"><i className="bi bi-envelope-fill me-2 text-secondary"></i>{t('auto.testSmtpConfiguration', 'Test SMTP Configuration')}</h6>
+              <p className="text-muted small mb-3">{t('auto.testSmtpDesc', 'Enter a destination email address to verify SMTP connectivity and credentials.')}</p>
+              <div className="d-flex gap-2">
+                <Form.Control
+                  type="email"
+                  placeholder={t('auto.enterTestEmail', 'Enter test destination email')}
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  style={{ maxWidth: '300px' }}
+                  className="bg-white"
+                />
+                <Button 
+                  variant="outline-primary" 
+                  onClick={handleTestSmtp}
+                  disabled={testingSmtp || !testEmail}
+                >
+                  {testingSmtp ? (
+                    <>
+                      <Spinner size="sm" animation="border" className="me-2"/>
+                      {t('auto.testing', 'Testing...')}
+                    </>
+                  ) : (
+                    t('auto.sendTestEmail', 'Send Test Email')
+                  )}
+                </Button>
+              </div>
+              {smtpTestResult && (
+                <Alert 
+                  variant={smtpTestResult.success ? 'success' : 'danger'} 
+                  className="mt-3 mb-0 py-2 small"
+                >
+                  {smtpTestResult.message}
+                </Alert>
+              )}
+            </div>
             
             <Button variant="primary" onClick={handleSave} disabled={updating}>
               {updating ? <><Spinner size="sm" animation="border" className="me-2"/>{t('auto.saving', `Saving...`)}</> : 'Save SMTP Settings'}

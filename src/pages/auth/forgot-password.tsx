@@ -191,35 +191,20 @@ export default function ForgotPassword() {
         <meta name="description" content="Reset your AIMS password" />
       </Head>
 
-      <div 
-        className="min-vh-100 d-flex align-items-center py-5"
-        style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #311042 100%)',
-          color: '#f8fafc'
-        }}
-      >
+      <div className="min-vh-100 d-flex align-items-center bg-light">
         <Container>
           <Row className="justify-content-center">
-            <Col md={8} lg={6} xl={5}>
-              <Card 
-                className="border-0 shadow-2xl overflow-hidden" 
-                style={{ 
-                  borderRadius: '24px',
-                  background: 'rgba(30, 41, 59, 0.7)',
-                  backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
-                }}
-              >
-                <div style={{ height: '6px', background: 'linear-gradient(90deg, #6366f1, #a855f7, #ec4899)' }}></div>
-                <Card.Body className="p-4 p-md-5 text-white">
+            <Col md={6} lg={5} xl={4}>
+              <Card className="shadow-lg border-0">
+                <Card.Body className="p-5">
                   <div className="text-center mb-4">
                     {settings.headerImg && (
                       <Image
                         src={settings.headerImg || '/assets/app-logo.png'}
                         alt={t('auto.logo', 'Logo')}
-                        width={200}
-                        height={80}
-                        style={{ height: 'auto', width: 'auto', objectFit: 'contain', maxHeight: '70px', maxWidth: '200px' }}
+                        width={250}
+                        height={100}
+                        style={{ height: 'auto', width: 'auto', objectFit: 'contain', maxHeight: '100px', maxWidth: '250px' }}
                         className="mb-3"
                         unoptimized
                         onError={(e) => {
@@ -227,10 +212,10 @@ export default function ForgotPassword() {
                         }}
                       />
                     )}
-                    <h2 className="fw-bold mb-1" style={{ letterSpacing: '-0.5px' }}>
-                      {t('auto.resetPasswordTitle', 'Forgot Password?')}
+                    <h2 className="fw-bold text-dark mb-2">
+                      {t('auto.resetPassword', 'Reset Password')}
                     </h2>
-                    <p className="text-muted small mb-0" style={{ color: '#94a3b8 !important' }}>
+                    <p className="text-muted small">
                       {step === 1 && t('auto.enterEmailStep', 'Enter your email to verify your identity')}
                       {step === 2 && t('auto.selectRecoveryStep', 'Select your preferred recovery method')}
                       {step === 3 && t('auto.answerQuestionsStep', 'Answer your security questions')}
@@ -246,17 +231,17 @@ export default function ForgotPassword() {
                         let active = s === step;
                         if (step === 2 && s === 2) active = true;
                         if (step === 3 && s === 3) active = true;
-                        if (step === 4 && s === 3) active = true; // merge verification steps for visual simplicity
-                        if (s === 4 && step > 1) active = step >= 3; // final inputs
+                        if (step === 4 && s === 3) active = true;
+                        if (s === 4 && step > 1) active = step >= 3;
                         
                         return (
                           <div 
                             key={s} 
                             style={{
-                              width: active ? '24px' : '8px',
-                              height: '8px',
-                              borderRadius: '4px',
-                              backgroundColor: active ? '#a855f7' : 'rgba(255, 255, 255, 0.2)',
+                              width: active ? '20px' : '6px',
+                              height: '6px',
+                              borderRadius: '3px',
+                              backgroundColor: active ? '#0d6efd' : 'rgba(0, 0, 0, 0.15)',
                               transition: 'all 0.3s ease'
                             }}
                           />
@@ -266,15 +251,15 @@ export default function ForgotPassword() {
                   )}
 
                   {error && (
-                    <Alert variant="danger" className="border-0 text-white mb-4" style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
-                      <i className="bi bi-exclamation-triangle-fill me-2 text-danger"></i>
+                    <Alert variant="danger" className="mb-4">
+                      <i className="bi bi-exclamation-triangle me-2"></i>
                       {error}
                     </Alert>
                   )}
 
                   {success && (
-                    <Alert variant="success" className="border-0 text-white mb-4" style={{ backgroundColor: 'rgba(34, 197, 94, 0.2)', borderRadius: '12px' }}>
-                      <i className="bi bi-check-circle-fill me-2 text-success"></i>
+                    <Alert variant="success" className="mb-4">
+                      <i className="bi bi-check-circle me-2"></i>
                       {success}
                     </Alert>
                   )}
@@ -283,21 +268,16 @@ export default function ForgotPassword() {
                   {step === 1 && (
                     <Form onSubmit={handleCheckRecovery}>
                       <Form.Group className="mb-4">
-                        <Form.Label className="small fw-semibold text-uppercase text-muted" style={{ letterSpacing: '0.5px' }}>
+                        <Form.Label className="fw-medium">
                           {t('auto.emailAddress', 'Email Address')}
                         </Form.Label>
                         <Form.Control
                           type="email"
-                          placeholder="e.g. name@example.com"
+                          placeholder={t('auto.enterYourRegisteredEmail', 'Enter your registered email')}
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
-                          className="border-0 text-white py-2 px-3"
-                          style={{ 
-                            background: 'rgba(15, 23, 42, 0.6)', 
-                            borderRadius: '12px',
-                            boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)' 
-                          }}
+                          className="py-2"
                           disabled={loading}
                         />
                       </Form.Group>
@@ -305,23 +285,18 @@ export default function ForgotPassword() {
                       <Button
                         variant="primary"
                         type="submit"
-                        className="w-100 py-2.5 fw-semibold border-0 mb-3"
-                        style={{ 
-                          background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-                          borderRadius: '12px',
-                          boxShadow: '0 4px 14px rgba(168, 85, 247, 0.4)'
-                        }}
+                        className="w-100 py-2 fw-medium mb-3"
                         disabled={loading || !email}
                       >
                         {loading ? (
-                          <><Spinner animation="border" size="sm" className="me-2" />{t('auto.checking', 'Checking options...')}</>
+                          <><Spinner animation="border" size="sm" className="me-2" />{t('auto.checking', 'Checking...')}</>
                         ) : (
                           t('auto.continue', 'Continue')
                         )}
                       </Button>
 
-                      <div className="text-center mt-3">
-                        <Link href="/auth/signin" className="text-decoration-none text-muted small hover:text-white" style={{ transition: 'color 0.2s' }}>
+                      <div className="text-center">
+                        <Link href="/auth/signin" className="text-decoration-none">
                           <i className="bi bi-arrow-left me-1"></i>
                           {t('auto.backToSignIn', 'Back to Sign In')}
                         </Link>
@@ -329,7 +304,7 @@ export default function ForgotPassword() {
                     </Form>
                   )}
 
-                  {/* STEP 2: Choose Method (Only shown if both recovery choices exist) */}
+                  {/* STEP 2: Choose Method */}
                   {step === 2 && (
                     <div>
                       <p className="text-muted small mb-4">{t('auto.multipleRecoveryOptionsFound', 'Please choose how you would like to reset your password:')}</p>
@@ -338,29 +313,27 @@ export default function ForgotPassword() {
                         {recoveryOptions.hasEmailReset && (
                           <div 
                             onClick={() => selectMethodAndProceed('EMAIL')}
-                            className="p-3 border text-start rounded-4 cursor-pointer hover:border-purple d-flex align-items-center gap-3"
+                            className="p-3 border text-start rounded d-flex align-items-center gap-3 bg-white"
                             style={{
-                              background: 'rgba(15, 23, 42, 0.4)',
-                              borderColor: 'rgba(255, 255, 255, 0.1)',
+                              borderColor: 'rgba(0, 0, 0, 0.125)',
                               cursor: 'pointer',
                               transition: 'all 0.2s ease',
-                              borderRadius: '16px'
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = '#a855f7';
-                              e.currentTarget.style.background = 'rgba(168, 85, 247, 0.1)';
+                              e.currentTarget.style.borderColor = '#0d6efd';
+                              e.currentTarget.style.background = '#f8f9fa';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                              e.currentTarget.style.background = 'rgba(15, 23, 42, 0.4)';
+                              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.125)';
+                              e.currentTarget.style.background = '#ffffff';
                             }}
                           >
-                            <div className="bg-purple p-2.5 rounded-3 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', width: '42px', height: '42px', borderRadius: '12px' }}>
-                              <i className="bi bi-envelope-check text-purple" style={{ color: '#c084fc', fontSize: '1.25rem' }}></i>
+                            <div className="p-2.5 rounded d-flex align-items-center justify-content-center bg-light" style={{ width: '42px', height: '42px' }}>
+                              <i className="bi bi-envelope-check text-primary" style={{ fontSize: '1.25rem' }}></i>
                             </div>
                             <div>
-                              <div className="fw-semibold">{t('auto.emailVerification', 'Email Verification')}</div>
-                              <div className="small text-muted">{t('auto.sendAOneTimeCodeTo', 'Send a one-time code to your email')}</div>
+                              <div className="fw-semibold text-dark">{t('auto.emailVerification', 'Email Verification')}</div>
+                              <div className="small text-muted">{t('auto.sendAOneTimeCodeTo', 'Send code to your email')}</div>
                             </div>
                           </div>
                         )}
@@ -368,29 +341,27 @@ export default function ForgotPassword() {
                         {recoveryOptions.hasSecurityQuestions && (
                           <div 
                             onClick={() => selectMethodAndProceed('QUESTIONS')}
-                            className="p-3 border text-start rounded-4 cursor-pointer hover:border-purple d-flex align-items-center gap-3"
+                            className="p-3 border text-start rounded d-flex align-items-center gap-3 bg-white"
                             style={{
-                              background: 'rgba(15, 23, 42, 0.4)',
-                              borderColor: 'rgba(255, 255, 255, 0.1)',
+                              borderColor: 'rgba(0, 0, 0, 0.125)',
                               cursor: 'pointer',
                               transition: 'all 0.2s ease',
-                              borderRadius: '16px'
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = '#a855f7';
-                              e.currentTarget.style.background = 'rgba(168, 85, 247, 0.1)';
+                              e.currentTarget.style.borderColor = '#0d6efd';
+                              e.currentTarget.style.background = '#f8f9fa';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-                              e.currentTarget.style.background = 'rgba(15, 23, 42, 0.4)';
+                              e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.125)';
+                              e.currentTarget.style.background = '#ffffff';
                             }}
                           >
-                            <div className="bg-purple p-2.5 rounded-3 d-flex align-items-center justify-content-center" style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', width: '42px', height: '42px', borderRadius: '12px' }}>
-                              <i className="bi bi-shield-lock text-purple" style={{ color: '#c084fc', fontSize: '1.25rem' }}></i>
+                            <div className="p-2.5 rounded d-flex align-items-center justify-content-center bg-light" style={{ width: '42px', height: '42px' }}>
+                              <i className="bi bi-shield-lock text-primary" style={{ fontSize: '1.25rem' }}></i>
                             </div>
                             <div>
-                              <div className="fw-semibold">{t('auto.securityQuestions', 'Security Questions')}</div>
-                              <div className="small text-muted">{t('auto.answerQuestionsToConfirm', 'Answer security questions you previously configured')}</div>
+                              <div className="fw-semibold text-dark">{t('auto.securityQuestions', 'Security Questions')}</div>
+                              <div className="small text-muted">{t('auto.answerQuestionsToConfirm', 'Answer your security questions')}</div>
                             </div>
                           </div>
                         )}
@@ -399,7 +370,7 @@ export default function ForgotPassword() {
                       <div className="text-center">
                         <Button 
                           variant="link" 
-                          className="text-decoration-none text-muted small p-0 hover:text-white"
+                          className="text-decoration-none text-muted small p-0"
                           onClick={() => setStep(1)}
                         >
                           {t('auto.backToEmailInput', 'Use a different email')}
@@ -411,44 +382,42 @@ export default function ForgotPassword() {
                   {/* STEP 3: Verify via Security Questions */}
                   {step === 3 && (
                     <Form onSubmit={handleResetPassword}>
-                      <Alert variant="info" className="small border-0 text-white mb-4" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '12px' }}>
-                        {t('auto.securityQuestionsInstruction', 'Please answer the security questions you configured in your account settings.')}
+                      <Alert variant="info" className="small">
+                        {t('auto.pleaseAnswerTheSecurityQuestio', 'Please answer the security questions you set up in your account settings.')}
                       </Alert>
 
                       <Form.Group className="mb-3">
-                        <Form.Label className="small text-muted mb-1">{t('auto.question1', 'Question 1')}</Form.Label>
-                        <p className="fw-semibold mb-2">{questions.question1}</p>
+                        <Form.Label className="fw-medium small text-muted">{t('auto.question1', 'Question 1')}</Form.Label>
+                        <p className="fw-bold mb-2">{questions.question1}</p>
                         <Form.Control
                           type="text"
                           placeholder={t('auto.yourAnswer', 'Your answer')}
                           value={answers.answer1}
                           onChange={(e) => setAnswers({...answers, answer1: e.target.value})}
                           required
-                          className="border-0 text-white py-2 px-3"
-                          style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '12px' }}
+                          className="py-2"
                           disabled={loading}
                         />
                       </Form.Group>
 
                       <Form.Group className="mb-4">
-                        <Form.Label className="small text-muted mb-1">{t('auto.question2', 'Question 2')}</Form.Label>
-                        <p className="fw-semibold mb-2">{questions.question2}</p>
+                        <Form.Label className="fw-medium small text-muted">{t('auto.question2', 'Question 2')}</Form.Label>
+                        <p className="fw-bold mb-2">{questions.question2}</p>
                         <Form.Control
                           type="text"
                           placeholder={t('auto.yourAnswer', 'Your answer')}
                           value={answers.answer2}
                           onChange={(e) => setAnswers({...answers, answer2: e.target.value})}
                           required
-                          className="border-0 text-white py-2 px-3"
-                          style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '12px' }}
+                          className="py-2"
                           disabled={loading}
                         />
                       </Form.Group>
 
-                      <hr className="my-4" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                      <hr className="my-4" />
 
                       <Form.Group className="mb-3">
-                        <Form.Label className="small fw-semibold text-uppercase text-muted">{t('auto.newPassword', 'New Password')}</Form.Label>
+                        <Form.Label className="fw-medium">{t('auto.newPassword', 'New Password')}</Form.Label>
                         <Form.Control
                           type="password"
                           placeholder={t('auto.enterNewPassword', 'Enter new password')}
@@ -456,14 +425,13 @@ export default function ForgotPassword() {
                           onChange={(e) => setNewPassword(e.target.value)}
                           required
                           minLength={8}
-                          className="border-0 text-white py-2 px-3"
-                          style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '12px' }}
+                          className="py-2"
                           disabled={loading}
                         />
                       </Form.Group>
 
                       <Form.Group className="mb-4">
-                        <Form.Label className="small fw-semibold text-uppercase text-muted">{t('auto.confirmNewPassword', 'Confirm New Password')}</Form.Label>
+                        <Form.Label className="fw-medium">{t('auto.confirmNewPassword', 'Confirm New Password')}</Form.Label>
                         <Form.Control
                           type="password"
                           placeholder={t('auto.confirmNewPassword', 'Confirm new password')}
@@ -471,8 +439,7 @@ export default function ForgotPassword() {
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           required
                           minLength={8}
-                          className="border-0 text-white py-2 px-3"
-                          style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '12px' }}
+                          className="py-2"
                           disabled={loading}
                         />
                       </Form.Group>
@@ -480,12 +447,7 @@ export default function ForgotPassword() {
                       <Button
                         variant="primary"
                         type="submit"
-                        className="w-100 py-2.5 fw-semibold border-0 mb-3"
-                        style={{ 
-                          background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-                          borderRadius: '12px',
-                          boxShadow: '0 4px 14px rgba(168, 85, 247, 0.4)'
-                        }}
+                        className="w-100 py-2 fw-medium mb-3"
                         disabled={loading || !answers.answer1 || !answers.answer2 || !newPassword || !confirmPassword}
                       >
                         {loading ? (
@@ -498,7 +460,7 @@ export default function ForgotPassword() {
                       <div className="text-center">
                         <Button 
                           variant="link" 
-                          className="text-decoration-none text-muted small p-0 hover:text-white"
+                          className="text-decoration-none text-muted small p-0"
                           onClick={() => {
                             if (recoveryOptions.hasEmailReset && recoveryOptions.hasSecurityQuestions) {
                               setStep(2);
@@ -517,49 +479,40 @@ export default function ForgotPassword() {
                   {/* STEP 4: Verify via Email Verification Code */}
                   {step === 4 && (
                     <Form onSubmit={handleResetPassword}>
-                      <Alert variant="info" className="small border-0 text-white mb-4" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)', borderRadius: '12px' }}>
+                      <Alert variant="info" className="small">
                         {t('auto.emailCodeInstruction', 'Please enter the 6-digit verification code sent to your email to verify ownership.')}
                       </Alert>
 
                       <Form.Group className="mb-4">
-                        <Form.Label className="small fw-semibold text-uppercase text-muted mb-1">{t('auto.verificationCode', 'Verification Code')}</Form.Label>
+                        <Form.Label className="fw-medium small text-muted mb-1">{t('auto.verificationCode', 'Verification Code')}</Form.Label>
                         <div className="d-flex gap-2 align-items-center">
                           <Form.Control
                             type="text"
-                            placeholder="e.g. 123456"
+                            placeholder="123456"
                             maxLength={6}
                             value={verificationCode}
                             onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                             required
-                            className="border-0 text-white py-2 px-3 text-center fw-bold fs-5"
-                            style={{ 
-                              background: 'rgba(15, 23, 42, 0.6)', 
-                              borderRadius: '12px',
-                              letterSpacing: '2px'
-                            }}
+                            className="py-2 text-center fw-bold fs-5"
+                            style={{ letterSpacing: '3px' }}
                             disabled={loading || sendingCode}
                           />
                           <Button
-                            variant="secondary"
+                            variant="outline-secondary"
                             onClick={triggerSendCode}
                             disabled={sendingCode || loading}
-                            style={{
-                              borderRadius: '12px',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              whiteSpace: 'nowrap'
-                            }}
+                            style={{ whiteSpace: 'nowrap' }}
                             className="py-2"
                           >
-                            {sendingCode ? <Spinner animation="border" size="sm" /> : t('auto.resend', 'Resend Code')}
+                            {sendingCode ? <Spinner animation="border" size="sm" /> : t('auto.resend', 'Resend')}
                           </Button>
                         </div>
                       </Form.Group>
 
-                      <hr className="my-4" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+                      <hr className="my-4" />
 
                       <Form.Group className="mb-3">
-                        <Form.Label className="small fw-semibold text-uppercase text-muted">{t('auto.newPassword', 'New Password')}</Form.Label>
+                        <Form.Label className="fw-medium">{t('auto.newPassword', 'New Password')}</Form.Label>
                         <Form.Control
                           type="password"
                           placeholder={t('auto.enterNewPassword', 'Enter new password')}
@@ -567,14 +520,13 @@ export default function ForgotPassword() {
                           onChange={(e) => setNewPassword(e.target.value)}
                           required
                           minLength={8}
-                          className="border-0 text-white py-2 px-3"
-                          style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '12px' }}
+                          className="py-2"
                           disabled={loading}
                         />
                       </Form.Group>
 
                       <Form.Group className="mb-4">
-                        <Form.Label className="small fw-semibold text-uppercase text-muted">{t('auto.confirmNewPassword', 'Confirm New Password')}</Form.Label>
+                        <Form.Label className="fw-medium">{t('auto.confirmNewPassword', 'Confirm New Password')}</Form.Label>
                         <Form.Control
                           type="password"
                           placeholder={t('auto.confirmNewPassword', 'Confirm new password')}
@@ -582,8 +534,7 @@ export default function ForgotPassword() {
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           required
                           minLength={8}
-                          className="border-0 text-white py-2 px-3"
-                          style={{ background: 'rgba(15, 23, 42, 0.6)', borderRadius: '12px' }}
+                          className="py-2"
                           disabled={loading}
                         />
                       </Form.Group>
@@ -591,12 +542,7 @@ export default function ForgotPassword() {
                       <Button
                         variant="primary"
                         type="submit"
-                        className="w-100 py-2.5 fw-semibold border-0 mb-3"
-                        style={{ 
-                          background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-                          borderRadius: '12px',
-                          boxShadow: '0 4px 14px rgba(168, 85, 247, 0.4)'
-                        }}
+                        className="w-100 py-2 fw-medium mb-3"
                         disabled={loading || !verificationCode || !newPassword || !confirmPassword || sendingCode}
                       >
                         {loading ? (
@@ -609,7 +555,7 @@ export default function ForgotPassword() {
                       <div className="text-center">
                         <Button 
                           variant="link" 
-                          className="text-decoration-none text-muted small p-0 hover:text-white"
+                          className="text-decoration-none text-muted small p-0"
                           onClick={() => {
                             if (recoveryOptions.hasEmailReset && recoveryOptions.hasSecurityQuestions) {
                               setStep(2);
@@ -628,16 +574,15 @@ export default function ForgotPassword() {
                   {/* STEP 5: Redirect / Success */}
                   {step === 5 && (
                     <div className="text-center py-4">
-                      <div className="mb-4 animate-bounce">
-                        <i className="bi bi-shield-check text-success" style={{ fontSize: '4.5rem', filter: 'drop-shadow(0 0 15px rgba(34, 197, 94, 0.6))' }}></i>
+                      <div className="mb-4">
+                        <i className="bi bi-check-circle text-success" style={{ fontSize: '4rem' }}></i>
                       </div>
                       <h4 className="fw-bold mb-2">{t('auto.allDone', 'All Done!')}</h4>
-                      <p className="text-muted small mb-4">{t('auto.redirectingToSignIn', 'Your password was reset successfully. Redirecting to login page...')}</p>
+                      <p className="text-muted small mb-4">{t('auto.redirectingToSignIn', 'Redirecting you to sign in...')}</p>
                       <Button
                         variant="outline-primary"
                         onClick={() => router.push('/auth/signin')}
-                        className="mt-2 py-2 px-4 border-white text-white"
-                        style={{ borderRadius: '12px', background: 'rgba(255, 255, 255, 0.05)' }}
+                        className="mt-2"
                       >
                         {t('auto.signInNow', 'Sign In Now')}
                       </Button>
