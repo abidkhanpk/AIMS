@@ -82,7 +82,7 @@ export const parseUploadForm = async (req: any, fieldName: string, allowedMimeTy
 
 export const uploadFileToDrive = async (
   file: File,
-  options: { namePrefix?: string; folderName?: string }
+  options: { namePrefix?: string; folderName?: string; driveFolderId?: string | null }
 ) => {
   const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN || process.env.google_drive_refresh_token;
   const clientId = process.env.GOOGLE_CLIENT_ID || process.env.google_client_id;
@@ -105,7 +105,15 @@ export const uploadFileToDrive = async (
 
   const sharedDriveId = process.env.DRIVE_SHARED_ID || process.env.DRIVE_SHARED_DRIVE_ID;
   const baseParent = process.env.DRIVE_FOLDER_ID;
-  const parents = await ensureSubfolder(drive, baseParent, options.folderName);
+  
+  let parents;
+  if (options.driveFolderId && options.folderName === 'payment-proofs-temp') {
+    const mainFolderParents = await ensureSubfolder(drive, baseParent, options.driveFolderId);
+    const mainFolderId = mainFolderParents?.[0];
+    parents = await ensureSubfolder(drive, mainFolderId, 'payment-proofs-temp');
+  } else {
+    parents = await ensureSubfolder(drive, baseParent, options.folderName);
+  }
 
   const uploadResponse = await drive.files.create({
     requestBody: {
@@ -196,10 +204,135 @@ const uploadFileToCloudinary = async (file: File, options: { folderName?: string
 export const uploadFileWithProvider = async (
   file: File,
   provider: 'DRIVE' | 'CLOUDINARY',
-  options: { folderName?: string; namePrefix?: string }
+  options: { folderName?: string; namePrefix?: string; driveFolderId?: string | null }
 ) => {
   if (provider === 'CLOUDINARY') {
     return uploadFileToCloudinary(file, options);
   }
   return uploadFileToDrive(file, options);
+};
+
+export const purgeDriveTemporaryFiles = async (driveFolderId?: string | null) => {
+  const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN || process.env.google_drive_refresh_token;
+  const clientId = process.env.GOOGLE_CLIENT_ID || process.env.google_client_id;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.google_client_secret;
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error('Google Drive credentials not fully configured for purging.');
+  }
+
+  const oauth2Client = getOAuthClient();
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
+  const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+  const sharedDriveId = process.env.DRIVE_SHARED_ID || process.env.DRIVE_SHARED_DRIVE_ID;
+  const baseParent = process.env.DRIVE_FOLDER_ID;
+
+  let targetParentId = baseParent;
+  if (driveFolderId) {
+    const mainFolderParents = await ensureSubfolder(drive, baseParent, driveFolderId);
+    targetParentId = mainFolderParents?.[0] || baseParent;
+  }
+
+  if (!targetParentId) {
+    throw new Error('No target parent folder ID found for Google Drive purge.');
+  }
+
+  const folderList = await drive.files.list({
+    q: `'${targetParentId}' in parents and name='payment-proofs-temp' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+    fields: 'files(id)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  const tempFolderId = folderList.data.files?.[0]?.id;
+  if (!tempFolderId) {
+    return { deletedCount: 0, message: 'payment-proofs-temp folder does not exist yet.' };
+  }
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const dateString = thirtyDaysAgo.toISOString();
+
+  let filesDeleted = 0;
+  let pageToken: string | undefined = undefined;
+
+  do {
+    const fileList: any = await drive.files.list({
+      q: `'${tempFolderId}' in parents and mimeType != 'application/vnd.google-apps.folder' and createdTime < '${dateString}' and trashed=false`,
+      fields: 'nextPageToken, files(id, name, createdTime)',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+      pageToken,
+      pageSize: 100,
+    });
+
+    const files = fileList.data.files || [];
+    for (const file of files) {
+      if (file.id) {
+        await drive.files.delete({
+          fileId: file.id,
+          supportsAllDrives: true,
+        });
+        filesDeleted++;
+      }
+    }
+
+    pageToken = fileList.data.nextPageToken;
+  } while (pageToken);
+
+  return { deletedCount: filesDeleted, message: `Successfully purged ${filesDeleted} files from Google Drive.` };
+};
+
+export const purgeCloudinaryTemporaryFiles = async (cloudinaryFolder?: string | null) => {
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    throw new Error('Cloudinary credentials not fully configured for purging.');
+  }
+
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+
+  const folderPath = cloudinaryFolder ? `${cloudinaryFolder}/payment-proofs-temp` : 'payment-proofs-temp';
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  let deletedCount = 0;
+  let nextCursor: string | undefined = undefined;
+
+  do {
+    const listResponse: any = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: folderPath,
+      max_results: 100,
+      next_cursor: nextCursor,
+    });
+
+    const resources = listResponse.resources || [];
+    const publicIdsToDelete = resources
+      .filter((res: any) => new Date(res.created_at) < thirtyDaysAgo)
+      .map((res: any) => res.public_id);
+
+    if (publicIdsToDelete.length > 0) {
+      await cloudinary.api.delete_resources(publicIdsToDelete);
+      deletedCount += publicIdsToDelete.length;
+    }
+
+    nextCursor = listResponse.next_cursor;
+  } while (nextCursor);
+
+  return { deletedCount, message: `Successfully purged ${deletedCount} files from Cloudinary.` };
+};
+
+export const purgeTemporaryProofFiles = async (
+  provider: 'DRIVE' | 'CLOUDINARY',
+  options: { driveFolderId?: string | null; cloudinaryFolder?: string | null }
+) => {
+  if (provider === 'CLOUDINARY') {
+    return purgeCloudinaryTemporaryFiles(options.cloudinaryFolder);
+  }
+  return purgeDriveTemporaryFiles(options.driveFolderId);
 };

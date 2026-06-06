@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Badge, Alert, Spinner, ProgressBar, Tabs, Tab, Button } from 'react-bootstrap';
 import FeePaymentModal from './FeePaymentModal';
+import RemarkThreadModal, { RemarkThread } from '../remarks/RemarkThreadModal';
+import CalendarView from '../calendar/CalendarView';
+import ReportCardsTab from './ReportCardsTab';
+import { getCurrencySymbol } from '../../utils/currencies';
 import { FeeStatus, AssessmentType } from '@prisma/client';
+import { useTranslation } from 'react-i18next';
 
 interface StudentData {
   id: string;
@@ -23,6 +28,7 @@ interface StudentData {
     remarks: string;
     attendance: string;
     createdAt: string;
+    parentRemarks?: RemarkThread[];
     course: {
       id: string;
       name: string;
@@ -107,6 +113,7 @@ interface Fee {
 }
 
 export default function StudentDashboard() {
+  const { t } = useTranslation('common');
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [fees, setFees] = useState<Fee[]>([]);
@@ -114,6 +121,30 @@ export default function StudentDashboard() {
   const [feesLoading, setFeesLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // UI States
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
+  const [showRemarksModal, setShowRemarksModal] = useState(false);
+  const [activeRemarks, setActiveRemarks] = useState<RemarkThread[]>([]);
+
+  const toggleCourseExpanded = (courseId: string) => {
+    setExpandedCourses(prev => {
+      const next = new Set(prev);
+      if (next.has(courseId)) {
+        next.delete(courseId);
+      } else {
+        next.add(courseId);
+      }
+      return next;
+    });
+  };
+
+  const openRemarks = (remarks: RemarkThread[] | undefined) => {
+    if (remarks && remarks.length > 0) {
+      setActiveRemarks(remarks);
+      setShowRemarksModal(true);
+    }
+  };
 
   // Fee payment states
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -248,57 +279,42 @@ export default function StudentDashboard() {
   const getAttendanceBadge = (attendance: string) => {
     switch (attendance) {
       case 'PRESENT':
-        return <Badge bg="success" className="small">Present</Badge>;
+        return <Badge bg="success" className="small">{t('auto.present', `Present`)}</Badge>;
       case 'ABSENT':
-        return <Badge bg="danger" className="small">Absent</Badge>;
+        return <Badge bg="danger" className="small">{t('auto.absent', `Absent`)}</Badge>;
       case 'LATE':
-        return <Badge bg="warning" className="small">Late</Badge>;
+        return <Badge bg="warning" className="small">{t('auto.late', `Late`)}</Badge>;
       case 'EXCUSED':
-        return <Badge bg="info" className="small">Excused</Badge>;
+        return <Badge bg="info" className="small">{t('auto.excused', `Excused`)}</Badge>;
       default:
-        return <Badge bg="secondary" className="small">Unknown</Badge>;
+        return <Badge bg="secondary" className="small">{t('auto.unknown', `Unknown`)}</Badge>;
     }
   };
 
   const getStatusBadge = (status: FeeStatus) => {
     switch (status) {
       case 'PAID':
-        return <Badge bg="success">Paid</Badge>;
+        return <Badge bg="success">{t('auto.paid', `Paid`)}</Badge>;
       case 'PENDING':
-        return <Badge bg="warning">Pending</Badge>;
+        return <Badge bg="warning">{t('auto.pending', `Pending`)}</Badge>;
       case 'PROCESSING':
-        return <Badge bg="info">Processing</Badge>;
+        return <Badge bg="info">{t('auto.processing', `Processing`)}</Badge>;
       case 'OVERDUE':
-        return <Badge bg="danger">Overdue</Badge>;
+        return <Badge bg="danger">{t('auto.overdue', `Overdue`)}</Badge>;
       case 'CANCELLED':
-        return <Badge bg="secondary">Cancelled</Badge>;
+        return <Badge bg="secondary">{t('auto.cancelled', `Cancelled`)}</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
   };
 
-  const getCurrencySymbol = (currencyCode: string) => {
-    const currencies = [
-      { code: 'USD', symbol: '$' },
-      { code: 'EUR', symbol: '€' },
-      { code: 'GBP', symbol: '£' },
-      { code: 'JPY', symbol: '¥' },
-      { code: 'CAD', symbol: 'C$' },
-      { code: 'AUD', symbol: 'A$' },
-      { code: 'CHF', symbol: 'CHF' },
-      { code: 'CNY', symbol: '¥' },
-      { code: 'INR', symbol: '₹' },
-      { code: 'PKR', symbol: '₨' },
-    ];
-    const currency = currencies.find(c => c.code === currencyCode);
-    return currency ? currency.symbol : currencyCode;
-  };
+  // Using global getCurrencySymbol imported from utils
 
   if (loading) {
     return (
       <div className="text-center py-5">
         <Spinner animation="border" />
-        <p className="mt-2 text-muted">Loading your progress...</p>
+        <p className="mt-2 text-muted">{t('auto.loadingYourProgress', `Loading your progress...`)}</p>
       </div>
     );
   }
@@ -306,7 +322,7 @@ export default function StudentDashboard() {
   if (!studentData) {
     return (
       <div className="text-center py-5">
-        <Alert variant="warning">No student data found</Alert>
+        <Alert variant="warning">{t('auto.noStudentDataFound', `No student data found`)}</Alert>
       </div>
     );
   }
@@ -320,17 +336,19 @@ export default function StudentDashboard() {
         <div className="col-12">
           <h1 className="h2 mb-0">
             <i className="bi bi-mortarboard me-2 text-warning"></i>
-            Student Dashboard
+            {t('dashboard.studentDashboard')}
           </h1>
-          <p className="text-muted">Track your academic progress across all subjects</p>
+          <p className="text-muted">{t('dashboard.trackProgress')}</p>
         </div>
       </div>
+
+      <CalendarView />
 
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
 
       <Tabs defaultActiveKey="progress" id="student-dashboard-tabs" className="mb-4">
-        <Tab eventKey="progress" title="Progress">
+        <Tab eventKey="progress" title={t('dashboard.progress')}>
           {/* Overall Progress Card */}
           <Row className="mb-4">
             <Col>
@@ -338,8 +356,8 @@ export default function StudentDashboard() {
                 <Card.Body>
                   <Row className="align-items-center">
                     <Col md={8}>
-                      <h5 className="mb-1">Welcome back, {studentData.name}!</h5>
-                      <p className="text-muted mb-0">Here&apos;s your overall academic progress</p>
+                      <h5 className="mb-1">{t('auto.welcomeBack', `Welcome back,`)} {studentData.name}!</h5>
+                      <p className="text-muted mb-0">{t('auto.hereapossYourOverallAcademicPr', `Here&apos;s your overall academic progress`)}</p>
                     </Col>
                     <Col md={4} className="text-md-end">
                       {overallProgress !== null ? (
@@ -347,12 +365,12 @@ export default function StudentDashboard() {
                           <h3 className={`mb-0 text-${getProgressVariant(overallProgress)}`}>
                             {overallProgress}%
                           </h3>
-                          <small className="text-muted">Overall Progress</small>
+                          <small className="text-muted">{t('dashboard.overallProgress')}</small>
                         </div>
                       ) : (
                         <div>
-                          <h5 className="mb-0 text-muted">No Data</h5>
-                          <small className="text-muted">No progress recorded yet</small>
+                          <h5 className="mb-0 text-muted">{t('dashboard.noData')}</h5>
+                          <small className="text-muted">{t('dashboard.noProgressRecorded')}</small>
                         </div>
                       )}
                     </Col>
@@ -370,7 +388,7 @@ export default function StudentDashboard() {
                   <div className="d-flex justify-content-between align-items-center">
                     <h6 className="mb-0">
                       <i className="bi bi-list-task me-2"></i>
-                      Current Assignments
+                      {t('dashboard.currentAssignments')}
                     </h6>
                     <Badge bg="light" text="dark">{assignments.length}</Badge>
                   </div>
@@ -379,19 +397,19 @@ export default function StudentDashboard() {
                   {assignments.length === 0 ? (
                     <div className="text-center py-4">
                       <i className="bi bi-list-task display-6 text-muted"></i>
-                      <h5 className="mt-3 text-muted">No Assignments Found</h5>
-                      <p className="text-muted">You don&apos;t have any assignments yet. Please contact your administrator to get assigned to subjects and teachers.</p>
+                      <h5 className="mt-3 text-muted">{t('auto.noAssignmentsFound', `No Assignments Found`)}</h5>
+                      <p className="text-muted">{t('auto.youDonapostHaveAnyAssignmentsY', `You don&apos;t have any assignments yet. Please contact your administrator to get assigned to subjects and teachers.`)}</p>
                     </div>
                   ) : (
                     <div className="table-responsive">
                       <Table hover className="mb-0">
                         <thead className="table-light">
                           <tr>
-                            <th>Subject</th>
-                            <th>Teacher</th>
-                            <th>Schedule</th>
-                            <th>Class Days</th>
-                            <th>Status</th>
+                            <th>{t('dashboard.subject')}</th>
+                            <th>{t('dashboard.teacher')}</th>
+                            <th>{t('dashboard.schedule')}</th>
+                            <th>{t('dashboard.classDays')}</th>
+                            <th>{t('dashboard.status')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -401,10 +419,10 @@ export default function StudentDashboard() {
                               <td className="text-muted">{assignment.teacher?.name}</td>
                               <td className="small">
                                 {assignment.startTime && (
-                                  <div><strong>Time:</strong> {assignment.startTime}</div>
+                                  <div><strong>{t('auto.time', `Time:`)}</strong> {assignment.startTime}</div>
                                 )}
                                 {assignment.duration && (
-                                  <div><strong>Duration:</strong> {assignment.duration} minutes</div>
+                                  <div><strong>{t('auto.duration', `Duration:`)}</strong> {assignment.duration} {t('auto.minutes', `minutes`)}</div>
                                 )}
                               </td>
                               <td className="small">
@@ -417,7 +435,7 @@ export default function StudentDashboard() {
                                     ))}
                                   </div>
                                 ) : (
-                                  <span className="text-muted">Not specified</span>
+                                  <span className="text-muted">{t('auto.notSpecified', `Not specified`)}</span>
                                 )}
                               </td>
                               <td>
@@ -441,8 +459,8 @@ export default function StudentDashboard() {
             <Card className="text-center py-5">
               <Card.Body>
                 <i className="bi bi-book display-4 text-muted"></i>
-                <h4 className="mt-3 text-muted">No Subjects Assigned</h4>
-                <p className="text-muted">You don&apos;t have any subjects assigned yet. Please contact your administrator.</p>
+                <h4 className="mt-3 text-muted">{t('auto.noSubjectsAssigned', `No Subjects Assigned`)}</h4>
+                <p className="text-muted">{t('auto.youDonapostHaveAnySubjectsAssi', `You don&apos;t have any subjects assigned yet. Please contact your administrator.`)}</p>
               </Card.Body>
             </Card>
           ) : (
@@ -468,10 +486,10 @@ export default function StudentDashboard() {
                                 <Badge bg={getProgressVariant(latestProgress.lessonProgress)} className="fs-6">
                                   {latestProgress.lessonProgress}%
                                 </Badge>
-                                <div className="small text-muted mt-1">Current Progress</div>
+                                <div className="small text-muted mt-1">{t('auto.currentProgress', `Current Progress`)}</div>
                               </div>
                             ) : (
-                              <Badge bg="secondary">No Progress</Badge>
+                              <Badge bg="secondary">{t('auto.noProgress', `No Progress`)}</Badge>
                             )}
                           </div>
                         </div>
@@ -489,28 +507,29 @@ export default function StudentDashboard() {
                         {allProgress.length === 0 ? (
                           <div className="text-center py-3">
                             <i className="bi bi-graph-up display-6 text-muted"></i>
-                            <p className="mt-2 text-muted">No progress updates yet</p>
-                            <small className="text-muted">Your teacher will update your progress soon</small>
+                            <p className="mt-2 text-muted">{t('auto.noProgressUpdatesYet', `No progress updates yet`)}</p>
+                            <small className="text-muted">{t('auto.yourTeacherWillUpdateYourProgr', `Your teacher will update your progress soon`)}</small>
                           </div>
                         ) : (
                           <div>
                             <div className="d-flex justify-content-between align-items-center mb-3">
-                              <h6 className="mb-0">Progress History</h6>
-                              <Badge bg="info">{allProgress.length} Updates</Badge>
+                              <h6 className="mb-0">{t('auto.progressHistory', `Progress History`)}</h6>
+                              <Badge bg="info">{allProgress.length} {t('auto.updates', `Updates`)}</Badge>
                             </div>
                             <div className="table-responsive">
                               <Table size="sm" className="mb-0">
                                 <thead className="table-light">
                                   <tr>
-                                    <th>Date</th>
-                                    <th>Teacher</th>
-                                    <th>Lesson</th>
-                                    <th>Progress</th>
-                                    <th>Attendance</th>
+                                    <th>{t('auto.date', `Date`)}</th>
+                                    <th>{t('auto.teacher', `Teacher`)}</th>
+                                    <th>{t('auto.lesson', `Lesson`)}</th>
+                                    <th>{t('auto.progress', `Progress`)}</th>
+                                    <th>{t('auto.attendance', `Attendance`)}</th>
+                                    <th>{t('auto.remarks', `Remarks`)}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {allProgress.slice(0, 5).map((progress) => (
+                                  {allProgress.slice(0, expandedCourses.has(course.id) ? undefined : 5).map((progress) => (
                                     <tr key={progress.id}>
                                       <td className="text-muted small">
                                         {new Date(progress.date).toLocaleDateString()}
@@ -545,15 +564,39 @@ export default function StudentDashboard() {
                                       <td>
                                         {getAttendanceBadge(progress.attendance)}
                                       </td>
+                                      <td>
+                                        {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
+                                          <Button 
+                                            variant="outline-info" 
+                                            size="sm" 
+                                            className="py-0 px-2 rounded-pill"
+                                            onClick={() => openRemarks(progress.parentRemarks)}
+                                            title={t('auto.viewRemarks', `View Remarks`)}
+                                          >
+                                            <i className="bi bi-chat-dots me-1"></i>
+                                            {progress.parentRemarks.length}
+                                          </Button>
+                                        ) : (
+                                          <span className="text-muted small">-</span>
+                                        )}
+                                      </td>
                                     </tr>
                                   ))}
                                 </tbody>
                               </Table>
                               {allProgress.length > 5 && (
-                                <div className="text-center mt-2">
-                                  <small className="text-muted">
-                                    Showing latest 5 of {allProgress.length} updates
-                                  </small>
+                                <div className="text-center mt-3 mb-1">
+                                  <Button 
+                                    variant="link" 
+                                    className="text-decoration-none text-muted p-0"
+                                    onClick={() => toggleCourseExpanded(course.id)}
+                                  >
+                                    {expandedCourses.has(course.id) ? (
+                                      <><i className="bi bi-chevron-up me-1"></i>{t('auto.showLess', `Show Less`)}</>
+                                    ) : (
+                                      <><i className="bi bi-chevron-down me-1"></i>{t('auto.showAll', `Show All`)} {allProgress.length} {t('auto.updates', `Updates`)}</>
+                                    )}
+                                  </Button>
                                 </div>
                               )}
                             </div>
@@ -567,14 +610,14 @@ export default function StudentDashboard() {
             </Row>
           )}
         </Tab>
-        <Tab eventKey="tests" title="Tests & Exams">
+        <Tab eventKey="tests" title={t('dashboard.testsAndExams')}>
           <Row className="mb-4">
             <Col>
               <Card className="shadow-sm">
                 <Card.Body className="d-flex justify-content-between align-items-center">
                   <div>
-                    <h5 className="mb-1">Your tests & exam results</h5>
-                    <p className="text-muted mb-0">Track obtained marks, percentages, and remarks</p>
+                    <h5 className="mb-1">{t('auto.yourTestsExamResults', `Your tests & exam results`)}</h5>
+                    <p className="text-muted mb-0">{t('auto.trackObtainedMarksPercentagesA', `Track obtained marks, percentages, and remarks`)}</p>
                   </div>
                   <div className="text-end">
                     {overallTestAverage !== null ? (
@@ -582,12 +625,12 @@ export default function StudentDashboard() {
                         <h3 className={`mb-0 text-${overallTestAverage >= 80 ? 'success' : overallTestAverage >= 60 ? 'warning' : 'danger'}`}>
                           {overallTestAverage}%
                         </h3>
-                        <small className="text-muted">Average score</small>
+                        <small className="text-muted">{t('auto.averageScore', `Average score`)}</small>
                       </div>
                     ) : (
                       <div>
-                        <h5 className="mb-0 text-muted">No Data</h5>
-                        <small className="text-muted">No tests recorded yet</small>
+                        <h5 className="mb-0 text-muted">{t('auto.noData', `No Data`)}</h5>
+                        <small className="text-muted">{t('auto.noTestsRecordedYet', `No tests recorded yet`)}</small>
                       </div>
                     )}
                   </div>
@@ -600,8 +643,8 @@ export default function StudentDashboard() {
             <Card className="text-center py-5">
               <Card.Body>
                 <i className="bi bi-journal-check display-4 text-muted"></i>
-                <h4 className="mt-3 text-muted">No Tests Recorded</h4>
-                <p className="text-muted">Your teachers will add test and exam results here once available.</p>
+                <h4 className="mt-3 text-muted">{t('auto.noTestsRecorded', `No Tests Recorded`)}</h4>
+                <p className="text-muted">{t('auto.yourTeachersWillAddTestAndExam', `Your teachers will add test and exam results here once available.`)}</p>
               </Card.Body>
             </Card>
           ) : (
@@ -609,8 +652,8 @@ export default function StudentDashboard() {
               <Card.Header className="bg-light d-flex justify-content-between align-items-center">
                 <h6 className="mb-0">
                   <i className="bi bi-journal-check me-2"></i>
-                  Recent Tests & Exams
-                </h6>
+                  {t('auto.recentTestsExams', `Recent Tests & Exams`)}
+                                                      </h6>
                 <Badge bg="info">{studentData.testRecords.length}</Badge>
               </Card.Header>
               <Card.Body className="p-0">
@@ -618,15 +661,15 @@ export default function StudentDashboard() {
                   <Table hover className="mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Date</th>
-                        <th>Subject</th>
-                        <th>Test/Exam</th>
-                        <th>Type</th>
-                        <th>Score</th>
-                        <th>Percentage</th>
-                        <th>Performance</th>
-                        <th>Remarks</th>
-                        <th>Teacher</th>
+                        <th>{t('auto.date', `Date`)}</th>
+                        <th>{t('auto.subject', `Subject`)}</th>
+                        <th>{t('auto.testexam', `Test/Exam`)}</th>
+                        <th>{t('auto.type', `Type`)}</th>
+                        <th>{t('auto.score', `Score`)}</th>
+                        <th>{t('auto.percentage', `Percentage`)}</th>
+                        <th>{t('auto.performance', `Performance`)}</th>
+                        <th>{t('auto.remarks', `Remarks`)}</th>
+                        <th>{t('auto.teacher', `Teacher`)}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -678,39 +721,44 @@ export default function StudentDashboard() {
             </Card>
           )}
         </Tab>
-        <Tab eventKey="fees" title="Fees">
+        
+        <Tab eventKey="report-cards" title={t('dashboard.reportCards')}>
+          <ReportCardsTab />
+        </Tab>
+
+        <Tab eventKey="fees" title={t('dashboard.feeVouchers')}>
           <Card className="shadow-sm">
             <Card.Header className="bg-light">
               <div className="d-flex justify-content-between align-items-center">
                 <h6 className="mb-0">
                   <i className="bi bi-cash-coin me-2"></i>
-                  Fee Management
-                </h6>
-                <Badge bg="warning">{fees.length} Total</Badge>
+                  {t('auto.feeManagement', `Fee Management`)}
+                                                  </h6>
+                <Badge bg="warning">{fees.length} {t('auto.total', `Total`)}</Badge>
               </div>
             </Card.Header>
             <Card.Body className="p-0">
               {feesLoading ? (
                 <div className="text-center py-4">
                   <Spinner animation="border" size="sm" />
-                  <p className="mt-2 text-muted small">Loading fees...</p>
+                  <p className="mt-2 text-muted small">{t('auto.loadingFees', `Loading fees...`)}</p>
                 </div>
               ) : fees.length === 0 ? (
                 <div className="text-center py-4">
                   <i className="bi bi-cash-coin display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">No fees found</p>
+                  <p className="mt-2 text-muted small">{t('auto.noFeesFound', `No fees found`)}</p>
                 </div>
               ) : (
                 <div className="table-responsive">
                   <Table hover size="sm" className="mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th>{t('auto.title', `Title`)}</th>
+                        <th>{t('auto.description', `Description`)}</th>
+                        <th>{t('auto.amount', `Amount`)}</th>
+                        <th>{t('auto.dueDate', `Due Date`)}</th>
+                        <th>{t('auto.status', `Status`)}</th>
+                        <th>{t('auto.action', `Action`)}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -733,8 +781,8 @@ export default function StudentDashboard() {
                                 onClick={() => handlePayFeeClick(fee)}
                               >
                                 <i className="bi bi-credit-card me-1"></i>
-                                Pay Now
-                              </Button>
+                                {t('auto.payNow', `Pay Now`)}
+                                                                        </Button>
                             )}
                           </td>
                         </tr>
@@ -756,34 +804,34 @@ export default function StudentDashboard() {
               <Card.Header className="bg-light">
                 <h6 className="mb-0">
                   <i className="bi bi-clock-history me-2"></i>
-                  Recent Activity
-                </h6>
+                  {t('auto.recentActivity', `Recent Activity`)}
+                                                  </h6>
               </Card.Header>
               <Card.Body>
                 <div className="row">
                   <div className="col-md-3 text-center">
                     <div className="border-end">
                       <h4 className="text-primary mb-0">{assignments.length}</h4>
-                      <small className="text-muted">Active Assignments</small>
+                      <small className="text-muted">{t('auto.activeAssignments', `Active Assignments`)}</small>
                     </div>
                   </div>
                   <div className="col-md-3 text-center">
                     <div className="border-end">
                       <h4 className="text-info mb-0">{studentData.studentCourses?.length || 0}</h4>
-                      <small className="text-muted">Enrolled Subjects</small>
+                      <small className="text-muted">{t('auto.enrolledSubjects', `Enrolled Subjects`)}</small>
                     </div>
                   </div>
                   <div className="col-md-3 text-center">
                     <div className="border-end">
                       <h4 className="text-success mb-0">{studentData.progressRecords?.length || 0}</h4>
-                      <small className="text-muted">Progress Updates</small>
+                      <small className="text-muted">{t('auto.progressUpdates', `Progress Updates`)}</small>
                     </div>
                   </div>
                   <div className="col-md-3 text-center">
                     <h4 className={`mb-0 text-${overallProgress ? getProgressVariant(overallProgress) : 'muted'}`}>
                       {overallProgress || 0}%
                     </h4>
-                    <small className="text-muted">Average Progress</small>
+                    <small className="text-muted">{t('auto.averageProgress', `Average Progress`)}</small>
                   </div>
                 </div>
               </Card.Body>
@@ -791,6 +839,13 @@ export default function StudentDashboard() {
           </Col>
         </Row>
       )}
+
+      <RemarkThreadModal
+        show={showRemarksModal}
+        onHide={() => setShowRemarksModal(false)}
+        remarks={activeRemarks}
+        title={t('auto.parentRemarksReplies', `Parent Remarks & Replies`)}
+      />
 
       {selectedFee && (
         <FeePaymentModal

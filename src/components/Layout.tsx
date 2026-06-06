@@ -3,8 +3,9 @@ import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert,
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import NotificationDropdown from './NotificationDropdown';
-import AdminSubscriptionTab from './dashboards/AdminSubscriptionTab';
 import { useRouter } from 'next/router';
+import { useTheme } from '../context/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 interface Settings {
   appTitle: string;
@@ -17,7 +18,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const user = session?.user;
   const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   const [settings, setSettings] = useState<Settings | null>(null);
+  const { t } = useTranslation('common');
 
   // User settings modal states
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -373,7 +376,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="me-3 app-brand-logo">
                 <Image 
                   src={settings.headerImg} 
-                  alt="Header Image"
+                  alt={t('auto.headerImage', `Header Image`)}
                   className="rounded"
                   style={{ 
                     maxHeight: '60px',
@@ -415,11 +418,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   onClick={handleInstall}
                 >
                   <i className="bi bi-download me-2"></i>
-                  Install
+                  {t('layout.install')}
                 </Button>
               )}
               {status === 'authenticated' && user && (
                 <>
+                  {/* Removed theme toggle */}
                   <div className="me-2 position-relative">
                     <NotificationDropdown />
                   </div>
@@ -428,7 +432,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     size="sm"
                     className="me-2 d-flex align-items-center text-light text-decoration-none p-0 position-relative"
                     onClick={() => router.push('/messages')}
-                    title="Messages"
+                    title={t('auto.messages', `Messages`)}
                   >
                     <i className="bi bi-envelope fs-5"></i>
                     {unreadMessages > 0 && (
@@ -438,6 +442,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     )}
                   </Button>
                   
+                  <NavDropdown 
+                    title={<i className="bi bi-globe fs-5 text-light"></i>} 
+                    id="language-dropdown" 
+                    align="end" 
+                    className="me-2"
+                  >
+                    <NavDropdown.Item onClick={() => {
+                      document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000`;
+                      router.push(router.pathname, router.asPath, { locale: 'en' });
+                    }}>
+                      {t('english', 'English')}
+                    </NavDropdown.Item>
+                    <NavDropdown.Item onClick={() => {
+                      document.cookie = `NEXT_LOCALE=ur; path=/; max-age=31536000`;
+                      router.push(router.pathname, router.asPath, { locale: 'ur' });
+                    }}>
+                      {t('urdu', 'Urdu (اردو)')}
+                    </NavDropdown.Item>
+                  </NavDropdown>
                   <NavDropdown 
                     title={
                       <span className="text-light">
@@ -449,16 +472,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     align="end"
                   >
                     <NavDropdown.Item disabled className="text-muted small">
-                      Role: {user.role}
+                      {t('layout.role')} <bdi>{user.role}</bdi>
                     </NavDropdown.Item>
                     <NavDropdown.Divider />
                     <NavDropdown.Item onClick={() => setShowSettingsModal(true)}>
                       <i className="bi bi-gear me-2"></i>
-                      Settings
+                      {t('layout.userSettings', 'User Settings')}
                     </NavDropdown.Item>
                     <NavDropdown.Item onClick={handleSignOut}>
                       <i className="bi bi-box-arrow-right me-2"></i>
-                      Sign Out
+                      {t('logout', 'Sign Out')}
                     </NavDropdown.Item>
                   </NavDropdown>
                 </>
@@ -467,7 +490,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/auth/signin" passHref>
                   <Nav.Link className="fw-medium">
                     <i className="bi bi-box-arrow-in-right me-1"></i>
-                    Sign In
+                    {t('layout.signIn')}
                   </Nav.Link>
                 </Link>
               )}
@@ -492,7 +515,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="row">
             <div className="col-12 text-center">
               <small>
-                © {new Date().getFullYear()} {settings?.appTitle || 'AIMS'}. All rights reserved.
+                © {new Date().getFullYear()} {settings?.appTitle || 'AIMS'}. {t('layout.allRightsReserved')}
               </small>
               <div className="mt-1">
                 <small className="text-muted fst-italic">
@@ -509,7 +532,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-gear me-2"></i>
-            User Settings
+            {t('layout.userSettings')}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -517,34 +540,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
           
           <Tabs defaultActiveKey="password" className="mb-3">
-            <Tab eventKey="password" title="Password">
+            <Tab eventKey="password" title={t('layout.password')}>
               <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label>Current Password</Form.Label>
+                  <Form.Label>{t('layout.currentPassword')}</Form.Label>
                   <Form.Control
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
+                    placeholder={t('layout.currentPassword')}
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>New Password</Form.Label>
+                  <Form.Label>{t('layout.newPassword')}</Form.Label>
                   <Form.Control
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
+                    placeholder={t('layout.newPassword')}
                     minLength={6}
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Confirm New Password</Form.Label>
+                  <Form.Label>{t('layout.confirmNewPassword')}</Form.Label>
                   <Form.Control
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
+                    placeholder={t('layout.confirmNewPassword')}
                     minLength={6}
                   />
                 </Form.Group>
@@ -554,15 +577,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   disabled={updating}
                 >
                   {updating ? <Spinner animation="border" size="sm" className="me-2" /> : null}
-                  Change Password
+                  {t('layout.changePassword')}
                 </Button>
               </Form>
             </Tab>
             
-            <Tab eventKey="email" title="Email">
+            <Tab eventKey="email" title={t('layout.email')}>
               <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label>Current Email</Form.Label>
+                  <Form.Label>{t('layout.currentEmail')}</Form.Label>
                   <Form.Control
                     type="email"
                     value={user?.email || ''}
@@ -570,12 +593,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>New Email Address</Form.Label>
+                  <Form.Label>{t('layout.newEmailAddress')}</Form.Label>
                   <Form.Control
                     type="email"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    placeholder="Enter new email address"
+                    placeholder={t('layout.newEmailAddress')}
                   />
                 </Form.Group>
                 <Button 
@@ -584,57 +607,57 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   disabled={updating}
                 >
                   {updating ? <Spinner animation="border" size="sm" className="me-2" /> : null}
-                  Change Email
+                  {t('layout.changeEmail')}
                 </Button>
               </Form>
             </Tab>
             
-            <Tab eventKey="security" title="Security Questions">
+            <Tab eventKey="security" title={t('layout.securityQuestions')}>
               <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label>Security Question 1</Form.Label>
+                  <Form.Label>{t('layout.securityQuestion1')}</Form.Label>
                   <Form.Select
                     value={secretQuestion1}
                     onChange={(e) => setSecretQuestion1(e.target.value)}
                   >
-                    <option value="">Select a question...</option>
+                    <option value="">{t('layout.selectQuestion')}</option>
                     {secretQuestions.map((question, index) => (
                       <option key={index} value={question}>{question}</option>
                     ))}
                   </Form.Select>
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Answer 1</Form.Label>
+                  <Form.Label>{t('layout.answer1')}</Form.Label>
                   <Form.Control
                     type="text"
                     value={secretAnswer1}
                     onChange={(e) => setSecretAnswer1(e.target.value)}
-                    placeholder="Enter your answer"
+                    placeholder={t('layout.answer1')}
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Security Question 2</Form.Label>
+                  <Form.Label>{t('layout.securityQuestion2')}</Form.Label>
                   <Form.Select
                     value={secretQuestion2}
                     onChange={(e) => setSecretQuestion2(e.target.value)}
                   >
-                    <option value="">Select a question...</option>
+                    <option value="">{t('layout.selectQuestion')}</option>
                     {secretQuestions.map((question, index) => (
                       <option key={index} value={question}>{question}</option>
                     ))}
                   </Form.Select>
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Answer 2</Form.Label>
+                  <Form.Label>{t('layout.answer2')}</Form.Label>
                   <Form.Control
                     type="text"
                     value={secretAnswer2}
                     onChange={(e) => setSecretAnswer2(e.target.value)}
-                    placeholder="Enter your answer"
+                    placeholder={t('layout.answer2')}
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Timezone</Form.Label>
+                  <Form.Label>{t('layout.timezone')}</Form.Label>
                   <Form.Select
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
@@ -650,49 +673,49 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   disabled={updating}
                 >
                   {updating ? <Spinner animation="border" size="sm" className="me-2" /> : null}
-                  Update Security Settings
+                  {t('layout.updateSecuritySettings')}
                 </Button>
               </Form>
             </Tab>
 
-            <Tab eventKey="notifications" title="Notifications">
+            <Tab eventKey="notifications" title={t('layout.notifications')}>
               <Form>
                 <Form.Group className="mb-3">
                   <Form.Check
                     type="switch"
                     id="enable-notifications"
-                    label="Enable Notifications"
+                    label={t('layout.enableNotifications')}
                     checked={enableNotifications}
                     onChange={(e) => setEnableNotifications(e.target.checked)}
                   />
                   <Form.Text className="text-muted">
-                    Master switch for all notifications
+                    {t('layout.masterSwitch')}
                   </Form.Text>
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Check
                     type="switch"
                     id="email-notifications"
-                    label="Email Notifications"
+                    label={t('layout.emailNotifications')}
                     checked={emailNotifications}
                     onChange={(e) => setEmailNotifications(e.target.checked)}
                     disabled={!enableNotifications}
                   />
                   <Form.Text className="text-muted">
-                    Receive notifications via email
+                    {t('layout.receiveViaEmail')}
                   </Form.Text>
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Check
                     type="switch"
                     id="parent-remark-notifications"
-                    label="Parent Remark Notifications"
+                    label={t('layout.parentRemarkNotifications')}
                     checked={parentRemarkNotifications}
                     onChange={(e) => setParentRemarkNotifications(e.target.checked)}
                     disabled={!enableNotifications}
                   />
                   <Form.Text className="text-muted">
-                    Get notified when parents add remarks
+                    {t('layout.getNotified')}
                   </Form.Text>
                 </Form.Group>
                 <Button 
@@ -701,17 +724,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   disabled={updating}
                 >
                   {updating ? <Spinner animation="border" size="sm" className="me-2" /> : null}
-                  Update Notification Settings
+                  {t('layout.updateNotificationSettings')}
                 </Button>
               </Form>
             </Tab>
-            {user?.role === 'ADMIN' && (
-              <Tab eventKey="admin-subscriptions" title={<span><i className="bi bi-wallet2 me-2"></i>Subscription & Payments</span>}>
-                <div className="mt-3">
-                  <AdminSubscriptionTab />
-                </div>
-              </Tab>
-            )}
           </Tabs>
         </Modal.Body>
       </Modal>

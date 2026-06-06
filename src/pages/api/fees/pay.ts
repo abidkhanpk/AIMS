@@ -37,7 +37,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const fee = await prisma.fee.findUnique({
       where: { id: feeId },
-      include: { feeDefinition: true },
+      include: { 
+        feeDefinition: true,
+        student: true 
+      },
     });
 
     if (!fee) {
@@ -59,6 +62,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ message: 'Not authorized to pay this fee' });
     }
 
+    // Defense-in-depth: cross-academy check
+    if (user.adminId && fee.student.adminId && user.adminId !== fee.student.adminId) {
+      return res.status(403).json({ message: 'Access denied: Academy mismatch' });
+    }
+
     const updatedFee = await prisma.fee.update({
       where: { id: feeId },
       data: {
@@ -71,9 +79,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    if (fee.feeDefinition) {
+    const adminIdToNotify = fee.feeDefinition?.adminId || fee.student.adminId;
+    if (adminIdToNotify) {
       const admin = await prisma.user.findUnique({
-        where: { id: fee.feeDefinition.adminId },
+        where: { id: adminIdToNotify },
       });
 
       if (admin) {

@@ -26,6 +26,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             id: true,
             name: true,
             email: true,
+            studentParents: {
+              include: {
+                parent: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                }
+              }
+            },
             studentCourses: {
               include: {
                 course: {
@@ -97,6 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return {
         ...rest,
         testRecords: studentTestRecords || [],
+        parents: (student as any).studentParents?.map((ps: any) => ps.parent) || [],
       };
     });
 

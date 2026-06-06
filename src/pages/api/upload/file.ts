@@ -21,18 +21,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // Allow all authenticated roles to upload proofs
     const { folder = 'misc', prefix = 'file' } = (req.query || {}) as { folder?: string; prefix?: string };
     const appSettings = await prisma.appSettings.findFirst();
     const provider = (appSettings?.storageProvider as 'DRIVE' | 'CLOUDINARY' | null) || 'DRIVE';
     const cloudinaryFolder = appSettings?.cloudinaryFolder;
     const driveFolder = appSettings?.driveFolderId;
     const { file } = await parseUploadForm(req, 'file');
+
+    const isTemp = folder === 'payment-proofs-temp';
+
     const uploadResult = await uploadFileWithProvider(file, provider, {
       namePrefix: `${prefix}`.toLowerCase(),
       folderName: provider === 'CLOUDINARY'
-        ? (cloudinaryFolder || `${folder}`.toLowerCase())
-        : (driveFolder || `${folder}`.toLowerCase()),
+        ? (isTemp
+            ? (cloudinaryFolder ? `${cloudinaryFolder}/payment-proofs-temp` : 'payment-proofs-temp')
+            : (cloudinaryFolder || `${folder}`.toLowerCase()))
+        : (isTemp
+            ? 'payment-proofs-temp'
+            : (driveFolder || `${folder}`.toLowerCase())),
+      driveFolderId: driveFolder,
     });
 
     res.status(200).json({

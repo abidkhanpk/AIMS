@@ -48,9 +48,32 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 id: true,
                 name: true,
               }
+            },
+            parentRemarks: {
+              include: {
+                parent: {
+                  select: {
+                    id: true,
+                    name: true,
+                  }
+                },
+                replies: {
+                  include: {
+                    author: {
+                      select: {
+                        id: true,
+                        name: true,
+                        role: true,
+                      }
+                    }
+                  },
+                  orderBy: { createdAt: 'asc' as const },
+                },
+              },
+              orderBy: { createdAt: 'desc' as const },
             }
           },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' as const }
         },
         studentTestRecords: {
           include: {

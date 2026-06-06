@@ -1,3 +1,4 @@
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
@@ -5,8 +6,11 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { SalaryManagementTab } from '../../components/dashboards/AdminDashboard';
+import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminSalariesPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -42,29 +46,44 @@ export default function AdminSalariesPage() {
       remarks: '/dashboard/parent-remarks',
       fees: '/dashboard/fees',
       'fee-verification': '/dashboard/fee-verification',
+      subjects: '/dashboard/subjects',
+      assignments: '/dashboard/assignments',
+      'attendance-reports': '/dashboard/attendance-reports',
+      'report-cards': '/dashboard/report-cards',
     };
     router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="salaries" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h2 className="h5 mb-1">
-                  <i className="bi bi-wallet2 me-2"></i>
-                  Salaries
-                </h2>
-                <p className="text-muted mb-0">Manage teacher salaries</p>
+    <>
+      <Head>
+        <title>{t('menu.salaries', 'Salaries') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="salaries" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <h2 className="h5 mb-1">
+                    <i className="bi bi-wallet2 me-2"></i>
+                    {t('auto.salaries', `Salaries`)}
+                  </h2>
+                  <p className="text-muted mb-0">{t('auto.manageTeacherSalaries', `Manage teacher salaries`)}</p>
+                </div>
               </div>
+              <SalaryManagementTab />
             </div>
-            <SalaryManagementTab />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
+export const getStaticProps = async ({ locale }: any) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'en', ['common'])),
+  },
+});

@@ -39,6 +39,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             id: true,
             name: true,
             email: true,
+            settings: {
+              select: {
+                appTitle: true
+              }
+            }
           }
         }
       }
@@ -89,12 +94,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         where: { role: 'DEVELOPER' }
       });
 
+      const academyName = (subscription.admin as any)?.settings?.appTitle || 'their academy';
       for (const developer of developers) {
         await prisma.notification.create({
           data: {
             type: 'PAYMENT_PROCESSING',
             title: 'Subscription Payment Submitted',
-            message: `${subscription.admin?.name || 'Admin'} has submitted a payment of ${subscription.currency} ${paidAmount} for their ${subscription.plan.toLowerCase()} subscription. Please verify and confirm.`,
+            message: `${subscription.admin?.name || 'Admin'} has submitted a payment of ${subscription.currency} ${paidAmount} for ${academyName} (${subscription.plan.toLowerCase()} subscription). Please verify and confirm.`,
             senderId: session.user.id,
             receiverId: developer.id,
           }

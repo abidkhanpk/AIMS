@@ -2,13 +2,15 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '../../../lib/prisma';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  // Simple API key check for cron job security
+  // Verify cron job authorization
+  const authHeader = req.headers.authorization;
   const apiKey = req.headers['x-api-key'];
-  if (apiKey !== process.env.CRON_API_KEY) {
+  
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && apiKey !== process.env.CRON_API_KEY) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 

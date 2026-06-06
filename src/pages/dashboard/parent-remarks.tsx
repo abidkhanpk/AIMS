@@ -1,3 +1,4 @@
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
@@ -5,8 +6,11 @@ import { Spinner } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 import { RemarksTab } from '../../components/dashboards/AdminDashboard';
+import { useTranslation } from 'react-i18next';
+import Head from 'next/head';
 
 export default function AdminParentRemarksPage() {
+    const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -41,29 +45,44 @@ export default function AdminParentRemarksPage() {
       fees: '/dashboard/fees',
       'fee-verification': '/dashboard/fee-verification',
       salaries: '/dashboard/salaries',
+      subjects: '/dashboard/subjects',
+      assignments: '/dashboard/assignments',
+      'attendance-reports': '/dashboard/attendance-reports',
+      'report-cards': '/dashboard/report-cards',
     };
     router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };
 
   return (
-    <div className={menuStyles.menuShell}>
-      <div className={menuStyles.menuLayout}>
-        <AdminMenu activeKey="parent-remarks" onSelect={handleSelect} />
-        <div className={menuStyles.mainContent}>
-          <div className="container-fluid py-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h2 className="h5 mb-1">
-                  <i className="bi bi-chat-dots me-2"></i>
-                  Parent Remarks
-                </h2>
-                <p className="text-muted mb-0">Review remarks and threads</p>
+    <>
+      <Head>
+        <title>{t('menu.parentRemarks', 'Parent Remarks') + ' | AIMS'}</title>
+      </Head>
+      <div className={menuStyles.menuShell}>
+        <div className={menuStyles.menuLayout}>
+          <AdminMenu activeKey="parent-remarks" onSelect={handleSelect} />
+          <div className={menuStyles.mainContent}>
+            <div className="container-fluid py-4">
+              <div className="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                  <h2 className="h5 mb-1">
+                    <i className="bi bi-chat-dots me-2"></i>
+                    {t('auto.parentRemarks', `Parent Remarks`)}
+                  </h2>
+                  <p className="text-muted mb-0">{t('auto.reviewRemarksAndThreads', `Review remarks and threads`)}</p>
+                </div>
               </div>
+              <RemarksTab />
             </div>
-            <RemarksTab />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
+export const getStaticProps = async ({ locale }: any) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'en', ['common'])),
+  },
+});

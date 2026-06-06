@@ -3,13 +3,15 @@ import { prisma } from '../../../lib/prisma';
 import { PayType } from '@prisma/client';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
+  if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  // Verify cron job authorization (you can add API key verification here)
+  // Verify cron job authorization
   const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const apiKey = req.headers['x-api-key'];
+
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && apiKey !== process.env.CRON_API_KEY) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 

@@ -32,8 +32,9 @@
 
 .navbar {
   top: 80px;
-  left: 0;
+  inset-inline-start: 0;
   padding: 0.35rem 0.25rem 0.75rem;
+  padding-top: 0.65rem;
   width: var(--collapsed-width);
   height: calc(100vh - 80px);
   position: fixed;
@@ -86,7 +87,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   transition: all .2s cubic-bezier(var(--transition-main), 1);
   font-size: 0.9rem;
   line-height: 1.15;
@@ -112,7 +113,7 @@
 .navbarItemInnerActive::before {
   content: '';
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 16%;
   bottom: 16%;
   width: 3px;
@@ -142,6 +143,7 @@
   transition: all .25s cubic-bezier(var(--transition-main), 1);
   overflow: hidden;
   opacity: 0;
+  line-height: 2;
 }
 
 .navbar:hover .linkText {
@@ -162,7 +164,7 @@
 
 .arrow {
   font-size: 0.8rem;
-  margin-left: auto;
+  margin-inline-start: auto;
   opacity: 0.7;
 }
 
@@ -223,7 +225,7 @@
   }
 
   .mainContent {
-    margin-left: 0;
+    margin-inline-start: 0;
     width: 100%;
   }
 }
@@ -240,10 +242,12 @@
 
 .mainContent {
   flex: 1;
-  margin-left: var(--collapsed-width);
+  margin-inline-start: var(--collapsed-width);
   padding: 1.5rem 1rem 3rem;
   background-color: hsl(var(--background));
-  transition: margin-left .35s cubic-bezier(var(--transition-main), 1);
+  transition: margin-inline-start .35s cubic-bezier(var(--transition-main), 1);
+  overflow-x: hidden;
+  max-width: calc(100vw - var(--collapsed-width));
 }
 
 .flexCol {
@@ -312,6 +316,6 @@
   }
 
   .mainContent {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }

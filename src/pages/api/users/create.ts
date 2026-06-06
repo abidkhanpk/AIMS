@@ -32,6 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Admin subscription fields
     subscriptionType,
     subscriptionAmount,
+    subscriptionCurrency,
     subscriptionStartDate,
     subscriptionEndDate
   } = req.body;
@@ -157,6 +158,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           adminId: user.id,
           appTitle: 'AIMS',
           headerImg: '/assets/default-logo.png',
+          defaultCurrency: subscriptionCurrency || 'USD',
           subscriptionType: subType,
           subscriptionAmount: subAmount,
           subscriptionStartDate: subStartDate,
@@ -170,6 +172,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           adminId: user.id,
           plan: subType,
           amount: subAmount,
+          currency: subscriptionCurrency || 'USD',
           startDate: subStartDate,
           endDate: subEndDate,
           status: subEndDate && subEndDate > new Date() ? 'ACTIVE' : 'EXPIRED',

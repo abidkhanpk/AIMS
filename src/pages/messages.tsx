@@ -1,8 +1,10 @@
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, Table, Alert, Spinner, Badge } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import MessageThreadModal, { MessageItem } from '../components/messages/MessageThreadModal';
 import DirectMessageModal from '../components/messages/DirectMessageModal';
+import { useTranslation } from 'react-i18next';
 
 function buildThreads(messagesList: any[], currentUserId?: string | null) {
   const map = new Map<
@@ -40,6 +42,7 @@ function buildThreads(messagesList: any[], currentUserId?: string | null) {
 }
 
 export default function MessagesPage() {
+    const { t } = useTranslation('common');
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const [messages, setMessages] = useState<any[]>([]);
@@ -74,6 +77,10 @@ export default function MessagesPage() {
 
   useEffect(() => {
     fetchMessages();
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const threads = useMemo(() => buildThreads(messages, currentUserId), [messages, currentUserId]);
@@ -148,15 +155,26 @@ export default function MessagesPage() {
     <div className="container py-4">
       <h1 className="h4 mb-4">
         <i className="bi bi-envelope me-2"></i>
-        Messages
-      </h1>
+        {t('auto.messages', `Messages`)}
+                    </h1>
 
       {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
 
       <Card>
         <Card.Header className="d-flex justify-content-between align-items-center">
-          <span>Inbox</span>
-          <span className="text-muted small">{threads.length} thread{threads.length === 1 ? '' : 's'}</span>
+          <div>
+            <span className="me-3 fw-bold">{t('auto.inbox', `Inbox`)}</span>
+            <button 
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setComposerTarget({ id: null, subject: '' });
+                setShowComposer(true);
+              }}
+            >
+              <i className="bi bi-pencil-square me-1"></i> {t('auto.newMessage', `New Message`)}
+                                      </button>
+          </div>
+          <span className="text-muted small">{threads.length} {t('auto.thread', `thread`)}{threads.length === 1 ? '' : 's'}</span>
         </Card.Header>
         <Card.Body className="p-0">
           {loading ? (
@@ -164,35 +182,35 @@ export default function MessagesPage() {
               <Spinner animation="border" size="sm" />
             </div>
           ) : threads.length === 0 ? (
-            <div className="text-center py-4 text-muted">No messages</div>
+            <div className="text-center py-4 text-muted">{t('auto.noMessages', `No messages`)}</div>
           ) : (
             <div className="table-responsive">
               <Table hover size="sm" className="mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th>From / To</th>
-                    <th>Role</th>
-                    <th>Subject</th>
-                    <th>Date</th>
-                    <th>Status</th>
+                    <th>{t('auto.fromTo', `From / To`)}</th>
+                    <th>{t('auto.role', `Role`)}</th>
+                    <th>{t('auto.subject', `Subject`)}</th>
+                    <th>{t('auto.date', `Date`)}</th>
+                    <th>{t('auto.status', `Status`)}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {threads.map((t) => {
-                    const other = t.other;
+                  {threads.map((thread) => {
+                    const other = thread.other;
                     return (
-                      <tr key={t.threadId} role="button" onClick={() => openThread(t.threadId)}>
+                      <tr key={thread.threadId} role="button" onClick={() => openThread(thread.threadId)}>
                         <td className="fw-semibold">
                           {other?.name || 'User'}
                         </td>
                         <td className="text-muted small">{other?.role || '-'}</td>
-                        <td className="small">{t.subject || 'No subject'}</td>
-                        <td className="text-muted small">{new Date(t.lastDate).toLocaleString()}</td>
+                        <td className="small">{thread.subject || 'No subject'}</td>
+                        <td className="text-muted small">{new Date(thread.lastDate).toLocaleString()}</td>
                         <td>
-                          {t.unreadCount > 0 ? (
-                            <Badge bg="danger">{t.unreadCount} new</Badge>
+                          {thread.unreadCount > 0 ? (
+                            <Badge bg="danger">{thread.unreadCount} {t('auto.new', `new`)}</Badge>
                           ) : (
-                            <Badge bg="secondary">Read</Badge>
+                            <Badge bg="secondary">{t('auto.read', `Read`)}</Badge>
                           )}
                         </td>
                       </tr>
@@ -234,3 +252,9 @@ export default function MessagesPage() {
     </div>
   );
 }
+
+export const getStaticProps = async ({ locale }: any) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'en', ['common'])),
+  },
+});

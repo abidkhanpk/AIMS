@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Form, Button, Table, Card, Row, Col, Alert, Spinner, Badge, Modal } from 'react-bootstrap';
 import { RelationType } from '@prisma/client';
+import { useTranslation } from 'react-i18next';
 
 interface User {
   id: string;
@@ -69,6 +70,7 @@ const getRelationTypeBadgeColor = (relationType: RelationType) => {
 };
 
 export default function ParentAssociationSubform({ studentId, onAssociationChange }: ParentAssociationSubformProps) {
+    const { t } = useTranslation('common');
   const [parents, setParents] = useState<User[]>([]);
   const [associations, setAssociations] = useState<ParentAssociation[]>([]);
   const [loading, setLoading] = useState(false);
@@ -227,7 +229,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
     return (
       <div className="text-center py-3">
         <Spinner animation="border" size="sm" />
-        <p className="mt-2 text-muted small">Loading parent associations...</p>
+        <p className="mt-2 text-muted small">{t('auto.loadingParentAssociations', `Loading parent associations...`)}</p>
       </div>
     );
   }
@@ -243,20 +245,20 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
             <Card.Header className="bg-info text-white">
               <h6 className="mb-0">
                 <i className="bi bi-person-plus me-2"></i>
-                Add Parent Association
-              </h6>
+                {t('auto.addParentAssociation', `Add Parent Association`)}
+                                            </h6>
             </Card.Header>
             <Card.Body>
               <Form onSubmit={handleCreateAssociation}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Select Parent *</Form.Label>
+                  <Form.Label>{t('auto.selectParent', `Select Parent *`)}</Form.Label>
                   <Form.Select 
                     value={selectedParent}
                     onChange={(e) => setSelectedParent(e.target.value)}
                     required
                     size="sm"
                   >
-                    <option value="">Choose a parent...</option>
+                    <option value="">{t('auto.chooseAParent', `Choose a parent...`)}</option>
                     {availableParents.map(parent => (
                       <option key={parent.id} value={parent.id}>
                         {parent.name} ({parent.email})
@@ -265,13 +267,13 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                   </Form.Select>
                   {availableParents.length === 0 && (
                     <Form.Text className="text-muted">
-                      All available parents are already associated with this student.
-                    </Form.Text>
+                      {t('auto.allAvailableParentsAreAlreadyA', `All available parents are already associated with this student.`)}
+                                                              </Form.Text>
                   )}
                 </Form.Group>
 
                 <Form.Group className="mb-4">
-                  <Form.Label>Relation Type *</Form.Label>
+                  <Form.Label>{t('auto.relationType', `Relation Type *`)}</Form.Label>
                   <Form.Select 
                     value={relationType}
                     onChange={(e) => setRelationType(e.target.value as RelationType)}
@@ -296,13 +298,13 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                   {creating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Adding...
-                    </>
+                      {t('auto.adding', `Adding...`)}
+                                                              </>
                   ) : (
                     <>
                       <i className="bi bi-person-plus me-2"></i>
-                      Add Association
-                    </>
+                      {t('auto.addAssociation', `Add Association`)}
+                                                                  </>
                   )}
                 </Button>
               </Form>
@@ -316,8 +318,8 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
               <div className="d-flex justify-content-between align-items-center">
                 <h6 className="mb-0">
                   <i className="bi bi-people me-2"></i>
-                  Associated Parents
-                </h6>
+                  {t('auto.associatedParents', `Associated Parents`)}
+                                                  </h6>
                 <Badge bg="info">{associations.length}</Badge>
               </div>
             </Card.Header>
@@ -325,18 +327,18 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
               {associations.length === 0 ? (
                 <div className="text-center py-4">
                   <i className="bi bi-people display-6 text-muted"></i>
-                  <p className="mt-2 text-muted small">No parent associations found</p>
+                  <p className="mt-2 text-muted small">{t('auto.noParentAssociationsFound', `No parent associations found`)}</p>
                 </div>
               ) : (
                 <div className="table-responsive">
                   <Table hover size="sm" className="mb-0">
                     <thead className="table-light">
                       <tr>
-                        <th>Parent Name</th>
-                        <th>Email</th>
-                        <th>Mobile</th>
-                        <th>Relation</th>
-                        <th>Actions</th>
+                        <th>{t('auto.parentName', `Parent Name`)}</th>
+                        <th>{t('auto.email', `Email`)}</th>
+                        <th>{t('auto.mobile', `Mobile`)}</th>
+                        <th>{t('auto.relation', `Relation`)}</th>
+                        <th>{t('auto.actions', `Actions`)}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -356,7 +358,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                                 variant="outline-warning"
                                 size="sm"
                                 onClick={() => handleEditAssociation(association)}
-                                title="Edit Relation"
+                                title={t('auto.editRelation', `Edit Relation`)}
                               >
                                 <i className="bi bi-pencil"></i>
                               </Button>
@@ -364,7 +366,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                                 variant="outline-danger"
                                 size="sm"
                                 onClick={() => handleDeleteAssociation(association.id)}
-                                title="Remove Association"
+                                title={t('auto.removeAssociation', `Remove Association`)}
                               >
                                 <i className="bi bi-person-dash"></i>
                               </Button>
@@ -386,17 +388,17 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
         <Modal.Header closeButton>
           <Modal.Title>
             <i className="bi bi-pencil me-2"></i>
-            Edit Parent Relation
-          </Modal.Title>
+            {t('auto.editParentRelation', `Edit Parent Relation`)}
+                                </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {editingAssociation && (
             <Form onSubmit={handleUpdateAssociation}>
               <div className="mb-3">
-                <strong>Parent:</strong> {editingAssociation.parent.name}
+                <strong>{t('auto.parent', `Parent:`)}</strong> {editingAssociation.parent.name}
               </div>
               <Form.Group className="mb-4">
-                <Form.Label>Relation Type *</Form.Label>
+                <Form.Label>{t('auto.relationType', `Relation Type *`)}</Form.Label>
                 <Form.Select 
                   value={editRelationType}
                   onChange={(e) => setEditRelationType(e.target.value as RelationType)}
@@ -411,8 +413,8 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
               </Form.Group>
               <div className="d-flex justify-content-end gap-2">
                 <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                  Cancel
-                </Button>
+                  {t('auto.cancel', `Cancel`)}
+                                                  </Button>
                 <Button
                   type="submit"
                   variant="warning"
@@ -421,13 +423,13 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                   {updating ? (
                     <>
                       <Spinner animation="border" size="sm" className="me-2" />
-                      Updating...
-                    </>
+                      {t('auto.updating', `Updating...`)}
+                                                              </>
                   ) : (
                     <>
                       <i className="bi bi-check-circle me-2"></i>
-                      Update
-                    </>
+                      {t('auto.update', `Update`)}
+                                                                  </>
                   )}
                 </Button>
               </div>

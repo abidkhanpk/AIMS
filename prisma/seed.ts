@@ -6,13 +6,30 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seeding...');
 
+  const today = new Date();
+  const subscriptionEndDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 5, 10, 0, 0);
+
+  function getRelativeDate(monthsOffset: number, dayOfMonth: number, hours = 10): Date {
+    // Return safe day of month matching month length boundaries
+    const d = new Date(today.getFullYear(), today.getMonth() + monthsOffset, 1, hours, 0, 0, 0);
+    const maxDays = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(dayOfMonth, maxDays));
+    return d;
+  }
+
+  function getMonthName(monthNumber: number): string {
+    const tempDate = new Date();
+    tempDate.setMonth(monthNumber - 1);
+    return tempDate.toLocaleString('en-US', { month: 'long' });
+  }
+
   // Create Developer
   const developer = await prisma.user.upsert({
-    where: { email: 'info@mmsurdu.pk' },
+    where: { email: 'info@absons.net' },
     update: {},
     create: {
-      name: 'System Developer',
-      email: 'info@mmsurdu.pk',
+      name: 'Developer',
+      email: 'info@absons.net',
       password: bcrypt.hashSync('developer123', 10),
       role: 'DEVELOPER',
     },
@@ -37,11 +54,22 @@ async function main() {
   // Create Admin Settings
   await prisma.settings.upsert({
     where: { adminId: admin.id },
-    update: {},
+    update: {
+      defaultCurrency: 'PKR',
+      subscriptionAmount: 5000.0,
+      subscriptionType: 'MONTHLY',
+      subscriptionStartDate: getRelativeDate(-2, 1, 0),
+      subscriptionEndDate: subscriptionEndDate,
+    },
     create: {
       adminId: admin.id,
       appTitle: 'Eilm-e-Quran Academy',
       headerImg: 'https://via.placeholder.com/200x60/28a745/ffffff?text=Greenwood+Academy',
+      defaultCurrency: 'PKR',
+      subscriptionAmount: 5000.0,
+      subscriptionType: 'MONTHLY',
+      subscriptionStartDate: getRelativeDate(-2, 1, 0),
+      subscriptionEndDate: subscriptionEndDate,
     },
   });
 
@@ -337,9 +365,62 @@ async function main() {
 
   console.log('✅ Class assignments created');
 
+  // Seeding Fee Definitions
+  console.log('Generating fee definitions...');
+  const pkrFeeDef = await prisma.feeDefinition.upsert({
+    where: { id: 'f17446b1-acfa-4c15-b587-64d8428a53b6' },
+    update: {},
+    create: {
+      id: 'f17446b1-acfa-4c15-b587-64d8428a53b6',
+      adminId: admin.id,
+      title: 'Tuition Fee',
+      description: 'Monthly tuition fee in PKR',
+      amount: 5000.0,
+      currency: 'PKR',
+      type: 'MONTHLY',
+      generationDay: 1,
+      startDate: new Date('2026-06-01'),
+      dueAfterDays: 10,
+    },
+  });
+
+  const usdFeeDef = await prisma.feeDefinition.upsert({
+    where: { id: 'usd-tuition-fee-def-id' },
+    update: {},
+    create: {
+      id: 'usd-tuition-fee-def-id',
+      adminId: admin.id,
+      title: 'Tuition Fee (USD)',
+      description: 'Monthly tuition fee in USD',
+      amount: 60.0,
+      currency: 'USD',
+      type: 'MONTHLY',
+      generationDay: 1,
+      startDate: new Date('2026-06-01'),
+      dueAfterDays: 7,
+    },
+  });
+
+  // Link Definitions to Students
+  const studentFeeDefs = [
+    { studentId: student1.id, feeDefinitionId: pkrFeeDef.id },
+    { studentId: student2.id, feeDefinitionId: pkrFeeDef.id },
+    { studentId: student3.id, feeDefinitionId: usdFeeDef.id },
+  ];
+
+  for (const sfd of studentFeeDefs) {
+    await prisma.studentFeeDefinition.upsert({
+      where: { studentId_feeDefinitionId: { studentId: sfd.studentId, feeDefinitionId: sfd.feeDefinitionId } },
+      update: {},
+      create: sfd,
+    });
+  }
+  console.log('✅ Fee definitions seeded');
+
   // Progress records
-  // Progress records with explicit dates (spread across days)
+  // Students with multiple subjects have progress for each subject on each day
   const progressRecords = [
+    // Student 1 - Tajweed + Basic Islamic Education across 3 days
     {
       studentId: student1.id,
       courseId: tajweedCourse.id,
@@ -360,7 +441,7 @@ async function main() {
       lessonProgress: 78,
       remarks: 'Understands meanings; needs fluency without looking.',
       attendance: 'PRESENT' as const,
-      date: new Date('2024-09-02'),
+      date: new Date('2024-09-01'),
     },
     {
       studentId: student1.id,
@@ -371,8 +452,43 @@ async function main() {
       lessonProgress: 90,
       remarks: 'Good pace; minor tajweed slips on qaf.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student1.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Adab of greeting & respect',
+      homework: 'List 3 ways to greet elders respectfully',
+      lessonProgress: 81,
+      remarks: 'Polite responses; needs more confidence speaking aloud.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student1.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Surah Al-Ikhlas with madd',
+      homework: 'Record recitation focusing on madd letters',
+      lessonProgress: 84,
+      remarks: 'Madd timing improved; slight stretching on laam.',
+      attendance: 'LATE' as const,
       date: new Date('2024-09-03'),
     },
+    {
+      studentId: student1.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Pillars of Salah review',
+      homework: 'Write pillars in order and memorize first 3',
+      lessonProgress: 86,
+      remarks: 'Remembers sequence; clarify rukn vs sunnah.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-03'),
+    },
+
+    // Student 2 - Tajweed + Basic Islamic Education across 3 days
     {
       studentId: student2.id,
       courseId: tajweedCourse.id,
@@ -393,8 +509,54 @@ async function main() {
       lessonProgress: 74,
       remarks: 'Interested and asks good questions; needs concise summaries.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-01'),
+    },
+    {
+      studentId: student2.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Idghaam without ghunnah practice',
+      homework: 'Highlight examples in Surah Al-Baqarah ayat 6-10',
+      lessonProgress: 79,
+      remarks: 'Misses one example; revisit qalqalah after idghaam.',
+      attendance: 'PRESENT' as const,
       date: new Date('2024-09-02'),
     },
+    {
+      studentId: student2.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Stories of the Sahaba: Abu Bakr (RA)',
+      homework: 'Prepare 3 bullet points on his support in Makkah',
+      lessonProgress: 77,
+      remarks: 'Summaries improving; needs louder voice while presenting.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student2.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Qalqalah sughra vs kubra',
+      homework: 'Practice with 10 example words; send recording',
+      lessonProgress: 83,
+      remarks: 'Clear qalqalah; keep pauses short between words.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-03'),
+    },
+    {
+      studentId: student2.id,
+      courseId: basicIslamicEduCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Taharah basics',
+      homework: 'List items that nullify wudhu',
+      lessonProgress: 80,
+      remarks: 'Understands concepts; confirm with a short quiz next class.',
+      attendance: 'PRESENT' as const,
+      date: new Date('2024-09-03'),
+    },
+
+    // Student 3 - Single subject (Tajweed), more records
     {
       studentId: student3.id,
       courseId: tajweedCourse.id,
@@ -415,14 +577,40 @@ async function main() {
       lessonProgress: 76,
       remarks: 'Pronunciation improving; keep steady pace.',
       attendance: 'PRESENT' as const,
+      date: new Date('2024-09-02'),
+    },
+    {
+      studentId: student3.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Makharij drill: throat letters',
+      homework: 'Record ح خ ع غ repetitions',
+      lessonProgress: 72,
+      remarks: 'ع articulation still soft; practice with mirror.',
+      attendance: 'LATE' as const,
+      date: new Date('2024-09-03'),
+    },
+    {
+      studentId: student3.id,
+      courseId: tajweedCourse.id,
+      teacherId: teacher.id,
+      lesson: 'Tafkheem vs Tarqeeq (Ra examples)',
+      homework: 'Highlight tafkheem/tarqeeq in short surahs',
+      lessonProgress: 78,
+      remarks: 'Better control on ra; minor slips on connected words.',
+      attendance: 'PRESENT' as const,
       date: new Date('2024-09-04'),
     },
   ];
 
   const createdProgress: Array<{ id: string; studentId: string; courseId: string }> = [];
   for (const progress of progressRecords) {
+    const dayOffset = -12 + (createdProgress.length % 5);
     const created = await prisma.progress.create({
-      data: progress,
+      data: {
+        ...progress,
+        date: getRelativeDate(0, today.getDate() + dayOffset),
+      },
     });
     createdProgress.push(created);
   }
@@ -560,163 +748,176 @@ async function main() {
     },
   ];
 
-  for (const test of testRecords) {
+  // Save test records with dynamic performedAt dates
+  for (let idx = 0; idx < testRecords.length; idx++) {
+    const test = testRecords[idx];
+    const monthOffset = idx % 2 === 0 ? -1 : 0;
+    const day = 5 + (idx * 5);
     await prisma.testRecord.create({
-      data: test,
+      data: {
+        ...test,
+        performedAt: getRelativeDate(monthOffset, day),
+      },
     });
   }
 
   console.log('✅ Test records created');
 
-  // Fees for each student/course
-  const fees = [
-    {
-      studentId: student1.id,
-      courseId: tajweedCourse.id,
-      title: 'Tuition Fee - Tajweed',
-      description: 'Monthly tuition fee for Tajweed ul Quran',
-      amount: 7500.0,
-      currency: 'PKR',
-      dueDate: new Date('2024-10-05'),
-      status: 'PENDING' as const,
-      month: 10,
-      year: 2024,
-      isRecurring: true,
-    },
-    {
-      studentId: student1.id,
-      courseId: basicIslamicEduCourse.id,
-      title: 'Tuition Fee - Basic Islamic Education',
-      description: 'Monthly tuition fee for Islamic basics and duas',
-      amount: 7000.0,
-      currency: 'PKR',
-      dueDate: new Date('2024-10-05'),
-      status: 'PAID' as const,
-      paidDate: new Date('2024-09-28'),
-      paidById: parent1.id,
-      paidAmount: 7000.0,
-      month: 10,
-      year: 2024,
-      isRecurring: true,
-    },
-    {
-      studentId: student2.id,
-      courseId: tajweedCourse.id,
-      title: 'Tuition Fee - Tajweed',
-      description: 'Monthly tuition fee for Tajweed ul Quran',
-      amount: 8000.0,
-      currency: 'PKR',
-      dueDate: new Date('2024-10-05'),
-      status: 'PROCESSING' as const,
-      paidDate: new Date('2024-10-02'),
-      paidById: parent2.id,
-      paidAmount: 8000.0,
-      month: 10,
-      year: 2024,
-      isRecurring: true,
-    },
-    {
-      studentId: student2.id,
-      courseId: basicIslamicEduCourse.id,
-      title: 'Resource Fee - Seerah & Duas',
-      description: 'Books and worksheets for Seerah & Duas',
-      amount: 2500.0,
-      currency: 'PKR',
-      dueDate: new Date('2024-09-25'),
-      status: 'OVERDUE' as const,
-      month: 9,
-      year: 2024,
-      isRecurring: false,
-    },
-    {
-      studentId: student3.id,
-      courseId: tajweedCourse.id,
-      title: 'Tuition Fee - Qaidah/Tajweed',
-      description: 'Monthly tuition fee for Qaidah/Tajweed',
-      amount: 60.0,
-      currency: 'USD',
-      dueDate: new Date('2024-10-05'),
-      status: 'PENDING' as const,
-      month: 10,
-      year: 2024,
-      isRecurring: true,
-    },
-  ];
+  // Find all assignments
+  const assignments = await prisma.assignment.findMany({
+    include: {
+      student: true,
+      course: true,
+    }
+  });
 
-  for (const fee of fees) {
-    await prisma.fee.create({
-      data: fee,
-    });
+  console.log('Generating dynamic monthly fee records...');
+  // We'll generate fees for the last 3 months (Month -2, Month -1, Month 0)
+  for (let offset = -2; offset <= 0; offset++) {
+    const targetDate = new Date();
+    targetDate.setMonth(targetDate.getMonth() + offset);
+    const m = targetDate.getMonth() + 1;
+    const y = targetDate.getFullYear();
+
+    for (const assoc of assignments) {
+      // Find parent of this student to be the payer
+      const parentRel = await prisma.parentStudent.findFirst({
+        where: { studentId: assoc.studentId },
+      });
+      const parentId = parentRel?.parentId || null;
+
+      const dueDate = getRelativeDate(offset, 10, 23);
+      const paidDate = getRelativeDate(offset, Math.min(3 + Math.floor(Math.random() * 4), 28), 11);
+      const processedDate = new Date(paidDate);
+      processedDate.setHours(processedDate.getHours() + 2);
+
+      const txnId = 'TXN-' + y + String(m).padStart(2, '0') + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      const isLastMonth = offset === 0;
+      const feeDefId = assoc.currency === 'USD' ? 'usd-tuition-fee-def-id' : 'f17446b1-acfa-4c15-b587-64d8428a53b6';
+
+      await prisma.fee.create({
+        data: {
+          studentId: assoc.studentId,
+          courseId: assoc.courseId,
+          feeDefinitionId: feeDefId,
+          title: `Tuition Fee - ${assoc.course?.name || 'Quran Education'}`,
+          description: `Monthly tuition fee for ${assoc.course?.name || 'Quran Education'} (${getMonthName(m)} ${y})`,
+          amount: assoc.monthlyFee || 0.0,
+          currency: assoc.currency,
+          dueDate,
+          status: isLastMonth ? 'PROCESSING' : 'PAID',
+          paidDate,
+          paidById: parentId,
+          paidAmount: assoc.monthlyFee || 0.0,
+          paymentDetails: isLastMonth 
+            ? `${getMonthName(m)} ${y} payment submitted. Please verify uploaded evidence.`
+            : `Paid via Online Banking Transfer. Ref: ${txnId}`,
+          paymentProof: 'https://res.cloudinary.com/demo/image/upload/v1580226922/sample.jpg',
+          processedDate: isLastMonth ? null : processedDate,
+          month: m,
+          year: y,
+          isRecurring: true,
+        },
+      });
+    }
   }
 
   console.log('✅ Fees created');
 
-  // Salary for the single teacher
-  await prisma.salary.create({
-    data: {
-      teacherId: teacher.id,
-      title: 'Monthly Salary - October 2024',
-      description: 'Monthly salary for Tajweed and Basic Islamic Education classes',
-      amount: 42000.0,
-      currency: 'PKR',
-      dueDate: new Date('2024-10-30'),
-      status: 'PENDING',
-      month: 10,
-      year: 2024,
-      payType: 'MONTHLY',
-      isRecurring: true,
-    },
-  });
+  console.log('Generating dynamic monthly salary records...');
+  for (let offset = -2; offset <= 0; offset++) {
+    const targetDate = new Date();
+    targetDate.setMonth(targetDate.getMonth() + offset);
+    const m = targetDate.getMonth() + 1;
+    const y = targetDate.getFullYear();
 
-  console.log('✅ Salary record created');
+    const dueDate = getRelativeDate(offset, 28, 18);
+    const paidDate = getRelativeDate(offset, Math.min(29, 28 + Math.floor(Math.random() * 2)), 10);
+    
+    const txnId = 'SAL-' + y + String(m).padStart(2, '0') + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-  // Admin subscription history (3-4 months, monthly)
-  // Seed monthly subscriptions: two months of history + current month active
-  const now = new Date();
-  const baseStart = new Date(now.getFullYear(), now.getMonth() - 2, 15); // two months back on the 15th
-  const subsToCreate = [];
-  for (let i = 0; i < 3; i++) {
-    const start = new Date(baseStart);
-    start.setMonth(start.getMonth() + i);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 1);
-    subsToCreate.push({
-      adminId: admin.id,
-      plan: 'MONTHLY' as const,
-      amount: 29.99,
-      currency: 'USD',
-      startDate: start,
-      endDate: end,
-      status: SubscriptionStatus.ACTIVE,
-      paidAmount: 29.99,
-      paidDate: new Date(start.getFullYear(), start.getMonth(), start.getDate() - 2),
-      paidById: admin.id,
-      paymentDetails: 'Seeded payment',
-      processedDate: new Date(start.getFullYear(), start.getMonth(), start.getDate() - 1),
-    });
-  }
-  for (const sub of subsToCreate) {
-    await prisma.subscription.create({ data: sub });
-  }
-
-  // Subscription payments history corresponding to the paid subscriptions
-  for (let i = 0; i < 3; i++) {
-    const start = new Date(baseStart);
-    start.setMonth(start.getMonth() + i);
-    const end = new Date(start);
-    end.setMonth(end.getMonth() + 1);
-    await prisma.subscriptionPayment.create({
+    const salary = await prisma.salary.create({
       data: {
-        adminId: admin.id,
-        amount: 29.99,
-        currency: 'USD',
-        plan: 'MONTHLY',
-        paymentDate: new Date(start.getFullYear(), start.getMonth(), start.getDate() - 2),
-        expiryExtended: end,
-        paymentDetails: 'Seeded payment',
-        processedById: developer.id,
+        teacherId: teacher.id,
+        title: `Monthly Salary - ${getMonthName(m)} ${y}`,
+        description: `Monthly salary for Tajweed and Basic Islamic Education classes`,
+        amount: teacher.payRate || 10000.0,
+        currency: teacher.payCurrency || 'PKR',
+        dueDate,
+        status: 'PAID',
+        paidDate,
+        paidById: admin.id,
+        paidAmount: teacher.payRate || 10000.0,
+        paymentDetails: `Salary credited via Direct Deposit. Ref: ${txnId}`,
+        month: m,
+        year: y,
+        payType: 'MONTHLY',
+        isRecurring: true,
       },
     });
+
+    // Create SalaryPayment audit log
+    await prisma.salaryPayment.create({
+      data: {
+        teacherId: teacher.id,
+        adminId: admin.id,
+        salaryId: salary.id,
+        amount: teacher.payRate || 10000.0,
+        currency: teacher.payCurrency || 'PKR',
+        paidDate,
+        paymentDetails: `Monthly salary payment processed for ${getMonthName(m)} ${y}`,
+      },
+    });
+  }
+
+  console.log('✅ Salary records created');
+
+  console.log('Generating dynamic developer subscriptions...');
+  for (let offset = -2; offset <= 0; offset++) {
+    const targetDate = new Date();
+    targetDate.setMonth(targetDate.getMonth() + offset);
+    const m = targetDate.getMonth() + 1;
+    const y = targetDate.getFullYear();
+
+    const start = getRelativeDate(offset, 1, 0);
+    const end = getRelativeDate(offset + 1, 1, 0); // end is first of next month
+
+    const isCurrentMonth = offset === 0;
+
+    if (isCurrentMonth) {
+      // Seed a single subscription record representing the current billing period as active but expiring in 5 days (so they can log in but must renew)
+      await prisma.subscription.create({
+        data: {
+          adminId: admin.id,
+          plan: 'MONTHLY',
+          amount: 5000.0,
+          currency: 'PKR',
+          startDate: start,
+          endDate: subscriptionEndDate,
+          status: SubscriptionStatus.ACTIVE,
+          paidAmount: null,
+          paidDate: null,
+          paidById: null,
+          paymentDetails: null,
+          processedDate: null,
+        },
+      });
+    } else {
+      // Seed the payment history for previous months directly in the payment records table
+      await prisma.subscriptionPayment.create({
+        data: {
+          adminId: admin.id,
+          amount: 5000.0,
+          currency: 'PKR',
+          plan: 'MONTHLY',
+          paymentDate: getRelativeDate(offset, 1, 10),
+          expiryExtended: end,
+          paymentDetails: 'Seeded payment in PKR',
+          processedById: developer.id,
+        },
+      });
+    }
   }
 
   console.log('✅ Subscriptions and payments seeded');
@@ -727,9 +928,10 @@ async function main() {
       {
         type: NotificationType.FEE_DUE,
         title: 'Fee Payment Due',
-        message: 'Tajweed tuition fee is due on October 5, 2024',
+        message: `Tajweed tuition fee is due on ${getRelativeDate(0, 10).toLocaleDateString()}`,
         senderId: admin.id,
         receiverId: parent1.id,
+        createdAt: getRelativeDate(0, 3),
       },
       {
         type: NotificationType.PROGRESS_UPDATE,
@@ -737,13 +939,15 @@ async function main() {
         message: 'Zafar has completed Surah Al-Fatihah with excellent pronunciation',
         senderId: teacher.id,
         receiverId: parent1.id,
+        createdAt: getRelativeDate(0, -2),
       },
       {
         type: NotificationType.SUBSCRIPTION_DUE,
         title: 'Subscription Renewal Due',
-        message: 'Your monthly subscription will expire on October 1, 2024. Please renew to continue using the system.',
+        message: `Your monthly subscription will expire on ${getRelativeDate(1, 1).toLocaleDateString()}. Please renew to continue using the system.`,
         senderId: developer.id,
         receiverId: admin.id,
+        createdAt: getRelativeDate(0, 1),
       },
     ],
   });
@@ -791,7 +995,7 @@ async function main() {
 
   console.log('🎉 Database seeding completed successfully!');
   console.log('\n📋 Login Credentials:');
-  console.log('Developer: info@mmsurdu.pk / developer123');
+  console.log('Developer: info@absons.net / developer123');
   console.log('Admin: admin@school.com / admin123');
   console.log('Teacher: teacher1@school.com / teacher123');
   console.log('Parent 1: parent1@email.com / parent123');
@@ -799,7 +1003,7 @@ async function main() {
   console.log('Student 1: student1@email.com / student123');
   console.log('Student 2: student2@email.com / student123');
   console.log('Student 3: student3@email.com / student123');
-  }
+}
 
 main()
   .catch((e) => {

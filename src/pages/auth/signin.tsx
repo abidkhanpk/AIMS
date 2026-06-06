@@ -1,11 +1,15 @@
+import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
 import { useState, useEffect } from 'react';
 import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { Form, Button, Card, Container, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import Head from 'next/head';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 
 export default function SignIn() {
+    const { t } = useTranslation('common');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -72,7 +76,7 @@ export default function SignIn() {
   return (
     <>
       <Head>
-        <title>Sign In - {settings.appTitle}</title>
+        <title>{t('auto.signIn', `Sign In -`)} {settings.appTitle}</title>
         <meta name="description" content="Sign in to your AIMS account" />
       </Head>
 
@@ -86,7 +90,7 @@ export default function SignIn() {
                     {settings.headerImg && (
                       <Image
                         src={settings.headerImg || '/assets/app-logo.png'}
-                        alt="Logo"
+                        alt={t('auto.logo', `Logo`)}
                         width={250}
                         height={100}
                         style={{ height: 'auto', width: 'auto', objectFit: 'contain', maxHeight: '100px', maxWidth: '250px' }}
@@ -97,8 +101,8 @@ export default function SignIn() {
                         }}
                       />
                     )}
-                    <h2 className="fw-bold text-dark mb-2">Welcome Back</h2>
-                    <p className="text-muted">Sign in to {settings.appTitle}</p>
+                    <h2 className="fw-bold text-dark mb-2">{t('auto.welcomeBack', `Welcome Back`)}</h2>
+                    <p className="text-muted">{t('auto.signInTo', `Sign in to`)} {settings.appTitle}</p>
                   </div>
 
                   {error && (
@@ -110,10 +114,10 @@ export default function SignIn() {
 
                   <Form onSubmit={handleSubmit}>
                     <Form.Group className="mb-3">
-                      <Form.Label className="fw-medium">Email Address</Form.Label>
+                      <Form.Label className="fw-medium">{t('auto.emailAddress', `Email Address`)}</Form.Label>
                       <Form.Control
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder={t('auto.enterYourEmail', `Enter your email`)}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -123,10 +127,10 @@ export default function SignIn() {
                     </Form.Group>
 
                     <Form.Group className="mb-4">
-                      <Form.Label className="fw-medium">Password</Form.Label>
+                      <Form.Label className="fw-medium">{t('auto.password', `Password`)}</Form.Label>
                       <Form.Control
                         type="password"
-                        placeholder="Enter your password"
+                        placeholder={t('auto.enterYourPassword', `Enter your password`)}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -144,21 +148,24 @@ export default function SignIn() {
                       {loading ? (
                         <>
                           <Spinner animation="border" size="sm" className="me-2" />
-                          Signing In...
-                        </>
+                          {t('auto.signingIn', `Signing In...`)}
+                                                                          </>
                       ) : (
                         <>
                           <i className="bi bi-box-arrow-in-right me-2"></i>
-                          Sign In
-                        </>
+                          {t('auto.signIn', `Sign In`)}
+                                                                              </>
                       )}
                     </Button>
                   </Form>
 
-                  <div className="text-center mt-4">
+                  <div className="d-flex justify-content-between align-items-center mt-4 px-2">
+                    <Link href="/auth/forgot-password" className="text-decoration-none small">
+                      {t('auto.forgotPassword', `Forgot Password?`)}
+                                                              </Link>
                     <small className="text-muted">
-                      Need help? Contact your administrator
-                    </small>
+                      {t('auto.needHelpContactAdmin', `Need help? Contact admin`)}
+                                                              </small>
                   </div>
                 </Card.Body>
               </Card>
@@ -169,3 +176,9 @@ export default function SignIn() {
     </>
   );
 }
+
+export const getStaticProps = async ({ locale }: any) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'en', ['common'])),
+  },
+});

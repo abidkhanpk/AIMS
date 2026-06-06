@@ -213,6 +213,7 @@ model User {
   teacherTestRecords   TestRecord[]     @relation("TeacherTestRecords")
   sentMessages        Message[]        @relation("MessageSender")
   receivedMessages    Message[]        @relation("MessageReceiver")
+  auditLogs           AuditLog[]       @relation("UserAuditLogs")
 }
 
 model Course {
@@ -583,6 +584,13 @@ model Settings {
   subscriptionStartDate DateTime @default(now())
   subscriptionEndDate DateTime? // Null for lifetime
   
+  // SMTP Settings for this Admin's Academy
+  smtpHost       String?
+  smtpPort       String?
+  smtpUser       String?
+  smtpPass       String?
+  smtpSecure     String?
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -619,6 +627,24 @@ model AppSettings {
   driveFolderId   String?
   cloudinaryFolder String?
   
+  // Global Developer SMTP Settings
+  smtpHost       String?
+  smtpPort       String?
+  smtpUser       String?
+  smtpPass       String?
+  smtpSecure     String?
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?  
+  actionType  String   
+  resourceId  String?  
+  details     String   @db.Text
+  timestamp   DateTime @default(now())
+
+  user        User?    @relation("UserAuditLogs", fields: [userId], references: [id])
 }

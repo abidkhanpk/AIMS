@@ -143,6 +143,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
+      // Fetch student and course names for notifications
+      const student = await prisma.user.findUnique({
+        where: { id: studentId },
+        select: { name: true }
+      });
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        select: { name: true }
+      });
+
+      // Notify all associated parents
+      const parentStudents = await prisma.parentStudent.findMany({
+        where: { studentId },
+        include: { parent: true }
+      });
+
+      for (const parentStudent of parentStudents) {
+        await prisma.notification.create({
+          data: {
+            type: 'PROGRESS_UPDATE',
+            title: 'Test Score Recorded',
+            message: `A new ${type.toLowerCase()} score has been recorded for ${student?.name || 'student'} in ${course?.name || 'course'}. Score: ${parsedObtained}/${parsedMax} (${percentage.toFixed(2)}%).`,
+            senderId: session.user.id,
+            receiverId: parentStudent.parent.id,
+          }
+        });
+      }
+
       return res.status(201).json(record);
     } catch (error) {
       console.error('Error recording test:', error);

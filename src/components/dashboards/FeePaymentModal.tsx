@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal, Button, Form, Spinner, Alert } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 interface FeePaymentModalProps {
   show: boolean;
@@ -9,6 +10,7 @@ interface FeePaymentModalProps {
 }
 
 const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModalProps) => {
+    const { t } = useTranslation('common');
   const [amount, setAmount] = useState(fee?.amount || '');
   const [paidDate, setPaidDate] = useState(new Date().toISOString().split('T')[0]);
   const [paymentDetails, setPaymentDetails] = useState('');
@@ -23,7 +25,7 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
     try {
       const formData = new FormData();
       formData.append('file', paymentProof);
-      const res = await fetch('/api/upload/file?folder=fee-payments&prefix=fee-proof', {
+      const res = await fetch('/api/upload/file?folder=payment-proofs-temp&prefix=fee-proof', {
         method: 'POST',
         body: formData,
       });
@@ -75,13 +77,13 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
   return (
     <Modal show={show} onHide={onHide}>
       <Modal.Header closeButton>
-        <Modal.Title>Pay Fee: {fee?.title}</Modal.Title>
+        <Modal.Title>{t('auto.payFee', `Pay Fee:`)} {fee?.title}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {error && <Alert variant="danger">{error}</Alert>}
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3">
-            <Form.Label>Amount</Form.Label>
+            <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
             <Form.Control
               type="number"
               value={amount}
@@ -90,7 +92,7 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Paid Date</Form.Label>
+            <Form.Label>{t('auto.paidDate', `Paid Date`)}</Form.Label>
             <Form.Control
               type="date"
               value={paidDate}
@@ -99,7 +101,7 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Payment Details/Remarks</Form.Label>
+            <Form.Label>{t('auto.paymentDetailsremarks', `Payment Details/Remarks`)}</Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
@@ -109,12 +111,12 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
             />
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>Upload Screenshot/Proof</Form.Label>
+            <Form.Label>{t('auto.uploadScreenshotproof', `Upload Screenshot/Proof`)}</Form.Label>
             <Form.Control
               type="file"
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPaymentProof(e.target.files ? e.target.files[0] : null)}
             />
-            {uploading && <div className="small text-muted mt-1">Uploading proof...</div>}
+            {uploading && <div className="small text-muted mt-1">{t('auto.uploadingProof', `Uploading proof...`)}</div>}
           </Form.Group>
           <Button variant="primary" type="submit" disabled={submitting}>
             {submitting ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Submit Payment'}

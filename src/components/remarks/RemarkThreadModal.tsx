@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Card, Button, Form, Spinner } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 interface RemarkAuthor {
   id?: string;
@@ -60,6 +61,7 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
   onMessageUser,
   emptyMessage = 'No remarks',
 }) => {
+    const { t } = useTranslation('common');
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState<Record<string, boolean>>({});
 
@@ -202,7 +204,7 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
                       <Form.Control
                         as="textarea"
                         rows={2}
-                        placeholder="Reply..."
+                        placeholder={t('auto.reply', `Reply...`)}
                         value={drafts[remark.id] || ''}
                         onChange={(e) => setDraft(remark.id, e.target.value)}
                       />
@@ -216,13 +218,13 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
                           {submitting[remark.id] ? (
                             <>
                               <Spinner animation="border" size="sm" className="me-2" />
-                              Replying...
-                            </>
+                              {t('auto.replying', `Replying...`)}
+                                                                            </>
                           ) : (
                             <>
                               <i className="bi bi-send me-1"></i>
-                              Reply
-                            </>
+                              {t('auto.reply', `Reply`)}
+                                                                                </>
                           )}
                         </Button>
                       </div>
@@ -236,8 +238,8 @@ const RemarkThreadModal: React.FC<RemarkThreadModalProps> = ({
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onHide}>
-          Close
-        </Button>
+          {t('auto.close', `Close`)}
+                          </Button>
       </Modal.Footer>
     </Modal>
   );

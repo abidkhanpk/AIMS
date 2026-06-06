@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Table, Badge, Button, Alert, Spinner, Card } from 'react-bootstrap';
 import SubscriptionPaymentModal from './SubscriptionPaymentModal';
 import { SubscriptionStatus, SubscriptionPlan } from '@prisma/client';
 import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
+import { useTranslation } from 'react-i18next';
 
 interface SubscriptionRec {
   id: string;
@@ -21,6 +22,7 @@ interface SubscriptionRec {
 }
 
 const AdminSubscriptionTab: React.FC = () => {
+    const { t } = useTranslation('common');
   const [subs, setSubs] = useState<SubscriptionRec[]>([]);
   const [payments, setPayments] = useState<Array<{ id: string; amount: number; currency: string; plan: SubscriptionPlan; paymentDate: string; expiryExtended: string; paymentDetails?: string }>>([]);
   const [loading, setLoading] = useState(true);
@@ -87,15 +89,15 @@ const AdminSubscriptionTab: React.FC = () => {
   const getStatusBadge = (status: SubscriptionStatus) => {
     switch (status) {
       case 'ACTIVE':
-        return <Badge bg="success">Paid</Badge>;
+        return <Badge bg="success">{t('auto.paid', `Paid`)}</Badge>;
       case 'PENDING':
-        return <Badge bg="warning">Pending</Badge>;
+        return <Badge bg="warning">{t('auto.pending', `Pending`)}</Badge>;
       case 'PROCESSING':
-        return <Badge bg="info">Processing</Badge>;
+        return <Badge bg="info">{t('auto.processing', `Processing`)}</Badge>;
       case 'EXPIRED':
-        return <Badge bg="danger">Expired</Badge>;
+        return <Badge bg="danger">{t('auto.expired', `Expired`)}</Badge>;
       case 'CANCELLED':
-        return <Badge bg="secondary">Cancelled</Badge>;
+        return <Badge bg="secondary">{t('auto.cancelled', `Cancelled`)}</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -105,76 +107,83 @@ const AdminSubscriptionTab: React.FC = () => {
     () => [...subs].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
     [subs]
   );
-  const paymentEntries = useMemo(
-    () => sortedSubs.filter((s) => s.paidById || s.status === 'PROCESSING' || s.paidAmount !== null),
-    [sortedSubs]
-  );
-
-  const isNearExpiry = (sub: SubscriptionRec) => {
+  const isNearExpiry = useCallback((sub: SubscriptionRec) => {
     if (!sub.endDate) return false;
     const end = new Date(sub.endDate);
     const now = new Date();
     const diff = end.getTime() - now.getTime();
     const days = diff / (1000 * 60 * 60 * 24);
-    return days <= 10; // show renewal option if expiring within 10 days
-  };
+    return days <= 10;
+  }, []);
+
+  const pendingEntries = useMemo(
+    () => sortedSubs.filter((s) => s.status === 'PENDING' || s.status === 'EXPIRED' || s.status === 'PROCESSING' || isNearExpiry(s)),
+    [sortedSubs, isNearExpiry]
+  );
+
+
 
   return (
     <>
       <Card className="shadow-sm mt-4">
         <Card.Header className="bg-light d-flex align-items-center justify-content-between">
           <h6 className="mb-0">
-            <i className="bi bi-wallet2 me-2"></i>
-            Payment History
-          </h6>
+            <i className="bi bi-exclamation-circle me-2"></i>
+            {t('auto.pendingDuesRenewals', `Pending Dues & Renewals`)}
+                                </h6>
         </Card.Header>
         <Card.Body className="p-0">
           {error && <Alert variant="danger" onClose={() => setError('')} dismissible className="m-3">{error}</Alert>}
           {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible className="m-3">{success}</Alert>}
           {loading ? (
-            <div className="text-center py-4"><Spinner animation="border" size="sm" /><p className="mt-2 text-muted small">Loading payment history...</p></div>
+            <div className="text-center py-4"><Spinner animation="border" size="sm" /><p className="mt-2 text-muted small">{t('auto.loadingPaymentHistory', `Loading payment history...`)}</p></div>
+          ) : pendingEntries.length === 0 ? (
+            <div className="text-center py-4 text-muted">
+              <i className="bi bi-check-circle display-6 text-success opacity-75"></i>
+              <p className="mt-2 mb-0">{t('auto.noPendingDuesOrRenewals', `No pending dues or renewals`)}</p>
+            </div>
           ) : (
             <Table hover size="sm" className="mb-0">
               <thead>
                 <tr>
-                  <th>Plan</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Paid Date</th>
-                  <th>Details</th>
-                  <th>Proof</th>
-                  <th>Actions</th>
+                  <th>{t('auto.plan', `Plan`)}</th>
+                  <th>{t('auto.amount', `Amount`)}</th>
+                  <th>{t('auto.status', `Status`)}</th>
+                  <th>{t('auto.paidDate', `Paid Date`)}</th>
+                  <th>{t('auto.details', `Details`)}</th>
+                  <th>{t('auto.proof', `Proof`)}</th>
+                  <th>{t('auto.actions', `Actions`)}</th>
                 </tr>
               </thead>
               <tbody>
-                {paymentEntries.map((s) => (
+                {pendingEntries.map((s) => (
                   <tr key={s.id}>
                     <td><Badge bg="warning" className="text-dark">{s.plan}</Badge></td>
                     <td className="fw-bold text-success">{(s.paidAmount || s.amount).toFixed(2)} {s.currency}</td>
                     <td>
                       {getStatusBadge(s.status)}
                       {isNearExpiry(s) && s.status !== 'PROCESSING' && (
-                        <div className="text-danger small">Expiring soon</div>
+                        <div className="text-danger small">{t('auto.expiringSoon', `Expiring soon`)}</div>
                       )}
                     </td>
                     <td className="small">{s.paidDate ? new Date(s.paidDate).toLocaleDateString() : '-'}</td>
                     <td className="small">{s.paymentDetails || '-'}</td>
                     <td>
                       {s.paymentProof ? (
-                        <a href={s.paymentProof} target="_blank" rel="noopener noreferrer">View</a>
+                        <a href={s.paymentProof} target="_blank" rel="noopener noreferrer">{t('auto.view', `View`)}</a>
                       ) : 'N/A'}
                     </td>
                     <td className="d-flex gap-2">
                       {(s.status === 'PENDING' || s.status === 'EXPIRED' || isNearExpiry(s)) && (
                         <Button size="sm" variant="primary" onClick={() => { setSelectedSub(s); setEditMode(false); setShowPaymentModal(true); }}>
-                          <i className="bi bi-cash me-1"></i>Pay
-                        </Button>
+                          <i className="bi bi-cash me-1"></i>{t('auto.pay', `Pay`)}
+                                                            </Button>
                       )}
                       {s.status === 'PROCESSING' && (
                         <>
                           <Button size="sm" variant="warning" onClick={() => { setSelectedSub(s); setEditMode(true); setShowPaymentModal(true); }}>
-                            <i className="bi bi-pencil me-1"></i>Edit
-                          </Button>
+                            <i className="bi bi-pencil me-1"></i>{t('auto.edit', `Edit`)}
+                                                                  </Button>
                           <Button
                             size="sm"
                             variant="danger"
@@ -200,8 +209,8 @@ const AdminSubscriptionTab: React.FC = () => {
                               }
                             }}
                           >
-                            <i className="bi bi-trash me-1"></i>Delete
-                          </Button>
+                            <i className="bi bi-trash me-1"></i>{t('auto.delete', `Delete`)}
+                                                                  </Button>
                         </>
                       )}
                     </td>
@@ -222,7 +231,7 @@ const AdminSubscriptionTab: React.FC = () => {
 
       <Card className="shadow-sm mt-3">
         <Card.Header className="bg-light">
-          <h6 className="mb-0">Subscription History</h6>
+          <h6 className="mb-0"><i className="bi bi-clock-history me-2"></i>{t('auto.subscriptionHistory', `Subscription History`)}</h6>
         </Card.Header>
         <Card.Body>
           <SubscriptionHistoryTab hideHeaders hidePaymentHistory />

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Offcanvas, ListGroup } from 'react-bootstrap';
 import { useRouter } from 'next/router';
 import NotificationDropdown from '../NotificationDropdown';
+import { useTranslation } from 'react-i18next';
 import styles from './AdminMenu.module.css';
 
 type MenuItem = {
@@ -14,47 +15,62 @@ type MenuItem = {
 const menuItems: MenuItem[] = [
   {
     key: 'home',
-    label: 'Home',
+    label: 'menu.home',
     icon: 'bi-house',
   },
   {
     key: 'individuals',
-    label: 'Individuals',
+    label: 'menu.individuals',
     icon: 'bi-people',
     children: [
-      { key: 'teachers', label: 'Teachers', icon: 'bi-person-workspace' },
-      { key: 'parents', label: 'Relatives', icon: 'bi-people' },
-      { key: 'students', label: 'Students', icon: 'bi-mortarboard' },
+      { key: 'teachers', label: 'menu.teachers', icon: 'bi-person-workspace' },
+      { key: 'parents', label: 'menu.parents', icon: 'bi-people' },
+      { key: 'students', label: 'menu.students', icon: 'bi-mortarboard' },
     ],
   },
   {
     key: 'academic',
-    label: 'Academic',
+    label: 'menu.academic',
     icon: 'bi-mortarboard',
     children: [
-      { key: 'progress', label: 'Progress', icon: 'bi-graph-up' },
-      { key: 'tests', label: 'Tests & Exams', icon: 'bi-journal-check' },
+      { key: 'subjects', label: 'menu.subjects', icon: 'bi-book' },
+      { key: 'assignments', label: 'menu.assignments', icon: 'bi-diagram-3' },
+      { key: 'progress', label: 'menu.progress', icon: 'bi-graph-up' },
+      { key: 'attendance-reports', label: 'menu.attendanceReports', icon: 'bi-file-earmark-spreadsheet' },
+      { key: 'report-cards', label: 'menu.reportCards', icon: 'bi-award' },
+      { key: 'tests', label: 'menu.tests', icon: 'bi-journal-check' },
     ],
   },
   {
     key: 'financials',
-    label: 'Financials',
+    label: 'menu.financials',
     icon: 'bi-cash-stack',
     children: [
-      { key: 'fees', label: 'Fee', icon: 'bi-cash-coin' },
-      { key: 'fee-verification', label: 'Fee Verification', icon: 'bi-check-circle' },
-      { key: 'salaries', label: 'Salaries', icon: 'bi-wallet2' },
+      { key: 'fees', label: 'menu.fees', icon: 'bi-cash-coin' },
+      { key: 'fee-verification', label: 'menu.feeVerification', icon: 'bi-check-circle' },
+      { key: 'salaries', label: 'menu.salaries', icon: 'bi-wallet2' },
     ],
   },
   {
     key: 'parent-remarks',
-    label: 'Parent Remarks',
+    label: 'menu.parentRemarks',
     icon: 'bi-chat-dots',
+  },
+  {
+    key: 'system',
+    label: 'menu.system',
+    icon: 'bi-shield-lock',
+    children: [
+      { key: 'audit-logs', label: 'menu.auditLogs', icon: 'bi-file-earmark-code' },
+      { key: 'academy-settings', label: 'menu.academySettings', icon: 'bi-gear-fill' },
+      { key: 'subscription-management', label: 'menu.subscriptionManagement', icon: 'bi-credit-card' },
+    ],
   },
 ];
 
 export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; onSelect: (key: string) => void }) {
   const router = useRouter();
+  const { t } = useTranslation('common');
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [mobileGroups, setMobileGroups] = useState<Record<string, boolean>>({});
@@ -133,7 +149,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
             <div className={`${styles.iconWrapper}`}>
               <i className={`bi ${item.icon}`} aria-hidden />
             </div>
-            <span className={styles.linkText}>{item.label}</span>
+            <span className={styles.linkText}>{t(item.label)}</span>
           </div>
           {hasChildren && (
             <i className={`bi ${expanded ? 'bi-chevron-up' : 'bi-chevron-down'} ${styles.arrow}`} aria-hidden />
@@ -186,7 +202,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
         >
           <span className="d-flex align-items-center">
             <i className={`bi ${item.icon} me-2`}></i>
-            {item.label}
+            {t(item.label)}
           </span>
           {hasChildren && (
             <i className={`bi ${expanded ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
@@ -206,7 +222,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
                 style={{ fontSize: '1.05rem' }}
               >
                 <i className={`bi ${child.icon} me-2`}></i>
-                {child.label}
+                {t(child.label)}
               </ListGroup.Item>
             ))}
           </ListGroup>
@@ -230,7 +246,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               <div className={styles.iconWrapper}>
                 <i className="bi bi-gear" aria-hidden />
               </div>
-              <span className={styles.linkText}>Settings</span>
+              <span className={styles.linkText}>{t('layout.userSettings')}</span>
             </button>
           </li>
           <li className={styles.navbarItem}>
@@ -242,17 +258,22 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               <div className={styles.iconWrapper}>
                 <i className="bi bi-box-arrow-right" aria-hidden />
               </div>
-              <span className={styles.linkText}>Logout</span>
+              <span className={styles.linkText}>{t('logout')}</span>
             </button>
           </li>
         </ul>
       </nav>
 
-      <Offcanvas show={showMobileMenu} onHide={() => setShowMobileMenu(false)} className="d-lg-none">
+      <Offcanvas 
+        show={showMobileMenu} 
+        onHide={() => setShowMobileMenu(false)} 
+        className="d-lg-none"
+        placement={router.locale === 'ur' ? 'end' : 'start'}
+      >
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>
             <i className="bi bi-list me-2"></i>
-            Menu
+            {t('menu.menu')}
           </Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
@@ -265,7 +286,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               style={{ fontSize: '1.05rem' }}
             >
               <i className="bi bi-gear me-2"></i>
-              Settings
+              {t('layout.userSettings')}
             </ListGroup.Item>
             <ListGroup.Item
               action
@@ -277,7 +298,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               style={{ fontSize: '1.05rem' }}
             >
               <i className="bi bi-box-arrow-right me-2"></i>
-              Logout
+              {t('logout')}
             </ListGroup.Item>
           </ListGroup>
           <div className="mt-3 pt-3 border-top">
@@ -295,7 +316,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
                 style={{ fontSize: '1.05rem' }}
               >
                 <i className="bi bi-envelope me-2"></i>
-                Messages
+                {t('messages')}
               </ListGroup.Item>
             </ListGroup>
           </div>

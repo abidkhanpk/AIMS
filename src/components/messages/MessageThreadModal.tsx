@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Card, Button, Form, Spinner } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 interface MessageAuthor {
   id?: string;
@@ -37,6 +38,7 @@ const MessageThreadModal: React.FC<MessageThreadModalProps> = ({
   onRefresh,
   onMessageUser,
 }) => {
+    const { t } = useTranslation('common');
   const [draft, setDraft] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -76,7 +78,7 @@ const MessageThreadModal: React.FC<MessageThreadModalProps> = ({
             <Spinner animation="border" size="sm" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-muted py-3">No messages</div>
+          <div className="text-center text-muted py-3">{t('auto.noMessages', `No messages`)}</div>
         ) : (
           <div className="d-flex flex-column gap-2">
             {messages.map((msg) => {
@@ -115,7 +117,7 @@ const MessageThreadModal: React.FC<MessageThreadModalProps> = ({
           <Form.Control
             as="textarea"
             rows={2}
-            placeholder="Reply..."
+            placeholder={t('auto.reply', `Reply...`)}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
           />
@@ -129,12 +131,12 @@ const MessageThreadModal: React.FC<MessageThreadModalProps> = ({
               {submitting ? (
                 <>
                   <Spinner animation="border" size="sm" className="me-2" />
-                  Sending...
-                </>
+                  {t('auto.sending', `Sending...`)}
+                                                  </>
               ) : (
                 <>
-                  <i className="bi bi-send me-1"></i>Send
-                </>
+                  <i className="bi bi-send me-1"></i>{t('auto.send', `Send`)}
+                                                      </>
               )}
             </Button>
           </div>
