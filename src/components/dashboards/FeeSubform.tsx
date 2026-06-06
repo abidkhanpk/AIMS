@@ -23,6 +23,10 @@ const feeTypes = Object.values(FeeType);
 import { currencies } from '../../utils/currencies';
 import { useTranslation } from 'react-i18next';
 
+const getCurrencySymbol = (code: string) => {
+  return currencies.find((c: any) => c.code === code)?.symbol || code;
+};
+
 function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange: () => void; }) {
     const { t } = useTranslation('common');
   const [feeDefinitions, setFeeDefinitions] = useState<FeeDefinition[]>([]);
@@ -305,8 +309,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
     </Form>
   );
 
-  const handleVerify = async (approve: boolean) => {
-    if (!verifyTarget) return;
+  const handleVerifyDirect = async (feeId: string, approve: boolean) => {
     setVerifying(true);
     setError('');
     setSuccess('');
@@ -314,11 +317,10 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       const res = await fetch('/api/fees/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feeId: verifyTarget.id, approve }),
+        body: JSON.stringify({ feeId, approve }),
       });
       if (res.ok) {
         setSuccess(approve ? 'Payment verified' : 'Payment rejected');
-        setVerifyTarget(null);
         fetchPayments();
         onFeeChange();
       } else {
@@ -330,6 +332,12 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
     } finally {
       setVerifying(false);
     }
+  };
+
+  const handleVerify = async (approve: boolean) => {
+    if (!verifyTarget) return;
+    await handleVerifyDirect(verifyTarget.id, approve);
+    setVerifyTarget(null);
   };
 
   const handleTabSelect = (key: string | null) => {
@@ -557,16 +565,35 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                               {fee.paidDate ? new Date(fee.paidDate).toLocaleDateString() : '-'}
                             </td>
                             <td>
-                              {fee.status === FeeStatus.PROCESSING ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline-primary"
-                                  onClick={() => setVerifyTarget(fee)}
-                                >
-                                  {t('auto.verifyreject', `Verify/Reject`)}
-                                                                            </Button>
-                              ) : (
-                                <span className="text-muted small">-</span>
+                              <Button
+                                variant="outline-info"
+                                size="sm"
+                                className="me-2"
+                                onClick={() => setVerifyTarget(fee)}
+                                title={fee.status === 'PROCESSING' ? t('auto.verifyPayment', 'Verify Payment') : t('auto.viewDetails', 'View Details')}
+                              >
+                                <i className="bi bi-eye"></i>
+                              </Button>
+                              {fee.status === 'PROCESSING' && (
+                                <>
+                                  <Button
+                                    variant="outline-success"
+                                    size="sm"
+                                    onClick={() => handleVerifyDirect(fee.id, true)}
+                                    title={t('auto.approve', 'Approve')}
+                                  >
+                                    <i className="bi bi-check-lg"></i>
+                                  </Button>
+                                  <Button
+                                    variant="outline-danger"
+                                    size="sm"
+                                    className="ms-2"
+                                    onClick={() => handleVerifyDirect(fee.id, false)}
+                                    title={t('auto.reject', 'Reject')}
+                                  >
+                                    <i className="bi bi-x-lg"></i>
+                                  </Button>
+                                </>
                               )}
                             </td>
                           </tr>
@@ -611,28 +638,139 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
     </Modal.Body>
   </Modal>
 
-      {/* Verify / Reject payment */}
-      <Modal show={!!verifyTarget} onHide={() => setVerifyTarget(null)} centered>
+      {/* Verify / Reject payment / View Details Modal */}
+      <Modal show={!!verifyTarget} onHide={() => setVerifyTarget(null)} size="lg" centered>
         <Modal.Header closeButton>
-          <Modal.Title>{t('auto.verifyPayment', `Verify Payment`)}</Modal.Title>
+          <Modal.Title>
+            <i className="bi bi-file-earmark-text me-2"></i>
+            {verifyTarget && verifyTarget.status === 'PROCESSING' 
+              ? t('auto.verifyPayment', 'Verify Payment') 
+              : t('auto.feePaymentDetailsTitle', 'Fee Payment Details')}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {verifyTarget && (
-            <>
-              <p className="mb-1"><strong>{t('auto.fee', `Fee:`)}</strong> {verifyTarget.feeDefinition?.title || verifyTarget.title}</p>
-              <p className="mb-1"><strong>{t('auto.amount', `Amount:`)}</strong> {verifyTarget.feeDefinition?.amount || verifyTarget.amount} {verifyTarget.feeDefinition?.currency || verifyTarget.currency}</p>
-              <p className="mb-0 text-muted small">{t('auto.approveToMarkAsPaidOrRejectToS', `Approve to mark as paid, or reject to send it back to pending.`)}</p>
-            </>
+            <div>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.feeTitleLabel', 'Fee Title:')}</strong>{' '}
+                  <span className="fw-medium">{verifyTarget.title || verifyTarget.feeDefinition?.title || 'N/A'}</span>
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.statusLabel', 'Status:')}</strong>{' '}
+                  <Badge bg={
+                    verifyTarget.status === 'PAID' ? 'success' :
+                    verifyTarget.status === 'PROCESSING' ? 'warning' :
+                    verifyTarget.status === 'OVERDUE' ? 'danger' : 'secondary'
+                  }>
+                    {verifyTarget.status}
+                  </Badge>
+                </Col>
+              </Row>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.dueDateLabel', 'Due Date:')}</strong>{' '}
+                  {verifyTarget.dueDate ? new Date(verifyTarget.dueDate).toLocaleDateString() : '-'}
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.paidDateLabel', 'Submitted/Paid Date:')}</strong>{' '}
+                  {verifyTarget.paidDate ? new Date(verifyTarget.paidDate).toLocaleDateString() : '-'}
+                </Col>
+              </Row>
+              <Row className="mb-3 border-bottom pb-2 g-2">
+                <Col md={6}>
+                  <strong>{t('auto.amountLabel', 'Expected Amount:')}</strong>{' '}
+                  <span className="fw-bold text-success">
+                    {getCurrencySymbol(verifyTarget.currency || verifyTarget.feeDefinition?.currency || 'USD')}
+                    {(verifyTarget.amount || verifyTarget.feeDefinition?.amount || 0).toFixed(2)}
+                  </span>
+                </Col>
+                <Col md={6}>
+                  <strong>{t('auto.paidAmountLabel', 'Paid Amount:')}</strong>{' '}
+                  <span className="fw-bold text-success">
+                    {verifyTarget.paidAmount !== undefined && verifyTarget.paidAmount !== null ? (
+                      `${getCurrencySymbol(verifyTarget.currency || verifyTarget.feeDefinition?.currency || 'USD')}${verifyTarget.paidAmount.toFixed(2)}`
+                    ) : (
+                      '-'
+                    )}
+                  </span>
+                </Col>
+              </Row>
+              {verifyTarget.description && (
+                <div className="mb-3 border-bottom pb-2">
+                  <strong>{t('auto.descriptionLabel', 'Description:')}</strong>
+                  <p className="bg-light p-2 rounded mt-1 border" style={{ whiteSpace: 'pre-wrap' }}>
+                    {verifyTarget.description}
+                  </p>
+                </div>
+              )}
+              <div className="mb-3 border-bottom pb-2">
+                <strong>{t('auto.detailsLabel', 'Payment Details/Remarks:')}</strong>
+                <p className="bg-light p-2 rounded mt-1 border" style={{ whiteSpace: 'pre-wrap' }}>
+                  {verifyTarget.paymentDetails || t('auto.noDetailsSubmitted', 'No details submitted')}
+                </p>
+              </div>
+              <div className="mb-3">
+                <strong>{t('auto.paymentProof', 'Payment Proof:')}</strong>
+                {verifyTarget.paymentProof ? (
+                  <div className="mt-2 border rounded p-2 bg-light text-center">
+                    <div className="mb-2">
+                      <a
+                        href={verifyTarget.paymentProof}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-sm btn-outline-primary"
+                      >
+                        <i className="bi bi-box-arrow-up-right me-1"></i>
+                        {t('auto.openInNewTab', 'Open Image in New Tab')}
+                      </a>
+                    </div>
+                    <img
+                      src={verifyTarget.paymentProof}
+                      alt={t('auto.paymentProofAlt', 'Payment Proof Screenshot')}
+                      className="img-fluid rounded border shadow-sm"
+                      style={{ maxHeight: '400px', objectFit: 'contain', cursor: 'pointer' }}
+                      onClick={() => window.open(verifyTarget.paymentProof, '_blank')}
+                      onError={(e) => {
+                        const img = e.currentTarget as HTMLImageElement;
+                        img.style.display = 'none';
+                        const msg = img.nextSibling as HTMLElement | null;
+                        if (msg) msg.style.display = 'block';
+                      }}
+                    />
+                    <p className="text-danger small mt-1" style={{ display: 'none' }}>
+                      {t('auto.imageLoadError', 'Could not load image. Use "Open Image in New Tab" to view it.')}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-muted mt-1">{t('auto.noProofUploaded', 'No proof screenshot uploaded')}</p>
+                )}
+              </div>
+            </div>
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setVerifyTarget(null)} disabled={verifying}>{t('auto.cancel', `Cancel`)}</Button>
-          <Button variant="danger" onClick={() => handleVerify(false)} disabled={verifying}>
-            {verifying ? 'Rejecting...' : 'Reject'}
-          </Button>
-          <Button variant="success" onClick={() => handleVerify(true)} disabled={verifying}>
-            {verifying ? 'Verifying...' : 'Verify'}
-          </Button>
+          {verifyTarget && verifyTarget.status === 'PROCESSING' ? (
+            <>
+              <div className="d-flex gap-2 me-auto">
+                <Button variant="success" onClick={() => handleVerify(true)} disabled={verifying}>
+                  {verifying ? <Spinner animation="border" size="sm" className="me-1" /> : <i className="bi bi-check-lg me-1"></i>}
+                  {t('auto.approve', 'Approve')}
+                </Button>
+                <Button variant="danger" onClick={() => handleVerify(false)} disabled={verifying}>
+                  {verifying ? <Spinner animation="border" size="sm" className="me-1" /> : <i className="bi bi-x-lg me-1"></i>}
+                  {t('auto.reject', 'Reject')}
+                </Button>
+              </div>
+              <Button variant="secondary" onClick={() => setVerifyTarget(null)} disabled={verifying}>
+                {t('auto.cancel', `Cancel`)}
+              </Button>
+            </>
+          ) : (
+            <Button variant="secondary" onClick={() => setVerifyTarget(null)}>
+              {t('auto.close', 'Close')}
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
     </div>
