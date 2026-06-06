@@ -832,6 +832,8 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [advancePayType, setAdvancePayType] = useState<PayType>('MONTHLY');
   const [advanceCurrency, setAdvanceCurrency] = useState('USD');
   const [advanceDetails, setAdvanceDetails] = useState('');
+  const [showSalaryPaymentForm, setShowSalaryPaymentForm] = useState(false);
+  const [showSalaryAdvanceForm, setShowSalaryAdvanceForm] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -2196,9 +2198,38 @@ export function UserManagementTab({ role }: { role: Role }) {
                     </Form>
                   </Tab>
                   <Tab eventKey="salaries" title={<span><i className="bi bi-cash-stack me-2"></i>{t('auto.salary', `Salary`)}</span>}>
-                    <Row className="g-3">
-                      <Col md={6}>
-                        <Card>
+                    <div className="d-flex justify-content-end gap-2 mb-3 mt-3">
+                      <Button 
+                        variant={showSalaryPaymentForm ? 'secondary' : 'primary'} 
+                        size="sm" 
+                        onClick={() => {
+                          setShowSalaryPaymentForm(v => !v);
+                          if (!showSalaryPaymentForm) setShowSalaryAdvanceForm(false);
+                        }}
+                      >
+                        {showSalaryPaymentForm ? t('auto.hideForm', 'Hide Form') : (
+                          <><i className="bi bi-cash me-1"></i> {t('auto.recordSalaryPayment', 'Record Salary Payment')}</>
+                        )}
+                      </Button>
+                      <Button 
+                        variant={showSalaryAdvanceForm ? 'secondary' : 'warning'} 
+                        size="sm" 
+                        onClick={() => {
+                          setShowSalaryAdvanceForm(v => !v);
+                          if (!showSalaryAdvanceForm) setShowSalaryPaymentForm(false);
+                        }}
+                      >
+                        {showSalaryAdvanceForm ? t('auto.hideForm', 'Hide Form') : (
+                          <><i className="bi bi-bank me-1"></i> {t('auto.createSalaryAdvanceloan', 'Create Salary Advance/Loan')}</>
+                        )}
+                      </Button>
+                    </div>
+
+                    {(showSalaryPaymentForm || showSalaryAdvanceForm) && (
+                      <Row className="g-3 mb-3">
+                        {showSalaryPaymentForm && (
+                          <Col md={12}>
+                            <Card className="shadow-sm border-primary">
                           <Card.Header className="bg-light"><strong>{t('auto.recordSalaryPayment', `Record Salary Payment`)}</strong></Card.Header>
                           <Card.Body>
                             <Row>
@@ -2289,8 +2320,10 @@ export function UserManagementTab({ role }: { role: Role }) {
                           </Card.Body>
                         </Card>
                       </Col>
-                      <Col md={6}>
-                        <Card>
+                    )}
+                    {showSalaryAdvanceForm && (
+                      <Col md={12}>
+                        <Card className="shadow-sm border-warning">
                           <Card.Header className="bg-light"><strong>{t('auto.createSalaryAdvanceloan', `Create Salary Advance/Loan`)}</strong></Card.Header>
                           <Card.Body>
                             <Row>
@@ -2342,9 +2375,11 @@ export function UserManagementTab({ role }: { role: Role }) {
                           </Card.Body>
                         </Card>
                       </Col>
-                    </Row>
+                    )}
+                  </Row>
+                )}
 
-                    <Row className="g-3 mt-2">
+                <Row className="g-3 mt-2">
                       <Col md={12}>
                         <Card>
                           <Card.Header className="bg-light"><strong>{t('auto.salarySchedule', `Salary Schedule`)}</strong></Card.Header>
