@@ -57,9 +57,16 @@ export async function sendEmail({ to, subject, html, category, academyAdminId }:
     },
   });
 
+  // Gmail SMTP protection workaround: if sending via Gmail and From address differs from authenticated user,
+  // we set it as the display name (e.g. "no-reply@abc.com" <user>) to avoid Gmail overriding it completely.
+  let finalFrom = from;
+  if (host && host.includes('gmail.com') && from && !from.includes('<') && from !== user) {
+    finalFrom = `"${from}" <${user}>`;
+  }
+
   try {
     const info = await transporter.sendMail({
-      from,
+      from: finalFrom,
       to,
       subject,
       html,

@@ -44,8 +44,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const fromAddress = smtpFrom || smtpUser;
 
+    let finalFrom = fromAddress;
+    if (smtpHost && smtpHost.includes('gmail.com') && fromAddress && !fromAddress.includes('<') && fromAddress !== smtpUser) {
+      finalFrom = `"${fromAddress}" <${smtpUser}>`;
+    }
+
     await transporter.sendMail({
-      from: fromAddress,
+      from: finalFrom,
       to: testEmail,
       subject: 'AIMS SMTP Connection Test',
       html: `
