@@ -322,7 +322,14 @@ function AdminManagementTab() {
     setDefaultCurrency(admin.settings?.defaultCurrency || 'USD');
     setSubscriptionType(admin.settings?.subscriptionType || 'MONTHLY');
     setSubscriptionAmount(admin.settings?.subscriptionAmount || 29.99);
-    setSubscriptionCurrency(admin.settings?.subscriptionType === 'LIFETIME' ? 'USD' : 'USD'); // Default currency for subscription
+    
+    const activeSub = admin.subscriptions?.length 
+      ? admin.subscriptions.reduce((latest: any, sub: any) =>
+          new Date(sub.endDate || sub.startDate || 0) > new Date(latest.endDate || latest.startDate || 0) ? sub : latest,
+          admin.subscriptions[0])
+      : null;
+    setSubscriptionCurrency(activeSub?.currency || 'USD');
+    
     setSubscriptionStartDate(admin.settings?.subscriptionStartDate ? admin.settings.subscriptionStartDate.split('T')[0] : '');
     setShowSettingsModal(true);
   };

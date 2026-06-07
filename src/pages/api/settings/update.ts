@@ -28,6 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     defaultCurrency,
     subscriptionType,
     subscriptionAmount,
+    subscriptionCurrency,
     subscriptionStartDate,
     subscriptionEndDate
   } = req.body;
@@ -96,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
       // Update subscription record if subscription details are provided
-      if (subscriptionType || subscriptionAmount || subscriptionStartDate || calculatedEndDate !== undefined) {
+      if (subscriptionType || subscriptionAmount || subscriptionCurrency || subscriptionStartDate || calculatedEndDate !== undefined) {
         const existingSubscription = await tx.subscription.findFirst({
           where: { adminId },
           orderBy: { createdAt: 'desc' }
@@ -105,6 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const subscriptionData = {
           plan: subscriptionType || 'MONTHLY',
           amount: subscriptionAmount ? parseFloat(subscriptionAmount) : 29.99,
+          currency: subscriptionCurrency || 'USD',
           startDate: subscriptionStartDate ? new Date(subscriptionStartDate) : new Date(),
           endDate: calculatedEndDate,
           status: 'ACTIVE' as const,

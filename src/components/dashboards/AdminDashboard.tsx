@@ -5482,6 +5482,7 @@ export default function AdminDashboard() {
   const tabActiveKey = showHome ? 'subjects' : activeTab;
   const [homeLoading, setHomeLoading] = useState(false);
   const [homeError, setHomeError] = useState('');
+  const [defaultCurrency, setDefaultCurrency] = useState('USD');
   const [homeSnapshot, setHomeSnapshot] = useState<{
     counts: { students: number; teachers: number; parents: number };
     fees: { total: number; pending: number; overdue: number; paid: number };
@@ -5528,7 +5529,7 @@ export default function AdminDashboard() {
     try {
       setHomeLoading(true);
       setHomeError('');
-      const [studentsRes, teachersRes, parentsRes, feesRes, salariesRes, progressRes, remarksRes, subscriptionsRes] = await Promise.all([
+      const [studentsRes, teachersRes, parentsRes, feesRes, salariesRes, progressRes, remarksRes, subscriptionsRes, currencyRes] = await Promise.all([
         fetch('/api/users?role=STUDENT'),
         fetch('/api/users?role=TEACHER'),
         fetch('/api/users?role=PARENT'),
@@ -5537,6 +5538,7 @@ export default function AdminDashboard() {
         fetch('/api/progress'),
         fetch('/api/remarks'),
         fetch('/api/subscriptions'),
+        fetch('/api/settings/currency'),
       ]);
 
       const students = studentsRes.ok ? await studentsRes.json() : [];
@@ -5547,6 +5549,8 @@ export default function AdminDashboard() {
       const progressData: Progress[] = progressRes.ok ? await progressRes.json() : [];
       const subscriptions = subscriptionsRes.ok ? await subscriptionsRes.json() : [];
       const remarks = remarksRes.ok ? await remarksRes.json() : [];
+      const currencyData = currencyRes.ok ? await currencyRes.json() : { defaultCurrency: 'USD' };
+      setDefaultCurrency(currencyData.defaultCurrency || 'USD');
 
       const feeTotals = fees.reduce(
         (acc: { total: number; pending: number; overdue: number; paid: number }, fee: any) => {
@@ -5927,16 +5931,16 @@ export default function AdminDashboard() {
                               <small className="text-muted">{t('dashboard.paidVsPending', 'Paid vs pending')}</small>
                             </div>
                             <Badge bg="primary">
-                              {getCurrencySymbol('USD')}
+                              {getCurrencySymbol(defaultCurrency)}
                               {homeSnapshot.fees.total.toFixed(0)} {t('auto.total', `total`)}
-                                                                                          </Badge>
+                            </Badge>
                           </Card.Header>
                           <Card.Body>
                             <div className="mb-3">
                               <div className="d-flex justify-content-between small text-muted mb-1">
                                 <span>{t('dashboard.paid', 'Paid')}</span>
                                 <span>
-                                  {getCurrencySymbol('USD')}
+                                  {getCurrencySymbol(defaultCurrency)}
                                   {homeSnapshot.fees.paid.toFixed(0)}
                                 </span>
                               </div>
@@ -5953,7 +5957,7 @@ export default function AdminDashboard() {
                               <div className="d-flex justify-content-between small text-muted mb-1">
                                 <span>{t('dashboard.pending', 'Pending')}</span>
                                 <span>
-                                  {getCurrencySymbol('USD')}
+                                  {getCurrencySymbol(defaultCurrency)}
                                   {homeSnapshot.fees.pending.toFixed(0)}
                                 </span>
                               </div>
@@ -5970,7 +5974,7 @@ export default function AdminDashboard() {
                               <div className="d-flex justify-content-between small text-muted mb-1">
                                 <span>{t('dashboard.overdue', 'Overdue')}</span>
                                 <span>
-                                  {getCurrencySymbol('USD')}
+                                  {getCurrencySymbol(defaultCurrency)}
                                   {homeSnapshot.fees.overdue.toFixed(0)}
                                 </span>
                               </div>
@@ -6004,7 +6008,7 @@ export default function AdminDashboard() {
                               <small className="text-muted">{t('dashboard.upcomingTeacherPayouts', 'Upcoming teacher payouts')}</small>
                             </div>
                             <Badge bg="success">
-                              {getCurrencySymbol('USD')}
+                              {getCurrencySymbol(defaultCurrency)}
                               {(homeSnapshot.salaries.pending + homeSnapshot.salaries.paid).toFixed(0)}
                             </Badge>
                           </Card.Header>
@@ -6013,7 +6017,7 @@ export default function AdminDashboard() {
                               <div className="d-flex justify-content-between small text-muted mb-1">
                                 <span>{t('dashboard.pending', 'Pending')}</span>
                                 <span>
-                                  {getCurrencySymbol('USD')}
+                                  {getCurrencySymbol(defaultCurrency)}
                                   {homeSnapshot.salaries.pending.toFixed(0)}
                                 </span>
                               </div>
@@ -6030,7 +6034,7 @@ export default function AdminDashboard() {
                               <div className="d-flex justify-content-between small text-muted mb-1">
                                 <span>{t('dashboard.paid', 'Paid')}</span>
                                 <span>
-                                  {getCurrencySymbol('USD')}
+                                  {getCurrencySymbol(defaultCurrency)}
                                   {homeSnapshot.salaries.paid.toFixed(0)}
                                 </span>
                               </div>
