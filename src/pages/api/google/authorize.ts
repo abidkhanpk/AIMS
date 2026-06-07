@@ -28,5 +28,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     scope: DRIVE_SCOPE,
   });
 
-  res.status(200).json({ url });
+  res.redirect(url);
 }
