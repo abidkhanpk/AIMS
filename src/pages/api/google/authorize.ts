@@ -1,9 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { google } from 'googleapis';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]';
 
 const DRIVE_SCOPE = ['https://www.googleapis.com/auth/drive.file'];
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions);
+  if (!session || session.user.role !== 'DEVELOPER') {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
   const clientId = process.env.GOOGLE_CLIENT_ID || process.env.google_client_id;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || process.env.google_client_secret;
   const redirectUri =

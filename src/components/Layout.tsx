@@ -345,6 +345,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const isAuthPage = router.pathname.startsWith('/auth/');
+
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
+
   return (
     <>
       <Navbar

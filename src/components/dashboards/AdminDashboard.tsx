@@ -35,6 +35,7 @@ export interface User {
   payRate?: number;
   payType?: PayType;
   payCurrency?: string;
+  isActive?: boolean;
 }
 
 export interface Course {
@@ -824,6 +825,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
   const [country, setCountry] = useState('');
+  const [isActive, setIsActive] = useState(true);
   
   // Bulk import state
   const [importingCsv, setImportingCsv] = useState(false);
@@ -975,6 +977,7 @@ export function UserManagementTab({ role }: { role: Role }) {
     setPayRate('');
     setPayType('MONTHLY');
     setPayCurrency('USD');
+    setIsActive(true);
     setActiveTab('basic');
   };
 
@@ -1016,6 +1019,7 @@ export function UserManagementTab({ role }: { role: Role }) {
     setPayRate(user.payRate?.toString() || '');
     setPayType(user.payType || 'MONTHLY');
     setPayCurrency(user.payCurrency || 'USD');
+    setIsActive(user.isActive ?? true);
     setActiveTab('basic');
     
     if (isStudent) {
@@ -1188,6 +1192,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         id: editingUser.id,
         name, 
         email, 
+        isActive,
         ...(password && { password }),
         mobile: mobile || undefined,
         dateOfBirth: dateOfBirth || undefined,
@@ -1570,6 +1575,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                         <th>{t('auto.mobile', `Mobile`)}</th>
                         <th>{t('auto.payRate', `Pay Rate`)}</th>
                         <th>{t('auto.created', `Created`)}</th>
+                        <th>{t('auto.status', `Status`)}</th>
                         <th>{t('auto.actions', `Actions`)}</th>
                       </tr>
                     </thead>
@@ -1592,6 +1598,13 @@ export function UserManagementTab({ role }: { role: Role }) {
                           </td>
                           <td className="text-muted small">
                             {new Date(user.createdAt).toLocaleDateString()}
+                          </td>
+                          <td>
+                            {user.isActive ? (
+                              <Badge bg="success">{t('auto.active', 'Active')}</Badge>
+                            ) : (
+                              <Badge bg="danger">{t('auto.inactive', 'Inactive')}</Badge>
+                            )}
                           </td>
                           <td>
                             <div className="d-flex gap-1">
@@ -1917,6 +1930,15 @@ export function UserManagementTab({ role }: { role: Role }) {
                           </Form.Group>
                         </Col>
                       </Row>
+                      <Form.Group className="mb-3">
+                        <Form.Check
+                          type="switch"
+                          id="edit-student-active"
+                          label={isActive ? t('auto.active', 'Active') : t('auto.inactive', 'Inactive')}
+                          checked={isActive}
+                          onChange={(e) => setIsActive(e.target.checked)}
+                        />
+                      </Form.Group>
                       <Form.Group className="mb-4">
                         <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                         <Form.Control 
@@ -2716,6 +2738,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                           <th>{t('auto.email', `Email`)}</th>
                           <th>{t('auto.mobile', `Mobile`)}</th>
                           <th>{t('auto.created', `Created`)}</th>
+                          <th>{t('auto.status', `Status`)}</th>
                           <th>{t('auto.actions', `Actions`)}</th>
                         </tr>
                       </thead>
@@ -2727,6 +2750,13 @@ export function UserManagementTab({ role }: { role: Role }) {
                             <td className="text-muted">{user.mobile || '-'}</td>
                             <td className="text-muted small">
                               {new Date(user.createdAt).toLocaleDateString()}
+                            </td>
+                            <td>
+                              {user.isActive ? (
+                                <Badge bg="success">{t('auto.active', 'Active')}</Badge>
+                              ) : (
+                                <Badge bg="danger">{t('auto.inactive', 'Inactive')}</Badge>
+                              )}
                             </td>
                             <td>
                               <div className="d-flex gap-1">
@@ -2877,6 +2907,15 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </option>
                       ))}
                     </Form.Select>
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Check
+                      type="switch"
+                      id="edit-teacher-active"
+                      label={isActive ? t('auto.active', 'Active') : t('auto.inactive', 'Inactive')}
+                      checked={isActive}
+                      onChange={(e) => setIsActive(e.target.checked)}
+                    />
                   </Form.Group>
                   <Form.Group className="mb-4">
                     <Form.Label>{t('auto.password', `Password`)}</Form.Label>
@@ -3099,6 +3138,15 @@ export function UserManagementTab({ role }: { role: Role }) {
               </Form.Group>
               
                             
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="switch"
+                  id="edit-parent-active"
+                  label={isActive ? t('auto.active', 'Active') : t('auto.inactive', 'Inactive')}
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                />
+              </Form.Group>
               <Form.Group className="mb-4">
                 <Form.Label>{t('auto.password', `Password`)}</Form.Label>
                 <Form.Control 
