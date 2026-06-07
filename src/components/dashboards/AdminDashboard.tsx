@@ -5602,9 +5602,16 @@ export default function AdminDashboard() {
       const activeThisWeek = activeTeacherIds.size;
       const activeRate = teachers.length ? Math.round((activeThisWeek / teachers.length) * 100) : 0;
 
+      const getSubEffectiveDate = (sub: any) => {
+        if (sub?.plan === 'LIFETIME') {
+          return new Date('9999-12-31');
+        }
+        return new Date(sub?.endDate || sub?.startDate || 0);
+      };
+
       const latestSubscription = Array.isArray(subscriptions) && subscriptions.length
         ? subscriptions.reduce((latest: any, sub: any) =>
-            new Date(sub.endDate || sub.startDate || 0) > new Date(latest.endDate || latest.startDate || 0) ? sub : latest,
+            getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
           subscriptions[0])
         : null;
       const now = new Date();
@@ -5655,7 +5662,7 @@ export default function AdminDashboard() {
           amount: latestSubscription?.amount ?? null,
           currency: latestSubscription?.currency || null,
           daysLeft,
-          warning: typeof daysLeft === 'number' ? daysLeft <= 7 : false,
+          warning: latestSubscription?.plan === 'LIFETIME' ? false : (typeof daysLeft === 'number' ? daysLeft <= 7 : false),
         },
         remarks: { total: Array.isArray(remarks) ? remarks.length : 0 },
       });

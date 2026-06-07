@@ -323,9 +323,16 @@ function AdminManagementTab() {
     setSubscriptionType(admin.settings?.subscriptionType || 'MONTHLY');
     setSubscriptionAmount(admin.settings?.subscriptionAmount || 29.99);
     
+    const getSubEffectiveDate = (sub: any) => {
+      if (sub?.plan === 'LIFETIME') {
+        return new Date('9999-12-31');
+      }
+      return new Date(sub?.endDate || sub?.startDate || 0);
+    };
+
     const activeSub = admin.subscriptions?.length 
       ? admin.subscriptions.reduce((latest: any, sub: any) =>
-          new Date(sub.endDate || sub.startDate || 0) > new Date(latest.endDate || latest.startDate || 0) ? sub : latest,
+          getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
           admin.subscriptions[0])
       : null;
     setSubscriptionCurrency(activeSub?.currency || 'USD');
