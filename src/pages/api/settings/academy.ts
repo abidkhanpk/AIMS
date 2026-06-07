@@ -24,7 +24,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpPass: true,
           smtpSecure: true,
           smtpReplyTo: true,
-          smtpFrom: true
+          smtpFrom: true,
+          defaultCurrency: true,
         }
       });
       
@@ -45,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom } = req.body;
+      const { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom, defaultCurrency } = req.body;
       
       let finalSmtpPass: string | null | undefined = undefined;
       if (smtpPass !== undefined) {
@@ -67,7 +68,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ...(finalSmtpPass !== undefined && { smtpPass: finalSmtpPass }),
           smtpSecure,
           smtpReplyTo,
-          smtpFrom
+          smtpFrom,
+          defaultCurrency: defaultCurrency || 'PKR'
         },
         create: {
           adminId,
@@ -77,7 +79,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpPass: finalSmtpPass !== undefined ? finalSmtpPass : null,
           smtpSecure,
           smtpReplyTo,
-          smtpFrom
+          smtpFrom,
+          defaultCurrency: defaultCurrency || 'PKR'
         }
       });
       

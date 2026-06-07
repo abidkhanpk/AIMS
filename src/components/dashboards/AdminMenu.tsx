@@ -3,6 +3,7 @@ import { Offcanvas, ListGroup } from 'react-bootstrap';
 import { useRouter } from 'next/router';
 import NotificationDropdown from '../NotificationDropdown';
 import { useTranslation } from 'react-i18next';
+import { signOut } from 'next-auth/react';
 import styles from './AdminMenu.module.css';
 
 type MenuItem = {
@@ -74,6 +75,23 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [mobileGroups, setMobileGroups] = useState<Record<string, boolean>>({});
+
+  const handleSignOut = async () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      await signOut({ 
+        redirect: false,
+        callbackUrl: '/auth/signin'
+      });
+      setTimeout(() => {
+        window.location.href = '/auth/signin';
+      }, 100);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      window.location.href = '/auth/signin';
+    }
+  };
 
   useEffect(() => {
     // Keep parent group open when a child is active
@@ -253,7 +271,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
             <button
               type="button"
               className={`${styles.navbarItemInner} ${styles.flexLeft}`}
-              onClick={() => router.push('/api/auth/signout')}
+              onClick={handleSignOut}
             >
               <div className={styles.iconWrapper}>
                 <i className="bi bi-box-arrow-right" aria-hidden />
@@ -291,7 +309,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
             <ListGroup.Item
               action
               onClick={() => {
-                router.push('/api/auth/signout');
+                handleSignOut();
                 setShowMobileMenu(false);
               }}
               className="d-flex align-items-center mt-2"

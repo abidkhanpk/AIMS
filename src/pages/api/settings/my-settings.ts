@@ -37,6 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         headerImg: appSettings.appLogo,
         headerImgUrl: appSettings.appLogo,
         enableHomePage: appSettings.enableHomePage,
+        defaultCurrency: appSettings.defaultCurrency || 'USD',
       };
     } else if (session.user.role === 'ADMIN') {
       // Admin gets their own settings
@@ -58,6 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           headerImgUrl: true,
           tagline: true,
           enableHomePage: true,
+          defaultCurrency: true,
         }
       });
 
@@ -121,6 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             headerImgUrl: true,
             tagline: true,
             enableHomePage: true,
+            defaultCurrency: true,
           }
         });
 

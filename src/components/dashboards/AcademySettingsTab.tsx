@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from 'react-i18next';
+import { currencies } from '../../utils/currencies';
 
 export default function AcademySettingsTab() {
     const { t } = useTranslation('common');
@@ -18,6 +19,7 @@ export default function AcademySettingsTab() {
   const [smtpSecure, setSmtpSecure] = useState('');
   const [smtpReplyTo, setSmtpReplyTo] = useState('');
   const [smtpFrom, setSmtpFrom] = useState('');
+  const [defaultCurrency, setDefaultCurrency] = useState('USD');
   const [testEmail, setTestEmail] = useState('');
   const [testingSmtp, setTestingSmtp] = useState(false);
   const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -36,6 +38,7 @@ export default function AcademySettingsTab() {
           setSmtpSecure(data.smtpSecure || 'tls');
           setSmtpReplyTo(data.smtpReplyTo || '');
           setSmtpFrom(data.smtpFrom || '');
+          setDefaultCurrency(data.defaultCurrency || 'USD');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error fetching settings');
@@ -62,6 +65,7 @@ export default function AcademySettingsTab() {
           smtpSecure: smtpSecure || null,
           smtpReplyTo: smtpReplyTo || null,
           smtpFrom: smtpFrom || null,
+          defaultCurrency: defaultCurrency || 'USD'
         })
       });
 
@@ -131,6 +135,31 @@ export default function AcademySettingsTab() {
 
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
+
+      <Card className="shadow-sm border-0 mb-4">
+        <Card.Header className="bg-white py-3">
+          <h5 className="mb-0 fw-bold text-muted">{t('auto.academyPreferences', `Academy Preferences`)}</h5>
+        </Card.Header>
+        <Card.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>{t('auto.defaultCurrency', `Default Currency`)}</Form.Label>
+            <Form.Select
+              value={defaultCurrency}
+              onChange={(e) => setDefaultCurrency(e.target.value)}
+              className="bg-white"
+            >
+              {currencies.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.symbol} {c.code} ({c.name})
+                </option>
+              ))}
+            </Form.Select>
+            <Form.Text className="text-muted">
+              {t('auto.defaultCurrencyDesc', `This is the default currency used for courses, fee invoices, and teacher pay rates.`)}
+            </Form.Text>
+          </Form.Group>
+        </Card.Body>
+      </Card>
 
       <Card className="shadow-sm border-0 mb-4">
         <Card.Header className="bg-white py-3">

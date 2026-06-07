@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, dateFnsLocalizer, View, Views } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addWeeks, setDay, parseISO } from 'date-fns';
+import { fromZonedTime } from 'date-fns-tz';
 import { enUS } from 'date-fns/locale/en-US';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Card, Spinner, Alert } from 'react-bootstrap';
@@ -23,6 +24,7 @@ interface ScheduleAssignment {
   assignmentDate: string;
   isActive: boolean;
   updatedAt: string;
+  timezone?: string | null;
 }
 
 interface CalendarEvent {
@@ -290,7 +292,7 @@ export default function CalendarView() {
 
         assignments.forEach(assignment => {
           if (!assignment.startTime) return;
-          const [hours, minutes] = assignment.startTime.split(':').map(Number);
+          const [hoursStr, minutesStr] = assignment.startTime.split(':');
           const durationMins = assignment.duration || 60;
 
           assignment.classDays.forEach(day => {
@@ -298,18 +300,23 @@ export default function CalendarView() {
             let current = setDay(startOfRange, targetDayIndex);
             if (current < startOfRange) current = addWeeks(current, 1);
 
-            const assignmentStartDate = new Date(assignment.assignmentDate);
-            assignmentStartDate.setHours(0, 0, 0, 0);
+            const assignmentStartDate = fromZonedTime(
+              `${format(new Date(assignment.assignmentDate), 'yyyy-MM-dd')} 00:00:00`,
+              assignment.timezone || 'UTC'
+            );
             
             let assignmentEndDate: Date | null = null;
             if (!assignment.isActive) {
-              assignmentEndDate = new Date(assignment.updatedAt);
-              assignmentEndDate.setHours(23, 59, 59, 999);
+              assignmentEndDate = fromZonedTime(
+                `${format(new Date(assignment.updatedAt), 'yyyy-MM-dd')} 23:59:59`,
+                assignment.timezone || 'UTC'
+              );
             }
 
             while (current <= endOfRange) {
-              const eventStart = new Date(current);
-              eventStart.setHours(hours, minutes, 0, 0);
+              const dateStr = format(current, 'yyyy-MM-dd');
+              const dateTimeStr = `${dateStr} ${hoursStr}:${minutesStr}:00`;
+              const eventStart = fromZonedTime(dateTimeStr, assignment.timezone || 'UTC');
               
               if (eventStart < assignmentStartDate) {
                 current = addWeeks(current, 1);

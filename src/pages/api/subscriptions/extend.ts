@@ -76,6 +76,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         await prisma.subscription.update({
           where: { id: currentSubscription.id },
           data: {
+            plan,
+            amount: parseFloat(amount),
+            currency,
             endDate: newExpiryDate,
             status: 'ACTIVE',
             paidDate: new Date(),

@@ -103,16 +103,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (payCurrency !== undefined) updateData.payCurrency = payCurrency;
     }
 
-    // Only developers can update isActive status
-    if (session.user.role === 'DEVELOPER' && isActive !== undefined) {
-      updateData.isActive = isActive;
-      
-      // If disabling an admin, also disable all their sub-users
-      if (!isActive && existingUser.role === 'ADMIN') {
-        await prisma.user.updateMany({
-          where: { adminId: existingUser.id },
-          data: { isActive: false }
-        });
+    // Developers and Admins can update isActive status
+    if (isActive !== undefined) {
+      if (session.user.role === 'DEVELOPER') {
+        updateData.isActive = isActive;
+        
+        // If disabling an admin, also disable all their sub-users
+        if (!isActive && existingUser.role === 'ADMIN') {
+          await prisma.user.updateMany({
+            where: { adminId: existingUser.id },
+            data: { isActive: false }
+          });
+        }
+      } else if (session.user.role === 'ADMIN') {
+        // Admins can toggle status of their managed users (TEACHER, STUDENT, PARENT)
+        if (['TEACHER', 'STUDENT', 'PARENT'].includes(existingUser.role)) {
+          updateData.isActive = isActive;
+        } else {
+          return res.status(403).json({ message: 'Admins can only toggle status of teachers, students, and parents' });
+        }
       }
     }
 
