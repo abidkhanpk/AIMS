@@ -158,7 +158,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           adminId: user.id,
           appTitle: 'AIMS',
           headerImg: '/assets/default-logo.png',
-          defaultCurrency: 'USD',
+          defaultCurrency: 'PKR',
           subscriptionType: subType,
           subscriptionAmount: subAmount,
           subscriptionStartDate: subStartDate,

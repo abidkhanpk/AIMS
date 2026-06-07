@@ -69,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpSecure,
           smtpReplyTo,
           smtpFrom,
-          defaultCurrency: defaultCurrency || 'USD'
+          defaultCurrency: defaultCurrency || 'PKR'
         },
         create: {
           adminId,
@@ -80,7 +80,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpSecure,
           smtpReplyTo,
           smtpFrom,
-          defaultCurrency: defaultCurrency || 'USD'
+          defaultCurrency: defaultCurrency || 'PKR'
         }
       });
       

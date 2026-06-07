@@ -88,7 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           headerImgUrl: headerImgUrl || null,
           tagline: tagline || 'Academy Information and Management System',
           enableHomePage: enableHomePage !== undefined ? enableHomePage : true,
-          defaultCurrency: defaultCurrency || 'USD',
+          defaultCurrency: defaultCurrency || 'PKR',
           subscriptionType: subscriptionType || 'MONTHLY',
           subscriptionAmount: subscriptionAmount ? parseFloat(subscriptionAmount) : 29.99,
           subscriptionStartDate: subscriptionStartDate ? new Date(subscriptionStartDate) : new Date(),
