@@ -203,6 +203,10 @@
 }
 
 /* Urdu Language RTL and Font Overrides */
+html[lang="ur"] {
+  font-size: 85% !important; /* 15% reduction of original font size */
+}
+
 body.lang-ur {
   font-family: 'Gulzar', 'Noto Nastaliq Urdu', serif !important;
   font-size: 1.1rem; /* Nastaliq fonts usually need a slight bump in size */
@@ -217,6 +221,26 @@ body.lang-ur h5,
 body.lang-ur h6 {
   font-family: 'Gulzar', 'Noto Nastaliq Urdu', serif !important;
   line-height: 2;
+}
+
+/* Reset sidebar font sizes to their original scale (not affected by root reduction) */
+body.lang-ur [class*="AdminMenu_navbarItemInner"] {
+  font-size: 14.4px !important; /* original 0.9rem */
+}
+body.lang-ur [class*="AdminMenu_arrow"] {
+  font-size: 12.8px !important; /* original 0.8rem */
+}
+body.lang-ur .offcanvas-title {
+  font-size: 20px !important; /* original 1.25rem */
+}
+body.lang-ur .offcanvas-body .list-group-item {
+  font-size: 16.8px !important; /* original 1.05rem */
+}
+
+/* Reduce table header row font size by 20% of original */
+body.lang-ur th,
+body.lang-ur thead th {
+  font-size: 12.8px !important; /* original 16px * 0.8 */
 }
 
 /* Fix some padding/margins for RTL across the app */
