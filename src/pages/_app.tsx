@@ -9,6 +9,7 @@ import Head from 'next/head';
 import Script from 'next/script';
 import { ThemeProvider } from '../context/ThemeContext';
 import { appWithTranslation } from 'next-i18next/pages';
+import nextI18nConfig from '../../next-i18next.config.js';
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   const router = useRouter();
@@ -58,4 +59,4 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   );
 }
 
-export default appWithTranslation(MyApp);
+export default appWithTranslation(MyApp, nextI18nConfig);
