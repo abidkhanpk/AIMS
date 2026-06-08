@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { adminId, plan, amount, currency, paymentDetails } = req.body;
+      const { adminId, plan, amount, currency, paymentDetails, cancelUnpaid } = req.body;
 
       if (!adminId || !plan || !amount || !currency) {
         return res.status(400).json({ message: 'Missing required fields' });
@@ -98,6 +98,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             status: 'ACTIVE',
             paidDate: new Date(),
             paidById: session.user.id
+          }
+        });
+      }
+
+      // Cancel any other PENDING, PROCESSING, or EXPIRED subscription records for this admin if requested
+      if (cancelUnpaid !== false) {
+        await prisma.subscription.updateMany({
+          where: {
+            adminId,
+            status: { in: ['PENDING', 'PROCESSING', 'EXPIRED'] },
+            ...(currentSubscription && { id: { not: currentSubscription.id } })
+          },
+          data: {
+            status: 'CANCELLED'
           }
         });
       }

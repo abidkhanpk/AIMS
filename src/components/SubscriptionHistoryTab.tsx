@@ -63,6 +63,7 @@ export default function SubscriptionHistoryTab({
   const [extensionAmount, setExtensionAmount] = useState(29.99);
   const [extensionCurrency, setExtensionCurrency] = useState('USD');
   const [paymentDetails, setPaymentDetails] = useState('');
+  const [cancelUnpaid, setCancelUnpaid] = useState(true);
 
   const fetchSubscriptionHistory = useCallback(async () => {
     try {
@@ -101,7 +102,8 @@ export default function SubscriptionHistoryTab({
           plan: extensionType,
           amount: extensionAmount,
           currency: extensionCurrency,
-          paymentDetails
+          paymentDetails,
+          cancelUnpaid
         })
       });
 
@@ -415,6 +417,19 @@ export default function SubscriptionHistoryTab({
                     value={paymentDetails}
                     onChange={(e) => setPaymentDetails(e.target.value)}
                     placeholder={t('auto.enterPaymentConfirmationDetail', `Enter payment confirmation details, transaction ID, etc.`)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <Form.Group className="mb-3">
+                  <Form.Check 
+                    type="checkbox"
+                    id="cancel-unpaid-checkbox"
+                    label={t('auto.cancelPreviousUnpaidPayments', 'Cancel/remove previously unpaid pending subscription payments')}
+                    checked={cancelUnpaid}
+                    onChange={(e) => setCancelUnpaid(e.target.checked)}
                   />
                 </Form.Group>
               </Col>
