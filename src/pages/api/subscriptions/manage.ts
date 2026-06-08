@@ -71,13 +71,47 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ message: 'Only developers can manage subscriptions' });
     }
 
-    const { adminId, action, plan, amount } = req.body;
+    const { adminId, action, plan, amount, subscriptionId } = req.body;
 
-    if (!adminId || !action) {
-      return res.status(400).json({ message: 'Admin ID and action are required' });
+    if (!action) {
+      return res.status(400).json({ message: 'Action is required' });
     }
 
     try {
+      if (action === 'cancel') {
+        if (!subscriptionId) {
+          return res.status(400).json({ message: 'Subscription ID is required' });
+        }
+        await prisma.subscription.update({
+          where: { id: subscriptionId },
+          data: { status: 'CANCELLED' }
+        });
+        return res.status(200).json({ message: 'Subscription cancelled successfully' });
+      } else if (action === 'cancelAllBefore') {
+        if (!subscriptionId) {
+          return res.status(400).json({ message: 'Subscription ID is required' });
+        }
+        const targetSub = await prisma.subscription.findUnique({
+          where: { id: subscriptionId }
+        });
+        if (!targetSub) {
+          return res.status(404).json({ message: 'Subscription not found' });
+        }
+        await prisma.subscription.updateMany({
+          where: {
+            adminId: targetSub.adminId,
+            createdAt: { lte: targetSub.createdAt },
+            status: { in: ['PENDING', 'PROCESSING', 'EXPIRED'] }
+          },
+          data: { status: 'CANCELLED' }
+        });
+        return res.status(200).json({ message: 'Obsolete subscriptions cancelled successfully' });
+      }
+
+      if (!adminId) {
+        return res.status(400).json({ message: 'Admin ID is required for this action' });
+      }
+
       // Get admin details
       const admin = await prisma.user.findFirst({
         where: {

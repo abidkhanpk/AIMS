@@ -292,7 +292,72 @@ export default function SubscriptionHistoryTab({
                               <i className="bi bi-x-lg"></i>
                             </Button>
                           </div>
-                        ) : (
+                        ) : null}
+                        {(sub.status === 'PROCESSING' || sub.status === 'PENDING' || sub.status === 'EXPIRED') && (
+                          <div className="d-flex gap-1 mt-1">
+                            <Button
+                              size="sm"
+                              variant="outline-warning"
+                              title={t('auto.cancelSelected', 'Cancel this unpaid payment')}
+                              disabled={verifyingId === sub.id}
+                              onClick={async () => {
+                                if (!confirm('Are you sure you want to cancel this pending payment record?')) return;
+                                setVerifyingId(sub.id);
+                                try {
+                                  const res = await fetch('/api/subscriptions/manage', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ subscriptionId: sub.id, action: 'cancel' })
+                                  });
+                                  if (res.ok) {
+                                    setSuccess('Subscription cancelled');
+                                    fetchSubscriptionHistory();
+                                  } else {
+                                    const err = await res.json();
+                                    setError(err.message || 'Failed to cancel');
+                                  }
+                                } catch (e) {
+                                  setError('Error cancelling subscription');
+                                } finally {
+                                  setVerifyingId(null);
+                                }
+                              }}
+                            >
+                              <i className="bi bi-slash-circle"></i>
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline-dark"
+                              title={t('auto.cancelAllBefore', 'Cancel this and all older unpaid payments')}
+                              disabled={verifyingId === sub.id}
+                              onClick={async () => {
+                                if (!confirm('Are you sure you want to cancel this and all older pending/expired payments?')) return;
+                                setVerifyingId(sub.id);
+                                try {
+                                  const res = await fetch('/api/subscriptions/manage', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ subscriptionId: sub.id, action: 'cancelAllBefore' })
+                                  });
+                                  if (res.ok) {
+                                    setSuccess('Obsolete subscriptions cancelled');
+                                    fetchSubscriptionHistory();
+                                  } else {
+                                    const err = await res.json();
+                                    setError(err.message || 'Failed to cancel');
+                                  }
+                                } catch (e) {
+                                  setError('Error cancelling subscriptions');
+                                } finally {
+                                  setVerifyingId(null);
+                                }
+                              }}
+                            >
+                              <i className="bi bi-arrow-left-square"></i>
+                            </Button>
+                          </div>
+                        )}
+                        {sub.status !== 'PROCESSING' && sub.status !== 'PENDING' && sub.status !== 'EXPIRED' && (
                           <span className="text-muted">-</span>
                         )}
                       </td>

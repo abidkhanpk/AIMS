@@ -330,11 +330,17 @@ function AdminManagementTab() {
       return new Date(sub?.endDate || sub?.startDate || 0);
     };
 
-    const activeSub = admin.subscriptions?.length 
-      ? admin.subscriptions.reduce((latest: any, sub: any) =>
+    const activeSubs = admin.subscriptions?.length ? admin.subscriptions.filter((s: any) => s.status === 'ACTIVE') : [];
+
+    const activeSub = activeSubs.length > 0
+      ? activeSubs.reduce((latest: any, sub: any) =>
           getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
-          admin.subscriptions[0])
-      : null;
+          activeSubs[0])
+      : (admin.subscriptions?.length
+          ? admin.subscriptions.reduce((latest: any, sub: any) =>
+              getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
+              admin.subscriptions[0])
+          : null);
     setSubscriptionCurrency(activeSub?.currency || 'USD');
     
     setSubscriptionStartDate(admin.settings?.subscriptionStartDate ? admin.settings.subscriptionStartDate.split('T')[0] : '');
