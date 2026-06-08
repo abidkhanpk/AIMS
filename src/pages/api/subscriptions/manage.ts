@@ -106,6 +106,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           data: { status: 'CANCELLED' }
         });
         return res.status(200).json({ message: 'Obsolete subscriptions cancelled successfully' });
+      } else if (action === 'cancelAllPending') {
+        if (!subscriptionId) {
+          return res.status(400).json({ message: 'Subscription ID is required' });
+        }
+        const targetSub = await prisma.subscription.findUnique({
+          where: { id: subscriptionId }
+        });
+        if (!targetSub) {
+          return res.status(404).json({ message: 'Subscription not found' });
+        }
+        await prisma.subscription.updateMany({
+          where: {
+            adminId: targetSub.adminId,
+            status: { in: ['PENDING', 'PROCESSING', 'EXPIRED'] }
+          },
+          data: { status: 'CANCELLED' }
+        });
+        return res.status(200).json({ message: 'All pending/unpaid subscriptions cancelled successfully' });
       }
 
       if (!adminId) {
