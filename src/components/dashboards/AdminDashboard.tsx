@@ -5508,6 +5508,7 @@ export default function AdminDashboard() {
       currency: string | null;
       daysLeft: number | null;
       warning: boolean;
+      hasPendingOrExpired: boolean;
     };
     remarks: { total: number };
   } | null>(null);
