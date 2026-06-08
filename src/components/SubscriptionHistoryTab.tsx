@@ -63,6 +63,13 @@ export default function SubscriptionHistoryTab({
   const [extensionAmount, setExtensionAmount] = useState(29.99);
   const [extensionCurrency, setExtensionCurrency] = useState('USD');
   const [paymentDetails, setPaymentDetails] = useState('');
+  const [cancelUnpaid, setCancelUnpaid] = useState(true);
+
+  // Cancellation modal states
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelTargetSub, setCancelTargetSub] = useState<SubscriptionRecord | null>(null);
+  const [cancelScope, setCancelScope] = useState('cancel');
+  const [cancelling, setCancelling] = useState(false);
 
   const fetchSubscriptionHistory = useCallback(async () => {
     try {
@@ -101,7 +108,8 @@ export default function SubscriptionHistoryTab({
           plan: extensionType,
           amount: extensionAmount,
           currency: extensionCurrency,
-          paymentDetails
+          paymentDetails,
+          cancelUnpaid
         })
       });
 
@@ -118,6 +126,37 @@ export default function SubscriptionHistoryTab({
       setError('Error extending subscription');
     } finally {
       setExtending(false);
+    }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelTargetSub) return;
+    setCancelling(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/subscriptions/manage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscriptionId: cancelTargetSub.id,
+          action: cancelScope
+        })
+      });
+
+      if (res.ok) {
+        setSuccess('Subscription/payment cancelled successfully');
+        fetchSubscriptionHistory();
+        setShowCancelModal(false);
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to cancel subscription');
+      }
+    } catch (error) {
+      setError('Error cancelling subscription');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -290,7 +329,24 @@ export default function SubscriptionHistoryTab({
                               <i className="bi bi-x-lg"></i>
                             </Button>
                           </div>
-                        ) : (
+                        ) : null}
+                        {(sub.status === 'PROCESSING' || sub.status === 'PENDING' || sub.status === 'EXPIRED') && (
+                          <div className="mt-1">
+                            <Button
+                              size="sm"
+                              variant="outline-danger"
+                              onClick={() => {
+                                setCancelTargetSub(sub);
+                                setCancelScope('cancel');
+                                setShowCancelModal(true);
+                              }}
+                            >
+                              <i className="bi bi-x-circle me-1"></i>
+                              {t('auto.cancel', 'Cancel')}
+                            </Button>
+                          </div>
+                        )}
+                        {sub.status !== 'PROCESSING' && sub.status !== 'PENDING' && sub.status !== 'EXPIRED' && (
                           <span className="text-muted">-</span>
                         )}
                       </td>
@@ -415,6 +471,19 @@ export default function SubscriptionHistoryTab({
                     value={paymentDetails}
                     onChange={(e) => setPaymentDetails(e.target.value)}
                     placeholder={t('auto.enterPaymentConfirmationDetail', `Enter payment confirmation details, transaction ID, etc.`)}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <Form.Group className="mb-3">
+                  <Form.Check 
+                    type="checkbox"
+                    id="cancel-unpaid-checkbox"
+                    label={t('auto.cancelPreviousUnpaidPayments', 'Cancel/remove previously unpaid pending subscription payments')}
+                    checked={cancelUnpaid}
+                    onChange={(e) => setCancelUnpaid(e.target.checked)}
                   />
                 </Form.Group>
               </Col>
@@ -618,6 +687,76 @@ export default function SubscriptionHistoryTab({
           )}
           <Button variant="secondary" onClick={() => setShowDetailsModal(false)}>
             {t('auto.close', 'Close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Cancel Subscription Scope Modal */}
+      <Modal show={showCancelModal} onHide={() => setShowCancelModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-x-circle-fill text-danger me-2"></i>
+            {t('auto.cancelSubscriptionPayment', 'Cancel Subscription Payment')}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <p className="mb-3 text-muted">
+              {t('auto.pleaseChooseCancellationScope', 'Please choose the cancellation scope for this payment:')}
+            </p>
+            <Form.Group className="mb-3">
+              <Form.Check
+                type="radio"
+                id="cancel-scope-selected"
+                name="cancelScope"
+                label={t('auto.cancelSelectedOnlyOption', 'Cancel Selected Only')}
+                value="cancel"
+                checked={cancelScope === 'cancel'}
+                onChange={(e) => setCancelScope(e.target.value)}
+                className="mb-2"
+              />
+              <Form.Check
+                type="radio"
+                id="cancel-scope-selected-older"
+                name="cancelScope"
+                label={t('auto.cancelSelectedAndOlderOption', 'Cancel Selected & All Older (this one and all older unpaid payments)')}
+                value="cancelAllBefore"
+                checked={cancelScope === 'cancelAllBefore'}
+                onChange={(e) => setCancelScope(e.target.value)}
+                className="mb-2"
+              />
+              <Form.Check
+                type="radio"
+                id="cancel-scope-all-pending"
+                name="cancelScope"
+                label={t('auto.cancelAllPendingOption', 'Cancel All Pending Payments (cancel all unpaid pending/processing/expired transactions)')}
+                value="cancelAllPending"
+                checked={cancelScope === 'cancelAllPending'}
+                onChange={(e) => setCancelScope(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowCancelModal(false)}>
+            {t('auto.close', 'Close')}
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleConfirmCancel}
+            disabled={cancelling}
+          >
+            {cancelling ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                {t('auto.cancelling', 'Cancelling...')}
+              </>
+            ) : (
+              <>
+                <i className="bi bi-x-lg me-2"></i>
+                {t('auto.confirmCancellation', 'Confirm Cancellation')}
+              </>
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

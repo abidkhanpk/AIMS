@@ -5508,6 +5508,7 @@ export default function AdminDashboard() {
       currency: string | null;
       daysLeft: number | null;
       warning: boolean;
+      hasPendingOrExpired: boolean;
     };
     remarks: { total: number };
   } | null>(null);
@@ -5609,11 +5610,22 @@ export default function AdminDashboard() {
         return new Date(sub?.endDate || sub?.startDate || 0);
       };
 
-      const latestSubscription = Array.isArray(subscriptions) && subscriptions.length
-        ? subscriptions.reduce((latest: any, sub: any) =>
+      const activeSubs = Array.isArray(subscriptions) ? subscriptions.filter((s) => s.status === 'ACTIVE') : [];
+      
+      const latestSubscription = activeSubs.length > 0
+        ? activeSubs.reduce((latest: any, sub: any) =>
             getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
-          subscriptions[0])
-        : null;
+          activeSubs[0])
+        : (Array.isArray(subscriptions) && subscriptions.length
+            ? subscriptions.reduce((latest: any, sub: any) =>
+                getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
+              subscriptions[0])
+            : null);
+
+      const hasPendingOrExpired = Array.isArray(subscriptions)
+        ? subscriptions.some((s) => s.id !== latestSubscription?.id && (s.status === 'PENDING' || s.status === 'PROCESSING' || s.status === 'EXPIRED'))
+        : false;
+
       const now = new Date();
       const subEndDate = latestSubscription?.endDate ? new Date(latestSubscription.endDate) : null;
       const daysLeft = subEndDate ? Math.ceil((subEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
@@ -5663,6 +5675,7 @@ export default function AdminDashboard() {
           currency: latestSubscription?.currency || null,
           daysLeft,
           warning: latestSubscription?.plan === 'LIFETIME' ? false : (typeof daysLeft === 'number' ? daysLeft <= 7 : false),
+          hasPendingOrExpired,
         },
         remarks: { total: Array.isArray(remarks) ? remarks.length : 0 },
       });
@@ -5917,13 +5930,19 @@ export default function AdminDashboard() {
                                     : t('dashboard.expiredDaysAgo', 'Expired day(s) ago').replace('day(s)', Math.abs(homeSnapshot.subscription.daysLeft).toString())}
                                 </small>
                               )}
+                              {homeSnapshot.subscription.warning && (
+                               <div className="alert alert-warning py-2 px-3 mt-3 mb-0">
+                                 <i className="bi bi-exclamation-triangle me-1"></i>
+                                 {t('dashboard.subscriptionEndsSoon', 'Subscription ends soon. Please renew within 7 days.')}
+                               </div>
+                             )}
+                             {homeSnapshot.subscription.hasPendingOrExpired && !homeSnapshot.subscription.warning && (
+                               <div className="alert alert-info py-2 px-3 mt-3 mb-0" style={{ fontSize: '0.85rem' }}>
+                                 <i className="bi bi-info-circle me-1"></i>
+                                 {t('auto.hasPendingOrExpiredAlert', 'Note: You have pending or expired payment records. Please review them in Subscriptions.')}
+                               </div>
+                             )}
                             </div>
-                            {homeSnapshot.subscription.warning && (
-                              <div className="alert alert-warning py-2 px-3 mt-3 mb-0">
-                                <i className="bi bi-exclamation-triangle me-1"></i>
-                                {t('dashboard.subscriptionEndsSoon', 'Subscription ends soon. Please renew within 7 days.')}
-                              </div>
-                            )}
                           </Card.Body>
                         </Card>
                       </Col>
