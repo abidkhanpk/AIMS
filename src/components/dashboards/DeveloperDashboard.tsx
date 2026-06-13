@@ -4,6 +4,16 @@ import { Form, Button, Table, Card, Row, Col, Modal, Alert, Spinner, Badge, Tabs
 import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
 import { currencies } from '../../utils/currencies';
 import { useTranslation } from 'react-i18next';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 interface Admin {
   id: string;
@@ -14,6 +24,7 @@ interface Admin {
   mobile?: string;
   address?: string;
   createdAt: string;
+  studentCount?: number;
   settings?: {
     appTitle: string;
     headerImg: string;
@@ -92,6 +103,13 @@ function AdminManagementTab() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
+
+  // Stats & Trends states
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [selectedStatsAdmin, setSelectedStatsAdmin] = useState<Admin | null>(null);
+  const [statsData, setStatsData] = useState<any>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [statsError, setStatsError] = useState('');
   const [appTitle, setAppTitle] = useState('');
   const [headerImage, setHeaderImage] = useState('');
   const [headerImageUrl, setHeaderImageUrl] = useState('');
@@ -158,6 +176,29 @@ function AdminManagementTab() {
       setError(t('auto.errorFetchingAdmins', `Error fetching admins`));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleShowStats = async (admin: Admin) => {
+    setSelectedStatsAdmin(admin);
+    setShowStatsModal(true);
+    setLoadingStats(true);
+    setStatsError('');
+    setStatsData(null);
+
+    try {
+      const res = await fetch(`/api/settings/developer-admin-stats?adminId=${admin.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStatsData(data);
+      } else {
+        const errorData = await res.json();
+        setStatsError(errorData.message || 'Failed to fetch statistics');
+      }
+    } catch (err) {
+      setStatsError('Error fetching statistics data');
+    } finally {
+      setLoadingStats(false);
     }
   };
 
@@ -648,6 +689,7 @@ function AdminManagementTab() {
                         <th>{t('auto.name', `Name`)}</th>
                         <th>{t('auto.email', `Email`)}</th>
                         <th>{t('auto.status', `Status`)}</th>
+                        <th>{t('auto.studentsCount', 'Students')}</th>
                         <th>{t('auto.subscription', `Subscription`)}</th>
                         <th>{t('auto.appTitle', `App Title`)}</th>
                         <th>{t('auto.currency', `Currency`)}</th>
@@ -668,66 +710,79 @@ function AdminManagementTab() {
                             )}
                           </td>
                           <td className="text-muted">{admin.email}</td>
-                          <td>
-                            <Badge bg={admin.isActive ? 'success' : 'danger'}>
-                              {admin.isActive ? 'Active' : 'Disabled'}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Badge bg="warning" className="text-dark">
-                              {admin.settings?.subscriptionType || 'MONTHLY'}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Badge bg="info" className="text-dark">
-                              {admin.settings?.appTitle || 'Default'}
-                            </Badge>
-                          </td>
-                          <td>
-                            <Badge bg="secondary">
-                              {admin.settings?.defaultCurrency || 'USD'}
-                            </Badge>
-                          </td>
-                          <td className="text-muted small">
-                            {new Date(admin.createdAt).toLocaleDateString()}
-                          </td>
-                          <td>
-                            <div className="d-flex gap-1">
-                              <Button 
-                                variant="outline-primary" 
-                                size="sm" 
-                                onClick={() => handleShowEdit(admin)}
-                                title={t('auto.editAdmin', `Edit Admin`)}
-                              >
-                                <i className="bi bi-pencil"></i>
-                              </Button>
-                              <Button 
-                                variant="outline-secondary" 
-                                size="sm" 
-                                onClick={() => handleShowSettings(admin)}
-                                title={t('auto.settingsSubscription', `Settings & Subscription`)}
-                              >
-                                <i className="bi bi-gear"></i>
-                              </Button>
-                              <Button 
-                                variant={admin.isActive ? "outline-danger" : "outline-success"}
-                                size="sm" 
-                                onClick={() => handleToggleAdminStatus(admin.id, admin.isActive)}
-                                title={admin.isActive ? "Disable Admin (Manual)" : "Enable Admin"}
-                              >
-                                <i className={`bi bi-${admin.isActive ? 'x-circle' : 'check-circle'}`}></i>
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() => handleDeleteAdmin(admin.id)}
-                                title={t('auto.deleteAdmin', `Delete Admin`)}
-                                disabled={deletingAdminId === admin.id}
-                              >
-                                <i className="bi bi-trash"></i>
-                              </Button>
-                            </div>
-                          </td>
+                           <td>
+                             <Badge bg={admin.isActive ? 'success' : 'danger'}>
+                               {admin.isActive ? 'Active' : 'Disabled'}
+                             </Badge>
+                           </td>
+                           <td>
+                             <Badge bg="info" className="text-dark">
+                               {admin.studentCount !== undefined ? admin.studentCount : 0}
+                             </Badge>
+                           </td>
+                           <td>
+                             <Badge bg="warning" className="text-dark">
+                               {admin.settings?.subscriptionType || 'MONTHLY'}
+                             </Badge>
+                           </td>
+                           <td>
+                             <Badge bg="info" className="text-dark">
+                               {admin.settings?.appTitle || 'Default'}
+                             </Badge>
+                           </td>
+                           <td>
+                             <Badge bg="secondary">
+                               {admin.settings?.defaultCurrency || 'USD'}
+                             </Badge>
+                           </td>
+                           <td className="text-muted small">
+                             {new Date(admin.createdAt).toLocaleDateString()}
+                           </td>
+                           <td>
+                             <div className="d-flex gap-1">
+                               <Button 
+                                 variant="outline-info" 
+                                 size="sm" 
+                                 onClick={() => handleShowStats(admin)}
+                                 title={t('auto.viewStatsAndTrends', `View Stats & Trends`)}
+                               >
+                                 <i className="bi bi-graph-up"></i>
+                               </Button>
+                               <Button 
+                                 variant="outline-primary" 
+                                 size="sm" 
+                                 onClick={() => handleShowEdit(admin)}
+                                 title={t('auto.editAdmin', `Edit Admin`)}
+                               >
+                                 <i className="bi bi-pencil"></i>
+                               </Button>
+                               <Button 
+                                 variant="outline-secondary" 
+                                 size="sm" 
+                                 onClick={() => handleShowSettings(admin)}
+                                 title={t('auto.settingsSubscription', `Settings & Subscription`)}
+                               >
+                                 <i className="bi bi-gear"></i>
+                               </Button>
+                               <Button 
+                                 variant={admin.isActive ? "outline-danger" : "outline-success"}
+                                 size="sm" 
+                                 onClick={() => handleToggleAdminStatus(admin.id, admin.isActive)}
+                                 title={admin.isActive ? "Disable Admin (Manual)" : "Enable Admin"}
+                               >
+                                 <i className={`bi bi-${admin.isActive ? 'x-circle' : 'check-circle'}`}></i>
+                               </Button>
+                               <Button
+                                 variant="outline-danger"
+                                 size="sm"
+                                 onClick={() => handleDeleteAdmin(admin.id)}
+                                 title={t('auto.deleteAdmin', `Delete Admin`)}
+                                 disabled={deletingAdminId === admin.id}
+                               >
+                                 <i className="bi bi-trash"></i>
+                               </Button>
+                             </div>
+                           </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1050,6 +1105,158 @@ function AdminManagementTab() {
                 {t('auto.saveChanges', `Save Changes`)}
                                                 </>
             )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Academy Statistics & Trends Modal */}
+      <Modal show={showStatsModal} onHide={() => setShowStatsModal(false)} size="xl" centered>
+        <Modal.Header closeButton className="bg-primary text-white">
+          <Modal.Title>
+            <i className="bi bi-graph-up me-2"></i>
+            {t('auto.academyStatisticsAndTrendsFor', 'Academy Statistics & Trends for')} {selectedStatsAdmin?.name}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="bg-light">
+          {loadingStats ? (
+            <div className="text-center py-5">
+              <Spinner animation="border" variant="primary" />
+              <p className="mt-2 text-muted">{t('auto.loadingStatsAndTrends', 'Loading statistics and trend data...')}</p>
+            </div>
+          ) : statsError ? (
+            <Alert variant="danger">
+              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              {statsError}
+            </Alert>
+          ) : statsData ? (
+            <div>
+              {/* Stats Cards */}
+              <Row className="g-3 mb-4">
+                <Col md={3} sm={6}>
+                  <Card className="shadow-sm border-0 text-white h-100 p-2" style={{ background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', borderRadius: '12px' }}>
+                    <Card.Body className="d-flex align-items-center">
+                      <div className="fs-1 me-3 opacity-75">
+                        <i className="bi bi-mortarboard-fill"></i>
+                      </div>
+                      <div>
+                        <h6 className="mb-0 text-uppercase fw-bold opacity-75 small">{t('auto.totalStudents', 'Total Students')}</h6>
+                        <h2 className="mb-0 fw-bold">{statsData.students}</h2>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+                <Col md={3} sm={6}>
+                  <Card className="shadow-sm border-0 text-white h-100 p-2" style={{ background: 'linear-gradient(135deg, #10b981, #047857)', borderRadius: '12px' }}>
+                    <Card.Body className="d-flex align-items-center">
+                      <div className="fs-1 me-3 opacity-75">
+                        <i className="bi bi-person-workspace"></i>
+                      </div>
+                      <div>
+                        <h6 className="mb-0 text-uppercase fw-bold opacity-75 small">{t('auto.totalTeachers', 'Total Teachers')}</h6>
+                        <h2 className="mb-0 fw-bold">{statsData.teachers}</h2>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+                <Col md={3} sm={6}>
+                  <Card className="shadow-sm border-0 text-white h-100 p-2" style={{ background: 'linear-gradient(135deg, #8b5cf6, #5b21b6)', borderRadius: '12px' }}>
+                    <Card.Body className="d-flex align-items-center">
+                      <div className="fs-1 me-3 opacity-75">
+                        <i className="bi bi-people-fill"></i>
+                      </div>
+                      <div>
+                        <h6 className="mb-0 text-uppercase fw-bold opacity-75 small">{t('auto.totalParents', 'Total Parents')}</h6>
+                        <h2 className="mb-0 fw-bold">{statsData.parents}</h2>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+                <Col md={3} sm={6}>
+                  <Card className="shadow-sm border-0 text-white h-100 p-2" style={{ background: 'linear-gradient(135deg, #f59e0b, #b45309)', borderRadius: '12px' }}>
+                    <Card.Body className="d-flex align-items-center">
+                      <div className="fs-1 me-3 opacity-75">
+                        <i className="bi bi-book-half"></i>
+                      </div>
+                      <div>
+                        <h6 className="mb-0 text-uppercase fw-bold opacity-75 small">{t('auto.totalCourses', 'Total Courses')}</h6>
+                        <h2 className="mb-0 fw-bold">{statsData.courses}</h2>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </Row>
+
+              {/* Growth Chart */}
+              <Card className="shadow-sm border-0" style={{ borderRadius: '12px' }}>
+                <Card.Header className="bg-white border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
+                  <h5 className="fw-bold text-dark mb-0">
+                    <i className="bi bi-graph-up-arrow text-primary me-2"></i>
+                    {t('auto.cumulativeGrowthOverTime', 'Cumulative Growth Over Time')}
+                  </h5>
+                  <Badge bg="primary">{t('auto.monthlyIntervals', 'Monthly Intervals')}</Badge>
+                </Card.Header>
+                <Card.Body>
+                  {statsData.overTime && statsData.overTime.length > 0 ? (
+                    <div style={{ height: 350, width: '100%' }}>
+                      <ResponsiveContainer>
+                        <LineChart data={statsData.overTime} margin={{ top: 20, right: 30, left: 10, bottom: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                          <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} style={{ fontSize: '12px', fill: '#6b7280' }} />
+                          <YAxis axisLine={false} tickLine={false} dx={-10} style={{ fontSize: '12px', fill: '#6b7280' }} />
+                          <Tooltip 
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)', backgroundColor: '#fff' }}
+                            labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
+                          />
+                          <Legend verticalAlign="top" height={36} iconType="circle" style={{ fontSize: '14px' }} />
+                          <Line 
+                            type="monotone" 
+                            dataKey="Students" 
+                            stroke="#3b82f6" 
+                            strokeWidth={3}
+                            dot={{ r: 4, strokeWidth: 2 }}
+                            activeDot={{ r: 6 }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="Teachers" 
+                            stroke="#10b981" 
+                            strokeWidth={3}
+                            dot={{ r: 4, strokeWidth: 2 }}
+                            activeDot={{ r: 6 }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="Parents" 
+                            stroke="#8b5cf6" 
+                            strokeWidth={3}
+                            dot={{ r: 4, strokeWidth: 2 }}
+                            activeDot={{ r: 6 }}
+                          />
+                          <Line 
+                            type="monotone" 
+                            dataKey="Courses" 
+                            stroke="#f59e0b" 
+                            strokeWidth={3}
+                            dot={{ r: 4, strokeWidth: 2 }}
+                            activeDot={{ r: 6 }}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="text-center py-5 text-muted">
+                      <i className="bi bi-bar-chart display-6"></i>
+                      <p className="mt-2 small">{t('auto.noOvertimeDataAvailable', 'No trend data available yet.')}</p>
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            </div>
+          ) : null}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowStatsModal(false)}>
+            {t('auto.close', 'Close')}
           </Button>
         </Modal.Footer>
       </Modal>
