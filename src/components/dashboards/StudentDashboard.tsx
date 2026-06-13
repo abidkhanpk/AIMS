@@ -91,6 +91,10 @@ interface Assignment {
 
 interface Fee {
   id: string;
+  title: string;
+  description?: string;
+  amount: number;
+  currency: string;
   dueDate: string;
   status: FeeStatus;
   paidDate?: string;
@@ -103,12 +107,6 @@ interface Fee {
     id: string;
     name: string;
     email: string;
-  };
-  feeDefinition: {
-    title: string;
-    description?: string;
-    amount: number;
-    currency: string;
   };
 }
 
@@ -764,11 +762,11 @@ export default function StudentDashboard() {
                     <tbody>
                       {fees.map((fee) => (
                         <tr key={fee.id}>
-                          <td>{fee.feeDefinition.title}</td>
+                          <td>{fee.title}</td>
                           <td className="text-muted small">
-                            {fee.feeDefinition.description || '-'}
+                            {fee.description || '-'}
                           </td>
-                          <td className="fw-bold text-success">{getCurrencySymbol(fee.feeDefinition.currency)}{fee.feeDefinition.amount.toFixed(2)}</td>
+                          <td className="fw-bold text-success">{getCurrencySymbol(fee.currency || 'USD')}{(fee.amount || 0).toFixed(2)}</td>
                           <td className="text-muted small">
                             {new Date(fee.dueDate).toLocaleDateString()}
                           </td>

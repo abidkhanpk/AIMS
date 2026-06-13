@@ -1655,25 +1655,6 @@ export function UserManagementTab({ role }: { role: Role }) {
               <Badge bg={config.color}>{users.length} {t('auto.total', `Total`)}</Badge>
             </div>
             <div className="d-flex gap-2">
-              {isStudent && (
-                <>
-                  <input
-                    type="file"
-                    accept=".csv"
-                    ref={csvInputRef}
-                    style={{ display: 'none' }}
-                    onChange={handleImportCsv}
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline-success"
-                    onClick={() => csvInputRef.current?.click()}
-                    disabled={importingCsv}
-                  >
-                    {importingCsv ? <Spinner size="sm" animation="border" /> : <><i className="bi bi-file-earmark-spreadsheet me-1"></i> {t('auto.importCsv', `Import CSV`)}</>}
-                  </Button>
-                </>
-              )}
               <Button
                 size="sm"
                 variant={showCreateForm ? 'secondary' : config.color}
