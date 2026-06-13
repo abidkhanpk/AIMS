@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Offcanvas, ListGroup } from 'react-bootstrap';
+import { Offcanvas, ListGroup, Button, Alert } from 'react-bootstrap';
 import { useRouter } from 'next/router';
 import NotificationDropdown from '../NotificationDropdown';
 import { useTranslation } from 'react-i18next';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import styles from './AdminMenu.module.css';
 
 type MenuItem = {
@@ -72,9 +72,15 @@ const menuItems: MenuItem[] = [
 export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; onSelect: (key: string) => void }) {
   const router = useRouter();
   const { t } = useTranslation('common');
+  const { data: session, status } = useSession();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [mobileGroups, setMobileGroups] = useState<Record<string, boolean>>({});
+
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -128,6 +134,42 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
       }
     };
   }, []);
+
+  // Track PWA install prompt and device status
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
+    setIsIOS(isIosDevice);
+
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(standalone);
+
+    if (standalone) {
+      setCanInstall(false);
+      return;
+    }
+
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstall(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setCanInstall(false);
+  };
 
   const renderMenuItem = (item: MenuItem, isChild = false) => {
     const hasChildren = Array.isArray(item.children) && item.children.length > 0;
@@ -319,9 +361,93 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               {t('logout')}
             </ListGroup.Item>
           </ListGroup>
+          {/* Language Switcher */}
+          <div className="mt-3 pt-3 border-top px-3 mb-4">
+            <label className="form-label small text-muted fw-bold mb-2">
+              <i className="bi bi-globe me-2"></i>{t('layout.language', 'Language')}
+            </label>
+            <div className="d-flex gap-2">
+              <Button
+                size="sm"
+                variant={router.locale === 'en' ? 'primary' : 'outline-secondary'}
+                className="w-50"
+                onClick={async () => {
+                  document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000`;
+                  if (status === 'authenticated') {
+                    try {
+                      await fetch('/api/settings/user-settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ defaultLanguage: 'en' })
+                      });
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  router.push(router.pathname, router.asPath, { locale: 'en' });
+                  setShowMobileMenu(false);
+                }}
+              >
+                English
+              </Button>
+              <Button
+                size="sm"
+                variant={router.locale === 'ur' ? 'primary' : 'outline-secondary'}
+                className="w-50"
+                onClick={async () => {
+                  document.cookie = `NEXT_LOCALE=ur; path=/; max-age=31536000`;
+                  if (status === 'authenticated') {
+                    try {
+                      await fetch('/api/settings/user-settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ defaultLanguage: 'ur' })
+                      });
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                  router.push(router.pathname, router.asPath, { locale: 'ur' });
+                  setShowMobileMenu(false);
+                }}
+              >
+                اردو
+              </Button>
+            </div>
+          </div>
+
+          {/* PWA Install Area */}
+          {canInstall && (
+            <div className="px-3 mb-4">
+              <Button
+                variant="outline-primary"
+                className="w-100 d-flex align-items-center justify-content-center py-2 fs-6 fw-bold"
+                onClick={handleInstall}
+              >
+                <i className="bi bi-download me-2"></i>
+                {t('layout.install', 'Install App')}
+              </Button>
+            </div>
+          )}
+
+          {/* iOS PWA Instructions */}
+          {isIOS && !isStandalone && (
+            <Alert variant="info" className="mx-3 mb-4 small py-2 px-3">
+              <div className="fw-bold mb-1">
+                <i className="bi bi-info-circle me-1"></i>
+                {t('auto.installOnIphone', 'Install on iPhone / iPad')}
+              </div>
+              <ol className="mb-0 ps-3">
+                <li>{t('auto.iosInstallStep1', 'Tap the Share icon in Safari (bottom navigation bar).')}</li>
+                <li>{t('auto.iosInstallStep2', 'Scroll down and select "Add to Home Screen".')}</li>
+              </ol>
+            </Alert>
+          )}
+
           <div className="mt-3 pt-3 border-top">
-            <div className="d-flex align-items-center mb-2">
-              <NotificationDropdown />
+            <div className="d-flex align-items-center mb-2 px-3 justify-content-between">
+              <span className="text-muted small"><i className="bi bi-bell me-1"></i>{t('auto.notifications', 'Notifications')}:</span>
+              <NotificationDropdown theme="light" />
             </div>
             <ListGroup>
               <ListGroup.Item

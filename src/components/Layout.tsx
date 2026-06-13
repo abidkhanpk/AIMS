@@ -898,6 +898,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 )}
               </ListGroup.Item>
 
+              {/* Notifications Link/Dropdown */}
+              <ListGroup.Item
+                className="d-flex align-items-center py-2 justify-content-between px-3"
+              >
+                <span className="d-flex align-items-center text-dark">
+                  <i className="bi bi-bell me-3 fs-5 text-warning"></i>
+                  <span>{t('auto.notifications', 'Notifications')}</span>
+                </span>
+                <NotificationDropdown theme="light" />
+              </ListGroup.Item>
+
               {/* User Settings */}
               <ListGroup.Item
                 action
