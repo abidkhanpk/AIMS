@@ -16,7 +16,7 @@ interface Notification {
   };
 }
 
-export default function NotificationDropdown() {
+export default function NotificationDropdown({ theme = 'dark' }: { theme?: 'light' | 'dark' }) {
     const { t } = useTranslation('common');
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -54,7 +54,7 @@ export default function NotificationDropdown() {
 
       if (res.ok) {
         setNotifications(prev => 
-          prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+         prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
         );
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
@@ -178,7 +178,7 @@ export default function NotificationDropdown() {
     <Dropdown show={show} onToggle={setShow} align="end">
       <Dropdown.Toggle
         as="button"
-        className="btn btn-link text-light position-relative p-2 border-0"
+        className={`btn btn-link ${theme === 'dark' ? 'text-light' : 'text-dark'} position-relative p-2 border-0`}
         style={{ background: 'none' }}
       >
         <i className="bi bi-bell fs-5"></i>

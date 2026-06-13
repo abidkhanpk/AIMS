@@ -47,6 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isSecure, setIsSecure] = useState(true);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -225,27 +226,57 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       (window.navigator as any).standalone === true;
     setIsStandalone(standalone);
 
+    const secure = window.location.protocol === 'https:' || 
+                   window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1';
+    setIsSecure(secure);
+
     if (standalone) {
       setCanInstall(false);
       return;
     }
 
-    const handler = (e: any) => {
+    // Check if prompt is already captured globally
+    if ((window as any).deferredPrompt) {
+      setCanInstall(true);
+    }
+
+    const handlePrompt = (e: any) => {
       e.preventDefault();
+      (window as any).deferredPrompt = e;
       setDeferredPrompt(e);
+      setCanInstall(true);
+      window.dispatchEvent(new Event('pwa-install-available'));
+    };
+
+    const handleAvailable = () => {
       setCanInstall(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    const handleInstalled = () => {
+      setCanInstall(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handlePrompt);
+    window.addEventListener('pwa-install-available', handleAvailable);
+    window.addEventListener('pwa-installed', handleInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handlePrompt);
+      window.removeEventListener('pwa-install-available', handleAvailable);
+      window.removeEventListener('pwa-installed', handleInstalled);
+    };
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
+    const prompt = (window as any).deferredPrompt || deferredPrompt;
+    if (!prompt) return;
+    prompt.prompt();
+    await prompt.userChoice;
+    (window as any).deferredPrompt = null;
     setDeferredPrompt(null);
     setCanInstall(false);
+    window.dispatchEvent(new Event('pwa-installed'));
   };
 
   const handleEmailChange = async () => {
@@ -898,6 +929,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 )}
               </ListGroup.Item>
 
+              {/* Notifications Link/Dropdown */}
+              <ListGroup.Item
+                className="d-flex align-items-center py-2 justify-content-between px-3"
+              >
+                <span className="d-flex align-items-center text-dark">
+                  <i className="bi bi-bell me-3 fs-5 text-warning"></i>
+                  <span>{t('auto.notifications', 'Notifications')}</span>
+                </span>
+                <NotificationDropdown theme="light" />
+              </ListGroup.Item>
+
               {/* User Settings */}
               <ListGroup.Item
                 action
@@ -979,6 +1021,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   {t('layout.install', 'Install App')}
                 </Button>
               </div>
+            )}
+
+            {!isSecure && (
+              <Alert variant="warning" className="mx-3 mb-4 small py-2 px-3">
+                <div className="fw-bold mb-1">
+                  <i className="bi bi-shield-slash me-1"></i>
+                  {t('auto.insecureConnection', 'Insecure Connection')}
+                </div>
+                <p className="mb-0">
+                  {t('auto.pwaSecureMsg', 'PWA installation is disabled by the browser over insecure HTTP. To install, access the app via HTTPS (e.g., in production) or localhost.')}
+                </p>
+              </Alert>
             )}
 
             {/* iOS PWA Instructions */}
