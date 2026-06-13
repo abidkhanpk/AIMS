@@ -28,6 +28,17 @@ function MyApp({ Component, pageProps: { session, ...pageProps } }: AppProps) {
     }
   }, [router.locale]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (reg) => console.log('Service Worker registered successfully with scope:', reg.scope),
+          (err) => console.error('Service Worker registration failed:', err)
+        );
+      });
+    }
+  }, []);
+
   return (
     <>
       <Head>

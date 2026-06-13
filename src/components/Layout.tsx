@@ -47,6 +47,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isSecure, setIsSecure] = useState(true);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -224,6 +225,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true;
     setIsStandalone(standalone);
+
+    const secure = window.location.protocol === 'https:' || 
+                   window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1';
+    setIsSecure(secure);
 
     if (standalone) {
       setCanInstall(false);
@@ -990,6 +996,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   {t('layout.install', 'Install App')}
                 </Button>
               </div>
+            )}
+
+            {!isSecure && (
+              <Alert variant="warning" className="mx-3 mb-4 small py-2 px-3">
+                <div className="fw-bold mb-1">
+                  <i className="bi bi-shield-slash me-1"></i>
+                  {t('auto.insecureConnection', 'Insecure Connection')}
+                </div>
+                <p className="mb-0">
+                  {t('auto.pwaSecureMsg', 'PWA installation is disabled by the browser over insecure HTTP. To install, access the app via HTTPS (e.g., in production) or localhost.')}
+                </p>
+              </Alert>
             )}
 
             {/* iOS PWA Instructions */}

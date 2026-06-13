@@ -81,6 +81,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
   const [canInstall, setCanInstall] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isSecure, setIsSecure] = useState(true);
 
   const handleSignOut = async () => {
     try {
@@ -147,6 +148,11 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
       window.matchMedia('(display-mode: standalone)').matches ||
       (window.navigator as any).standalone === true;
     setIsStandalone(standalone);
+
+    const secure = window.location.protocol === 'https:' || 
+                   window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1';
+    setIsSecure(secure);
 
     if (standalone) {
       setCanInstall(false);
@@ -427,6 +433,20 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
                 <i className="bi bi-download me-2"></i>
                 {t('layout.install', 'Install App')}
               </Button>
+            </div>
+          )}
+
+          {!isSecure && (
+            <div className="px-3 mb-4">
+              <Alert variant="warning" className="small py-2 px-3 m-0">
+                <div className="fw-bold mb-1">
+                  <i className="bi bi-shield-slash me-1"></i>
+                  {t('auto.insecureConnection', 'Insecure Connection')}
+                </div>
+                <p className="mb-0">
+                  {t('auto.pwaSecureMsg', 'PWA installation is disabled by the browser over insecure HTTP. To install, access the app via HTTPS (e.g., in production) or localhost.')}
+                </p>
+              </Alert>
             </div>
           )}
 
