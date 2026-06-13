@@ -59,15 +59,15 @@ export default function SignIn() {
 
       if (result?.error) {
         if (result.error === 'Account disabled') {
-          setError('Your account has been disabled. Please contact your administrator.');
+          setError(t('auto.yourAccountHasBeenDisabled', `Your account has been disabled. Please contact your administrator.`));
         } else {
-          setError('Invalid email or password');
+          setError(t('auto.invalidEmailOrPassword', `Invalid email or password`));
         }
       } else {
         router.push('/dashboard');
       }
     } catch (error) {
-      setError('An error occurred during sign in');
+      setError(t('auto.anErrorOccurredDuringSign', `An error occurred during sign in`));
     } finally {
       setLoading(false);
     }

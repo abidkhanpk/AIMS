@@ -41,7 +41,7 @@ const AdminSubscriptionTab: React.FC = () => {
         const data = await res.json();
         setSubs(Array.isArray(data) ? data : []);
       } else {
-        setError('Failed to fetch subscriptions');
+        setError(t('auto.failedToFetchSubscriptions', `Failed to fetch subscriptions`));
         setSubs([]);
       }
       // Also fetch payments history
@@ -51,7 +51,7 @@ const AdminSubscriptionTab: React.FC = () => {
         setPayments(data2.payments || []);
       }
     } catch (e) {
-      setError('Error fetching subscriptions');
+      setError(t('auto.errorFetchingSubscriptions', `Error fetching subscriptions`));
       setSubs([]);
     } finally {
       setLoading(false);
@@ -82,7 +82,7 @@ const AdminSubscriptionTab: React.FC = () => {
         setError(err.message || 'Failed to submit payment');
       }
     } catch (e) {
-      setError('Error submitting payment');
+      setError(t('auto.errorSubmittingPayment', `Error submitting payment`));
     }
   };
 
@@ -198,14 +198,14 @@ const AdminSubscriptionTab: React.FC = () => {
                                   body: JSON.stringify({ subscriptionId: s.id })
                                 });
                                 if (res.ok) {
-                                  setSuccess('Payment request deleted');
+                                  setSuccess(t('auto.paymentRequestDeleted', `Payment request deleted`));
                                   fetchSubs();
                                 } else {
                                   const err = await res.json();
                                   setError(err.message || 'Failed to delete payment');
                                 }
                               } catch {
-                                setError('Error deleting payment');
+                                setError(t('auto.errorDeletingPayment', `Error deleting payment`));
                               }
                             }}
                           >

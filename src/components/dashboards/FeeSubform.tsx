@@ -84,11 +84,11 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         );
         setFeeDefinitions(filtered);
       } else {
-        setError('Failed to fetch fee definitions');
+        setError(t('auto.failedToFetchFeeDefinitions', `Failed to fetch fee definitions`));
         setFeeDefinitions([]);
       }
     } catch (error) {
-      setError('Error fetching fee definitions');
+      setError(t('auto.errorFetchingFeeDefinitions', `Error fetching fee definitions`));
       setFeeDefinitions([]);
     } finally {
       setLoading(false);
@@ -104,11 +104,11 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         const filtered = (Array.isArray(data) ? data : []).filter((fee) => fee.student?.id === studentId);
         setFeePayments(filtered);
       } else {
-        setError('Failed to fetch fee payments');
+        setError(t('auto.failedToFetchFeePayments', `Failed to fetch fee payments`));
         setFeePayments([]);
       }
     } catch (err) {
-      setError('Error fetching fee payments');
+      setError(t('auto.errorFetchingFeePayments', `Error fetching fee payments`));
       setFeePayments([]);
     } finally {
       setPaymentsLoading(false);
@@ -146,7 +146,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       });
 
       if (res.ok) {
-        setSuccess('Fee definition created successfully!');
+        setSuccess(t('auto.feeDefinitionCreatedSuccessfully', `Fee definition created successfully!`));
         resetForm();
         setShowCreateForm(false);
         fetchFees();
@@ -156,7 +156,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         setError(errorData.message || 'Failed to create fee definition');
       }
     } catch (error) {
-      setError('Error creating fee definition');
+      setError(t('auto.errorCreatingFeeDefinition', `Error creating fee definition`));
     } finally {
       setCreating(false);
     }
@@ -178,7 +178,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       });
 
       if (res.ok || res.status === 204) {
-        setSuccess('Fee definition deleted successfully!');
+        setSuccess(t('auto.feeDefinitionDeletedSuccessfully', `Fee definition deleted successfully!`));
         setShowDeleteModal(false);
         setDeleteTarget(null);
         fetchFees();
@@ -188,7 +188,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         setError(errorData.message || 'Failed to delete fee definition');
       }
     } catch (error) {
-      setError('Error deleting fee definition');
+      setError(t('auto.errorDeletingFeeDefinition', `Error deleting fee definition`));
     }
   };
 
@@ -230,7 +230,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
       });
 
       if (res.ok) {
-        setSuccess('Fee definition updated successfully!');
+        setSuccess(t('auto.feeDefinitionUpdatedSuccessfully', `Fee definition updated successfully!`));
         setShowEditModal(false);
         setEditingFeeDefinition(null);
         fetchFees();
@@ -240,7 +240,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         setError(errorData.message || 'Failed to update fee definition');
       }
     } catch (error) {
-      setError('Error updating fee definition');
+      setError(t('auto.errorUpdatingFeeDefinition', `Error updating fee definition`));
     } finally {
       setEditing(false);
     }
@@ -328,7 +328,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
         setError(err.message || 'Failed to process verification');
       }
     } catch (err) {
-      setError('Error verifying payment');
+      setError(t('auto.errorVerifyingPayment', `Error verifying payment`));
     } finally {
       setVerifying(false);
     }

@@ -169,11 +169,11 @@ export default function TeacherDashboard() {
         }
         return list;
       } else {
-        setError('Failed to fetch assigned students');
+        setError(t('auto.failedToFetchAssignedStudents', `Failed to fetch assigned students`));
         setStudents([]);
       }
     } catch (error) {
-      setError('Error fetching assigned students');
+      setError(t('auto.errorFetchingAssignedStudents', `Error fetching assigned students`));
       setStudents([]);
     } finally {
       if (!silent) setLoading(false);
@@ -289,7 +289,7 @@ export default function TeacherDashboard() {
         setError(errorData.message || 'Failed to update progress');
       }
     } catch (error) {
-      setError('Error updating progress');
+      setError(t('auto.errorUpdatingProgress', `Error updating progress`));
     } finally {
       setUpdatingProgress(false);
     }
@@ -338,7 +338,7 @@ export default function TeacherDashboard() {
         setError(errorData.message || 'Failed to record test');
       }
     } catch (err) {
-      setError('Error recording test');
+      setError(t('auto.errorRecordingTest', `Error recording test`));
     } finally {
       setSavingTest(false);
     }
@@ -396,7 +396,7 @@ export default function TeacherDashboard() {
           const match = findProgressInList(list, selectedProgressId);
           if (match) setSelectedRemarks(match.parentRemarks || []);
         }
-        setSuccess('Reply posted');
+        setSuccess(t('auto.replyPosted', `Reply posted`));
         return true;
       } else {
         const err = await res.json();
@@ -404,7 +404,7 @@ export default function TeacherDashboard() {
         return false;
       }
     } catch (err) {
-      setError('Failed to post reply');
+      setError(t('auto.failedToPostReply', `Failed to post reply`));
       return false;
     }
   };
@@ -434,13 +434,13 @@ export default function TeacherDashboard() {
       });
       if (res.ok) {
         setShowChatModal(false);
-        setSuccess('Message sent');
+        setSuccess(t('auto.messageSent', `Message sent`));
       } else {
         const err = await res.json();
         setError(err.message || 'Failed to send message');
       }
     } catch (err) {
-      setError('Failed to send message');
+      setError(t('auto.failedToSendMessage', `Failed to send message`));
     }
   };
 
@@ -1172,7 +1172,7 @@ export default function TeacherDashboard() {
         onHide={() => setShowChatModal(false)}
         targetId={chatTargetId}
         targetName={chatTargetName}
-        onSent={() => setSuccess('Message sent')}
+        onSent={() => setSuccess(t('auto.messageSent', `Message sent`))}
       />
     </div>
   );

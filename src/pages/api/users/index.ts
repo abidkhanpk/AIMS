@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (userRole === 'DEVELOPER') {
       // Developers can see all admins with full settings and subscription data
       if (role === 'ADMIN') {
-        users = await prisma.user.findMany({
+        const admins = await prisma.user.findMany({
           where: { role: 'ADMIN' },
           select: {
             id: true,
@@ -65,6 +65,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
           orderBy: { createdAt: 'desc' }
         });
+
+        users = await Promise.all(
+          admins.map(async (admin) => {
+            const studentCount = await prisma.user.count({
+              where: { adminId: admin.id, role: 'STUDENT' },
+            });
+            return {
+              ...admin,
+              studentCount,
+            };
+          })
+        );
       } else {
         users = await prisma.user.findMany({
           where: role ? { role: role as Role } : {},

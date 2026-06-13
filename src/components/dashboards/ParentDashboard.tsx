@@ -141,11 +141,11 @@ export default function ParentDashboard() {
         setChildren(list);
         return list;
       } else {
-        setError('Failed to fetch children data');
+        setError(t('auto.failedToFetchChildrenData', `Failed to fetch children data`));
         setChildren([]);
       }
     } catch (error) {
-      setError('Error fetching children data');
+      setError(t('auto.errorFetchingChildrenData', `Error fetching children data`));
       setChildren([]);
     } finally {
       if (!silent) setLoading(false);
@@ -211,7 +211,7 @@ export default function ParentDashboard() {
       });
 
       if (res.ok) {
-        setSuccess('Remark added successfully!');
+        setSuccess(t('auto.remarkAddedSuccessfully', `Remark added successfully!`));
         setShowRemarkModal(false);
         fetchChildren(); // Refresh data
       } else {
@@ -219,7 +219,7 @@ export default function ParentDashboard() {
         setError(errorData.message || 'Failed to add remark');
       }
     } catch (error) {
-      setError('Error adding remark');
+      setError(t('auto.errorAddingRemark', `Error adding remark`));
     } finally {
       setAddingRemark(false);
     }
@@ -242,14 +242,14 @@ export default function ParentDashboard() {
       });
 
       if (res.ok) {
-        setSuccess('Fee payment submitted successfully! Awaiting admin verification.');
+        setSuccess(t('auto.feePaymentSubmittedSuccessfullyAwaiting', `Fee payment submitted successfully! Awaiting admin verification.`));
         fetchFees(); // Refresh fees data
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to submit payment');
       }
     } catch (error) {
-      setError('Error submitting payment');
+      setError(t('auto.errorSubmittingPayment', `Error submitting payment`));
     }
   };
 
@@ -364,14 +364,14 @@ export default function ParentDashboard() {
           )
         );
         await refreshThread();
-        setSuccess('Comment added');
+        setSuccess(t('auto.commentAdded', `Comment added`));
         return true;
       }
       const err = await res.json();
       setError(err.message || 'Failed to add comment');
       return false;
     } catch (err) {
-      setError('Failed to add comment');
+      setError(t('auto.failedToAddComment', `Failed to add comment`));
       return false;
     }
   };

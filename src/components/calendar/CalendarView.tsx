@@ -71,6 +71,7 @@ const TIP_WIDTH = 340;
 const TIP_MAX_HEIGHT = 300; // header ~50 + up to 5 rows ~50 each
 
 function EventTooltip({ events, dateLabel, role, anchorRect }: TooltipProps) {
+    const { t } = useTranslation('common');
   // All coords are viewport-relative (position: fixed)
   const margin = 10;
 
@@ -120,18 +121,17 @@ function EventTooltip({ events, dateLabel, role, anchorRect }: TooltipProps) {
         <i className="bi bi-calendar3" style={{ color: '#0d6efd', fontSize: 13 }} />
         <span style={{ fontWeight: 700, fontSize: 12.5, color: '#212529' }}>{dateLabel}</span>
         <span
-          style={{
-            marginLeft: 'auto',
-            background: '#0d6efd',
-            color: '#fff',
-            borderRadius: 20,
-            padding: '1px 9px',
-            fontSize: 11,
-            fontWeight: 600,
-          }}
-        >
-          {events.length} class{events.length !== 1 ? 'es' : ''}
-        </span>
+                        style={{
+                          background: '#0d6efd',
+                          color: '#fff',
+                          borderRadius: 20,
+                          padding: '1px 9px',
+                          fontSize: 11,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {events.length === 1 ? t('auto.oneClass', '1 class') : t('auto.multipleClasses', '{{count}} classes', { count: events.length })}
+                      </span>
       </div>
 
       {/* Scrollable event list — max height ~220px */}
@@ -442,17 +442,17 @@ export default function CalendarView() {
         })}
         {dayEvents.length > MAX_INLINE && (
           <div
-            style={{
-              fontSize: 10,
-              color: '#6c757d',
-              fontWeight: 600,
-              padding: '2px 5px',
-              background: '#f1f5f9',
-              borderRadius: 4,
-            }}
-          >
-            +{dayEvents.length - MAX_INLINE} more
-          </div>
+                          style={{
+                            fontSize: 10,
+                            color: '#6c757d',
+                            fontWeight: 600,
+                            padding: '2px 5px',
+                            background: '#f1f5f9',
+                            borderRadius: 4,
+                          }}
+                        >
+                          {t('auto.moreEvents', '+{{count}} more', { count: dayEvents.length - MAX_INLINE })}
+                        </div>
         )}
       </div>
     );

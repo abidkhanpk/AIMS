@@ -111,11 +111,9 @@ const Home: NextPage = () => {
                                                   </p>
                 {status === 'unauthenticated' && (
                   <div className="d-flex gap-3 flex-wrap">
-                    <Link href="/auth/signin" passHref>
-                      <Button variant="light" size="lg" className="px-4">
-                        <i className="bi bi-box-arrow-in-right me-2"></i>
-                        {t('auto.signIn', `Sign In`)}
-                                                                    </Button>
+                    <Link href="/auth/signin" className="btn btn-light btn-lg px-4">
+                      <i className="bi bi-box-arrow-in-right me-2"></i>
+                      {t('auto.signIn', `Sign In`)}
                     </Link>
                   </div>
                 )}
@@ -125,21 +123,14 @@ const Home: NextPage = () => {
               <div className="py-5">
                 {appSettings.appLogo && (
                   <Image
-                    src={appSettings.appLogo || '/assets/app-logo.png'}
+                    src={appSettings.appLogo}
                     alt={t('auto.aimsLogo', `AIMS Logo`)}
-                    width={300}
+                    width={200}
                     height={200}
+                    priority
                     className="img-fluid mb-4"
-                    style={{ height: 'auto', width: 'auto', maxHeight: '200px', maxWidth: '100%', objectFit: 'contain' }}
-                    unoptimized
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/assets/app-logo.png';
-                    }}
                   />
                 )}
-                <div className="bg-white bg-opacity-10 rounded-3 p-4">
-                  <i className="bi bi-mortarboard display-1 text-white-50"></i>
-                </div>
               </div>
             </Col>
           </Row>
@@ -147,170 +138,163 @@ const Home: NextPage = () => {
       </div>
 
       {/* Features Section */}
-      <Container className="py-5">
-        <Row className="text-center mb-5">
-          <Col>
-            <h2 className="display-5 fw-bold mb-3">{t('auto.powerfulFeatures', `Powerful Features`)}</h2>
-            <p className="lead text-muted">
-              {t('auto.everythingYouNeedToManageYourE', `Everything you need to manage your educational institution effectively`)}
-                                      </p>
-          </Col>
-        </Row>
-
-        <Row className="g-4">
-          <Col md={6} lg={3}>
-            <Card className="h-100 text-center border-0 shadow-sm">
-              <Card.Body className="p-4">
-                <div className="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
-                  <i className="bi bi-people-fill text-primary" style={{ fontSize: '2rem' }}></i>
-                </div>
-                <h5 className="fw-bold mb-3">{t('auto.userManagement', `User Management`)}</h5>
-                <p className="text-muted">
-                  {t('auto.comprehensiveRolebasedAccessCo', `Comprehensive role-based access control for developers, admins, teachers, parents, and students.`)}
-                                                  </p>
-              </Card.Body>
-            </Card>
-          </Col>
-
-          <Col md={6} lg={3}>
-            <Card className="h-100 text-center border-0 shadow-sm">
-              <Card.Body className="p-4">
-                <div className="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
-                  <i className="bi bi-graph-up text-success" style={{ fontSize: '2rem' }}></i>
-                </div>
-                <h5 className="fw-bold mb-3">{t('auto.progressTracking', `Progress Tracking`)}</h5>
-                <p className="text-muted">
-                  {t('auto.realtimeProgressMonitoringWith', `Real-time progress monitoring with detailed analytics and reporting for all stakeholders.`)}
-                                                  </p>
-              </Card.Body>
-            </Card>
-          </Col>
-
-          <Col md={6} lg={3}>
-            <Card className="h-100 text-center border-0 shadow-sm">
-              <Card.Body className="p-4">
-                <div className="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
-                  <i className="bi bi-book text-info" style={{ fontSize: '2rem' }}></i>
-                </div>
-                <h5 className="fw-bold mb-3">{t('auto.courseManagement', `Course Management`)}</h5>
-                <p className="text-muted">
-                  {t('auto.easytouseCourseCreationAndMana', `Easy-to-use course creation and management tools with flexible assignment options.`)}
-                                                  </p>
-              </Card.Body>
-            </Card>
-          </Col>
-
-          <Col md={6} lg={3}>
-            <Card className="h-100 text-center border-0 shadow-sm">
-              <Card.Body className="p-4">
-                <div className="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style={{ width: '80px', height: '80px' }}>
-                  <i className="bi bi-phone text-warning" style={{ fontSize: '2rem' }}></i>
-                </div>
-                <h5 className="fw-bold mb-3">{t('auto.mobileFriendly', `Mobile Friendly`)}</h5>
-                <p className="text-muted">
-                  {t('auto.fullyResponsiveDesignThatWorks', `Fully responsive design that works seamlessly across all devices and screen sizes.`)}
-                                                  </p>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
-      </Container>
-
-      {/* User Roles Section */}
-      <div className="bg-light py-5">
-        <Container>
+      <section id="features" className="py-5 bg-white border-bottom">
+        <Container className="py-5">
           <Row className="text-center mb-5">
-            <Col>
-              <h2 className="display-5 fw-bold mb-3">{t('auto.builtForEveryone', `Built for Everyone`)}</h2>
+            <Col lg={8} className="mx-auto">
+              <h2 className="display-5 fw-bold mb-3">{t('auto.powerfulFeatures', `Powerful Features`)}</h2>
               <p className="lead text-muted">
-                {t('auto.tailoredExperiencesForEachUser', `Tailored experiences for each user role in your educational ecosystem`)}
-                                            </p>
+                {t('auto.everythingYouNeedToManageYourE', `Everything you need to manage your educational institution effectively`)}
+                                              </p>
             </Col>
           </Row>
-
           <Row className="g-4">
-            <Col md={6} lg={4}>
-              <Card className="h-100 border-0 shadow-sm">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '50px', height: '50px' }}>
-                      <i className="bi bi-gear-fill text-primary"></i>
-                    </div>
-                    <h5 className="fw-bold mb-0">{t('auto.administrators', `Administrators`)}</h5>
+            <Col md={6} lg={3}>
+              <Card className="h-100 border-0 shadow-sm p-3">
+                <Card.Body>
+                  <div className="text-primary fs-1 mb-3">
+                    <i className="bi bi-people-fill"></i>
                   </div>
-                  <p className="text-muted mb-0">
-                    {t('auto.completeControlOverUserManagem', `Complete control over user management, course creation, and system configuration with detailed analytics.`)}
-                                                        </p>
+                  <h5 className="fw-bold mb-3">{t('auto.userManagement', `User Management`)}</h5>
+                  <Card.Text className="text-muted">
+                    {t('auto.comprehensiveRolebasedAccessCo', `Comprehensive role-based access control for developers, admins, teachers, parents, and students.`)}
+                                      </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
-
-            <Col md={6} lg={4}>
-              <Card className="h-100 border-0 shadow-sm">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '50px', height: '50px' }}>
-                      <i className="bi bi-person-workspace text-success"></i>
-                    </div>
-                    <h5 className="fw-bold mb-0">{t('auto.teachers', `Teachers`)}</h5>
+            <Col md={6} lg={3}>
+              <Card className="h-100 border-0 shadow-sm p-3">
+                <Card.Body>
+                  <div className="text-success fs-1 mb-3">
+                    <i className="bi bi-graph-up-arrow"></i>
                   </div>
-                  <p className="text-muted mb-0">
-                    {t('auto.manageAssignedStudentsTrackPro', `Manage assigned students, track progress, and provide detailed feedback with easy-to-use tools.`)}
-                                                        </p>
+                  <h5 className="fw-bold mb-3">{t('auto.progressTracking', `Progress Tracking`)}</h5>
+                  <Card.Text className="text-muted">
+                    {t('auto.realtimeProgressMonitoringWith', `Real-time progress monitoring with detailed analytics and reporting for all stakeholders.`)}
+                                      </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
-
-            <Col md={6} lg={4}>
-              <Card className="h-100 border-0 shadow-sm">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '50px', height: '50px' }}>
-                      <i className="bi bi-people text-info"></i>
-                    </div>
-                    <h5 className="fw-bold mb-0">{t('auto.parents', `Parents`)}</h5>
+            <Col md={6} lg={3}>
+              <Card className="h-100 border-0 shadow-sm p-3">
+                <Card.Body>
+                  <div className="text-warning fs-1 mb-3">
+                    <i className="bi bi-journal-text"></i>
                   </div>
-                  <p className="text-muted mb-0">
-                    {t('auto.monitorYourChildrensAcademicPr', `Monitor your children's academic progress with detailed reports and historical data.`)}
-                                                        </p>
+                  <h5 className="fw-bold mb-3">{t('auto.courseManagement', `Course Management`)}</h5>
+                  <Card.Text className="text-muted">
+                    {t('auto.easytouseCourseCreationAndMana', `Easy-to-use course creation and management tools with flexible assignment options.`)}
+                                      </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
-
-            <Col md={6} lg={4}>
-              <Card className="h-100 border-0 shadow-sm">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '50px', height: '50px' }}>
-                      <i className="bi bi-mortarboard text-warning"></i>
-                    </div>
-                    <h5 className="fw-bold mb-0">{t('auto.students', `Students`)}</h5>
+            <Col md={6} lg={3}>
+              <Card className="h-100 border-0 shadow-sm p-3">
+                <Card.Body>
+                  <div className="text-info fs-1 mb-3">
+                    <i className="bi bi-phone-fill"></i>
                   </div>
-                  <p className="text-muted mb-0">
-                    {t('auto.trackYourOwnProgressViewGrades', `Track your own progress, view grades, and stay updated with your academic journey.`)}
-                                                        </p>
-                </Card.Body>
-              </Card>
-            </Col>
-
-            <Col md={6} lg={4}>
-              <Card className="h-100 border-0 shadow-sm">
-                <Card.Body className="p-4">
-                  <div className="d-flex align-items-center mb-3">
-                    <div className="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style={{ width: '50px', height: '50px' }}>
-                      <i className="bi bi-code-slash text-secondary"></i>
-                    </div>
-                    <h5 className="fw-bold mb-0">{t('auto.developers', `Developers`)}</h5>
-                  </div>
-                  <p className="text-muted mb-0">
-                    {t('auto.systemlevelAccessToManageMulti', `System-level access to manage multiple institutions and configure global settings.`)}
-                                                        </p>
+                  <h5 className="fw-bold mb-3">{t('auto.mobileFriendly', `Mobile Friendly`)}</h5>
+                  <Card.Text className="text-muted">
+                    {t('auto.fullyResponsiveDesignThatWorks', `Fully responsive design that works seamlessly across all devices and screen sizes.`)}
+                                      </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
           </Row>
         </Container>
-      </div>
+      </section>
+
+      {/* Roles Section */}
+      <section className="py-5 bg-light">
+        <Container className="py-5">
+          <Row className="text-center mb-5">
+            <Col lg={8} className="mx-auto">
+              <h2 className="display-5 fw-bold mb-3">{t('auto.builtForEveryone', `Built for Everyone`)}</h2>
+              <p className="lead text-muted">
+                {t('auto.tailoredExperiencesForEachUser', `Tailored experiences for each user role in your educational ecosystem`)}
+                                              </p>
+            </Col>
+          </Row>
+          <Row className="g-4">
+            <Col md={6} lg={4}>
+              <Card className="h-100 border-0 shadow-sm">
+                <Card.Body className="d-flex align-items-start p-4">
+                  <div className="bg-primary-subtle text-primary rounded p-3 me-3">
+                    <i className="bi bi-shield-lock-fill fs-4"></i>
+                  </div>
+                  <div>
+                    <h5 className="fw-bold mb-0">{t('auto.administrators', `Administrators`)}</h5>
+                    <Card.Text className="text-muted mt-2">
+                    {t('auto.completeControlOverUserManagem', `Complete control over user management, course creation, and system configuration with detailed analytics.`)}
+                                          </Card.Text>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={6} lg={4}>
+              <Card className="h-100 border-0 shadow-sm">
+                <Card.Body className="d-flex align-items-start p-4">
+                  <div className="bg-success-subtle text-success rounded p-3 me-3">
+                    <i className="bi bi-person-badge-fill fs-4"></i>
+                  </div>
+                  <div>
+                    <h5 className="fw-bold mb-0">{t('auto.teachers', `Teachers`)}</h5>
+                    <Card.Text className="text-muted mt-2">
+                    {t('auto.manageAssignedStudentsTrackPro', `Manage assigned students, track progress, and provide detailed feedback with easy-to-use tools.`)}
+                                          </Card.Text>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={6} lg={4}>
+              <Card className="h-100 border-0 shadow-sm">
+                <Card.Body className="d-flex align-items-start p-4">
+                  <div className="bg-warning-subtle text-warning rounded p-3 me-3">
+                    <i className="bi bi-people-fill fs-4"></i>
+                  </div>
+                  <div>
+                    <h5 className="fw-bold mb-0">{t('auto.parents', `Parents`)}</h5>
+                    <Card.Text className="text-muted mt-2">
+                    {t('auto.monitorYourChildrensAcademicPr', `Monitor your children's academic progress with detailed reports and historical data.`)}
+                                          </Card.Text>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={6} lg={4}>
+              <Card className="h-100 border-0 shadow-sm">
+                <Card.Body className="d-flex align-items-start p-4">
+                  <div className="bg-info-subtle text-info rounded p-3 me-3">
+                    <i className="bi bi-mortarboard-fill fs-4"></i>
+                  </div>
+                  <div>
+                    <h5 className="fw-bold mb-0">{t('auto.students', `Students`)}</h5>
+                    <Card.Text className="text-muted mt-2">
+                    {t('auto.trackYourOwnProgressViewGrades', `Track your own progress, view grades, and stay updated with your academic journey.`)}
+                                          </Card.Text>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={6} lg={4}>
+              <Card className="h-100 border-0 shadow-sm">
+                <Card.Body className="d-flex align-items-start p-4">
+                  <div className="bg-dark-subtle text-dark rounded p-3 me-3">
+                    <i className="bi bi-cpu-fill fs-4"></i>
+                  </div>
+                  <div>
+                    <h5 className="fw-bold mb-0">{t('auto.developers', `Developers`)}</h5>
+                    <Card.Text className="text-muted mt-2">
+                    {t('auto.systemlevelAccessToManageMulti', `System-level access to manage multiple institutions and configure global settings.`)}
+                                          </Card.Text>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      </section>
 
       {/* CTA Section */}
       {status === 'unauthenticated' && (
@@ -322,11 +306,9 @@ const Home: NextPage = () => {
                 <p className="lead text-muted mb-4">
                   {t('auto.joinThousandsOfEducationalInst', `Join thousands of educational institutions already using our platform`)}
                                                   </p>
-                <Link href="/auth/signin" passHref>
-                  <Button variant="primary" size="lg" className="px-5">
-                    <i className="bi bi-box-arrow-in-right me-2"></i>
-                    {t('auto.signInNow', `Sign In Now`)}
-                                                        </Button>
+                <Link href="/auth/signin" className="btn btn-primary btn-lg px-5">
+                  <i className="bi bi-box-arrow-in-right me-2"></i>
+                  {t('auto.signInNow', `Sign In Now`)}
                 </Link>
               </div>
             </Col>

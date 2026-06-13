@@ -70,10 +70,10 @@ export default function MessagesPage() {
         setMessages(Array.isArray(data) ? data : []);
         return Array.isArray(data) ? data : [];
       } else {
-        setError('Failed to load messages');
+        setError(t('auto.failedToLoadMessages', `Failed to load messages`));
       }
     } catch (err) {
-      setError('Failed to load messages');
+      setError(t('auto.failedToLoadMessages', `Failed to load messages`));
     } finally {
       setLoading(false);
     }
@@ -151,7 +151,7 @@ export default function MessagesPage() {
       setError(err.message || 'Failed to send reply');
       return false;
     } catch (e) {
-      setError('Failed to send reply');
+      setError(t('auto.failedToSendReply', `Failed to send reply`));
       return false;
     }
   };

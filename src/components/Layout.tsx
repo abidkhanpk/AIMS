@@ -1,5 +1,5 @@
 import { useSession, signOut } from 'next-auth/react';
-import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab, Badge } from 'react-bootstrap';
+import { Container, Nav, Navbar, NavDropdown, Image, Modal, Form, Button, Alert, Spinner, Tabs, Tab, Badge, Offcanvas, ListGroup } from 'react-bootstrap';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import NotificationDropdown from './NotificationDropdown';
@@ -36,6 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [enableNotifications, setEnableNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [parentRemarkNotifications, setParentRemarkNotifications] = useState(true);
+  const [defaultLanguage, setDefaultLanguage] = useState('en');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -43,6 +44,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [canInstall, setCanInstall] = useState(false);
+  const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   const timezones = [
     'UTC', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
@@ -96,14 +100,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         setSecretQuestion2(data.secretQuestion2 || '');
         setSecretAnswer2(data.secretAnswer2 || '');
         setTimezone(data.timezone || 'UTC');
+        const dbLang = data.defaultLanguage || 'en';
+        setDefaultLanguage(dbLang);
         setEnableNotifications(data.enableNotifications ?? true);
         setEmailNotifications(data.emailNotifications ?? true);
         setParentRemarkNotifications(data.parentRemarkNotifications ?? true);
+
+        // Sync locale if database differs from current router locale
+        if (dbLang !== router.locale) {
+          document.cookie = `NEXT_LOCALE=${dbLang}; path=/; max-age=31536000`;
+          router.push(router.pathname, router.asPath, { locale: dbLang });
+        }
       }
     } catch (error) {
       console.error('Error fetching user settings:', error);
     }
-  }, [user?.email]);
+  }, [user?.email, router.locale, router.pathname, router.asPath]);
 
   const loadUnreadMessages = useCallback(async () => {
     try {
@@ -129,11 +141,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
+      setError(t('auto.newPasswordsDoNotMatch', `New passwords do not match`));
       return;
     }
     if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError(t('auto.passwordMustBeAtLeast', `Password must be at least 6 characters long`));
       return;
     }
 
@@ -152,7 +164,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        setSuccess('Password changed successfully!');
+        setSuccess(t('auto.passwordChangedSuccessfully', `Password changed successfully!`));
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -161,7 +173,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         setError(errorData.message || 'Failed to change password');
       }
     } catch (error) {
-      setError('Error changing password');
+      setError(t('auto.errorChangingPassword', `Error changing password`));
     } finally {
       setUpdating(false);
     }
@@ -169,7 +181,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const openMainMenuMobile = () => {
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('open-admin-menu'));
+      if (user?.role === 'ADMIN') {
+        window.dispatchEvent(new Event('open-admin-menu'));
+      } else {
+        setShowMobileDrawer(true);
+      }
     }
   };
 
@@ -196,14 +212,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Track PWA install prompt
+  // Track PWA install prompt and device status
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const isStandalone =
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const isIosDevice = /iphone|ipad|ipod/.test(userAgent);
+    setIsIOS(isIosDevice);
+
+    const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone;
-    if (isStandalone) {
+      (window.navigator as any).standalone === true;
+    setIsStandalone(standalone);
+
+    if (standalone) {
       setCanInstall(false);
       return;
     }
@@ -228,7 +250,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleEmailChange = async () => {
     if (!newEmail || newEmail === user?.email) {
-      setError('Please enter a new email address');
+      setError(t('auto.pleaseEnterANewEmail', `Please enter a new email address`));
       return;
     }
 
@@ -244,13 +266,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        setSuccess('Email changed successfully!');
+        setSuccess(t('auto.emailChangedSuccessfully', `Email changed successfully!`));
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to change email');
       }
     } catch (error) {
-      setError('Error changing email');
+      setError(t('auto.errorChangingEmail', `Error changing email`));
     } finally {
       setUpdating(false);
     }
@@ -258,7 +280,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleSecretQuestionsUpdate = async () => {
     if (!secretQuestion1 || !secretAnswer1 || !secretQuestion2 || !secretAnswer2) {
-      setError('Please fill in both secret questions and answers');
+      setError(t('auto.pleaseFillInBothSecret', `Please fill in both secret questions and answers`));
       return;
     }
 
@@ -280,13 +302,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        setSuccess('Security settings updated successfully!');
+        setSuccess(t('auto.securitySettingsUpdatedSuccessfully', `Security settings updated successfully!`));
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to update settings');
       }
     } catch (error) {
-      setError('Error updating settings');
+      setError(t('auto.errorUpdatingSettings', `Error updating settings`));
     } finally {
       setUpdating(false);
     }
@@ -310,13 +332,42 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        setSuccess('Notification settings updated successfully!');
+        setSuccess(t('auto.notificationSettingsUpdatedSuccessfully', `Notification settings updated successfully!`));
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to update notification settings');
       }
     } catch (error) {
-      setError('Error updating notification settings');
+      setError(t('auto.errorUpdatingNotificationSettings', `Error updating notification settings`));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleLanguageSettingsUpdate = async () => {
+    setUpdating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/settings/user-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          defaultLanguage
+        })
+      });
+
+      if (res.ok) {
+        setSuccess('Language settings updated successfully!');
+        document.cookie = `NEXT_LOCALE=${defaultLanguage}; path=/; max-age=31536000`;
+        router.push(router.pathname, router.asPath, { locale: defaultLanguage });
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to update language settings');
+      }
+    } catch (error) {
+      setError('Error updating language settings');
     } finally {
       setUpdating(false);
     }
@@ -454,14 +505,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     align="end" 
                     className="me-2"
                   >
-                    <NavDropdown.Item onClick={() => {
+                    <NavDropdown.Item onClick={async () => {
                       document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000`;
+                      if (status === 'authenticated') {
+                        try {
+                          await fetch('/api/settings/user-settings', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ defaultLanguage: 'en' })
+                          });
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }
                       router.push(router.pathname, router.asPath, { locale: 'en' });
                     }}>
                       {t('english', 'English')}
                     </NavDropdown.Item>
-                    <NavDropdown.Item onClick={() => {
+                    <NavDropdown.Item onClick={async () => {
                       document.cookie = `NEXT_LOCALE=ur; path=/; max-age=31536000`;
+                      if (status === 'authenticated') {
+                        try {
+                          await fetch('/api/settings/user-settings', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ defaultLanguage: 'ur' })
+                          });
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }
                       router.push(router.pathname, router.asPath, { locale: 'ur' });
                     }}>
                       {t('urdu', 'Urdu (اردو)')}
@@ -493,11 +566,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </>
               )}
               {status === 'unauthenticated' && (
-                <Link href="/auth/signin" passHref>
-                  <Nav.Link className="fw-medium">
-                    <i className="bi bi-box-arrow-in-right me-1"></i>
-                    {t('layout.signIn')}
-                  </Nav.Link>
+                <Link href="/auth/signin" className="nav-link fw-medium text-light">
+                  <i className="bi bi-box-arrow-in-right me-1"></i>
+                  {t('layout.signIn')}
                 </Link>
               )}
             </Nav>
@@ -734,9 +805,213 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Button>
               </Form>
             </Tab>
+            
+            <Tab eventKey="language" title={t('layout.language', 'Language')}>
+              <Form>
+                <Form.Group className="mb-3">
+                  <Form.Label>{t('layout.defaultLanguageSetting', 'Default Language')}</Form.Label>
+                  <Form.Select
+                    value={defaultLanguage}
+                    onChange={(e) => setDefaultLanguage(e.target.value)}
+                  >
+                    <option value="en">{t('english', 'English')}</option>
+                    <option value="ur">{t('urdu', 'Urdu (اردو)')}</option>
+                  </Form.Select>
+                </Form.Group>
+                <Button 
+                  variant="primary" 
+                  onClick={handleLanguageSettingsUpdate}
+                  disabled={updating}
+                >
+                  {updating ? <Spinner animation="border" size="sm" className="me-2" /> : null}
+                  {t('layout.updateLanguageSettings', 'Update Language Settings')}
+                </Button>
+              </Form>
+            </Tab>
           </Tabs>
         </Modal.Body>
       </Modal>
+
+      {/* Unified Mobile Menu Drawer for Non-Admin roles */}
+      <Offcanvas
+        show={showMobileDrawer}
+        onHide={() => setShowMobileDrawer(false)}
+        className="d-lg-none"
+        placement={router.locale === 'ur' ? 'end' : 'start'}
+      >
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>
+            <i className="bi bi-list me-2"></i>
+            {t('menu.menu', 'Menu')}
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body className="d-flex flex-column justify-content-between">
+          <div>
+            {/* User Info Header */}
+            {user && (
+              <div className="p-3 mb-3 bg-light rounded text-dark">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <i className="bi bi-person-circle fs-3 text-secondary"></i>
+                  <div>
+                    <div className="fw-bold text-truncate" style={{ maxWidth: '200px' }}>{user.name || user.email}</div>
+                    <small className="text-muted d-block text-truncate" style={{ maxWidth: '200px' }}>{user.email}</small>
+                  </div>
+                </div>
+                <div className="small">
+                  <span className="text-muted">{t('layout.role', 'Role')}: </span>
+                  <Badge bg="primary" className="text-capitalize">{user.role}</Badge>
+                </div>
+              </div>
+            )}
+
+            <ListGroup variant="flush" className="mb-4">
+              {/* Home Link */}
+              <ListGroup.Item
+                action
+                onClick={() => {
+                  router.push('/dashboard');
+                  setShowMobileDrawer(false);
+                }}
+                className="d-flex align-items-center py-3"
+              >
+                <i className="bi bi-house me-3 fs-5 text-primary"></i>
+                <span>{t('menu.home', 'Home')}</span>
+              </ListGroup.Item>
+
+              {/* Messages Link */}
+              <ListGroup.Item
+                action
+                onClick={() => {
+                  router.push('/messages');
+                  setShowMobileDrawer(false);
+                }}
+                className="d-flex align-items-center py-3 justify-content-between"
+              >
+                <span className="d-flex align-items-center">
+                  <i className="bi bi-envelope me-3 fs-5 text-success"></i>
+                  <span>{t('messages', 'Messages')}</span>
+                </span>
+                {unreadMessages > 0 && (
+                  <Badge bg="danger" pill>
+                    {unreadMessages}
+                  </Badge>
+                )}
+              </ListGroup.Item>
+
+              {/* User Settings */}
+              <ListGroup.Item
+                action
+                onClick={() => {
+                  setShowSettingsModal(true);
+                  setShowMobileDrawer(false);
+                }}
+                className="d-flex align-items-center py-3"
+              >
+                <i className="bi bi-gear me-3 fs-5 text-secondary"></i>
+                <span>{t('layout.userSettings', 'User Settings')}</span>
+              </ListGroup.Item>
+            </ListGroup>
+
+            {/* Language Switcher */}
+            <div className="mb-4 px-3">
+              <label className="form-label small text-muted fw-bold mb-2">
+                <i className="bi bi-globe me-2"></i>{t('layout.language', 'Language')}
+              </label>
+              <div className="d-flex gap-2">
+                <Button
+                  size="sm"
+                  variant={router.locale === 'en' ? 'primary' : 'outline-secondary'}
+                  className="w-50"
+                  onClick={async () => {
+                    document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000`;
+                    if (status === 'authenticated') {
+                      try {
+                        await fetch('/api/settings/user-settings', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ defaultLanguage: 'en' })
+                        });
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }
+                    router.push(router.pathname, router.asPath, { locale: 'en' });
+                    setShowMobileDrawer(false);
+                  }}
+                >
+                  English
+                </Button>
+                <Button
+                  size="sm"
+                  variant={router.locale === 'ur' ? 'primary' : 'outline-secondary'}
+                  className="w-50"
+                  onClick={async () => {
+                    document.cookie = `NEXT_LOCALE=ur; path=/; max-age=31536000`;
+                    if (status === 'authenticated') {
+                      try {
+                        await fetch('/api/settings/user-settings', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ defaultLanguage: 'ur' })
+                        });
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }
+                    router.push(router.pathname, router.asPath, { locale: 'ur' });
+                    setShowMobileDrawer(false);
+                  }}
+                >
+                  اردو
+                </Button>
+              </div>
+            </div>
+
+            {/* PWA Install Area */}
+            {canInstall && (
+              <div className="px-3 mb-4">
+                <Button
+                  variant="outline-primary"
+                  className="w-100 d-flex align-items-center justify-content-center py-2 fs-6 fw-bold"
+                  onClick={handleInstall}
+                >
+                  <i className="bi bi-download me-2"></i>
+                  {t('layout.install', 'Install App')}
+                </Button>
+              </div>
+            )}
+
+            {/* iOS PWA Instructions */}
+            {isIOS && !isStandalone && (
+              <Alert variant="info" className="mx-3 mb-4 small py-2 px-3">
+                <div className="fw-bold mb-1">
+                  <i className="bi bi-info-circle me-1"></i>
+                  {t('auto.installOnIphone', 'Install on iPhone / iPad')}
+                </div>
+                <ol className="mb-0 ps-3">
+                  <li>{t('auto.iosInstallStep1', 'Tap the Share icon in Safari (bottom navigation bar).')}</li>
+                  <li>{t('auto.iosInstallStep2', 'Scroll down and select "Add to Home Screen".')}</li>
+                </ol>
+              </Alert>
+            )}
+          </div>
+
+          {/* Sign Out Button at bottom of drawer */}
+          <div className="p-3 border-top mt-auto">
+            <Button
+              variant="danger"
+              className="w-100 py-2 d-flex align-items-center justify-content-center"
+              onClick={() => {
+                handleSignOut();
+                setShowMobileDrawer(false);
+              }}
+            >
+              <i className="bi bi-box-arrow-right me-2"></i>
+              {t('logout', 'Sign Out')}
+            </Button>
+          </div>
+        </Offcanvas.Body>
+      </Offcanvas>
     </>
   );
 }

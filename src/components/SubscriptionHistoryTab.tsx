@@ -81,10 +81,10 @@ export default function SubscriptionHistoryTab({
         setSubscriptions(data.subscriptions || []);
         setPayments(data.payments || []);
       } else {
-        setError('Failed to fetch subscription history');
+        setError(t('auto.failedToFetchSubscriptionHistory', `Failed to fetch subscription history`));
       }
     } catch (error) {
-      setError('Error fetching subscription history');
+      setError(t('auto.errorFetchingSubscriptionHistory', `Error fetching subscription history`));
     } finally {
       setLoading(false);
     }
@@ -114,7 +114,7 @@ export default function SubscriptionHistoryTab({
       });
 
       if (res.ok) {
-        setSuccess('Subscription extended successfully!');
+        setSuccess(t('auto.subscriptionExtendedSuccessfully', `Subscription extended successfully!`));
         fetchSubscriptionHistory();
         setShowExtendModal(false);
         setPaymentDetails('');
@@ -123,7 +123,7 @@ export default function SubscriptionHistoryTab({
         setError(errorData.message || 'Failed to extend subscription');
       }
     } catch (error) {
-      setError('Error extending subscription');
+      setError(t('auto.errorExtendingSubscription', `Error extending subscription`));
     } finally {
       setExtending(false);
     }
@@ -146,7 +146,7 @@ export default function SubscriptionHistoryTab({
       });
 
       if (res.ok) {
-        setSuccess('Subscription/payment cancelled successfully');
+        setSuccess(t('auto.subscriptionpaymentCancelledSuccessfully', `Subscription/payment cancelled successfully`));
         fetchSubscriptionHistory();
         setShowCancelModal(false);
       } else {
@@ -154,7 +154,7 @@ export default function SubscriptionHistoryTab({
         setError(errorData.message || 'Failed to cancel subscription');
       }
     } catch (error) {
-      setError('Error cancelling subscription');
+      setError(t('auto.errorCancellingSubscription', `Error cancelling subscription`));
     } finally {
       setCancelling(false);
     }
@@ -283,14 +283,14 @@ export default function SubscriptionHistoryTab({
                                     body: JSON.stringify({ subscriptionId: sub.id, approved: true })
                                   });
                                   if (res.ok) {
-                                    setSuccess('Subscription payment approved');
+                                    setSuccess(t('auto.subscriptionPaymentApproved', `Subscription payment approved`));
                                     fetchSubscriptionHistory();
                                   } else {
                                     const err = await res.json();
                                     setError(err.message || 'Failed to approve');
                                   }
                                 } catch (e) {
-                                  setError('Error approving payment');
+                                  setError(t('auto.errorApprovingPayment', `Error approving payment`));
                                 } finally {
                                   setVerifyingId(null);
                                 }
@@ -313,14 +313,14 @@ export default function SubscriptionHistoryTab({
                                     body: JSON.stringify({ subscriptionId: sub.id, approved: false })
                                   });
                                   if (res.ok) {
-                                    setSuccess('Subscription payment rejected');
+                                    setSuccess(t('auto.subscriptionPaymentRejected', `Subscription payment rejected`));
                                     fetchSubscriptionHistory();
                                   } else {
                                     const err = await res.json();
                                     setError(err.message || 'Failed to reject');
                                   }
                                 } catch (e) {
-                                  setError('Error rejecting payment');
+                                  setError(t('auto.errorRejectingPayment', `Error rejecting payment`));
                                 } finally {
                                   setVerifyingId(null);
                                 }
@@ -635,7 +635,7 @@ export default function SubscriptionHistoryTab({
                       body: JSON.stringify({ subscriptionId: selectedSub.id, approved: true })
                     });
                     if (res.ok) {
-                      setSuccess('Subscription payment approved');
+                      setSuccess(t('auto.subscriptionPaymentApproved', `Subscription payment approved`));
                       setShowDetailsModal(false);
                       fetchSubscriptionHistory();
                     } else {
@@ -643,7 +643,7 @@ export default function SubscriptionHistoryTab({
                       setError(err.message || 'Failed to approve');
                     }
                   } catch (e) {
-                    setError('Error approving payment');
+                    setError(t('auto.errorApprovingPayment', `Error approving payment`));
                   } finally {
                     setVerifyingId(null);
                   }
@@ -666,7 +666,7 @@ export default function SubscriptionHistoryTab({
                       body: JSON.stringify({ subscriptionId: selectedSub.id, approved: false })
                     });
                     if (res.ok) {
-                      setSuccess('Subscription payment rejected');
+                      setSuccess(t('auto.subscriptionPaymentRejected', `Subscription payment rejected`));
                       setShowDetailsModal(false);
                       fetchSubscriptionHistory();
                     } else {
@@ -674,7 +674,7 @@ export default function SubscriptionHistoryTab({
                       setError(err.message || 'Failed to reject');
                     }
                   } catch (e) {
-                    setError('Error rejecting payment');
+                    setError(t('auto.errorRejectingPayment', `Error rejecting payment`));
                   } finally {
                     setVerifyingId(null);
                   }

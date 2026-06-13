@@ -39,11 +39,11 @@ const FeeVerificationTab = () => {
         const data = await res.json();
         setFees(Array.isArray(data) ? data : []);
       } else {
-        setError('Failed to fetch fees');
+        setError(t('auto.failedToFetchFees', `Failed to fetch fees`));
         setFees([]);
       }
     } catch (error) {
-      setError('Error fetching fees');
+      setError(t('auto.errorFetchingFees', `Error fetching fees`));
       setFees([]);
     } finally {
       setLoading(false);
@@ -73,7 +73,7 @@ const FeeVerificationTab = () => {
         setError(errorData.message || 'Failed to verify payment');
       }
     } catch (error) {
-      setError('Error verifying payment');
+      setError(t('auto.errorVerifyingPayment', `Error verifying payment`));
     }
   };
 
@@ -87,7 +87,7 @@ const FeeVerificationTab = () => {
         body: JSON.stringify({ feeId }),
       });
       if (res.ok) {
-        setSuccess('Fee reverted to pending.');
+        setSuccess(t('auto.feeRevertedToPending', `Fee reverted to pending.`));
         setStatusFilter('PENDING');
         fetchFees();
       } else {
@@ -95,7 +95,7 @@ const FeeVerificationTab = () => {
         setError(errorData.message || 'Failed to revert fee');
       }
     } catch (error) {
-      setError('Error reverting fee');
+      setError(t('auto.errorRevertingFee', `Error reverting fee`));
     }
   };
 
@@ -116,7 +116,7 @@ const FeeVerificationTab = () => {
 
     if (!editingFee) return;
     if (!editTitle || !editAmount || !editDueDate) {
-      setError('Title, amount, and due date are required');
+      setError(t('auto.titleAmountAndDueDate', `Title, amount, and due date are required`));
       return;
     }
 
@@ -136,7 +136,7 @@ const FeeVerificationTab = () => {
       });
 
       if (res.ok) {
-        setSuccess('Fee updated successfully!');
+        setSuccess(t('auto.feeUpdatedSuccessfully', `Fee updated successfully!`));
         setShowEditModal(false);
         setEditingFee(null);
         fetchFees();
@@ -145,7 +145,7 @@ const FeeVerificationTab = () => {
         setError(errorData.message || 'Failed to update fee');
       }
     } catch (error) {
-      setError('Error updating fee');
+      setError(t('auto.errorUpdatingFee', `Error updating fee`));
     } finally {
       setSaving(false);
     }

@@ -63,7 +63,7 @@ export default function SubscriptionPaymentModal({ show, onHide, subscription, o
 
     try {
       if (!amount || !paidDate || !details.trim()) {
-        setError('Amount, Paid Date, and Payment Details are required');
+        setError(t('auto.amountPaidDateAndPayment', `Amount, Paid Date, and Payment Details are required`));
         setSubmitting(false);
         return;
       }
