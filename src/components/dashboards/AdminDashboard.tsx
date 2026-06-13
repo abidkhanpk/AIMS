@@ -277,7 +277,7 @@ function AssignmentSubform({
       if (teachersRes.ok) setTeachers(await teachersRes.json());
       if (subjectsRes.ok) setSubjects(await subjectsRes.json());
     } catch (error) {
-      setError('Error fetching data');
+      setError(t('auto.errorFetchingData', `Error fetching data`));
     } finally {
       setLoading(false);
     }
@@ -372,7 +372,7 @@ function AssignmentSubform({
       });
 
       if (res.ok) {
-        setSuccess('Assignment deleted successfully!');
+        setSuccess(t('auto.assignmentDeletedSuccessfully', `Assignment deleted successfully!`));
         if (editingAssignment?.id === assignmentId) {
           resetForm();
           setShowCreateForm(false);
@@ -383,7 +383,7 @@ function AssignmentSubform({
         setError(errorData.message || 'Failed to delete assignment');
       }
     } catch (error) {
-      setError('Error deleting assignment');
+      setError(t('auto.errorDeletingAssignment', `Error deleting assignment`));
     }
   };
 
@@ -888,11 +888,11 @@ export function UserManagementTab({ role }: { role: Role }) {
         const data = await res.json();
         setUsers(Array.isArray(data) ? data : []);
       } else {
-        setError('Failed to fetch users');
+        setError(t('auto.failedToFetchUsers', `Failed to fetch users`));
         setUsers([]);
       }
     } catch (error) {
-      setError('Error fetching users');
+      setError(t('auto.errorFetchingUsers', `Error fetching users`));
       setUsers([]);
     } finally {
       setLoading(false);
@@ -1051,7 +1051,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         const assignmentsData = await assignmentsRes.json();
         setStudentAssignments(assignmentsData.filter((a: Assignment) => a.studentId === studentId));
       } else {
-        setError('Failed to fetch assignments');
+        setError(t('auto.failedToFetchAssignments', `Failed to fetch assignments`));
         setStudentAssignments([]);
       }
 
@@ -1059,7 +1059,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         const feesData = await feesRes.json();
         setStudentFees(feesData.filter((f: Fee) => f.student.id === studentId));
       } else {
-        setError('Failed to fetch student data');
+        setError(t('auto.failedToFetchStudentData', `Failed to fetch student data`));
         setStudentFees([]);
       }
 
@@ -1067,7 +1067,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         const associationsData = await associationsRes.json();
         setParentAssociations(associationsData);
       } else {
-        setError('Failed to fetch parent associations');
+        setError(t('auto.failedToFetchParentAssociations', `Failed to fetch parent associations`));
         setParentAssociations([]);
       }
 
@@ -1075,7 +1075,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         const progressData = await progressRes.json();
         setStudentProgress(progressData.filter((p: Progress) => p.student.id === studentId));
       } else {
-        setError('Failed to fetch progress data');
+        setError(t('auto.failedToFetchProgressData', `Failed to fetch progress data`));
         setStudentProgress([]);
       }
 
@@ -1083,7 +1083,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         const testsData = await testsRes.json();
         setStudentTests(testsData.filter((t: AdminTestRecord) => t.student.id === studentId));
       } else {
-        setError('Failed to fetch test records');
+        setError(t('auto.failedToFetchTestRecords', `Failed to fetch test records`));
         setStudentTests([]);
       }
     } catch (error) {
@@ -1127,7 +1127,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         })
       });
       if (res.ok) {
-        setSuccess('Salary payment recorded');
+        setSuccess(t('auto.salaryPaymentRecorded', `Salary payment recorded`));
         setPaymentAmount('');
         setPaymentDate('');
         setPaymentDetails('');
@@ -1138,7 +1138,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         setError(errorData.message || 'Failed to record payment');
       }
     } catch (error) {
-      setError('Error recording payment');
+      setError(t('auto.errorRecordingPayment', `Error recording payment`));
     } finally {
       setRecordingPayment(false);
     }
@@ -1163,7 +1163,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         })
       });
       if (res.ok) {
-        setSuccess('Salary advance created');
+        setSuccess(t('auto.salaryAdvanceCreated', `Salary advance created`));
         setAdvancePrincipal('');
         setAdvanceInstallments('');
         setAdvanceDetails('');
@@ -1173,7 +1173,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         setError(errorData.message || 'Failed to create salary advance');
       }
     } catch (error) {
-      setError('Error creating salary advance');
+      setError(t('auto.errorCreatingSalaryAdvance', `Error creating salary advance`));
     } finally {
       setCreatingAdvance(false);
     }
@@ -1271,7 +1271,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         body: JSON.stringify({ id: userId }),
       });
       if (res.ok) {
-        setSuccess('User deleted successfully');
+        setSuccess(t('auto.userDeletedSuccessfully', `User deleted successfully`));
         fetchUsers();
         if (editingUser && editingUser.id === userId) {
           closeEditModal();
@@ -1281,7 +1281,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         setError(err.message || 'Failed to delete user');
       }
     } catch (e) {
-      setError('Error deleting user');
+      setError(t('auto.errorDeletingUser', `Error deleting user`));
     } finally {
       setDeletingId(null);
     }
@@ -1317,7 +1317,7 @@ export function UserManagementTab({ role }: { role: Role }) {
             setError(err.message || 'Failed to import students');
           }
         } catch (e) {
-          setError('Error importing CSV');
+          setError(t('auto.errorImportingCsv', `Error importing CSV`));
         } finally {
           setImportingCsv(false);
           if (csvInputRef.current) csvInputRef.current.value = '';
@@ -2296,7 +2296,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                                     <option value="">{t('auto.noSpecificSalary', `General payment / No specific salary`)}</option>
                                     {teacherSalaries.filter(s => s.status !== 'PAID').map(s => (
                                       <option key={s.id} value={s.id}>
-                                        {s.title} - {getCurrencySymbol(s.currency)}{s.amount.toFixed(2)} (Due: {new Date(s.dueDate).toLocaleDateString()})
+                                        {s.title} - {getCurrencySymbol(s.currency)}{s.amount.toFixed(2)} {t('auto.due', `(Due: `)}{new Date(s.dueDate).toLocaleDateString()})
                                       </option>
                                     ))}
                                   </Form.Select>
@@ -2334,16 +2334,16 @@ export function UserManagementTab({ role }: { role: Role }) {
                                 return (
                                   <Alert variant="info" className="py-2 px-3 mb-3 small">
                                     <div className="d-flex justify-content-between">
-                                      <span><strong>Gross Recorded:</strong></span>
+                                      <span><strong>{t('auto.grossRecorded', `Gross Recorded:`)}</strong></span>
                                       <span>{getCurrencySymbol(editingUser?.payCurrency || 'USD')}{parsedAmt.toFixed(2)}</span>
                                     </div>
                                     <div className="d-flex justify-content-between text-danger">
-                                      <span><strong>Loan Deductions:</strong></span>
+                                      <span><strong>{t('auto.loanDeductions', `Loan Deductions:`)}</strong></span>
                                       <span>-{getCurrencySymbol(editingUser?.payCurrency || 'USD')}{totalDeduction.toFixed(2)}</span>
                                     </div>
                                     <hr className="my-1" />
                                     <div className="d-flex justify-content-between fw-bold text-success">
-                                      <span><strong>Net Paid (Estimated Cash):</strong></span>
+                                      <span><strong>{t('auto.netPaidEstimatedCash', `Net Paid (Estimated Cash):`)}</strong></span>
                                       <span>{getCurrencySymbol(editingUser?.payCurrency || 'USD')}{netPay.toFixed(2)}</span>
                                     </div>
                                   </Alert>
@@ -3227,10 +3227,10 @@ export function SubjectManagementTab() {
         const data = await res.json();
         setSubjects(data);
       } else {
-        setError('Failed to fetch subjects');
+        setError(t('auto.failedToFetchSubjects', `Failed to fetch subjects`));
       }
     } catch (error) {
-      setError('Error fetching subjects');
+      setError(t('auto.errorFetchingSubjects', `Error fetching subjects`));
     } finally {
       setLoading(false);
     }
@@ -3250,7 +3250,7 @@ export function SubjectManagementTab() {
       });
 
       if (res.ok) {
-        setSuccess('Subject created successfully!');
+        setSuccess(t('auto.subjectCreatedSuccessfully', `Subject created successfully!`));
         fetchSubjects();
         setName('');
         setDescription('');
@@ -3260,7 +3260,7 @@ export function SubjectManagementTab() {
         setError(errorData.message || 'Failed to create subject');
       }
     } catch (error) {
-      setError('Error creating subject');
+      setError(t('auto.errorCreatingSubject', `Error creating subject`));
     } finally {
       setCreating(false);
     }
@@ -3293,7 +3293,7 @@ export function SubjectManagementTab() {
       });
 
       if (res.ok) {
-        setSuccess('Subject updated successfully!');
+        setSuccess(t('auto.subjectUpdatedSuccessfully', `Subject updated successfully!`));
         fetchSubjects();
         setShowEditModal(false);
         setEditingSubject(null);
@@ -3302,7 +3302,7 @@ export function SubjectManagementTab() {
         setError(errorData.message || 'Failed to update subject');
       }
     } catch (error) {
-      setError('Error updating subject');
+      setError(t('auto.errorUpdatingSubject', `Error updating subject`));
     } finally {
       setEditing(false);
     }
@@ -3623,7 +3623,7 @@ export function AssignmentsTab() {
       if (subjectsRes.ok) setSubjects(await subjectsRes.json());
       if (assignmentsRes.ok) setAssignments(await assignmentsRes.json());
     } catch (error) {
-      setError('Error fetching data');
+      setError(t('auto.errorFetchingData', `Error fetching data`));
     } finally {
       setLoading(false);
     }
@@ -3654,7 +3654,7 @@ export function AssignmentsTab() {
       });
 
       if (res.ok) {
-        setSuccess('Assignment created successfully!');
+        setSuccess(t('auto.assignmentCreatedSuccessfully', `Assignment created successfully!`));
         fetchData();
         resetForm();
         setShowCreateForm(false);
@@ -3663,7 +3663,7 @@ export function AssignmentsTab() {
         setError(errorData.message || 'Failed to create assignment');
       }
     } catch (error) {
-      setError('Error creating assignment');
+      setError(t('auto.errorCreatingAssignment', `Error creating assignment`));
     } finally {
       setCreating(false);
     }
@@ -3721,7 +3721,7 @@ export function AssignmentsTab() {
       });
 
       if (res.ok) {
-        setSuccess('Assignment updated successfully!');
+        setSuccess(t('auto.assignmentUpdatedSuccessfully', `Assignment updated successfully!`));
         fetchData();
         setShowEditModal(false);
         setEditingAssignment(null);
@@ -3730,7 +3730,7 @@ export function AssignmentsTab() {
         setError(errorData.message || 'Failed to update assignment');
       }
     } catch (error) {
-      setError('Error updating assignment');
+      setError(t('auto.errorUpdatingAssignment', `Error updating assignment`));
     } finally {
       setUpdating(false);
     }
@@ -3747,14 +3747,14 @@ export function AssignmentsTab() {
       });
 
       if (res.ok) {
-        setSuccess('Assignment deleted successfully!');
+        setSuccess(t('auto.assignmentDeletedSuccessfully', `Assignment deleted successfully!`));
         fetchData();
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to delete assignment');
       }
     } catch (error) {
-      setError('Error deleting assignment');
+      setError(t('auto.errorDeletingAssignment', `Error deleting assignment`));
     } finally {
       setCreating(false);
     }
@@ -4276,7 +4276,7 @@ export function SalaryManagementTab() {
         const salariesData = await salariesRes.json();
         setSalaries(salariesData);
       } else {
-        setError('Failed to fetch salary data');
+        setError(t('auto.failedToFetchSalaryData', `Failed to fetch salary data`));
       }
 
       if (teachersRes.ok) {
@@ -4284,7 +4284,7 @@ export function SalaryManagementTab() {
         setTeachers(teachersData);
       }
     } catch (error) {
-      setError('Error fetching salary data');
+      setError(t('auto.errorFetchingSalaryData', `Error fetching salary data`));
     } finally {
       setLoading(false);
     }
@@ -4304,14 +4304,14 @@ export function SalaryManagementTab() {
         body: JSON.stringify({ salaryId })
       });
       if (res.ok) {
-        setSuccess('Salary paid successfully and logged to payments.');
+        setSuccess(t('auto.salaryPaidSuccessfullyAndLogged', `Salary paid successfully and logged to payments.`));
         fetchData();
       } else {
         const data = await res.json();
         setError(data.message || 'Failed to pay salary');
       }
     } catch (err) {
-      setError('Error paying salary');
+      setError(t('auto.errorPayingSalary', `Error paying salary`));
     } finally {
       setPayingSalaryId(null);
     }
@@ -4338,7 +4338,7 @@ export function SalaryManagementTab() {
       });
 
       if (res.ok) {
-        setSuccess('Salary created successfully!');
+        setSuccess(t('auto.salaryCreatedSuccessfully', `Salary created successfully!`));
         fetchData();
         setSelectedTeacher('');
         setSalaryTitle('');
@@ -4352,7 +4352,7 @@ export function SalaryManagementTab() {
         setError(errorData.message || 'Failed to create salary');
       }
     } catch (error) {
-      setError('Error creating salary');
+      setError(t('auto.errorCreatingSalary', `Error creating salary`));
     } finally {
       setCreating(false);
     }
@@ -4391,7 +4391,7 @@ export function SalaryManagementTab() {
       });
 
       if (res.ok) {
-        setSuccess('Salary updated successfully!');
+        setSuccess(t('auto.salaryUpdatedSuccessfully', `Salary updated successfully!`));
         fetchData();
         setShowEditModal(false);
         setEditingSalary(null);
@@ -4400,7 +4400,7 @@ export function SalaryManagementTab() {
         setError(errorData.message || 'Failed to update salary');
       }
     } catch (error) {
-      setError('Error updating salary');
+      setError(t('auto.errorUpdatingSalary', `Error updating salary`));
     } finally {
       setEditing(false);
     }
@@ -4950,10 +4950,10 @@ export function ProgressTab() {
         const data = await res.json();
         setProgress(data);
       } else {
-        setError('Failed to fetch progress data');
+        setError(t('auto.failedToFetchProgressData', `Failed to fetch progress data`));
       }
     } catch (error) {
-      setError('Error fetching progress data');
+      setError(t('auto.errorFetchingProgressData', `Error fetching progress data`));
     } finally {
       setLoading(false);
     }
@@ -5103,10 +5103,10 @@ export function RemarksTab() {
         setRemarks(Array.isArray(data) ? data : []);
         return Array.isArray(data) ? data : [];
       } else {
-        setError('Failed to fetch remarks');
+        setError(t('auto.failedToFetchRemarks', `Failed to fetch remarks`));
       }
     } catch (err) {
-      setError('Failed to fetch remarks');
+      setError(t('auto.failedToFetchRemarks', `Failed to fetch remarks`));
     } finally {
       if (!silent) setLoading(false);
     }
@@ -5133,7 +5133,7 @@ export function RemarksTab() {
               : r
           )
         );
-        setSuccess('Reply posted');
+        setSuccess(t('auto.replyPosted', `Reply posted`));
         const list = await fetchRemarks({ silent: true });
         const match = (list || []).find((r: any) => r.id === remarkId);
         if (match) {
@@ -5151,7 +5151,7 @@ export function RemarksTab() {
         return false;
       }
     } catch (err) {
-      setError('Failed to reply');
+      setError(t('auto.failedToReply', `Failed to reply`));
       return false;
     }
   };
@@ -5170,7 +5170,7 @@ export function RemarksTab() {
         body: JSON.stringify(type === 'remark' ? { remarkId: id } : { replyId: id }),
       });
       if (res.ok) {
-        setSuccess('Deleted successfully');
+        setSuccess(t('auto.deletedSuccessfully', `Deleted successfully`));
         const list = await fetchRemarks();
         if (type === 'remark' && activeRemark?.id === id) {
           setActiveRemark(null);
@@ -5186,7 +5186,7 @@ export function RemarksTab() {
         setError(err.message || 'Failed to delete');
       }
     } catch (err) {
-      setError('Failed to delete');
+      setError(t('auto.failedToDelete', `Failed to delete`));
     }
   };
 
@@ -5333,7 +5333,7 @@ export function RemarksTab() {
         onHide={() => setShowMessageModal(false)}
         targetId={messageTargetId}
         targetName={messageTargetName}
-        onSent={() => setSuccess('Message sent')}
+        onSent={() => setSuccess(t('auto.messageSent', `Message sent`))}
       />
     </div>
   );

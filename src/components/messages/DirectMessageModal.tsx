@@ -79,7 +79,7 @@ export default function DirectMessageModal({ show, onHide, targetId, targetName,
         setError(err.message || 'Failed to send message');
       }
     } catch (err) {
-      setError('Failed to send message');
+      setError(t('auto.failedToSendMessage', `Failed to send message`));
     } finally {
       setSending(false);
     }

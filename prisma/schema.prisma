@@ -609,6 +609,7 @@ model UserSettings {
   emailNotifications    Boolean @default(true)
   parentRemarkNotifications Boolean @default(true)
   timezone              String  @default("UTC")
+  defaultLanguage       String  @default("en")
   secretQuestion1       String?
   secretAnswer1         String?
   secretQuestion2       String?

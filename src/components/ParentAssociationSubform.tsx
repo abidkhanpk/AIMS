@@ -41,9 +41,9 @@ const relationTypeOptions = [
   { value: 'OTHER', label: 'Other' },
 ];
 
-const getRelationTypeLabel = (relationType: RelationType) => {
+const getRelationTypeLabel = (relationType: RelationType, t: any) => {
   const option = relationTypeOptions.find(opt => opt.value === relationType);
-  return option ? option.label : relationType;
+  return option ? t(`relationType.${option.value.toLowerCase()}`, option.label) : relationType;
 };
 
 const getRelationTypeBadgeColor = (relationType: RelationType) => {
@@ -101,17 +101,17 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
         const parentsData = await parentsRes.json();
         setParents(parentsData);
       } else {
-        setError('Failed to fetch parents');
+        setError(t('auto.failedToFetchParents', `Failed to fetch parents`));
       }
 
       if (associationsRes.ok) {
         const associationsData = await associationsRes.json();
         setAssociations(associationsData);
       } else {
-        setError('Failed to fetch parent associations');
+        setError(t('auto.failedToFetchParentAssociations', `Failed to fetch parent associations`));
       }
     } catch (error) {
-      setError('Error fetching data');
+      setError(t('auto.errorFetchingData', `Error fetching data`));
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
       });
 
       if (res.ok) {
-        setSuccess('Parent association created successfully!');
+        setSuccess(t('auto.parentAssociationCreatedSuccessfully', `Parent association created successfully!`));
         fetchData();
         onAssociationChange();
         setSelectedParent('');
@@ -152,7 +152,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
         setError(errorData.message || 'Failed to create parent association');
       }
     } catch (error) {
-      setError('Error creating parent association');
+      setError(t('auto.errorCreatingParentAssociation', `Error creating parent association`));
     } finally {
       setCreating(false);
     }
@@ -183,7 +183,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
       });
 
       if (res.ok) {
-        setSuccess('Parent association updated successfully!');
+        setSuccess(t('auto.parentAssociationUpdatedSuccessfully', `Parent association updated successfully!`));
         fetchData();
         onAssociationChange();
         setShowEditModal(false);
@@ -193,7 +193,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
         setError(errorData.message || 'Failed to update parent association');
       }
     } catch (error) {
-      setError('Error updating parent association');
+      setError(t('auto.errorUpdatingParentAssociation', `Error updating parent association`));
     } finally {
       setUpdating(false);
     }
@@ -210,7 +210,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
       });
 
       if (res.ok) {
-        setSuccess('Parent association removed successfully!');
+        setSuccess(t('auto.parentAssociationRemovedSuccessfully', `Parent association removed successfully!`));
         fetchData();
         onAssociationChange();
       } else {
@@ -218,7 +218,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
         setError(errorData.message || 'Failed to remove parent association');
       }
     } catch (error) {
-      setError('Error removing parent association');
+      setError(t('auto.errorRemovingParentAssociation', `Error removing parent association`));
     }
   };
 
@@ -301,7 +301,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                     >
                       {relationTypeOptions.map(option => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {t(`relationType.${option.value.toLowerCase()}`, option.label)}
                         </option>
                       ))}
                     </Form.Select>
@@ -368,7 +368,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                       <td className="text-muted">{association.parent.mobile || '-'}</td>
                       <td>
                         <Badge bg={getRelationTypeBadgeColor(association.relationType)}>
-                          {getRelationTypeLabel(association.relationType)}
+                          {getRelationTypeLabel(association.relationType, t)}
                         </Badge>
                       </td>
                       <td>
@@ -423,7 +423,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                 >
                   {relationTypeOptions.map(option => (
                     <option key={option.value} value={option.value}>
-                      {option.label}
+                      {t(`relationType.${option.value.toLowerCase()}`, option.label)}
                     </option>
                   ))}
                 </Form.Select>

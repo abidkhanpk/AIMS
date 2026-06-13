@@ -36,6 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [enableNotifications, setEnableNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [parentRemarkNotifications, setParentRemarkNotifications] = useState(true);
+  const [defaultLanguage, setDefaultLanguage] = useState('en');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -96,14 +97,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         setSecretQuestion2(data.secretQuestion2 || '');
         setSecretAnswer2(data.secretAnswer2 || '');
         setTimezone(data.timezone || 'UTC');
+        const dbLang = data.defaultLanguage || 'en';
+        setDefaultLanguage(dbLang);
         setEnableNotifications(data.enableNotifications ?? true);
         setEmailNotifications(data.emailNotifications ?? true);
         setParentRemarkNotifications(data.parentRemarkNotifications ?? true);
+
+        // Sync locale if database differs from current router locale
+        if (dbLang !== router.locale) {
+          document.cookie = `NEXT_LOCALE=${dbLang}; path=/; max-age=31536000`;
+          router.push(router.pathname, router.asPath, { locale: dbLang });
+        }
       }
     } catch (error) {
       console.error('Error fetching user settings:', error);
     }
-  }, [user?.email]);
+  }, [user?.email, router.locale, router.pathname, router.asPath]);
 
   const loadUnreadMessages = useCallback(async () => {
     try {
@@ -129,11 +138,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
+      setError(t('auto.newPasswordsDoNotMatch', `New passwords do not match`));
       return;
     }
     if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError(t('auto.passwordMustBeAtLeast', `Password must be at least 6 characters long`));
       return;
     }
 
@@ -152,7 +161,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        setSuccess('Password changed successfully!');
+        setSuccess(t('auto.passwordChangedSuccessfully', `Password changed successfully!`));
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
@@ -161,7 +170,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         setError(errorData.message || 'Failed to change password');
       }
     } catch (error) {
-      setError('Error changing password');
+      setError(t('auto.errorChangingPassword', `Error changing password`));
     } finally {
       setUpdating(false);
     }
@@ -228,7 +237,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleEmailChange = async () => {
     if (!newEmail || newEmail === user?.email) {
-      setError('Please enter a new email address');
+      setError(t('auto.pleaseEnterANewEmail', `Please enter a new email address`));
       return;
     }
 
@@ -244,13 +253,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        setSuccess('Email changed successfully!');
+        setSuccess(t('auto.emailChangedSuccessfully', `Email changed successfully!`));
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to change email');
       }
     } catch (error) {
-      setError('Error changing email');
+      setError(t('auto.errorChangingEmail', `Error changing email`));
     } finally {
       setUpdating(false);
     }
@@ -258,7 +267,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleSecretQuestionsUpdate = async () => {
     if (!secretQuestion1 || !secretAnswer1 || !secretQuestion2 || !secretAnswer2) {
-      setError('Please fill in both secret questions and answers');
+      setError(t('auto.pleaseFillInBothSecret', `Please fill in both secret questions and answers`));
       return;
     }
 
@@ -280,13 +289,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        setSuccess('Security settings updated successfully!');
+        setSuccess(t('auto.securitySettingsUpdatedSuccessfully', `Security settings updated successfully!`));
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to update settings');
       }
     } catch (error) {
-      setError('Error updating settings');
+      setError(t('auto.errorUpdatingSettings', `Error updating settings`));
     } finally {
       setUpdating(false);
     }
@@ -310,13 +319,42 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       });
 
       if (res.ok) {
-        setSuccess('Notification settings updated successfully!');
+        setSuccess(t('auto.notificationSettingsUpdatedSuccessfully', `Notification settings updated successfully!`));
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to update notification settings');
       }
     } catch (error) {
-      setError('Error updating notification settings');
+      setError(t('auto.errorUpdatingNotificationSettings', `Error updating notification settings`));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleLanguageSettingsUpdate = async () => {
+    setUpdating(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/settings/user-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          defaultLanguage
+        })
+      });
+
+      if (res.ok) {
+        setSuccess('Language settings updated successfully!');
+        document.cookie = `NEXT_LOCALE=${defaultLanguage}; path=/; max-age=31536000`;
+        router.push(router.pathname, router.asPath, { locale: defaultLanguage });
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to update language settings');
+      }
+    } catch (error) {
+      setError('Error updating language settings');
     } finally {
       setUpdating(false);
     }
@@ -454,14 +492,36 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     align="end" 
                     className="me-2"
                   >
-                    <NavDropdown.Item onClick={() => {
+                    <NavDropdown.Item onClick={async () => {
                       document.cookie = `NEXT_LOCALE=en; path=/; max-age=31536000`;
+                      if (status === 'authenticated') {
+                        try {
+                          await fetch('/api/settings/user-settings', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ defaultLanguage: 'en' })
+                          });
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }
                       router.push(router.pathname, router.asPath, { locale: 'en' });
                     }}>
                       {t('english', 'English')}
                     </NavDropdown.Item>
-                    <NavDropdown.Item onClick={() => {
+                    <NavDropdown.Item onClick={async () => {
                       document.cookie = `NEXT_LOCALE=ur; path=/; max-age=31536000`;
+                      if (status === 'authenticated') {
+                        try {
+                          await fetch('/api/settings/user-settings', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ defaultLanguage: 'ur' })
+                          });
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }
                       router.push(router.pathname, router.asPath, { locale: 'ur' });
                     }}>
                       {t('urdu', 'Urdu (اردو)')}
@@ -493,11 +553,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </>
               )}
               {status === 'unauthenticated' && (
-                <Link href="/auth/signin" passHref>
-                  <Nav.Link className="fw-medium">
-                    <i className="bi bi-box-arrow-in-right me-1"></i>
-                    {t('layout.signIn')}
-                  </Nav.Link>
+                <Link href="/auth/signin" className="nav-link fw-medium text-light">
+                  <i className="bi bi-box-arrow-in-right me-1"></i>
+                  {t('layout.signIn')}
                 </Link>
               )}
             </Nav>
@@ -731,6 +789,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 >
                   {updating ? <Spinner animation="border" size="sm" className="me-2" /> : null}
                   {t('layout.updateNotificationSettings')}
+                </Button>
+              </Form>
+            </Tab>
+            
+            <Tab eventKey="language" title={t('layout.language', 'Language')}>
+              <Form>
+                <Form.Group className="mb-3">
+                  <Form.Label>{t('layout.defaultLanguageSetting', 'Default Language')}</Form.Label>
+                  <Form.Select
+                    value={defaultLanguage}
+                    onChange={(e) => setDefaultLanguage(e.target.value)}
+                  >
+                    <option value="en">{t('english', 'English')}</option>
+                    <option value="ur">{t('urdu', 'Urdu (اردو)')}</option>
+                  </Form.Select>
+                </Form.Group>
+                <Button 
+                  variant="primary" 
+                  onClick={handleLanguageSettingsUpdate}
+                  disabled={updating}
+                >
+                  {updating ? <Spinner animation="border" size="sm" className="me-2" /> : null}
+                  {t('layout.updateLanguageSettings', 'Update Language Settings')}
                 </Button>
               </Form>
             </Tab>

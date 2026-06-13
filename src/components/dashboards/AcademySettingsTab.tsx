@@ -70,7 +70,7 @@ export default function AcademySettingsTab() {
       });
 
       if (!res.ok) throw new Error('Failed to update academy settings');
-      setSuccess('Academy settings updated successfully.');
+      setSuccess(t('auto.academySettingsUpdatedSuccessfully', `Academy settings updated successfully.`));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error updating settings');
     } finally {
@@ -80,7 +80,7 @@ export default function AcademySettingsTab() {
 
   const handleTestSmtp = async () => {
     if (!testEmail) {
-      alert('Please enter a destination email address to test.');
+      alert(t('auto.pleaseEnterADestinationEmail', `Please enter a destination email address to test.`));
       return;
     }
     setTestingSmtp(true);
@@ -212,8 +212,8 @@ export default function AcademySettingsTab() {
                 value={smtpSecure}
                 onChange={e => setSmtpSecure(e.target.value)}
               >
-                <option value="tls">TLS/STARTTLS</option>
-                <option value="ssl">SSL/SMTPS</option>
+                <option value="tls">{t('auto.tlsstarttls', `TLS/STARTTLS`)}</option>
+                <option value="ssl">{t('auto.sslsmtps', `SSL/SMTPS`)}</option>
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-4">

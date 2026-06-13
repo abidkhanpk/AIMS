@@ -47,7 +47,7 @@ export default function AttendanceReportsTab() {
       const data = await res.json();
       setRecords(data);
     } catch (err) {
-      setError('Error fetching attendance records');
+      setError(t('auto.errorFetchingAttendanceRecords', `Error fetching attendance records`));
     } finally {
       setLoading(false);
     }

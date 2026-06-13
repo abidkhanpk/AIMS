@@ -27,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         secretQuestion2: userSettings?.secretQuestion2 || '',
         secretAnswer2: userSettings?.secretAnswer2 || '',
         timezone: userSettings?.timezone || 'UTC',
+        defaultLanguage: userSettings?.defaultLanguage || 'en',
         enableNotifications: userSettings?.enableNotifications ?? true,
         emailNotifications: userSettings?.emailNotifications ?? true,
         parentRemarkNotifications: userSettings?.parentRemarkNotifications ?? true
@@ -39,23 +40,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const { 
         timezone, 
+        defaultLanguage,
         enableNotifications, 
         emailNotifications, 
         parentRemarkNotifications 
       } = req.body;
 
+      const updateData: any = {};
+      if (timezone !== undefined) updateData.timezone = timezone;
+      if (defaultLanguage !== undefined) updateData.defaultLanguage = defaultLanguage;
+      if (enableNotifications !== undefined) updateData.enableNotifications = enableNotifications;
+      if (emailNotifications !== undefined) updateData.emailNotifications = emailNotifications;
+      if (parentRemarkNotifications !== undefined) updateData.parentRemarkNotifications = parentRemarkNotifications;
+
       // Upsert user settings
       await prisma.userSettings.upsert({
         where: { userId: session.user.id },
-        update: {
-          timezone: timezone || 'UTC',
-          enableNotifications: enableNotifications ?? true,
-          emailNotifications: emailNotifications ?? true,
-          parentRemarkNotifications: parentRemarkNotifications ?? true
-        },
+        update: updateData,
         create: {
           userId: session.user.id,
           timezone: timezone || 'UTC',
+          defaultLanguage: defaultLanguage || 'en',
           enableNotifications: enableNotifications ?? true,
           emailNotifications: emailNotifications ?? true,
           parentRemarkNotifications: parentRemarkNotifications ?? true

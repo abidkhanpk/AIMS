@@ -165,7 +165,7 @@ export default function StudentDashboard() {
         const progressData = await progressRes.json();
         setStudentData(progressData);
       } else {
-        setError('Failed to fetch progress data');
+        setError(t('auto.failedToFetchProgressData', `Failed to fetch progress data`));
       }
 
       // Fetch student assignments
@@ -178,7 +178,7 @@ export default function StudentDashboard() {
         setAssignments([]);
       }
     } catch (error) {
-      setError('Error fetching student data');
+      setError(t('auto.errorFetchingStudentData', `Error fetching student data`));
     } finally {
       setLoading(false);
     }
@@ -220,14 +220,14 @@ export default function StudentDashboard() {
       });
 
       if (res.ok) {
-        setSuccess('Fee payment submitted successfully! Awaiting admin verification.');
+        setSuccess(t('auto.feePaymentSubmittedSuccessfullyAwaiting', `Fee payment submitted successfully! Awaiting admin verification.`));
         fetchFees(); // Refresh fees data
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to submit payment');
       }
     } catch (error) {
-      setError('Error submitting payment');
+      setError(t('auto.errorSubmittingPayment', `Error submitting payment`));
     }
   };
 

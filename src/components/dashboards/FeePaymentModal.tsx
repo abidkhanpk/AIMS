@@ -47,7 +47,7 @@ const FeePaymentModal = ({ show, onHide, fee, onPaymentSubmit }: FeePaymentModal
 
     try {
       if (!amount || !paidDate || !paymentDetails.trim()) {
-        setError('Amount, Paid Date, and Payment Details are required.');
+        setError(t('auto.amountPaidDateAndPayment', `Amount, Paid Date, and Payment Details are required.`));
         setSubmitting(false);
         return;
       }

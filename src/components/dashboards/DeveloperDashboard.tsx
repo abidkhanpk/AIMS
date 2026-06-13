@@ -152,10 +152,10 @@ function AdminManagementTab() {
         const data = await res.json();
         setAdmins(data);
       } else {
-        setError('Failed to fetch admins');
+        setError(t('auto.failedToFetchAdmins', `Failed to fetch admins`));
       }
     } catch (error) {
-      setError('Error fetching admins');
+      setError(t('auto.errorFetchingAdmins', `Error fetching admins`));
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ function AdminManagementTab() {
       });
 
       if (res.ok) {
-        setSuccess('Admin created successfully!');
+        setSuccess(t('auto.adminCreatedSuccessfully', `Admin created successfully!`));
         fetchAdmins();
         setName('');
         setEmail('');
@@ -206,7 +206,7 @@ function AdminManagementTab() {
         setError(errorData.message || 'Failed to create admin');
       }
     } catch (error) {
-      setError('Error creating admin');
+      setError(t('auto.errorCreatingAdmin', `Error creating admin`));
     } finally {
       setCreating(false);
     }
@@ -249,7 +249,7 @@ function AdminManagementTab() {
       });
 
       if (res.ok) {
-        setSuccess('Admin updated successfully!');
+        setSuccess(t('auto.adminUpdatedSuccessfully', `Admin updated successfully!`));
         fetchAdmins();
         setShowEditModal(false);
       } else {
@@ -257,7 +257,7 @@ function AdminManagementTab() {
         setError(errorData.message || 'Failed to update admin');
       }
     } catch (error) {
-      setError('Error updating admin');
+      setError(t('auto.errorUpdatingAdmin', `Error updating admin`));
     } finally {
       setUpdating(false);
     }
@@ -282,7 +282,7 @@ function AdminManagementTab() {
         setError(errorData.message || 'Failed to update admin status');
       }
     } catch (error) {
-      setError('Error updating admin status');
+      setError(t('auto.errorUpdatingAdminStatus', `Error updating admin status`));
     }
   };
 
@@ -298,14 +298,14 @@ function AdminManagementTab() {
         body: JSON.stringify({ id: adminId }),
       });
       if (res.ok) {
-        setSuccess('Admin deleted successfully');
+        setSuccess(t('auto.adminDeletedSuccessfully', `Admin deleted successfully`));
         fetchAdmins();
       } else {
         const err = await res.json();
         setError(err.message || 'Failed to delete admin');
       }
     } catch {
-      setError('Error deleting admin');
+      setError(t('auto.errorDeletingAdmin', `Error deleting admin`));
     } finally {
       setDeletingAdminId(null);
     }
@@ -354,13 +354,13 @@ function AdminManagementTab() {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Invalid file type. Please upload JPEG, PNG, GIF, or WebP images only.');
+      setError(t('auto.invalidFileTypePleaseUpload', `Invalid file type. Please upload JPEG, PNG, GIF, or WebP images only.`));
       return;
     }
 
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      setError('File size too large. Please upload images smaller than 5MB.');
+      setError(t('auto.fileSizeTooLargePlease', `File size too large. Please upload images smaller than 5MB.`));
       return;
     }
 
@@ -380,13 +380,13 @@ function AdminManagementTab() {
         const data = await res.json();
         setHeaderImage(data.logoUrl);
         setHeaderImageUrl(data.logoUrl);
-        setSuccess('Logo uploaded successfully!');
+        setSuccess(t('auto.logoUploadedSuccessfully', `Logo uploaded successfully!`));
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to upload logo');
       }
     } catch (error) {
-      setError('Error uploading logo');
+      setError(t('auto.errorUploadingLogo', `Error uploading logo`));
     } finally {
       setUploadingLogo(false);
       // Reset file input
@@ -424,7 +424,7 @@ function AdminManagementTab() {
       });
 
       if (res.ok) {
-        setSuccess('Settings updated successfully!');
+        setSuccess(t('auto.settingsUpdatedSuccessfully', `Settings updated successfully!`));
         fetchAdmins();
         setShowSettingsModal(false);
       } else {
@@ -432,7 +432,7 @@ function AdminManagementTab() {
         setError(errorData.message || 'Failed to update settings');
       }
     } catch (error) {
-      setError('Error updating settings');
+      setError(t('auto.errorUpdatingSettings', `Error updating settings`));
     } finally {
       setUpdatingSettings(false);
     }
@@ -1110,10 +1110,10 @@ function GlobalSettingsTab() {
         setSmtpReplyTo(data.smtpReplyTo || '');
         setSmtpFrom(data.smtpFrom || '');
       } else {
-        setError('Failed to fetch global settings');
+        setError(t('auto.failedToFetchGlobalSettings', `Failed to fetch global settings`));
       }
     } catch (error) {
-      setError('Error fetching global settings');
+      setError(t('auto.errorFetchingGlobalSettings', `Error fetching global settings`));
     } finally {
       setLoading(false);
     }
@@ -1126,13 +1126,13 @@ function GlobalSettingsTab() {
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      setError('Invalid file type. Please upload JPEG, PNG, GIF, or WebP images only.');
+      setError(t('auto.invalidFileTypePleaseUpload', `Invalid file type. Please upload JPEG, PNG, GIF, or WebP images only.`));
       return;
     }
 
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      setError('File size too large. Please upload images smaller than 5MB.');
+      setError(t('auto.fileSizeTooLargePlease', `File size too large. Please upload images smaller than 5MB.`));
       return;
     }
 
@@ -1151,13 +1151,13 @@ function GlobalSettingsTab() {
       if (res.ok) {
         const data = await res.json();
         setAppLogo(data.logoUrl);
-        setSuccess('Logo uploaded successfully!');
+        setSuccess(t('auto.logoUploadedSuccessfully', `Logo uploaded successfully!`));
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to upload logo');
       }
     } catch (error) {
-      setError('Error uploading logo');
+      setError(t('auto.errorUploadingLogo', `Error uploading logo`));
     } finally {
       setUploadingLogo(false);
       // Reset file input
@@ -1195,14 +1195,14 @@ function GlobalSettingsTab() {
       });
 
       if (res.ok) {
-        setSuccess('Global settings updated successfully!');
+        setSuccess(t('auto.globalSettingsUpdatedSuccessfully', `Global settings updated successfully!`));
         fetchGlobalSettings();
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to update global settings');
       }
     } catch (error) {
-      setError('Error updating global settings');
+      setError(t('auto.errorUpdatingGlobalSettings', `Error updating global settings`));
     } finally {
       setUpdating(false);
     }
@@ -1210,7 +1210,7 @@ function GlobalSettingsTab() {
 
   const handleTestSmtp = async () => {
     if (!testEmail) {
-      alert('Please enter a destination email address to test.');
+      alert(t('auto.pleaseEnterADestinationEmail', `Please enter a destination email address to test.`));
       return;
     }
     setTestingSmtp(true);
@@ -1381,7 +1381,7 @@ function GlobalSettingsTab() {
                   type="text"
                   value={smtpHost}
                   onChange={e => setSmtpHost(e.target.value)}
-                  placeholder="e.g. smtp.gmail.com"
+                  placeholder={t('auto.egSmtpgmailcom', `e.g. smtp.gmail.com`)}
                 />
               </Form.Group>
             </Col>
@@ -1392,7 +1392,7 @@ function GlobalSettingsTab() {
                   type="text"
                   value={smtpPort}
                   onChange={e => setSmtpPort(e.target.value)}
-                  placeholder="e.g. 587 or 465"
+                  placeholder={t('auto.egOr', `e.g. 587 or 465`)}
                 />
               </Form.Group>
             </Col>
@@ -1405,7 +1405,7 @@ function GlobalSettingsTab() {
                   type="email"
                   value={smtpUser}
                   onChange={e => setSmtpUser(e.target.value)}
-                  placeholder="e.g. your-email@gmail.com"
+                  placeholder={t('auto.egYouremailgmailcom', `e.g. your-email@gmail.com`)}
                 />
               </Form.Group>
             </Col>
@@ -1416,7 +1416,7 @@ function GlobalSettingsTab() {
                   type="password"
                   value={smtpPass}
                   onChange={e => setSmtpPass(e.target.value)}
-                  placeholder="SMTP server password"
+                  placeholder={t('auto.smtpServerPassword', `SMTP server password`)}
                 />
               </Form.Group>
             </Col>
@@ -1430,8 +1430,8 @@ function GlobalSettingsTab() {
                   value={smtpSecure}
                   onChange={e => setSmtpSecure(e.target.value)}
                 >
-                  <option value="tls">TLS/STARTTLS</option>
-                  <option value="ssl">SSL/SMTPS</option>
+                  <option value="tls">{t('auto.tlsstarttls', `TLS/STARTTLS`)}</option>
+                  <option value="ssl">{t('auto.sslsmtps', `SSL/SMTPS`)}</option>
                 </Form.Select>
               </Form.Group>
             </Col>
@@ -1442,7 +1442,7 @@ function GlobalSettingsTab() {
                   type="text"
                   value={smtpFrom}
                   onChange={e => setSmtpFrom(e.target.value)}
-                  placeholder="e.g. AIMS <no-reply@aims.com>"
+                  placeholder={t('auto.egAimsNoreplyaimscom', `e.g. AIMS <no-reply@aims.com>`)}
                 />
               </Form.Group>
             </Col>
@@ -1453,7 +1453,7 @@ function GlobalSettingsTab() {
                    type="email"
                    value={smtpReplyTo}
                    onChange={e => setSmtpReplyTo(e.target.value)}
-                   placeholder="e.g. support@aims.com"
+                   placeholder={t('auto.egSupportaimscom', `e.g. support@aims.com`)}
                  />
                </Form.Group>
              </Col>

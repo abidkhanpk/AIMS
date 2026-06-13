@@ -66,11 +66,11 @@ const FeeManagementTab = () => {
         const data = await res.json();
         setFeeDefinitions(Array.isArray(data) ? data : []);
       } else {
-        setError('Failed to fetch fee definitions');
+        setError(t('auto.failedToFetchFeeDefinitions', `Failed to fetch fee definitions`));
         setFeeDefinitions([]);
       }
     } catch (error) {
-      setError('Error fetching fee definitions');
+      setError(t('auto.errorFetchingFeeDefinitions', `Error fetching fee definitions`));
       setFeeDefinitions([]);
     } finally {
       setLoading(false);
@@ -86,7 +86,7 @@ const FeeManagementTab = () => {
       if (studentsRes.ok) setStudents(await studentsRes.json());
       if (coursesRes.ok) setCourses(await coursesRes.json());
     } catch (error) {
-      setError('Error fetching required data');
+      setError(t('auto.errorFetchingRequiredData', `Error fetching required data`));
     }
   }, []);
 
@@ -119,7 +119,7 @@ const FeeManagementTab = () => {
       });
 
       if (res.ok) {
-        setSuccess('Fee definition created successfully!');
+        setSuccess(t('auto.feeDefinitionCreatedSuccessfully', `Fee definition created successfully!`));
         fetchFeeDefinitions();
         resetForm();
         setShowCreateForm(false);
@@ -128,7 +128,7 @@ const FeeManagementTab = () => {
         setError(errorData.message || 'Failed to create fee definition');
       }
     } catch (error) {
-      setError('Error creating fee definition');
+      setError(t('auto.errorCreatingFeeDefinition', `Error creating fee definition`));
     } finally {
       setCreating(false);
     }
@@ -174,7 +174,7 @@ const FeeManagementTab = () => {
       });
 
       if (res.ok) {
-        setSuccess('Fee definition updated successfully!');
+        setSuccess(t('auto.feeDefinitionUpdatedSuccessfully', `Fee definition updated successfully!`));
         fetchFeeDefinitions();
         setShowEditModal(false);
         setEditingFeeDefinition(null);
@@ -183,7 +183,7 @@ const FeeManagementTab = () => {
         setError(errorData.message || 'Failed to update fee definition');
       }
     } catch (error) {
-      setError('Error updating fee definition');
+      setError(t('auto.errorUpdatingFeeDefinition', `Error updating fee definition`));
     } finally {
       setEditing(false);
     }
@@ -198,20 +198,20 @@ const FeeManagementTab = () => {
       });
 
       if (res.ok) {
-        setSuccess('Fee definition deleted successfully!');
+        setSuccess(t('auto.feeDefinitionDeletedSuccessfully', `Fee definition deleted successfully!`));
         fetchFeeDefinitions();
       } else {
         const errorData = await res.json();
         setError(errorData.message || 'Failed to delete fee definition');
       }
     } catch (error) {
-      setError('Error deleting fee definition');
+      setError(t('auto.errorDeletingFeeDefinition', `Error deleting fee definition`));
     }
   };
 
   const handleBulkGenerate = async () => {
     if (!targetMonth) {
-      setError('Please select a target month');
+      setError(t('auto.pleaseSelectATargetMonth', `Please select a target month`));
       return;
     }
     setGeneratingBulk(true);
@@ -234,7 +234,7 @@ const FeeManagementTab = () => {
         setError(data.message || 'Failed to bulk generate fees');
       }
     } catch (e) {
-      setError('Error bulk generating fees');
+      setError(t('auto.errorBulkGeneratingFees', `Error bulk generating fees`));
     } finally {
       setGeneratingBulk(false);
     }
