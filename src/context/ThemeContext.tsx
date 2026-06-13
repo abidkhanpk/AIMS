@@ -13,25 +13,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    // Check local storage or system preference on mount
-    const savedTheme = localStorage.getItem('app-theme') as Theme | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      document.documentElement.setAttribute('data-bs-theme', savedTheme);
-    } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (prefersDark) {
-        setTheme('dark');
-        document.documentElement.setAttribute('data-bs-theme', 'dark');
-      }
-    }
+    // Force light theme and override any system preferences
+    setTheme('light');
+    document.documentElement.setAttribute('data-bs-theme', 'light');
+    localStorage.setItem('app-theme', 'light');
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('app-theme', newTheme);
-    document.documentElement.setAttribute('data-bs-theme', newTheme);
+    // Keep theme as light only
+    setTheme('light');
+    document.documentElement.setAttribute('data-bs-theme', 'light');
+    localStorage.setItem('app-theme', 'light');
   };
 
   return (
