@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Offcanvas, ListGroup, Button, Alert } from 'react-bootstrap';
+import { Offcanvas, ListGroup, Button, Alert, Modal, Tabs, Tab } from 'react-bootstrap';
 import { useRouter } from 'next/router';
 import NotificationDropdown from '../NotificationDropdown';
 import { useTranslation } from 'react-i18next';
@@ -82,6 +82,8 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isSecure, setIsSecure] = useState(true);
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  const [instructionsTab, setInstructionsTab] = useState('android');
 
   const handleSignOut = async () => {
     try {
@@ -200,6 +202,14 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
     setDeferredPrompt(null);
     setCanInstall(false);
     window.dispatchEvent(new Event('pwa-installed'));
+  };
+
+  const triggerPwaInstall = () => {
+    if (canInstall) {
+      handleInstall();
+    } else {
+      setShowInstructionsModal(true);
+    }
   };
 
   const renderMenuItem = (item: MenuItem, isChild = false) => {
@@ -447,46 +457,18 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
             </div>
           </div>
 
-          {/* PWA Install Area */}
-          {canInstall && (
+          {/* PWA Install Area — always visible if not standalone */}
+          {!isStandalone && (
             <div className="px-3 mb-4">
               <Button
                 variant="outline-primary"
                 className="w-100 d-flex align-items-center justify-content-center py-2 fs-6 fw-bold"
-                onClick={handleInstall}
+                onClick={triggerPwaInstall}
               >
                 <i className="bi bi-download me-2"></i>
                 {t('layout.install', 'Install App')}
               </Button>
             </div>
-          )}
-
-          {!isSecure && (
-            <div className="px-3 mb-4">
-              <Alert variant="warning" className="small py-2 px-3 m-0">
-                <div className="fw-bold mb-1">
-                  <i className="bi bi-shield-slash me-1"></i>
-                  {t('auto.insecureConnection', 'Insecure Connection')}
-                </div>
-                <p className="mb-0">
-                  {t('auto.pwaSecureMsg', 'PWA installation is disabled by the browser over insecure HTTP. To install, access the app via HTTPS (e.g., in production) or localhost.')}
-                </p>
-              </Alert>
-            </div>
-          )}
-
-          {/* iOS PWA Instructions */}
-          {isIOS && !isStandalone && (
-            <Alert variant="info" className="mx-3 mb-4 small py-2 px-3">
-              <div className="fw-bold mb-1">
-                <i className="bi bi-info-circle me-1"></i>
-                {t('auto.installOnIphone', 'Install on iPhone / iPad')}
-              </div>
-              <ol className="mb-0 ps-3">
-                <li>{t('auto.iosInstallStep1', 'Tap the Share icon in Safari (bottom navigation bar).')}</li>
-                <li>{t('auto.iosInstallStep2', 'Scroll down and select "Add to Home Screen".')}</li>
-              </ol>
-            </Alert>
           )}
 
           <div className="mt-3 pt-3 border-top">
@@ -511,6 +493,94 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
           </div>
         </Offcanvas.Body>
       </Offcanvas>
+
+      {/* PWA Installation Instructions Modal */}
+      <Modal show={showInstructionsModal} onHide={() => setShowInstructionsModal(false)} centered size="lg">
+        <Modal.Header closeButton style={{ background: 'linear-gradient(135deg, #0d6efd, #6610f2)', color: '#fff', border: 'none' }}>
+          <Modal.Title className="d-flex align-items-center gap-2">
+            <i className="bi bi-phone"></i>
+            {t('pwa.installTitle', 'Install AIMS App')}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="p-0">
+          <Tabs
+            activeKey={instructionsTab}
+            onSelect={(k) => setInstructionsTab(k || 'android')}
+            className="px-3 pt-3"
+            fill
+          >
+            <Tab eventKey="android" title={<span><i className="bi bi-android2 me-1"></i> Android</span>}>
+              <div className="p-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#34a853', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>1</span>
+                  <span>{t('pwa.androidStep1', 'Open this page in Google Chrome browser.')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#34a853', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>2</span>
+                  <span>{t('pwa.androidStep2', 'Tap the three-dot menu (⋮) in the top-right corner.')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#34a853', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>3</span>
+                  <span>{t('pwa.androidStep3', 'Select "Install app" or "Add to Home screen".')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#34a853', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>4</span>
+                  <span>{t('pwa.androidStep4', 'Tap "Install" to confirm. The app icon will appear on your home screen.')}</span>
+                </div>
+              </div>
+            </Tab>
+            <Tab eventKey="ios" title={<span><i className="bi bi-apple me-1"></i> iOS</span>}>
+              <div className="p-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#007aff', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>1</span>
+                  <span>{t('pwa.iosStep1', 'Open this page in Safari browser (required for iOS).')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#007aff', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>2</span>
+                  <span>{t('pwa.iosStep2', 'Tap the Share button (square with an upward arrow) at the bottom.')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#007aff', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>3</span>
+                  <span>{t('pwa.iosStep3', 'Scroll down and tap "Add to Home Screen".')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#007aff', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>4</span>
+                  <span>{t('pwa.iosStep4', 'Tap "Add" to confirm. The app icon will appear on your home screen.')}</span>
+                </div>
+                <Alert variant="info" className="mt-3 small">
+                  <i className="bi bi-info-circle me-1"></i>
+                  {t('pwa.iosNote', 'Note: On iOS, the app can only be installed via Safari. Other browsers like Chrome for iOS do not support PWA installation.')}
+                </Alert>
+              </div>
+            </Tab>
+            <Tab eventKey="desktop" title={<span><i className="bi bi-laptop me-1"></i> Desktop</span>}>
+              <div className="p-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#5b21b6', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>1</span>
+                  <span>{t('pwa.desktopStep1', 'Open this page in Google Chrome or Microsoft Edge.')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#5b21b6', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>2</span>
+                  <span>{t('pwa.desktopStep2', 'Look for the install icon (⊕) in the address bar on the right side.')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#5b21b6', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>3</span>
+                  <span>{t('pwa.desktopStep3', 'Click it and select "Install" in the popup.')}</span>
+                </div>
+                <div className="d-flex align-items-center gap-2">
+                  <span style={{ width: 32, height: 32, borderRadius: '50%', background: '#5b21b6', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>4</span>
+                  <span>{t('pwa.desktopStep4', 'The app will open in its own window and appear in your apps list.')}</span>
+                </div>
+              </div>
+            </Tab>
+          </Tabs>
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="secondary" onClick={() => setShowInstructionsModal(false)}>
+            {t('pwa.close', 'Close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }
