@@ -159,22 +159,47 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
       return;
     }
 
-    const handler = (e: any) => {
+    // Check if prompt is already captured globally
+    if ((window as any).deferredPrompt) {
+      setCanInstall(true);
+    }
+
+    const handlePrompt = (e: any) => {
       e.preventDefault();
+      (window as any).deferredPrompt = e;
       setDeferredPrompt(e);
+      setCanInstall(true);
+      window.dispatchEvent(new Event('pwa-install-available'));
+    };
+
+    const handleAvailable = () => {
       setCanInstall(true);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    const handleInstalled = () => {
+      setCanInstall(false);
+    };
+
+    window.addEventListener('beforeinstallprompt', handlePrompt);
+    window.addEventListener('pwa-install-available', handleAvailable);
+    window.addEventListener('pwa-installed', handleInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handlePrompt);
+      window.removeEventListener('pwa-install-available', handleAvailable);
+      window.removeEventListener('pwa-installed', handleInstalled);
+    };
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
+    const prompt = (window as any).deferredPrompt || deferredPrompt;
+    if (!prompt) return;
+    prompt.prompt();
+    await prompt.userChoice;
+    (window as any).deferredPrompt = null;
     setDeferredPrompt(null);
     setCanInstall(false);
+    window.dispatchEvent(new Event('pwa-installed'));
   };
 
   const renderMenuItem = (item: MenuItem, isChild = false) => {
