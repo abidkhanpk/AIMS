@@ -574,7 +574,7 @@ export default function TeacherDashboard() {
                             </div>
                           ) : (
                             <div className="table-responsive">
-                              <Table className="mb-0">
+                              <Table className="mb-0 mobile-card-table">
                                 <thead className="table-light small">
                                   <tr>
                                     <th>{t('auto.date', `Date`)}</th>
@@ -598,22 +598,22 @@ export default function TeacherDashboard() {
                                   ) : (
                                     student.progressRecords.map((progress) => (
                                       <tr key={progress.id}>
-                                        <td className="small">
+                                        <td data-label={t('auto.date', `Date`)} className="small">
                                           {new Date(progress.date).toLocaleDateString()}
                                         </td>
-                                        <td className="fw-medium small">
+                                        <td data-label={t('auto.course', `Course`)} className="fw-medium small">
                                           {progress.course.name}
                                         </td>
-                                        <td>
+                                        <td data-label={t('auto.attendance', `Attendance`)}>
                                           {getAttendanceBadge(progress.attendance)}
                                         </td>
-                                        <td className="small">
+                                        <td data-label={t('auto.lesson', `Lesson`)} className="small">
                                           <ExpandableText text={progress.lesson} maxLength={20} />
                                         </td>
-                                        <td className="small">
+                                        <td data-label={t('auto.homework', `Homework`)} className="small">
                                           <ExpandableText text={progress.homework} maxLength={20} />
                                         </td>
-                                        <td>
+                                        <td data-label={t('auto.progress', `Progress %`)}>
                                           {progress.lessonProgress !== null ? (
                                             <Badge bg="primary">
                                               {progress.lessonProgress}%
@@ -622,10 +622,10 @@ export default function TeacherDashboard() {
                                             <span className="text-muted small">-</span>
                                           )}
                                         </td>
-                                        <td className="small">
+                                        <td data-label={t('auto.teacherapossRemarks', `Teacher's Remarks`)} className="small">
                                           <ExpandableText text={progress.remarks} maxLength={30} />
                                         </td>
-                                        <td className="small">
+                                        <td data-label={t('auto.parentapossRemarks', `Parent's Remarks`)} className="small">
                                           {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                             (() => {
                                               const replyCount = progress.parentRemarks.reduce(
@@ -646,7 +646,7 @@ export default function TeacherDashboard() {
                                             <span className="small text-muted d-inline-block">{t('auto.noParentRemarks', `No parent remarks`)}</span>
                                           )}
                                         </td>
-                                        <td>
+                                        <td data-label={t('auto.actions', `Actions`)}>
                                           <div className="d-flex gap-2 align-items-center flex-nowrap">
                                             <Button
                                               variant="outline-primary"
@@ -754,7 +754,7 @@ export default function TeacherDashboard() {
                           </div>
                         ) : (
                           <div className="table-responsive">
-                            <Table className="mb-0">
+                            <Table className="mb-0 mobile-card-table">
                               <thead className="table-light small">
                                 <tr>
                                   <th>{t('auto.date', `Date`)}</th>
@@ -778,38 +778,38 @@ export default function TeacherDashboard() {
                                 ) : (
                                   student.testRecords.map((test) => (
                                     <tr key={test.id}>
-                                      <td className="small">
+                                      <td data-label={t('auto.date', `Date`)} className="small">
                                         {new Date(test.performedAt).toLocaleDateString()}
                                       </td>
-                                      <td className="fw-medium small">
+                                      <td data-label={t('auto.subject', `Subject`)} className="fw-medium small">
                                         {test.course.name}
                                       </td>
-                                      <td className="small">
+                                      <td data-label={t('auto.testexam', `Test/Exam`)} className="small">
                                         <strong>{test.title}</strong>
                                       </td>
-                                      <td>
+                                      <td data-label={t('auto.type', `Type`)}>
                                         {(() => {
                                           const t = formatTestType(test.type);
                                           return <Badge bg={t.variant}>{t.label}</Badge>;
                                         })()}
                                       </td>
-                                      <td>
+                                      <td data-label={t('auto.score', `Score`)}>
                                         <Badge bg="dark">
                                           {test.obtainedMarks}/{test.maxMarks}
                                         </Badge>
                                       </td>
-                                      <td>
+                                      <td data-label={t('auto.percentage', `Percentage`)}>
                                         <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
                                           {test.percentage}%
                                         </Badge>
                                       </td>
-                                      <td className="small">
+                                      <td data-label={t('auto.performance', `Performance`)} className="small">
                                         <ExpandableText text={test.performanceNote || '-'} maxLength={30} />
                                       </td>
-                                      <td className="small">
+                                      <td data-label={t('auto.remarks', `Remarks`)} className="small">
                                         <ExpandableText text={test.remarks || '-'} maxLength={30} />
                                       </td>
-                                      <td>
+                                      <td data-label={t('auto.actions', `Actions`)}>
                                         <Button
                                           variant="outline-primary"
                                           size="sm"
