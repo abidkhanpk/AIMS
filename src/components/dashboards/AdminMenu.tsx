@@ -353,7 +353,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
           <li className={styles.navbarItem}>
             <button
               type="button"
-              className={`${styles.navbarItemInner} ${styles.flexLeft}`}
+              className={`${styles.navbarItemInner} ${styles.flexLeft} text-danger`}
               onClick={handleSignOut}
             >
               <div className={styles.iconWrapper}>
@@ -389,18 +389,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               <i className="bi bi-gear me-2"></i>
               {t('layout.userSettings')}
             </ListGroup.Item>
-            <ListGroup.Item
-              action
-              onClick={() => {
-                handleSignOut();
-                setShowMobileMenu(false);
-              }}
-              className="d-flex align-items-center mt-2"
-              style={{ fontSize: '1.05rem' }}
-            >
-              <i className="bi bi-box-arrow-right me-2"></i>
-              {t('logout')}
-            </ListGroup.Item>
+
           </ListGroup>
           {/* Language Switcher */}
           <div className="mt-3 pt-3 border-top px-3 mb-4">
@@ -490,6 +479,20 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
                 {t('messages')}
               </ListGroup.Item>
             </ListGroup>
+          </div>
+
+          <div className="p-3 border-top mt-auto">
+            <Button
+              variant="danger"
+              className="w-100 py-2 d-flex align-items-center justify-content-center"
+              onClick={() => {
+                handleSignOut();
+                setShowMobileMenu(false);
+              }}
+            >
+              <i className="bi bi-box-arrow-right me-2"></i>
+              {t('logout', 'Sign Out')}
+            </Button>
           </div>
         </Offcanvas.Body>
       </Offcanvas>
