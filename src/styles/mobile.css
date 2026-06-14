@@ -90,16 +90,16 @@
   }
 
   main > .container-fluid {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
     padding-top: 0.5rem !important;
   }
 
   /* Containers: minimal side padding */
   .container,
   .container-fluid {
-    padding-left: 0.65rem;
-    padding-right: 0.65rem;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
   }
 
   /* Stack admin layout instead of fixed sidebar */
