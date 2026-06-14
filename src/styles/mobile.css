@@ -78,9 +78,14 @@
 
 /* ---- 2. GLOBAL LAYOUT TIGHTENING (< 992px) ---- */
 @media (max-width: 992px) {
-  /* Remove double-gutter from Layout's Container > row > col */
-  main .row {
-    --bs-gutter-x: 0;
+  /* Remove horizontal negative margins from rows to prevent asymmetry */
+  .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .col, [class*="col-"] {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
   }
 
   /* Reduce main content vertical padding */
@@ -90,16 +95,19 @@
   }
 
   main > .container-fluid {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
     padding-top: 0.5rem !important;
   }
 
   /* Containers: minimal side padding */
   .container,
   .container-fluid {
-    padding-left: 0.65rem;
-    padding-right: 0.65rem;
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden;
   }
 
   /* Stack admin layout instead of fixed sidebar */

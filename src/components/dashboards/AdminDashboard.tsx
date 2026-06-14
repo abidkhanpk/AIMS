@@ -5726,7 +5726,7 @@ export default function AdminDashboard() {
             </div>
 
             {showHome ? (
-              <div className={`${menuStyles.homePanel} p-3 p-md-4`}>
+              <div className="pt-2">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                   <div className="d-flex align-items-center">
                     <h3 className="h5 mb-1">{t('dashboard.overview', 'Overview')}</h3>
