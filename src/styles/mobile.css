@@ -241,7 +241,7 @@
   .table-responsive-xxl {
     margin-bottom: 0.75rem;
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;
   }
 
   /* Prevent horizontal scroll */
