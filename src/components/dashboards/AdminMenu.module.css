@@ -2,12 +2,12 @@
 
 .menuShell,
 .navbar {
-  --primary: 237, 94%, 81%;
-  --background: 266, 16%, 92%;
+  --primary: 221, 83%, 53%;
+  --background: 0, 0%, 100%;
   --background-secondary: 256, 12%, 12%;
   --background-secondary-dark: 256, 10%, 10%;
   --background-secondary-light: 257, 11%, 16%;
-  --text-primary: 0, 0%, 0%;
+  --text-primary: 0, 0%, 15%;
   --black: 0, 0%, 0%;
   --white: 0, 0%, 100%;
   --quite-gray: 0, 0%, 50%;
