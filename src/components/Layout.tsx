@@ -639,12 +639,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </Navbar>
       
       <main className="min-vh-100 bg-light">
-        <Container fluid className="py-4 px-3">
-          <div className="row justify-content-center">
-            <div className="col-12">
-              {children}
-            </div>
-          </div>
+        <Container fluid className="py-2 py-md-4 px-1 px-md-3">
+          {children}
         </Container>
       </main>
 

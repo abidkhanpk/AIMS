@@ -516,7 +516,7 @@ export default function ParentDashboard() {
                                       </div>
                                     ) : (
                                       <div className="table-responsive">
-                                        <Table size="sm" className="mb-0">
+                                        <Table size="sm" className="mb-0 mobile-card-table">
                                           <thead className="table-light small">
                                             <tr>
                                               <th>{t('auto.date', `Date`)}</th>
@@ -533,10 +533,10 @@ export default function ParentDashboard() {
                                           <tbody>
                                             {allProgress.map((progress) => (
                                               <tr key={progress.id}>
-                                                <td className="text-muted small">
+                                                <td data-label={t('auto.date', `Date`)} className="text-muted small">
                                                   {new Date(progress.date).toLocaleDateString()}
                                                 </td>
-                                                <td className="fw-medium small">
+                                                <td data-label={t('auto.teacher', `Teacher`)} className="fw-medium small">
                                                   <span
                                                     role="button"
                                                     className="text-decoration-underline text-primary"
@@ -545,16 +545,16 @@ export default function ParentDashboard() {
                                                     {progress.teacher?.name || 'Unknown'}
                                                   </span>
                                                 </td>
-                                                <td>
+                                                <td data-label={t('auto.attendance', `Attendance`)}>
                                                   {getAttendanceBadge(progress.attendance)}
                                                 </td>
-                                                <td className="small">
+                                                <td data-label={t('auto.lesson', `Lesson`)} className="small">
                                                   {progress.lesson || '-'}
                                                 </td>
-                                                <td className="small">
+                                                <td data-label={t('auto.homework', `Homework`)} className="small">
                                                   {progress.homework || '-'}
                                                 </td>
-                                                <td>
+                                                <td data-label={t('auto.progress', `Progress`)}>
                                                   {progress.lessonProgress !== null ? (
                                                     <Badge 
                                                       bg={progress.lessonProgress >= 80 ? 'success' : 
@@ -567,7 +567,7 @@ export default function ParentDashboard() {
                                                     <span className="text-muted small">-</span>
                                                   )}
                                                 </td>
-                                                <td className="small">
+                                                <td data-label={t('auto.teacherapossRemarks', `Teacher's Remarks`)} className="small">
                                                   {progress.remarks ? (
                                                     <span className="text-muted">
                                                       {progress.remarks.length > 30 
@@ -579,7 +579,7 @@ export default function ParentDashboard() {
                                                     <span className="text-muted">-</span>
                                                   )}
                                                 </td>
-                                                <td className="small">
+                                                <td data-label={t('auto.parentapossRemarks', `Parent's Remarks`)} className="small">
                                                   {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                                     (() => {
                                                       const replyCount = progress.parentRemarks.reduce(
@@ -600,7 +600,7 @@ export default function ParentDashboard() {
                                                     <span className="small text-muted d-inline-block">{t('auto.noParentRemarks', `No parent remarks`)}</span>
                                                   )}
                                                 </td>
-                                                <td>
+                                                <td data-label={t('auto.action', `Action`)}>
                                                   <Button
                                                     variant="outline-info"
                                                     size="sm"
@@ -678,7 +678,7 @@ export default function ParentDashboard() {
                           </div>
                         ) : (
                           <div className="table-responsive">
-                            <Table hover size="sm" className="mb-0">
+                            <Table hover size="sm" className="mb-0 mobile-card-table">
                               <thead className="table-light small">
                                 <tr>
                                   <th>{t('auto.date', `Date`)}</th>
@@ -695,12 +695,12 @@ export default function ParentDashboard() {
                               <tbody>
               {tests.map((test) => (
                 <tr key={test.id}>
-                  <td className="text-muted small">
+                  <td data-label={t('auto.date', `Date`)} className="text-muted small">
                     {new Date(test.performedAt).toLocaleDateString()}
                   </td>
-                  <td className="fw-medium small">{test.course.name}</td>
-                  <td className="small">{test.title}</td>
-                                    <td>
+                  <td data-label={t('auto.subject', `Subject`)} className="fw-medium small">{test.course.name}</td>
+                  <td data-label={t('auto.testexam', `Test/Exam`)} className="small">{test.title}</td>
+                                    <td data-label={t('auto.type', `Type`)}>
                                       <Badge bg={
                                         test.type === 'EXAM'
                                           ? 'danger'
@@ -719,17 +719,17 @@ export default function ParentDashboard() {
                                               : 'Quiz'}
                                       </Badge>
                                     </td>
-                                    <td>
+                                    <td data-label={t('auto.score', `Score`)}>
                                       <Badge bg="dark">{test.obtainedMarks}/{test.maxMarks}</Badge>
                                     </td>
-                                    <td>
+                                    <td data-label={t('auto.percentage', `Percentage`)}>
                                       <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
                                         {test.percentage}%
                                       </Badge>
                                     </td>
-                                    <td className="small">{test.performanceNote || '-'}</td>
-                                    <td className="small">{test.remarks || '-'}</td>
-                                    <td className="small">{test.teacher?.name || '-'}</td>
+                                    <td data-label={t('auto.performance', `Performance`)} className="small">{test.performanceNote || '-'}</td>
+                                    <td data-label={t('auto.remarks', `Remarks`)} className="small">{test.remarks || '-'}</td>
+                                    <td data-label={t('auto.teacher', `Teacher`)} className="small">{test.teacher?.name || '-'}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -776,7 +776,7 @@ export default function ParentDashboard() {
                   </div>
                 ) : (
                   <div className="table-responsive">
-                    <Table hover size="sm" className="mb-0">
+                    <Table hover size="sm" className="mb-0 mobile-card-table">
                       <thead className="table-light small">
                         <tr>
                           <th>{t('auto.student', `Student`)}</th>
@@ -791,17 +791,17 @@ export default function ParentDashboard() {
                       <tbody>
                         {fees.map((fee) => (
                           <tr key={fee.id}>
-                            <td className="fw-medium">{fee.student.name}</td>
-                            <td>{fee.title}</td>
-                            <td className="text-muted small">
+                            <td data-label={t('auto.student', `Student`)} className="fw-medium">{fee.student.name}</td>
+                            <td data-label={t('auto.title', `Title`)}>{fee.title}</td>
+                            <td data-label={t('auto.description', `Description`)} className="text-muted small">
                               {fee.description || '-'}
                             </td>
-                            <td className="fw-bold text-success">${fee.amount.toFixed(2)}</td>
-                            <td className="text-muted small">
+                            <td data-label={t('auto.amount', `Amount`)} className="fw-bold text-success">${fee.amount.toFixed(2)}</td>
+                            <td data-label={t('auto.dueDate', `Due Date`)} className="text-muted small">
                               {new Date(fee.dueDate).toLocaleDateString()}
                             </td>
-                            <td>{getStatusBadge(fee.status)}</td>
-                            <td>
+                            <td data-label={t('auto.status', `Status`)}>{getStatusBadge(fee.status)}</td>
+                            <td data-label={t('auto.action', `Action`)}>
                               {(fee.status === 'PENDING' || fee.status === 'OVERDUE') && (
                                 <Button
                                   variant="success"

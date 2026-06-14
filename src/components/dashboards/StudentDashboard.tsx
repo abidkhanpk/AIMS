@@ -400,7 +400,7 @@ export default function StudentDashboard() {
                     </div>
                   ) : (
                     <div className="table-responsive">
-                      <Table hover className="mb-0">
+                      <Table hover className="mb-0 mobile-card-table">
                         <thead className="table-light">
                           <tr>
                             <th>{t('dashboard.subject')}</th>
@@ -413,9 +413,9 @@ export default function StudentDashboard() {
                         <tbody>
                           {assignments.map((assignment) => (
                             <tr key={assignment.id}>
-                              <td className="fw-medium">{assignment.course?.name}</td>
-                              <td className="text-muted">{assignment.teacher?.name}</td>
-                              <td className="small">
+                              <td data-label={t('dashboard.subject')} className="fw-medium">{assignment.course?.name}</td>
+                              <td data-label={t('dashboard.teacher')} className="text-muted">{assignment.teacher?.name}</td>
+                              <td data-label={t('dashboard.schedule')} className="small">
                                 {assignment.startTime && (
                                   <div><strong>{t('auto.time', `Time:`)}</strong> {assignment.startTime}</div>
                                 )}
@@ -423,7 +423,7 @@ export default function StudentDashboard() {
                                   <div><strong>{t('auto.duration', `Duration:`)}</strong> {assignment.duration} {t('auto.minutes', `minutes`)}</div>
                                 )}
                               </td>
-                              <td className="small">
+                              <td data-label={t('dashboard.classDays')} className="small">
                                 {assignment.classDays && assignment.classDays.length > 0 ? (
                                   <div className="d-flex flex-wrap gap-1">
                                     {assignment.classDays.map(day => (
@@ -436,7 +436,7 @@ export default function StudentDashboard() {
                                   <span className="text-muted">{t('auto.notSpecified', `Not specified`)}</span>
                                 )}
                               </td>
-                              <td>
+                              <td data-label={t('dashboard.status')}>
                                 <Badge bg={assignment.isActive ? 'success' : 'secondary'}>
                                   {assignment.isActive ? 'Active' : 'Inactive'}
                                 </Badge>
@@ -515,7 +515,7 @@ export default function StudentDashboard() {
                               <Badge bg="info">{allProgress.length} {t('auto.updates', `Updates`)}</Badge>
                             </div>
                             <div className="table-responsive">
-                              <Table size="sm" className="mb-0">
+                              <Table size="sm" className="mb-0 mobile-card-table">
                                 <thead className="table-light">
                                   <tr>
                                     <th>{t('auto.date', `Date`)}</th>
@@ -529,13 +529,13 @@ export default function StudentDashboard() {
                                 <tbody>
                                   {allProgress.slice(0, expandedCourses.has(course.id) ? undefined : 5).map((progress) => (
                                     <tr key={progress.id}>
-                                      <td className="text-muted small">
+                                      <td data-label={t('auto.date', `Date`)} className="text-muted small">
                                         {new Date(progress.date).toLocaleDateString()}
                                       </td>
-                                      <td className="fw-medium small">
+                                      <td data-label={t('auto.teacher', `Teacher`)} className="fw-medium small">
                                         {progress.teacher.name}
                                       </td>
-                                      <td className="small">
+                                      <td data-label={t('auto.lesson', `Lesson`)} className="small">
                                         {progress.lesson ? (
                                           <span className="text-muted">
                                             {progress.lesson.length > 20 
@@ -547,7 +547,7 @@ export default function StudentDashboard() {
                                           <span className="text-muted">-</span>
                                         )}
                                       </td>
-                                      <td>
+                                      <td data-label={t('auto.progress', `Progress`)}>
                                         {progress.lessonProgress !== null ? (
                                           <Badge 
                                             bg={getProgressVariant(progress.lessonProgress)}
@@ -559,10 +559,10 @@ export default function StudentDashboard() {
                                           <span className="text-muted small">-</span>
                                         )}
                                       </td>
-                                      <td>
+                                      <td data-label={t('auto.attendance', `Attendance`)}>
                                         {getAttendanceBadge(progress.attendance)}
                                       </td>
-                                      <td>
+                                      <td data-label={t('auto.remarks', `Remarks`)}>
                                         {progress.parentRemarks && progress.parentRemarks.length > 0 ? (
                                           <Button 
                                             variant="outline-info" 
@@ -656,7 +656,7 @@ export default function StudentDashboard() {
               </Card.Header>
               <Card.Body className="p-0">
                 <div className="table-responsive">
-                  <Table hover className="mb-0">
+                  <Table hover className="mb-0 mobile-card-table">
                     <thead className="table-light">
                       <tr>
                         <th>{t('auto.date', `Date`)}</th>
@@ -673,12 +673,12 @@ export default function StudentDashboard() {
                     <tbody>
                       {studentData.testRecords.map((test) => (
                         <tr key={test.id}>
-                          <td className="text-muted small">
+                          <td data-label={t('auto.date', `Date`)} className="text-muted small">
                             {new Date(test.performedAt).toLocaleDateString()}
                           </td>
-                          <td className="fw-medium small">{test.course.name}</td>
-                          <td className="small">{test.title}</td>
-                          <td>
+                          <td data-label={t('auto.subject', `Subject`)} className="fw-medium small">{test.course.name}</td>
+                          <td data-label={t('auto.testexam', `Test/Exam`)} className="small">{test.title}</td>
+                          <td data-label={t('auto.type', `Type`)}>
                             <Badge bg={
                               test.type === 'EXAM'
                                 ? 'danger'
@@ -697,19 +697,19 @@ export default function StudentDashboard() {
                                     : 'Quiz'}
                             </Badge>
                           </td>
-                          <td>
+                          <td data-label={t('auto.score', `Score`)}>
                             <Badge bg="dark">
                               {test.obtainedMarks}/{test.maxMarks}
                             </Badge>
                           </td>
-                          <td>
+                          <td data-label={t('auto.percentage', `Percentage`)}>
                             <Badge bg={test.percentage >= 80 ? 'success' : test.percentage >= 60 ? 'warning' : 'danger'}>
                               {test.percentage}%
                             </Badge>
                           </td>
-                          <td className="small">{test.performanceNote || '-'}</td>
-                          <td className="small">{test.remarks || '-'}</td>
-                          <td className="small">{test.teacher?.name || '-'}</td>
+                          <td data-label={t('auto.performance', `Performance`)} className="small">{test.performanceNote || '-'}</td>
+                          <td data-label={t('auto.remarks', `Remarks`)} className="small">{test.remarks || '-'}</td>
+                          <td data-label={t('auto.teacher', `Teacher`)} className="small">{test.teacher?.name || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -748,7 +748,7 @@ export default function StudentDashboard() {
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
+                  <Table hover size="sm" className="mb-0 mobile-card-table">
                     <thead className="table-light">
                       <tr>
                         <th>{t('auto.title', `Title`)}</th>
@@ -762,16 +762,16 @@ export default function StudentDashboard() {
                     <tbody>
                       {fees.map((fee) => (
                         <tr key={fee.id}>
-                          <td>{fee.title}</td>
-                          <td className="text-muted small">
+                          <td data-label={t('auto.title', `Title`)}>{fee.title}</td>
+                          <td data-label={t('auto.description', `Description`)} className="text-muted small">
                             {fee.description || '-'}
                           </td>
-                          <td className="fw-bold text-success">{getCurrencySymbol(fee.currency || 'USD')}{(fee.amount || 0).toFixed(2)}</td>
-                          <td className="text-muted small">
+                          <td data-label={t('auto.amount', `Amount`)} className="fw-bold text-success">{getCurrencySymbol(fee.currency || 'USD')}{(fee.amount || 0).toFixed(2)}</td>
+                          <td data-label={t('auto.dueDate', `Due Date`)} className="text-muted small">
                             {new Date(fee.dueDate).toLocaleDateString()}
                           </td>
-                          <td>{getStatusBadge(fee.status)}</td>
-                          <td>
+                          <td data-label={t('auto.status', `Status`)}>{getStatusBadge(fee.status)}</td>
+                          <td data-label={t('auto.action', `Action`)}>
                             {(fee.status === 'PENDING' || fee.status === 'OVERDUE') && (
                               <Button
                                 variant="success"

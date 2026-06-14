@@ -653,7 +653,7 @@ function AssignmentSubform({
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
+              <Table hover size="sm" className="mb-0 mobile-card-table">
                 <thead className="table-light">
                   <tr>
                     <th>{t('auto.subject', `Subject`)}</th>
@@ -666,9 +666,9 @@ function AssignmentSubform({
                 <tbody>
                   {assignments.map((assignment) => (
                     <tr key={assignment.id}>
-                      <td className="fw-medium">{assignment.course?.name}</td>
-                      <td className="text-muted">{assignment.teacher?.name}</td>
-                      <td className="small">
+                      <td data-label={t('auto.subject', `Subject`)} className="fw-medium">{assignment.course?.name}</td>
+                      <td data-label={t('auto.teacher', `Teacher`)} className="text-muted">{assignment.teacher?.name}</td>
+                      <td data-label={t('auto.schedule', `Schedule`)} className="small">
                         {assignment.startTime && (
                           <div>{assignment.startTime}</div>
                         )}
@@ -686,7 +686,7 @@ function AssignmentSubform({
                           </div>
                         )}
                       </td>
-                      <td>
+                      <td data-label={t('auto.fee', `Fee`)}>
                         {assignment.monthlyFee ? (
                           <Badge bg="success">
                             {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
@@ -695,7 +695,7 @@ function AssignmentSubform({
                           <span className="text-muted">-</span>
                         )}
                       </td>
-                      <td>
+                      <td data-label={t('auto.actions', `Actions`)}>
                         <div className="d-flex gap-2">
                           <Button
                             variant="outline-primary"
@@ -1567,7 +1567,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                 </div>
               ) : (
                 <div className="table-responsive">
-                  <Table hover size="sm" className="mb-0">
+                  <Table hover size="sm" className="mb-0 mobile-card-table">
                     <thead className="table-light">
                       <tr>
                         <th>{t('auto.name', `Name`)}</th>
@@ -1582,10 +1582,10 @@ export function UserManagementTab({ role }: { role: Role }) {
                     <tbody>
                       {users.map((user) => (
                         <tr key={user.id}>
-                          <td className="fw-medium">{user.name}</td>
-                          <td className="text-muted">{user.email}</td>
-                          <td className="text-muted">{user.mobile || '-'}</td>
-                          <td className="text-muted">
+                          <td data-label={t('auto.name', `Name`)} className="fw-medium">{user.name}</td>
+                          <td data-label={t('auto.email', `Email`)} className="text-muted">{user.email}</td>
+                          <td data-label={t('auto.mobile', `Mobile`)} className="text-muted">{user.mobile || '-'}</td>
+                          <td data-label={t('auto.payRate', `Pay Rate`)} className="text-muted">
                             {user.payRate ? (
                               <Badge bg="success">
                                 {getCurrencySymbol(user.payCurrency || 'USD')}
@@ -1596,17 +1596,17 @@ export function UserManagementTab({ role }: { role: Role }) {
                               <Badge bg="secondary">{t('auto.na', `N/A`)}</Badge>
                             )}
                           </td>
-                          <td className="text-muted small">
+                          <td data-label={t('auto.created', `Created`)} className="text-muted small">
                             {new Date(user.createdAt).toLocaleDateString()}
                           </td>
-                          <td>
+                          <td data-label={t('auto.status', `Status`)}>
                             {user.isActive ? (
                               <Badge bg="success">{t('auto.active', 'Active')}</Badge>
                             ) : (
                               <Badge bg="danger">{t('auto.inactive', 'Inactive')}</Badge>
                             )}
                           </td>
-                          <td>
+                          <td data-label={t('auto.actions', `Actions`)}>
                             <div className="d-flex gap-1">
                               <Button
                                 variant="outline-info"
@@ -2406,7 +2406,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                           <Card.Header className="bg-light"><strong>{t('auto.salarySchedule', `Salary Schedule`)}</strong></Card.Header>
                           <Card.Body className="p-0">
                             <div className="table-responsive">
-                              <Table size="sm" className="mb-0" hover>
+                              <Table size="sm" className="mb-0 mobile-card-table" hover>
                                 <thead className="table-light">
                                   <tr>
                                     <th>{t('auto.title', `Title`)}</th>
@@ -2421,15 +2421,15 @@ export function UserManagementTab({ role }: { role: Role }) {
                                     <tr><td colSpan={5} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                                   ) : teacherSalaries.map((s) => (
                                     <tr key={s.id}>
-                                      <td className="fw-medium">{s.title}</td>
-                                      <td className="fw-bold">{getCurrencySymbol(s.currency)}{s.amount.toFixed(2)}</td>
-                                      <td className="small">{new Date(s.dueDate).toLocaleDateString()}</td>
-                                      <td>
+                                      <td data-label={t('auto.title', `Title`)} className="fw-medium">{s.title}</td>
+                                      <td data-label={t('auto.amount', `Amount`)} className="fw-bold">{getCurrencySymbol(s.currency)}{s.amount.toFixed(2)}</td>
+                                      <td data-label={t('auto.dueDate', `Due Date`)} className="small">{new Date(s.dueDate).toLocaleDateString()}</td>
+                                      <td data-label={t('auto.status', `Status`)}>
                                         <Badge bg={s.status === 'PAID' ? 'success' : s.status === 'PENDING' ? 'warning' : 'danger'}>
                                           {s.status}
                                         </Badge>
                                       </td>
-                                      <td className="small">{s.paidBy?.name || '-'}</td>
+                                      <td data-label={t('auto.paidBy', `Paid By`)} className="small">{s.paidBy?.name || '-'}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -2446,7 +2446,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                           <Card.Header className="bg-light"><strong>{t('auto.paymentHistory', `Payment History`)}</strong></Card.Header>
                           <Card.Body className="p-0">
                             <div className="table-responsive">
-                              <Table size="sm" className="mb-0">
+                              <Table size="sm" className="mb-0 mobile-card-table">
                                 <thead className="table-light">
                                   <tr>
                                     <th>{t('auto.amount', `Amount`)}</th>
@@ -2459,9 +2459,9 @@ export function UserManagementTab({ role }: { role: Role }) {
                                     <tr><td colSpan={3} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                                   ) : teacherPayments.map((p) => (
                                     <tr key={p.id}>
-                                      <td className="fw-bold text-success">{getCurrencySymbol(p.currency)}{p.amount.toFixed(2)}</td>
-                                      <td className="small">{new Date(p.paidDate).toLocaleDateString()}</td>
-                                      <td className="small">{p.paymentDetails || '-'}</td>
+                                      <td data-label={t('auto.amount', `Amount`)} className="fw-bold text-success">{getCurrencySymbol(p.currency)}{p.amount.toFixed(2)}</td>
+                                      <td data-label={t('auto.date', `Date`)} className="small">{new Date(p.paidDate).toLocaleDateString()}</td>
+                                      <td data-label={t('auto.details', `Details`)} className="small">{p.paymentDetails || '-'}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -2475,7 +2475,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                           <Card.Header className="bg-light"><strong>{t('auto.advancesloans', `Advances/Loans`)}</strong></Card.Header>
                           <Card.Body className="p-0">
                             <div className="table-responsive">
-                              <Table size="sm" className="mb-0">
+                              <Table size="sm" className="mb-0 mobile-card-table">
                                 <thead className="table-light">
                                   <tr>
                                     <th>{t('auto.principal', `Principal`)}</th>
@@ -2489,10 +2489,10 @@ export function UserManagementTab({ role }: { role: Role }) {
                                     <tr><td colSpan={4} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                                   ) : teacherAdvances.map((a) => (
                                     <tr key={a.id}>
-                                      <td className="fw-bold">{getCurrencySymbol(a.currency)}{a.principal.toFixed(2)}</td>
-                                      <td>{getCurrencySymbol(a.currency)}{a.balance.toFixed(2)}</td>
-                                      <td>{a.installments} x {a.installmentAmount}</td>
-                                      <td><Badge bg={a.status === 'ACTIVE' ? 'warning' : a.status === 'COMPLETED' ? 'success' : 'secondary'}>{a.status}</Badge></td>
+                                      <td data-label={t('auto.principal', `Principal`)} className="fw-bold">{getCurrencySymbol(a.currency)}{a.principal.toFixed(2)}</td>
+                                      <td data-label={t('auto.balance', `Balance`)}>{getCurrencySymbol(a.currency)}{a.balance.toFixed(2)}</td>
+                                      <td data-label={t('auto.installments', `Installments`)}>{a.installments} x {a.installmentAmount}</td>
+                                      <td data-label={t('auto.status', `Status`)}><Badge bg={a.status === 'ACTIVE' ? 'warning' : a.status === 'COMPLETED' ? 'success' : 'secondary'}>{a.status}</Badge></td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -2712,7 +2712,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                   </div>
                 ) : (
                   <div className="table-responsive">
-                    <Table hover size="sm" className="mb-0">
+                    <Table hover size="sm" className="mb-0 mobile-card-table">
                       <thead className="table-light">
                         <tr>
                           <th>{t('auto.name', `Name`)}</th>
@@ -2726,20 +2726,20 @@ export function UserManagementTab({ role }: { role: Role }) {
                       <tbody>
                         {users.map((user) => (
                           <tr key={user.id}>
-                            <td className="fw-medium">{user.name}</td>
-                            <td className="text-muted">{user.email}</td>
-                            <td className="text-muted">{user.mobile || '-'}</td>
-                            <td className="text-muted small">
+                            <td data-label={t('auto.name', `Name`)} className="fw-medium">{user.name}</td>
+                            <td data-label={t('auto.email', `Email`)} className="text-muted">{user.email}</td>
+                            <td data-label={t('auto.mobile', `Mobile`)} className="text-muted">{user.mobile || '-'}</td>
+                            <td data-label={t('auto.created', `Created`)} className="text-muted small">
                               {new Date(user.createdAt).toLocaleDateString()}
                             </td>
-                            <td>
+                            <td data-label={t('auto.status', `Status`)}>
                               {user.isActive ? (
                                 <Badge bg="success">{t('auto.active', 'Active')}</Badge>
                               ) : (
                                 <Badge bg="danger">{t('auto.inactive', 'Inactive')}</Badge>
                               )}
                             </td>
-                            <td>
+                            <td data-label={t('auto.actions', `Actions`)}>
                               <div className="d-flex gap-1">
                                 <Button
                                   variant="outline-info"
@@ -3018,7 +3018,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                       <Card.Header className="bg-light"><strong>{t('auto.paymentHistory', `Payment History`)}</strong></Card.Header>
                       <Card.Body className="p-0">
                         <div className="table-responsive">
-                          <Table size="sm" className="mb-0">
+                          <Table size="sm" className="mb-0 mobile-card-table">
                             <thead className="table-light">
                               <tr>
                                 <th>{t('auto.amount', `Amount`)}</th>
@@ -3031,9 +3031,9 @@ export function UserManagementTab({ role }: { role: Role }) {
                                 <tr><td colSpan={3} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                               ) : teacherPayments.map((p) => (
                                 <tr key={p.id}>
-                                  <td className="fw-bold text-success">{getCurrencySymbol(p.currency)}{p.amount.toFixed(2)}</td>
-                                  <td className="small">{new Date(p.paidDate).toLocaleDateString()}</td>
-                                  <td className="small">{p.paymentDetails || '-'}</td>
+                                  <td data-label={t('auto.amount', `Amount`)} className="fw-bold text-success">{getCurrencySymbol(p.currency)}{p.amount.toFixed(2)}</td>
+                                  <td data-label={t('auto.date', `Date`)} className="small">{new Date(p.paidDate).toLocaleDateString()}</td>
+                                  <td data-label={t('auto.details', `Details`)} className="small">{p.paymentDetails || '-'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -3047,7 +3047,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                       <Card.Header className="bg-light"><strong>{t('auto.advancesloans', `Advances/Loans`)}</strong></Card.Header>
                       <Card.Body className="p-0">
                         <div className="table-responsive">
-                          <Table size="sm" className="mb-0">
+                          <Table size="sm" className="mb-0 mobile-card-table">
                             <thead className="table-light">
                               <tr>
                                 <th>{t('auto.principal', `Principal`)}</th>
@@ -3061,10 +3061,10 @@ export function UserManagementTab({ role }: { role: Role }) {
                                 <tr><td colSpan={4} className="text-center text-muted small py-3">{t('auto.noRecords', `No records`)}</td></tr>
                               ) : teacherAdvances.map((a) => (
                                 <tr key={a.id}>
-                                  <td className="fw-bold">{getCurrencySymbol(a.currency)}{a.principal.toFixed(2)}</td>
-                                  <td>{getCurrencySymbol(a.currency)}{a.balance.toFixed(2)}</td>
-                                  <td>{a.installments} x {a.installmentAmount}</td>
-                                  <td><Badge bg={a.status === 'ACTIVE' ? 'warning' : a.status === 'COMPLETED' ? 'success' : 'secondary'}>{a.status}</Badge></td>
+                                  <td data-label={t('auto.principal', `Principal`)} className="fw-bold">{getCurrencySymbol(a.currency)}{a.principal.toFixed(2)}</td>
+                                  <td data-label={t('auto.balance', `Balance`)}>{getCurrencySymbol(a.currency)}{a.balance.toFixed(2)}</td>
+                                  <td data-label={t('auto.installments', `Installments`)}>{a.installments} x {a.installmentAmount}</td>
+                                  <td data-label={t('auto.status', `Status`)}><Badge bg={a.status === 'ACTIVE' ? 'warning' : a.status === 'COMPLETED' ? 'success' : 'secondary'}>{a.status}</Badge></td>
                                 </tr>
                               ))}
                             </tbody>
@@ -3402,7 +3402,7 @@ export function SubjectManagementTab() {
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
+              <Table hover size="sm" className="mb-0 mobile-card-table">
                 <thead className="table-light">
                   <tr>
                     <th>{t('auto.name', `Name`)}</th>
@@ -3415,22 +3415,22 @@ export function SubjectManagementTab() {
                 <tbody>
                   {subjects.map((subject) => (
                     <tr key={subject.id}>
-                      <td className="fw-medium">{subject.name}</td>
-                      <td className="text-muted">
+                      <td data-label={t('auto.name', `Name`)} className="fw-medium">{subject.name}</td>
+                      <td data-label={t('auto.description', `Description`)} className="text-muted">
                         <ExpandableText 
                           text={subject.description || 'No description'} 
                           maxLength={50} 
                         />
                       </td>
-                      <td>
+                      <td data-label={t('auto.students', `Students`)}>
                         <Badge bg="secondary">
                           {subject._count?.studentCourses || 0}
                         </Badge>
                       </td>
-                      <td className="text-muted small">
+                      <td data-label={t('auto.created', `Created`)} className="text-muted small">
                         {new Date(subject.createdAt).toLocaleDateString()}
                       </td>
-                      <td>
+                      <td data-label={t('auto.actions', `Actions`)}>
                         <div className="d-flex gap-1">
                           <Button
                             variant="outline-info"
@@ -4001,7 +4001,7 @@ export function AssignmentsTab() {
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
+              <Table hover size="sm" className="mb-0 mobile-card-table">
                 <thead className="table-light">
                   <tr>
                     <th>{t('auto.student', `Student`)}</th>
@@ -4022,10 +4022,10 @@ export function AssignmentsTab() {
                   ) : (
                     filteredAssignments.map((assignment) => (
                       <tr key={assignment.id}>
-                        <td className="fw-medium">{assignment.student.name}</td>
-                        <td className="text-muted">{assignment.course.name}</td>
-                        <td className="text-muted">{assignment.teacher.name}</td>
-                        <td className="small">
+                        <td data-label={t('auto.student', `Student`)} className="fw-medium">{assignment.student.name}</td>
+                        <td data-label={t('auto.subject', `Subject`)} className="text-muted">{assignment.course.name}</td>
+                        <td data-label={t('auto.teacher', `Teacher`)} className="text-muted">{assignment.teacher.name}</td>
+                        <td data-label={t('auto.schedule', `Schedule`)} className="small">
                           {assignment.assignmentDate && (
                             <div>
                               <strong>{t('auto.created', `Created`)}:</strong>{' '}
@@ -4049,7 +4049,7 @@ export function AssignmentsTab() {
                             </div>
                           )}
                         </td>
-                        <td>
+                        <td data-label={t('auto.fee', `Fee`)}>
                           {assignment.monthlyFee ? (
                             <Badge bg="success">
                               {getCurrencySymbol(assignment.currency)}{assignment.monthlyFee}
@@ -4058,7 +4058,7 @@ export function AssignmentsTab() {
                             <span className="text-muted">-</span>
                           )}
                         </td>
-                        <td>
+                        <td data-label={t('auto.actions', `Actions`)}>
                           <div className="d-flex gap-1">
                             <Button
                               variant="outline-warning"
@@ -4589,7 +4589,7 @@ export function SalaryManagementTab() {
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
+              <Table hover size="sm" className="mb-0 mobile-card-table">
                 <thead className="table-light">
                   <tr>
                     <th>{t('auto.teacher', `Teacher`)}</th>
@@ -4604,19 +4604,19 @@ export function SalaryManagementTab() {
                 <tbody>
                   {salaries.map((salary) => (
                     <tr key={salary.id}>
-                      <td className="fw-medium">{salary.teacher.name}</td>
-                      <td>{salary.title}</td>
-                      <td className="fw-bold text-success">
+                      <td data-label={t('auto.teacher', `Teacher`)} className="fw-medium">{salary.teacher.name}</td>
+                      <td data-label={t('auto.title', `Title`)}>{salary.title}</td>
+                      <td data-label={t('auto.amount', `Amount`)} className="fw-bold text-success">
                         {getCurrencySymbol(salary.currency)}{salary.amount.toFixed(2)}
                       </td>
-                      <td className="text-muted small">
+                      <td data-label={t('auto.dueDate', `Due Date`)} className="text-muted small">
                         {new Date(salary.dueDate).toLocaleDateString()}
                       </td>
-                      <td>{getStatusBadge(salary.status)}</td>
-                      <td className="text-muted small">
+                      <td data-label={t('auto.status', `Status`)}>{getStatusBadge(salary.status)}</td>
+                      <td data-label={t('auto.paidBy', `Paid By`)} className="text-muted small">
                         {salary.paidBy ? salary.paidBy.name : '-'}
                       </td>
-                      <td>
+                      <td data-label={t('auto.actions', `Actions`)}>
                         {salary.status !== 'PAID' && salary.status !== 'CANCELLED' && (
                           <Button
                             variant="success"
@@ -4714,7 +4714,7 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
+              <Table hover size="sm" className="mb-0 mobile-card-table">
                 <thead className="table-light">
                   <tr>
                     <th>{t('auto.date', `Date`)}</th>
@@ -4731,16 +4731,16 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
                 <tbody>
                   {progress.map((item) => (
                     <tr key={item.id}>
-                      <td className="text-muted small">
+                      <td data-label={t('auto.date', `Date`)} className="text-muted small">
                         {new Date(item.date).toLocaleDateString()}
                       </td>
-                      <td className="fw-medium">{item.student.name}</td>
-                      <td>{item.course.name}</td>
-                      <td className="text-muted">{item.teacher.name}</td>
-                      <td className="text-muted">
+                      <td data-label={t('auto.student', `Student`)} className="fw-medium">{item.student.name}</td>
+                      <td data-label={t('auto.subject', `Subject`)}>{item.course.name}</td>
+                      <td data-label={t('auto.teacher', `Teacher`)} className="text-muted">{item.teacher.name}</td>
+                      <td data-label={t('auto.lesson', `Lesson`)} className="text-muted">
                         <ExpandableText text={item.lesson || 'No lesson'} maxLength={30} />
                       </td>
-                      <td>
+                      <td data-label={t('auto.progress', `Progress`)}>
                         {item.lessonProgress !== null ? (
                           <div className="d-flex align-items-center">
                             <div className="progress me-2" style={{ width: '60px', height: '8px' }}>
@@ -4755,8 +4755,8 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
                           <span className="text-muted">-</span>
                         )}
                       </td>
-                      <td>{getAttendanceBadge(item.attendance)}</td>
-                      <td>
+                      <td data-label={t('auto.attendance', `Attendance`)}>{getAttendanceBadge(item.attendance)}</td>
+                      <td data-label={t('auto.parentRemarks', `Parent Remarks`)}>
                         <div className="d-flex align-items-center gap-2">
                           <div className="small text-muted">
                             {item.parentRemarks && item.parentRemarks.length > 0 ? (() => {
@@ -4787,7 +4787,7 @@ function StudentProgressTabContent({ progress, loading }: { progress: Progress[]
                           )}
                         </div>
                       </td>
-                      <td>
+                      <td data-label={t('auto.actions', `Actions`)}>
                         <Button
                           variant="outline-info"
                           size="sm"
@@ -4848,7 +4848,7 @@ function StudentTestsTabContent({ tests, loading }: { tests: AdminTestRecord[]; 
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
+              <Table hover size="sm" className="mb-0 mobile-card-table">
                 <thead className="table-light">
                   <tr>
                     <th>{t('auto.date', `Date`)}</th>
@@ -4864,13 +4864,13 @@ function StudentTestsTabContent({ tests, loading }: { tests: AdminTestRecord[]; 
                 <tbody>
                   {tests.map((rec) => (
                     <tr key={rec.id}>
-                      <td className="text-muted small">
+                      <td data-label={t('auto.date', `Date`)} className="text-muted small">
                         {new Date(rec.performedAt).toLocaleDateString()}
                       </td>
-                      <td className="fw-medium small">{rec.student.name}</td>
-                      <td className="small">{rec.course.name}</td>
-                      <td className="small">{rec.title}</td>
-                      <td>
+                      <td data-label={t('auto.student', `Student`)} className="fw-medium small">{rec.student.name}</td>
+                      <td data-label={t('auto.subject', `Subject`)} className="small">{rec.course.name}</td>
+                      <td data-label={t('auto.title', `Title`)} className="small">{rec.title}</td>
+                      <td data-label={t('auto.type', `Type`)}>
                         <Badge bg={
                           rec.type === 'EXAM'
                             ? 'danger'
@@ -4889,15 +4889,15 @@ function StudentTestsTabContent({ tests, loading }: { tests: AdminTestRecord[]; 
                                 : 'Quiz'}
                         </Badge>
                       </td>
-                      <td>
+                      <td data-label={t('auto.score', `Score`)}>
                         <Badge bg="dark">{rec.obtainedMarks}/{rec.maxMarks}</Badge>
                       </td>
-                      <td>
+                      <td data-label="%">
                         <Badge bg={rec.percentage >= 80 ? 'success' : rec.percentage >= 60 ? 'warning' : 'danger'}>
                           {rec.percentage}%
                         </Badge>
                       </td>
-                      <td className="small">{rec.teacher.name}</td>
+                      <td data-label={t('auto.teacher', `Teacher`)} className="small">{rec.teacher.name}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -4988,7 +4988,7 @@ export function ProgressTab() {
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
+              <Table hover size="sm" className="mb-0 mobile-card-table">
                 <thead className="table-light">
                   <tr>
                     <th>{t('auto.date', `Date`)}</th>
@@ -5004,16 +5004,16 @@ export function ProgressTab() {
                 <tbody>
                   {progress.map((item) => (
                     <tr key={item.id}>
-                      <td className="text-muted small">
+                      <td data-label={t('auto.date', `Date`)} className="text-muted small">
                         {new Date(item.date).toLocaleDateString()}
                       </td>
-                      <td className="fw-medium">{item.student.name}</td>
-                      <td>{item.course.name}</td>
-                      <td className="text-muted">{item.teacher.name}</td>
-                      <td className="text-muted">
+                      <td data-label={t('auto.student', `Student`)} className="fw-medium">{item.student.name}</td>
+                      <td data-label={t('auto.subject', `Subject`)}>{item.course.name}</td>
+                      <td data-label={t('auto.teacher', `Teacher`)} className="text-muted">{item.teacher.name}</td>
+                      <td data-label={t('auto.lesson', `Lesson`)} className="text-muted">
                         <ExpandableText text={item.lesson || 'No lesson'} maxLength={30} />
                       </td>
-                      <td>
+                      <td data-label={t('auto.progress', `Progress`)}>
                         {item.lessonProgress !== null ? (
                           <div className="d-flex align-items-center">
                             <div className="progress me-2" style={{ width: '60px', height: '8px' }}>
@@ -5028,8 +5028,8 @@ export function ProgressTab() {
                           <span className="text-muted">-</span>
                         )}
                       </td>
-                      <td>{getAttendanceBadge(item.attendance)}</td>
-                      <td>
+                      <td data-label={t('auto.attendance', `Attendance`)}>{getAttendanceBadge(item.attendance)}</td>
+                      <td data-label={t('auto.actions', `Actions`)}>
                         <Button
                           variant="outline-info"
                           size="sm"
@@ -5374,7 +5374,7 @@ export function TestsTab() {
             </div>
           ) : (
             <div className="table-responsive">
-              <Table hover size="sm" className="mb-0">
+              <Table hover size="sm" className="mb-0 mobile-card-table">
                 <thead className="table-light">
                   <tr>
                     <th>{t('auto.date', `Date`)}</th>
@@ -5390,13 +5390,13 @@ export function TestsTab() {
                 <tbody>
                   {records.map((rec) => (
                     <tr key={rec.id}>
-                      <td className="text-muted small">
+                      <td data-label={t('auto.date', `Date`)} className="text-muted small">
                         {new Date(rec.performedAt).toLocaleDateString()}
                       </td>
-                      <td className="fw-medium small">{rec.student.name}</td>
-                      <td className="small">{rec.course.name}</td>
-                      <td className="small">{rec.title}</td>
-                      <td>
+                      <td data-label={t('auto.student', `Student`)} className="fw-medium small">{rec.student.name}</td>
+                      <td data-label={t('auto.subject', `Subject`)} className="small">{rec.course.name}</td>
+                      <td data-label={t('auto.title', `Title`)} className="small">{rec.title}</td>
+                      <td data-label={t('auto.type', `Type`)}>
                         <Badge bg={
                           rec.type === 'EXAM'
                             ? 'danger'
@@ -5415,15 +5415,15 @@ export function TestsTab() {
                                 : 'Quiz'}
                         </Badge>
                       </td>
-                      <td>
+                      <td data-label={t('auto.score', `Score`)}>
                         <Badge bg="dark">{rec.obtainedMarks}/{rec.maxMarks}</Badge>
                       </td>
-                      <td>
+                      <td data-label="%">
                         <Badge bg={rec.percentage >= 80 ? 'success' : rec.percentage >= 60 ? 'warning' : 'danger'}>
                           {rec.percentage}%
                         </Badge>
                       </td>
-                      <td className="small">{rec.teacher.name}</td>
+                      <td data-label={t('auto.teacher', `Teacher`)} className="small">{rec.teacher.name}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -6097,7 +6097,7 @@ export default function AdminDashboard() {
                               <div className="text-center text-muted py-4">{t('dashboard.noRecentProgress', 'No recent progress')}</div>
                             ) : (
                               <div className="table-responsive">
-                                <Table hover size="sm" className="mb-0">
+                                <Table hover size="sm" className="mb-0 mobile-card-table">
                                   <thead className="table-light">
                                     <tr>
                                       <th>{t('dashboard.date', 'Date')}</th>
@@ -6110,13 +6110,13 @@ export default function AdminDashboard() {
                                   <tbody>
                                     {homeSnapshot.progress.recent.map((item) => (
                                       <tr key={item.id}>
-                                        <td className="text-muted small">
+                                        <td data-label={t('dashboard.date', 'Date')} className="text-muted small">
                                           {new Date(item.date).toLocaleDateString()}
                                         </td>
-                                        <td>{item.student.name}</td>
-                                        <td className="text-muted small">{item.course.name}</td>
-                                        <td className="text-muted small">{item.teacher.name}</td>
-                                        <td>
+                                        <td data-label={t('menu.students', 'Student')}>{item.student.name}</td>
+                                        <td data-label={t('dashboard.subject', 'Subject')} className="text-muted small">{item.course.name}</td>
+                                        <td data-label={t('menu.teachers', 'Teacher')} className="text-muted small">{item.teacher.name}</td>
+                                        <td data-label={t('dashboard.progress', 'Progress')}>
                                           <div className="d-flex align-items-center">
                                             <div className="progress me-2" style={{ width: '80px', height: '6px' }}>
                                               <div
