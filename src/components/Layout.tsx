@@ -849,6 +849,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 © {new Date().getFullYear()} {settings?.appTitle || 'AIMS'}. {t('layout.allRightsReserved')}
               </small>
               <div className="mt-1">
+                <Link href="/privacy-policy" className="link-light link-underline-opacity-0 link-underline-opacity-75-hover small">
+                  Privacy Policy
+                </Link>
+              </div>
+              <div className="mt-1">
                 <small className="text-muted fst-italic">
                   {settings?.tagline || 'Academy Information and Management System'}
                 </small>
