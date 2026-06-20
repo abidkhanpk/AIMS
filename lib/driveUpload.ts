@@ -32,6 +32,22 @@ export const getDriveAuthUrl = () => {
   });
 };
 
+const createDriveAuthError = (message: string, cause?: unknown) => {
+  const err: any = new Error(message);
+  err.authorizeUrl = getDriveAuthUrl();
+  err.code = 'GOOGLE_DRIVE_AUTH_REQUIRED';
+  err.cause = cause;
+  return err;
+};
+
+const getGoogleErrorCode = (error: any) =>
+  error?.response?.data?.error ||
+  error?.errors?.[0]?.reason ||
+  error?.code ||
+  error?.message;
+
+const isInvalidGrantError = (error: any) => getGoogleErrorCode(error) === 'invalid_grant';
+
 const ensureSubfolder = async (drive: any, parentId: string | undefined, folderName?: string) => {
   if (!folderName || !parentId) return parentId ? [parentId] : undefined;
 
@@ -93,10 +109,7 @@ export const uploadFileToDrive = async (
   }
 
   if (!refreshToken) {
-    const authorizeUrl = getDriveAuthUrl();
-    const err: any = new Error('Google Drive access not authorized yet.');
-    err.authorizeUrl = authorizeUrl;
-    throw err;
+    throw createDriveAuthError('Google Drive access not authorized yet.');
   }
 
   const oauth2Client = getOAuthClient();
@@ -106,66 +119,76 @@ export const uploadFileToDrive = async (
   const sharedDriveId = process.env.DRIVE_SHARED_ID || process.env.DRIVE_SHARED_DRIVE_ID;
   const baseParent = process.env.DRIVE_FOLDER_ID;
   
-  let parents;
-  if (options.driveFolderId && options.folderName === 'payment-proofs-temp') {
-    const mainFolderParents = await ensureSubfolder(drive, baseParent, options.driveFolderId);
-    const mainFolderId = mainFolderParents?.[0];
-    parents = await ensureSubfolder(drive, mainFolderId, 'payment-proofs-temp');
-  } else {
-    parents = await ensureSubfolder(drive, baseParent, options.folderName);
-  }
+  try {
+    let parents;
+    if (options.driveFolderId && options.folderName === 'payment-proofs-temp') {
+      const mainFolderParents = await ensureSubfolder(drive, baseParent, options.driveFolderId);
+      const mainFolderId = mainFolderParents?.[0];
+      parents = await ensureSubfolder(drive, mainFolderId, 'payment-proofs-temp');
+    } else {
+      parents = await ensureSubfolder(drive, baseParent, options.folderName);
+    }
 
-  const uploadResponse = await drive.files.create({
-    requestBody: {
-      name: `${options.namePrefix || 'file'}-${Date.now()}-${file.originalFilename || 'upload'}`,
-      mimeType: file.mimetype || 'application/octet-stream',
-      parents,
-      ...(sharedDriveId ? { driveId: sharedDriveId } : {}),
-    },
-    media: {
-      mimeType: file.mimetype || 'application/octet-stream',
-      body: fs.createReadStream(file.filepath),
-    },
-    fields: 'id, name, webViewLink, webContentLink',
-    supportsAllDrives: true,
-    ...(sharedDriveId ? { supportsTeamDrives: true } : {}),
-  });
+    const uploadResponse = await drive.files.create({
+      requestBody: {
+        name: `${options.namePrefix || 'file'}-${Date.now()}-${file.originalFilename || 'upload'}`,
+        mimeType: file.mimetype || 'application/octet-stream',
+        parents,
+        ...(sharedDriveId ? { driveId: sharedDriveId } : {}),
+      },
+      media: {
+        mimeType: file.mimetype || 'application/octet-stream',
+        body: fs.createReadStream(file.filepath),
+      },
+      fields: 'id, name, webViewLink, webContentLink',
+      supportsAllDrives: true,
+      ...(sharedDriveId ? { supportsTeamDrives: true } : {}),
+    });
 
-  const fileId = uploadResponse.data.id;
+    const fileId = uploadResponse.data.id;
 
-  if (fileId) {
+    if (fileId) {
+      try {
+        await drive.permissions.create({
+          fileId,
+          requestBody: { role: 'reader', type: 'anyone' },
+          supportsAllDrives: true,
+          ...(sharedDriveId ? { supportsTeamDrives: true } : {}),
+        });
+      } catch (permErr) {
+        console.warn('Failed to set public permission for Drive file', permErr);
+      }
+    }
+
+    const viewUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : null;
+    const downloadUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
+    // Google hosts public assets on googleusercontent.com; this form works more reliably for images.
+    const cdnUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : null;
+    return {
+      fileId: fileId || null,
+      url:
+        cdnUrl ||
+        viewUrl ||
+        downloadUrl ||
+        uploadResponse.data.webViewLink ||
+        uploadResponse.data.webContentLink ||
+        null,
+    };
+  } catch (error) {
+    if (isInvalidGrantError(error)) {
+      throw createDriveAuthError(
+        'Google Drive authorization expired or was revoked. Reconnect Google Drive and update GOOGLE_DRIVE_REFRESH_TOKEN.',
+        error
+      );
+    }
+    throw error;
+  } finally {
     try {
-      await drive.permissions.create({
-        fileId,
-        requestBody: { role: 'reader', type: 'anyone' },
-        supportsAllDrives: true,
-        ...(sharedDriveId ? { supportsTeamDrives: true } : {}),
-      });
-    } catch (permErr) {
-      console.warn('Failed to set public permission for Drive file', permErr);
+      fs.unlinkSync(file.filepath);
+    } catch (cleanupError) {
+      console.warn('Failed to cleanup temporary file:', cleanupError);
     }
   }
-
-  try {
-    fs.unlinkSync(file.filepath);
-  } catch (cleanupError) {
-    console.warn('Failed to cleanup temporary file:', cleanupError);
-  }
-
-  const viewUrl = fileId ? `https://drive.google.com/uc?export=view&id=${fileId}` : null;
-  const downloadUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
-  // Google hosts public assets on googleusercontent.com; this form works more reliably for images.
-  const cdnUrl = fileId ? `https://lh3.googleusercontent.com/d/${fileId}` : null;
-  return {
-    fileId: fileId || null,
-    url:
-      cdnUrl ||
-      viewUrl ||
-      downloadUrl ||
-      uploadResponse.data.webViewLink ||
-      uploadResponse.data.webContentLink ||
-      null,
-  };
 };
 
 const uploadFileToCloudinary = async (file: File, options: { folderName?: string; namePrefix?: string }) => {
