@@ -42,8 +42,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       logoUrl: uploadResult.url,
       fileId: uploadResult.fileId,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Logo upload error:', error);
+
+    if (error?.authorizeUrl) {
+      return res.status(400).json({
+        message:
+          error.message ||
+          'Google Drive access not authorized yet. Please authorize and set the refresh token.',
+        authorizeUrl: error.authorizeUrl || getDriveAuthUrl(),
+      });
+    }
 
     const hint = (error as any)?.code === 403
       ? 'Google Drive rejected the upload (often because the service account lacks storage in this drive). Move the target folder to a Shared Drive, add the service account as a member, and set DRIVE_SHARED_ID/DRIVE_SHARED_DRIVE_ID to that drive ID.'

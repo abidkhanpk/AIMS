@@ -85,6 +85,17 @@ interface Subscription {
   };
 }
 
+const getUploadErrorMessage = (errorData: any, fallback: string) => {
+  const message = errorData?.message || fallback;
+  const details = [errorData?.hint];
+
+  if (errorData?.authorizeUrl) {
+    details.push(`Reconnect Google Drive here: ${errorData.authorizeUrl}`);
+  }
+
+  return [message, ...details.filter(Boolean)].join(' ');
+};
+
 function AdminManagementTab() {
     const { t } = useTranslation('common');
   const [admins, setAdmins] = useState<Admin[]>([]);
@@ -424,7 +435,7 @@ function AdminManagementTab() {
         setSuccess(t('auto.logoUploadedSuccessfully', `Logo uploaded successfully!`));
       } else {
         const errorData = await res.json();
-        setError(errorData.message || 'Failed to upload logo');
+        setError(getUploadErrorMessage(errorData, 'Failed to upload logo'));
       }
     } catch (error) {
       setError(t('auto.errorUploadingLogo', `Error uploading logo`));
@@ -1361,7 +1372,7 @@ function GlobalSettingsTab() {
         setSuccess(t('auto.logoUploadedSuccessfully', `Logo uploaded successfully!`));
       } else {
         const errorData = await res.json();
-        setError(errorData.message || 'Failed to upload logo');
+        setError(getUploadErrorMessage(errorData, 'Failed to upload logo'));
       }
     } catch (error) {
       setError(t('auto.errorUploadingLogo', `Error uploading logo`));
