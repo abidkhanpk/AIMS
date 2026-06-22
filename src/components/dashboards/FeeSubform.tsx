@@ -654,7 +654,7 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
               <Row className="mb-3 border-bottom pb-2 g-2">
                 <Col md={6}>
                   <strong>{t('auto.feeTitleLabel', 'Fee Title:')}</strong>{' '}
-                  <span className="fw-medium">{verifyTarget.title || verifyTarget.feeDefinition?.title || 'N/A'}</span>
+                  <span className="fw-medium">{verifyTarget.title || verifyTarget.feeDefinition?.title || t('auto.na', 'N/A')}</span>
                 </Col>
                 <Col md={6}>
                   <strong>{t('auto.statusLabel', 'Status:')}</strong>{' '}
@@ -663,7 +663,11 @@ function FeeSubform({ studentId, onFeeChange }: { studentId: string; onFeeChange
                     verifyTarget.status === 'PROCESSING' ? 'warning' :
                     verifyTarget.status === 'OVERDUE' ? 'danger' : 'secondary'
                   }>
-                    {verifyTarget.status}
+                    {verifyTarget.status === 'PAID' ? t('auto.paid', 'Paid') :
+                     verifyTarget.status === 'PROCESSING' ? t('auto.processing', 'Processing') :
+                     verifyTarget.status === 'OVERDUE' ? t('auto.overdue', 'Overdue') :
+                     verifyTarget.status === 'PENDING' ? t('auto.pending', 'Pending') :
+                     verifyTarget.status === 'CANCELLED' ? t('auto.cancelled', 'Cancelled') : verifyTarget.status}
                   </Badge>
                 </Col>
               </Row>
