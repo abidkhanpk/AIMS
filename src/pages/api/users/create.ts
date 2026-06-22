@@ -24,6 +24,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     dateOfBirth, 
     address,
     country,
+    profession,
+    parentCnic,
+    bFormNumber,
+    dateOfBirthInWords,
+    religiousEducation,
+    formalEducation,
+    previousInstitution,
+    previousInstitutionReason,
+    admissionClass,
+    admissionDepartment,
+    fatherAlive,
+    motherAlive,
+    studentNotes,
     // Teacher specific fields
     qualification,
     payRate,
@@ -98,10 +111,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (mobile) userData.mobile = mobile;
     if (address) userData.address = address;
     if (country) userData.country = country;
+    if (role === 'PARENT' && profession) userData.profession = profession;
 
     // Add date of birth only for STUDENT and TEACHER
     if (dateOfBirth && ['STUDENT', 'TEACHER'].includes(role)) {
       userData.dateOfBirth = new Date(dateOfBirth);
+    }
+
+    if (role === 'STUDENT') {
+      const studentProfileData = {
+        bFormNumber: bFormNumber || undefined,
+        dateOfBirthInWords: dateOfBirthInWords || undefined,
+        religiousEducation: religiousEducation || undefined,
+        formalEducation: formalEducation || undefined,
+        previousInstitution: previousInstitution || undefined,
+        previousInstitutionReason: previousInstitutionReason || undefined,
+        admissionClass: admissionClass || undefined,
+        admissionDepartment: admissionDepartment || undefined,
+        fatherAlive: typeof fatherAlive === 'boolean' ? fatherAlive : undefined,
+        motherAlive: typeof motherAlive === 'boolean' ? motherAlive : undefined,
+        notes: studentNotes || undefined,
+      };
+
+      if (Object.values(studentProfileData).some((value) => value !== undefined)) {
+        userData.studentProfile = { create: studentProfileData };
+      }
+    }
+
+    if (role === 'PARENT' && parentCnic) {
+      userData.parentProfile = {
+        create: {
+          cnic: parentCnic,
+        },
+      };
     }
 
     // Add teacher specific fields ONLY for teachers
@@ -128,6 +170,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         payRate: true,
         payType: true,
         payCurrency: true,
+        profession: true,
+        studentProfile: true,
+        parentProfile: true,
         createdAt: true,
       }
     });

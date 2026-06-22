@@ -23,6 +23,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     dateOfBirth, 
     address,
     country,
+    profession,
+    parentCnic,
+    bFormNumber,
+    dateOfBirthInWords,
+    religiousEducation,
+    formalEducation,
+    previousInstitution,
+    previousInstitutionReason,
+    admissionClass,
+    admissionDepartment,
+    fatherAlive,
+    motherAlive,
+    studentNotes,
     // Teacher specific fields
     qualification,
     payRate,
@@ -94,6 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (dateOfBirth) updateData.dateOfBirth = new Date(dateOfBirth);
     if (address !== undefined) updateData.address = address;
     if (country !== undefined) updateData.country = country;
+    if (existingUser.role === 'PARENT' && profession !== undefined) updateData.profession = profession;
 
     // Add teacher specific fields ONLY for teachers
     if (existingUser.role === 'TEACHER') {
@@ -125,6 +139,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    if (existingUser.role === 'STUDENT') {
+      const studentProfileData = {
+        bFormNumber: bFormNumber || null,
+        dateOfBirthInWords: dateOfBirthInWords || null,
+        religiousEducation: religiousEducation || null,
+        formalEducation: formalEducation || null,
+        previousInstitution: previousInstitution || null,
+        previousInstitutionReason: previousInstitutionReason || null,
+        admissionClass: admissionClass || null,
+        admissionDepartment: admissionDepartment || null,
+        fatherAlive: typeof fatherAlive === 'boolean' ? fatherAlive : null,
+        motherAlive: typeof motherAlive === 'boolean' ? motherAlive : null,
+        notes: studentNotes || null,
+      };
+
+      updateData.studentProfile = {
+        upsert: {
+          create: studentProfileData,
+          update: studentProfileData,
+        },
+      };
+    }
+
+    if (existingUser.role === 'PARENT') {
+      updateData.parentProfile = {
+        upsert: {
+          create: { cnic: parentCnic || null },
+          update: { cnic: parentCnic || null },
+        },
+      };
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id },
       data: updateData,
@@ -141,6 +187,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         payRate: true,
         payType: true,
         payCurrency: true,
+        profession: true,
+        studentProfile: true,
+        parentProfile: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,

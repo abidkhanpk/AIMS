@@ -9,6 +9,9 @@ interface User {
   email: string;
   mobile?: string;
   profession?: string;
+  parentProfile?: {
+    cnic?: string | null;
+  } | null;
   createdAt: string;
 }
 
@@ -356,6 +359,8 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                     <th>{t('auto.parentName', `Parent Name`)}</th>
                     <th>{t('auto.email', `Email`)}</th>
                     <th>{t('auto.mobile', `Mobile`)}</th>
+                    <th>CNIC</th>
+                    <th>Occupation</th>
                     <th>{t('auto.relation', `Relation`)}</th>
                     <th>{t('auto.actions', `Actions`)}</th>
                   </tr>
@@ -366,6 +371,8 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                       <td className="fw-medium">{association.parent.name}</td>
                       <td className="text-muted">{association.parent.email}</td>
                       <td className="text-muted">{association.parent.mobile || '-'}</td>
+                      <td className="text-muted">{association.parent.parentProfile?.cnic || '-'}</td>
+                      <td className="text-muted">{association.parent.profession || '-'}</td>
                       <td>
                         <Badge bg={getRelationTypeBadgeColor(association.relationType)}>
                           {getRelationTypeLabel(association.relationType, t)}

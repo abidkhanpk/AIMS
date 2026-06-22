@@ -47,6 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               email: true,
               mobile: true,
               profession: true,
+              parentProfile: true,
               createdAt: true,
             }
           }
@@ -127,6 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               email: true,
               mobile: true,
               profession: true,
+              parentProfile: true,
               createdAt: true,
             }
           },
@@ -201,6 +203,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               email: true,
               mobile: true,
               profession: true,
+              parentProfile: true,
               createdAt: true,
             }
           }

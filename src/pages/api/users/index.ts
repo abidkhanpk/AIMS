@@ -95,6 +95,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             payType: true,
             payCurrency: true,
             profession: true,
+            studentProfile: true,
+            parentProfile: true,
             createdAt: true,
           },
           orderBy: { createdAt: 'desc' }
@@ -122,6 +124,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           payRate: true,
           payType: true,
           payCurrency: true,
+          studentProfile: true,
+          parentProfile: true,
           createdAt: true,
         },
         orderBy: { createdAt: 'desc' }
