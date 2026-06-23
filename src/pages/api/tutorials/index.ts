@@ -24,15 +24,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       let whereClause = {};
 
-      // Regular roles only see videos matching their role
-      if (userRole !== 'DEVELOPER' && userRole !== 'ADMIN') {
+      // Only DEVELOPER can see all videos
+      if (userRole !== 'DEVELOPER') {
         whereClause = {
           roles: {
             has: userRole as Role,
           },
         };
       } else {
-        // If developer or admin, check if they passed a specific role filter
+        // If developer, check if they passed a specific role filter
         const { filterRole } = req.query;
         if (filterRole && Object.values(Role).includes(filterRole as Role)) {
           whereClause = {
@@ -55,8 +55,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // POST, PUT, DELETE operations require ADMIN or DEVELOPER role
-  if (userRole !== 'DEVELOPER' && userRole !== 'ADMIN') {
+  // POST, PUT, DELETE operations require DEVELOPER role
+  if (userRole !== 'DEVELOPER') {
     return res.status(403).json({ message: 'Forbidden' });
   }
 

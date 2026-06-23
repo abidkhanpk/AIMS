@@ -104,9 +104,9 @@ export default function VideosPage() {
     return match && match[2].length === 11 ? match[2] : '';
   };
 
-  // Check if current user is Admin or Developer
+  // Check if current user is Developer
   const canManage = useMemo(() => {
-    return session?.user?.role === 'ADMIN' || session?.user?.role === 'DEVELOPER';
+    return session?.user?.role === 'DEVELOPER';
   }, [session]);
 
   // Filter videos on frontend based on search query
@@ -287,8 +287,8 @@ export default function VideosPage() {
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
           <h1 className="h3 mb-1 font-weight-bold d-flex align-items-center gap-2">
-            <i className="bi bi-play-btn-fill text-danger"></i>
-            {t('menu.tutorials', 'Tutorial Videos')}
+            <i className="bi bi-question-circle-fill text-danger"></i>
+            {t('menu.help', 'Help')}
           </h1>
           <p className="text-muted mb-0">{t('auto.everythingYouNeedToManageYourE', 'Educational video guides for using the application')}</p>
         </div>
@@ -505,10 +505,10 @@ export default function VideosPage() {
   return (
     <>
       <Head>
-        <title>{t('menu.tutorials', 'Tutorial Videos') + ' | AIMS'}</title>
+        <title>{t('menu.help', 'Help') + ' | AIMS'}</title>
       </Head>
 
-      {session?.user?.role === 'ADMIN' ? (
+      {session?.user?.role === 'ADMIN' || session?.user?.role === 'DEVELOPER' ? (
         <div className={menuStyles.menuShell}>
           <div className={menuStyles.menuLayout}>
             <AdminMenu activeKey="tutorials" onSelect={handleSelect} />
