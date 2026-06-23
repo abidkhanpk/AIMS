@@ -1,5 +1,5 @@
 import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslations';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { Container, Row, Col, Card, Form, Button, Modal, Spinner, Offcanvas, Badge, ListGroup, InputGroup } from 'react-bootstrap';
@@ -11,7 +11,7 @@ import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 
 // Import Vidstack components
-import { MediaPlayer, MediaProvider } from '@vidstack/react';
+import { MediaPlayer, MediaProvider, type MediaPlayerInstance } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
 
 // Import Vidstack styles
@@ -48,6 +48,15 @@ export default function VideosPage() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [activeVideo, setActiveVideo] = useState<VideoTutorial | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+
+  // Playback Progress Ref (in-memory, until page reload)
+  const videoProgressRef = useRef<Record<string, number>>({});
+  const playerRef = useRef<MediaPlayerInstance>(null);
+  const hasSeekedRef = useRef(false);
+
+  useEffect(() => {
+    hasSeekedRef.current = false;
+  }, [activeVideo?.id]);
 
   // Form / Modal States for Admin/Developer
   const [showFormModal, setShowFormModal] = useState(false);
@@ -525,6 +534,7 @@ export default function VideosPage() {
       <Offcanvas
         show={showDrawer}
         onHide={() => setShowDrawer(false)}
+        onExited={() => setActiveVideo(null)}
         placement={currentLocale === 'ur' ? 'start' : 'end'}
         style={{ 
           width: '500px', 
@@ -548,10 +558,26 @@ export default function VideosPage() {
               >
                 {isMounted && (
                   <MediaPlayer
+                    ref={playerRef}
                     title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
                     src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
                     autoplay
                     style={{ width: '100%', height: '100%' }}
+                    onTimeUpdate={(detail) => {
+                      const { currentTime } = detail;
+                      if (activeVideo) {
+                        videoProgressRef.current[activeVideo.id] = currentTime;
+                      }
+                    }}
+                    onCanPlay={() => {
+                      if (activeVideo && playerRef.current && !hasSeekedRef.current) {
+                        const savedTime = videoProgressRef.current[activeVideo.id];
+                        if (savedTime && savedTime > 2) {
+                          playerRef.current.currentTime = savedTime;
+                        }
+                        hasSeekedRef.current = true;
+                      }
+                    }}
                   >
                     <MediaProvider />
                     <DefaultVideoLayout icons={defaultLayoutIcons} />
