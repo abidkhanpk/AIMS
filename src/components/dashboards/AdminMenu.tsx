@@ -58,6 +58,11 @@ const menuItems: MenuItem[] = [
     icon: 'bi-chat-dots',
   },
   {
+    key: 'tutorials',
+    label: 'menu.tutorials',
+    icon: 'bi-play-btn',
+  },
+  {
     key: 'system',
     label: 'menu.system',
     icon: 'bi-shield-lock',

@@ -560,6 +560,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </Badge>
                     )}
                   </Button>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="me-2 d-flex align-items-center text-light text-decoration-none p-0 ms-2"
+                    onClick={() => router.push('/dashboard/videos')}
+                    title={t('menu.tutorials', `Tutorial Videos`)}
+                  >
+                    <i className="bi bi-play-btn fs-5"></i>
+                  </Button>
                   
                   <NavDropdown 
                     title={<i className="bi bi-globe fs-5 text-light"></i>} 
@@ -1155,6 +1164,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     {unreadMessages}
                   </Badge>
                 )}
+              </ListGroup.Item>
+
+              {/* Videos Link */}
+              <ListGroup.Item
+                action
+                onClick={() => {
+                  router.push('/dashboard/videos');
+                  setShowMobileDrawer(false);
+                }}
+                className="d-flex align-items-center py-3"
+              >
+                <i className="bi bi-play-btn me-3 fs-5 text-danger"></i>
+                <span>{t('menu.tutorials', 'Tutorial Videos')}</span>
               </ListGroup.Item>
 
               {/* Notifications Link/Dropdown */}

@@ -173,7 +173,8 @@
     "feeManagement": "فیس مینجمنٹ",
     "subjects": "مضامین",
     "assignments": "اسائنمنٹس",
-    "subscriptionManagement": "سبسکرپشن مینجمنٹ"
+    "subscriptionManagement": "سبسکرپشن مینجمنٹ",
+    "tutorials": "ٹیوٹوریل ویڈیوز"
   },
   "calendar": {
     "allDay": "پورا دن",
@@ -930,7 +931,25 @@
     "cnicNumber": "شناختی کارڈ نمبر",
     "enterCnicNumber": "والدین / سرپرست کا شناختی کارڈ نمبر",
     "cnic": "شناختی کارڈ",
-    "yes": "جی ہاں"
+    "yes": "Ji han",
+    "videos": "ٹیوٹوریل ویڈیوز",
+    "addVideo": "ویڈیو شامل کریں",
+    "editVideo": "ویڈیو میں ترمیم کریں",
+    "deleteVideo": "ویڈیو حذف کریں",
+    "videoTitleEn": "انگریزی عنوان",
+    "videoTitleUr": "اردو عنوان",
+    "keywordsEn": "انگریزی کی ورڈز",
+    "keywordsUr": "اردو کی ورڈز",
+    "youtubeUrl": "یوٹیوب لنک",
+    "roles": "کردار",
+    "allRoles": "تمام کردار",
+    "searchVideos": "ویڈیو تلاش کریں...",
+    "playVideo": "ویڈیو چلائیں",
+    "playlist": "پلے لسٹ",
+    "videoAdded": "ویڈیو کامیابی سے شامل ہو گئی!",
+    "videoUpdated": "ویڈیو کامیابی سے اپ ڈیٹ ہو گئی!",
+    "videoDeleted": "ویڈیو کامیابی سے حذف ہو گئی!",
+    "confirmDeleteVideo": "کیا آپ واقعی یہ ویڈیو حذف کرنا چاہتے ہیں؟"
   },
   "adminDashboard": "ایڈمن ڈیش بورڈ",
   "avgLessonProgress": "اسباق کی اوسط پیشرفت",

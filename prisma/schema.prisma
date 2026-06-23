@@ -687,3 +687,15 @@ model AuditLog {
 
   user        User?    @relation("UserAuditLogs", fields: [userId], references: [id])
 }
+
+model VideoTutorial {
+  id         String   @id @default(uuid())
+  titleEn    String
+  titleUr    String
+  keywordsEn String?  @default("")
+  keywordsUr String?  @default("")
+  youtubeUrl String
+  roles      Role[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

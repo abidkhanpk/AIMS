@@ -16,6 +16,7 @@
   "dependencies": {
     "@prisma/client": "^6.16.1",
     "@prisma/extension-accelerate": "latest",
+    "@vidstack/react": "^1.15.6",
     "bcryptjs": "^3.0.2",
     "bootstrap": "^5.3.3",
     "cloudinary": "^2.5.1",
@@ -42,7 +43,8 @@
     "react-dom": "^19.1.1",
     "react-i18next": "^17.0.8",
     "recharts": "^3.8.1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vidstack": "^1.15.6"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
