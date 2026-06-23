@@ -16,7 +16,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
+      const whereClause = session.user.role === 'DEVELOPER'
+        ? {}
+        : {
+            OR: [
+              { userId: session.user.id },
+              { user: { adminId: session.user.id } }
+            ]
+          };
+
       const logs = await prisma.auditLog.findMany({
+        where: whereClause,
         orderBy: { timestamp: 'desc' },
         take: 100, // Fetch the latest 100 logs
         include: {
