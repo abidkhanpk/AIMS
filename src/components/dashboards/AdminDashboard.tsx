@@ -1462,139 +1462,139 @@ export function UserManagementTab({ role }: { role: Role }) {
         <Row className="g-3">
           <Col md={4}>
             <Form.Group>
-              <Form.Label>B-form Number</Form.Label>
+              <Form.Label>{t('auto.bFormNumber', 'B-form Number')}</Form.Label>
               <Form.Control
                 type="text"
                 value={createMode ? newBFormNumber : bFormNumber}
                 onChange={(e) => createMode ? setNewBFormNumber(e.target.value) : setBFormNumber(e.target.value)}
-                placeholder="Enter child B-form number"
+                placeholder={t('auto.enterBFormNumber', 'Enter child B-form number')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
           </Col>
           <Col md={4}>
             <Form.Group>
-              <Form.Label>Date of Birth in Words</Form.Label>
+              <Form.Label>{t('auto.dateOfBirthInWords', 'Date of Birth in Words')}</Form.Label>
               <Form.Control
                 type="text"
                 value={createMode ? newDateOfBirthInWords : dateOfBirthInWords}
                 onChange={(e) => createMode ? setNewDateOfBirthInWords(e.target.value) : setDateOfBirthInWords(e.target.value)}
-                placeholder="e.g. Fifteen March Two Thousand Ten"
+                placeholder={t('auto.enterDateOfBirthInWords', 'e.g. Fifteen March Two Thousand Ten')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
           </Col>
           <Col md={4}>
             <Form.Group>
-              <Form.Label>Admission Class</Form.Label>
+              <Form.Label>{t('auto.admissionClass', 'Admission Class')}</Form.Label>
               <Form.Control
                 type="text"
                 value={createMode ? newAdmissionClass : admissionClass}
                 onChange={(e) => createMode ? setNewAdmissionClass(e.target.value) : setAdmissionClass(e.target.value)}
-                placeholder="Class / grade"
+                placeholder={t('auto.enterAdmissionClass', 'Class / grade')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
           </Col>
           <Col md={4}>
             <Form.Group>
-              <Form.Label>Admission Department</Form.Label>
+              <Form.Label>{t('auto.admissionDepartment', 'Admission Department')}</Form.Label>
               <Form.Control
                 type="text"
                 value={createMode ? newAdmissionDepartment : admissionDepartment}
                 onChange={(e) => createMode ? setNewAdmissionDepartment(e.target.value) : setAdmissionDepartment(e.target.value)}
-                placeholder="Department / section"
+                placeholder={t('auto.enterAdmissionDepartment', 'Department / section')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
           </Col>
           <Col md={4}>
             <Form.Group>
-              <Form.Label>Father Alive?</Form.Label>
+              <Form.Label>{t('auto.fatherAlive', 'Father Alive?')}</Form.Label>
               <Form.Select
                 value={createMode ? newFatherAlive : fatherAlive}
                 onChange={(e) => createMode ? setNewFatherAlive(e.target.value) : setFatherAlive(e.target.value)}
                 size={createMode ? 'sm' : undefined}
               >
-                <option value="">Unknown</option>
-                <option value="true">Yes</option>
-                <option value="false">No</option>
+                <option value="">{t('auto.unknown', 'Unknown')}</option>
+                <option value="true">{t('auto.yes', 'Yes')}</option>
+                <option value="false">{t('auto.no', 'No')}</option>
               </Form.Select>
             </Form.Group>
           </Col>
           <Col md={4}>
             <Form.Group>
-              <Form.Label>Mother Alive?</Form.Label>
+              <Form.Label>{t('auto.motherAlive', 'Mother Alive?')}</Form.Label>
               <Form.Select
                 value={createMode ? newMotherAlive : motherAlive}
                 onChange={(e) => createMode ? setNewMotherAlive(e.target.value) : setMotherAlive(e.target.value)}
                 size={createMode ? 'sm' : undefined}
               >
-                <option value="">Unknown</option>
-                <option value="true">Yes</option>
-                <option value="false">No</option>
+                <option value="">{t('auto.unknown', 'Unknown')}</option>
+                <option value="true">{t('auto.yes', 'Yes')}</option>
+                <option value="false">{t('auto.no', 'No')}</option>
               </Form.Select>
             </Form.Group>
           </Col>
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Religious Education</Form.Label>
+              <Form.Label>{t('auto.religiousEducation', 'Religious Education')}</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={2}
                 value={createMode ? newReligiousEducation : religiousEducation}
                 onChange={(e) => createMode ? setNewReligiousEducation(e.target.value) : setReligiousEducation(e.target.value)}
-                placeholder="Quran, Nazra, Hifz, etc."
+                placeholder={t('auto.enterReligiousEducation', 'Quran, Nazra, Hifz, etc.')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
           </Col>
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Formal Education</Form.Label>
+              <Form.Label>{t('auto.formalEducation', 'Formal Education')}</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={2}
                 value={createMode ? newFormalEducation : formalEducation}
                 onChange={(e) => createMode ? setNewFormalEducation(e.target.value) : setFormalEducation(e.target.value)}
-                placeholder="School education / grade completed"
+                placeholder={t('auto.enterFormalEducation', 'School education / grade completed')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
           </Col>
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Previous Madrasa / School</Form.Label>
+              <Form.Label>{t('auto.previousMadrasaOrSchool', 'Previous Madrasa / School')}</Form.Label>
               <Form.Control
                 type="text"
                 value={createMode ? newPreviousInstitution : previousInstitution}
                 onChange={(e) => createMode ? setNewPreviousInstitution(e.target.value) : setPreviousInstitution(e.target.value)}
-                placeholder="Previous institution name"
+                placeholder={t('auto.enterPreviousMadrasaOrSchool', 'Previous institution name')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
           </Col>
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Reason for Leaving</Form.Label>
+              <Form.Label>{t('auto.reasonForLeaving', 'Reason for Leaving')}</Form.Label>
               <Form.Control
                 type="text"
                 value={createMode ? newPreviousInstitutionReason : previousInstitutionReason}
                 onChange={(e) => createMode ? setNewPreviousInstitutionReason(e.target.value) : setPreviousInstitutionReason(e.target.value)}
-                placeholder="Reason student left previous institution"
+                placeholder={t('auto.enterReasonForLeaving', 'Reason student left previous institution')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
           </Col>
           <Col md={12}>
             <Form.Group>
-              <Form.Label>Admission Notes</Form.Label>
+              <Form.Label>{t('auto.admissionNotes', 'Admission Notes')}</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={2}
                 value={createMode ? newStudentNotes : studentNotes}
                 onChange={(e) => createMode ? setNewStudentNotes(e.target.value) : setStudentNotes(e.target.value)}
-                placeholder="Any additional admission or record keeping notes"
+                placeholder={t('auto.enterAdmissionNotes', 'Any additional admission or record keeping notes')}
                 size={createMode ? 'sm' : undefined}
               />
             </Form.Group>
@@ -1610,24 +1610,24 @@ export function UserManagementTab({ role }: { role: Role }) {
       <>
         <Col md={4}>
           <Form.Group className={createMode ? 'mb-0' : 'mb-3'}>
-            <Form.Label>Occupation</Form.Label>
+            <Form.Label>{t('auto.occupation', 'Occupation')}</Form.Label>
             <Form.Control
               type="text"
               value={createMode ? newProfession : profession}
               onChange={(e) => createMode ? setNewProfession(e.target.value) : setProfession(e.target.value)}
-              placeholder="Parent / guardian occupation"
+              placeholder={t('auto.enterOccupation', 'Parent / guardian occupation')}
               size={createMode ? 'sm' : undefined}
             />
           </Form.Group>
         </Col>
         <Col md={4}>
           <Form.Group className={createMode ? 'mb-0' : 'mb-3'}>
-            <Form.Label>CNIC Number</Form.Label>
+            <Form.Label>{t('auto.cnicNumber', 'CNIC Number')}</Form.Label>
             <Form.Control
               type="text"
               value={createMode ? newParentCnic : parentCnic}
               onChange={(e) => createMode ? setNewParentCnic(e.target.value) : setParentCnic(e.target.value)}
-              placeholder="Parent / guardian CNIC"
+              placeholder={t('auto.enterCnicNumber', 'Parent / guardian CNIC')}
               size={createMode ? 'sm' : undefined}
             />
           </Form.Group>

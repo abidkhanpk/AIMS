@@ -359,8 +359,8 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                     <th>{t('auto.parentName', `Parent Name`)}</th>
                     <th>{t('auto.email', `Email`)}</th>
                     <th>{t('auto.mobile', `Mobile`)}</th>
-                    <th>CNIC</th>
-                    <th>Occupation</th>
+                    <th>{t('auto.cnic', 'CNIC')}</th>
+                    <th>{t('auto.occupation', 'Occupation')}</th>
                     <th>{t('auto.relation', `Relation`)}</th>
                     <th>{t('auto.actions', `Actions`)}</th>
                   </tr>
