@@ -560,6 +560,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </Badge>
                     )}
                   </Button>
+
                   
                   <NavDropdown 
                     title={<i className="bi bi-globe fs-5 text-light"></i>} 
@@ -616,6 +617,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       {t('layout.role')} <bdi>{user.role}</bdi>
                     </NavDropdown.Item>
                     <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => router.push('/dashboard/videos')}>
+                      <i className="bi bi-question-circle me-2"></i>
+                      {t('menu.help', 'Help')}
+                    </NavDropdown.Item>
                     <NavDropdown.Item onClick={() => setShowSettingsModal(true)}>
                       <i className="bi bi-gear me-2"></i>
                       {t('layout.userSettings', 'User Settings')}
@@ -1166,6 +1171,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <span>{t('auto.notifications', 'Notifications')}</span>
                 </span>
                 <NotificationDropdown theme="light" />
+              </ListGroup.Item>
+
+              {/* Help Link */}
+              <ListGroup.Item
+                action
+                onClick={() => {
+                  router.push('/dashboard/videos');
+                  setShowMobileDrawer(false);
+                }}
+                className="d-flex align-items-center py-3"
+              >
+                <i className="bi bi-question-circle me-3 fs-5 text-danger"></i>
+                <span>{t('menu.help', 'Help')}</span>
               </ListGroup.Item>
 
               {/* User Settings */}

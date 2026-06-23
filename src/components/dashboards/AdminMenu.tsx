@@ -341,6 +341,18 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
           <li className={styles.navbarItem}>
             <button
               type="button"
+              className={`${styles.navbarItemInner} ${styles.flexLeft} ${activeKey === 'tutorials' ? styles.navbarItemInnerActive : ''}`}
+              onClick={() => router.push('/dashboard/videos')}
+            >
+              <div className={styles.iconWrapper}>
+                <i className="bi bi-question-circle" aria-hidden />
+              </div>
+              <span className={styles.linkText}>{t('menu.help', 'Help')}</span>
+            </button>
+          </li>
+          <li className={styles.navbarItem}>
+            <button
+              type="button"
               className={`${styles.navbarItemInner} ${styles.flexLeft}`}
               onClick={openSettingsModal}
             >
@@ -380,6 +392,18 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
         <Offcanvas.Body>
           <ListGroup variant="flush">
             {menuItems.map((item) => renderMobileItem(item))}
+            <ListGroup.Item
+              action
+              onClick={() => {
+                router.push('/dashboard/videos');
+                setShowMobileMenu(false);
+              }}
+              className="d-flex align-items-center mt-2"
+              style={{ fontSize: '1.05rem' }}
+            >
+              <i className="bi bi-question-circle me-2"></i>
+              {t('menu.help', 'Help')}
+            </ListGroup.Item>
             <ListGroup.Item
               action
               onClick={openSettingsModal}

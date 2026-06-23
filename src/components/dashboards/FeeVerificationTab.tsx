@@ -399,7 +399,7 @@ const FeeVerificationTab = () => {
               <Row className="mb-3 border-bottom pb-2 g-2">
                 <Col md={6}>
                   <strong>{t('auto.feeTitleLabel', 'Fee Title:')}</strong>{' '}
-                  <span className="fw-medium">{selectedFee.title || selectedFee.feeDefinition?.title || 'N/A'}</span>
+                  <span className="fw-medium">{selectedFee.title || selectedFee.feeDefinition?.title || t('auto.na', 'N/A')}</span>
                 </Col>
                 <Col md={6}>
                   <strong>{t('auto.dueDateLabel', 'Due Date:')}</strong>{' '}

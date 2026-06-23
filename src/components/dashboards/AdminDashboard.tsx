@@ -35,6 +35,23 @@ export interface User {
   payRate?: number;
   payType?: PayType;
   payCurrency?: string;
+  profession?: string;
+  studentProfile?: {
+    bFormNumber?: string | null;
+    dateOfBirthInWords?: string | null;
+    religiousEducation?: string | null;
+    formalEducation?: string | null;
+    previousInstitution?: string | null;
+    previousInstitutionReason?: string | null;
+    admissionClass?: string | null;
+    admissionDepartment?: string | null;
+    fatherAlive?: boolean | null;
+    motherAlive?: boolean | null;
+    notes?: string | null;
+  } | null;
+  parentProfile?: {
+    cnic?: string | null;
+  } | null;
   isActive?: boolean;
 }
 
@@ -812,6 +829,19 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [newDateOfBirth, setNewDateOfBirth] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [newCountry, setNewCountry] = useState('');
+  const [newProfession, setNewProfession] = useState('');
+  const [newParentCnic, setNewParentCnic] = useState('');
+  const [newBFormNumber, setNewBFormNumber] = useState('');
+  const [newDateOfBirthInWords, setNewDateOfBirthInWords] = useState('');
+  const [newReligiousEducation, setNewReligiousEducation] = useState('');
+  const [newFormalEducation, setNewFormalEducation] = useState('');
+  const [newPreviousInstitution, setNewPreviousInstitution] = useState('');
+  const [newPreviousInstitutionReason, setNewPreviousInstitutionReason] = useState('');
+  const [newAdmissionClass, setNewAdmissionClass] = useState('');
+  const [newAdmissionDepartment, setNewAdmissionDepartment] = useState('');
+  const [newFatherAlive, setNewFatherAlive] = useState('');
+  const [newMotherAlive, setNewMotherAlive] = useState('');
+  const [newStudentNotes, setNewStudentNotes] = useState('');
   const [newQualification, setNewQualification] = useState('');
   const [newPayRate, setNewPayRate] = useState('');
   const [newPayType, setNewPayType] = useState<PayType>('MONTHLY');
@@ -825,6 +855,19 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
   const [country, setCountry] = useState('');
+  const [profession, setProfession] = useState('');
+  const [parentCnic, setParentCnic] = useState('');
+  const [bFormNumber, setBFormNumber] = useState('');
+  const [dateOfBirthInWords, setDateOfBirthInWords] = useState('');
+  const [religiousEducation, setReligiousEducation] = useState('');
+  const [formalEducation, setFormalEducation] = useState('');
+  const [previousInstitution, setPreviousInstitution] = useState('');
+  const [previousInstitutionReason, setPreviousInstitutionReason] = useState('');
+  const [admissionClass, setAdmissionClass] = useState('');
+  const [admissionDepartment, setAdmissionDepartment] = useState('');
+  const [fatherAlive, setFatherAlive] = useState('');
+  const [motherAlive, setMotherAlive] = useState('');
+  const [studentNotes, setStudentNotes] = useState('');
   const [isActive, setIsActive] = useState(true);
   
   // Bulk import state
@@ -879,6 +922,10 @@ export function UserManagementTab({ role }: { role: Role }) {
   const isTeacher = roleValue === 'TEACHER';
   const isParent = roleValue === 'PARENT';
   const isStudent = roleValue === 'STUDENT';
+  const parseNullableBoolean = (value: string) =>
+    value === 'true' ? true : value === 'false' ? false : undefined;
+  const formatNullableBoolean = (value?: boolean | null) =>
+    typeof value === 'boolean' ? String(value) : '';
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -921,6 +968,25 @@ export function UserManagementTab({ role }: { role: Role }) {
         country: newCountry || undefined
       };
 
+      if (isStudent) {
+        userData.bFormNumber = newBFormNumber || undefined;
+        userData.dateOfBirthInWords = newDateOfBirthInWords || undefined;
+        userData.religiousEducation = newReligiousEducation || undefined;
+        userData.formalEducation = newFormalEducation || undefined;
+        userData.previousInstitution = newPreviousInstitution || undefined;
+        userData.previousInstitutionReason = newPreviousInstitutionReason || undefined;
+        userData.admissionClass = newAdmissionClass || undefined;
+        userData.admissionDepartment = newAdmissionDepartment || undefined;
+        userData.fatherAlive = parseNullableBoolean(newFatherAlive);
+        userData.motherAlive = parseNullableBoolean(newMotherAlive);
+        userData.studentNotes = newStudentNotes || undefined;
+      }
+
+      if (isParent) {
+        userData.profession = newProfession || undefined;
+        userData.parentCnic = newParentCnic || undefined;
+      }
+
       // Only add teacher-specific fields for teachers
       if (isTeacher) {
         userData.qualification = newQualification || undefined;
@@ -959,6 +1025,19 @@ export function UserManagementTab({ role }: { role: Role }) {
     setNewDateOfBirth('');
     setNewAddress('');
     setNewCountry('');
+    setNewProfession('');
+    setNewParentCnic('');
+    setNewBFormNumber('');
+    setNewDateOfBirthInWords('');
+    setNewReligiousEducation('');
+    setNewFormalEducation('');
+    setNewPreviousInstitution('');
+    setNewPreviousInstitutionReason('');
+    setNewAdmissionClass('');
+    setNewAdmissionDepartment('');
+    setNewFatherAlive('');
+    setNewMotherAlive('');
+    setNewStudentNotes('');
     setNewQualification('');
     setNewPayRate('');
     setNewPayType('MONTHLY');
@@ -973,6 +1052,19 @@ export function UserManagementTab({ role }: { role: Role }) {
     setDateOfBirth('');
     setAddress('');
     setCountry('');
+    setProfession('');
+    setParentCnic('');
+    setBFormNumber('');
+    setDateOfBirthInWords('');
+    setReligiousEducation('');
+    setFormalEducation('');
+    setPreviousInstitution('');
+    setPreviousInstitutionReason('');
+    setAdmissionClass('');
+    setAdmissionDepartment('');
+    setFatherAlive('');
+    setMotherAlive('');
+    setStudentNotes('');
     setQualification('');
     setPayRate('');
     setPayType('MONTHLY');
@@ -1015,6 +1107,19 @@ export function UserManagementTab({ role }: { role: Role }) {
     setDateOfBirth(user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '');
     setAddress(user.address || '');
     setCountry(user.country || '');
+    setProfession(user.profession || '');
+    setParentCnic(user.parentProfile?.cnic || '');
+    setBFormNumber(user.studentProfile?.bFormNumber || '');
+    setDateOfBirthInWords(user.studentProfile?.dateOfBirthInWords || '');
+    setReligiousEducation(user.studentProfile?.religiousEducation || '');
+    setFormalEducation(user.studentProfile?.formalEducation || '');
+    setPreviousInstitution(user.studentProfile?.previousInstitution || '');
+    setPreviousInstitutionReason(user.studentProfile?.previousInstitutionReason || '');
+    setAdmissionClass(user.studentProfile?.admissionClass || '');
+    setAdmissionDepartment(user.studentProfile?.admissionDepartment || '');
+    setFatherAlive(formatNullableBoolean(user.studentProfile?.fatherAlive));
+    setMotherAlive(formatNullableBoolean(user.studentProfile?.motherAlive));
+    setStudentNotes(user.studentProfile?.notes || '');
     setQualification(user.qualification || '');
     setPayRate(user.payRate?.toString() || '');
     setPayType(user.payType || 'MONTHLY');
@@ -1200,6 +1305,25 @@ export function UserManagementTab({ role }: { role: Role }) {
         country: country || undefined
       };
 
+      if (isStudent) {
+        updateData.bFormNumber = bFormNumber || undefined;
+        updateData.dateOfBirthInWords = dateOfBirthInWords || undefined;
+        updateData.religiousEducation = religiousEducation || undefined;
+        updateData.formalEducation = formalEducation || undefined;
+        updateData.previousInstitution = previousInstitution || undefined;
+        updateData.previousInstitutionReason = previousInstitutionReason || undefined;
+        updateData.admissionClass = admissionClass || undefined;
+        updateData.admissionDepartment = admissionDepartment || undefined;
+        updateData.fatherAlive = parseNullableBoolean(fatherAlive);
+        updateData.motherAlive = parseNullableBoolean(motherAlive);
+        updateData.studentNotes = studentNotes || undefined;
+      }
+
+      if (isParent) {
+        updateData.profession = profession || undefined;
+        updateData.parentCnic = parentCnic || undefined;
+      }
+
       // Only add teacher-specific fields for teachers
       if (isTeacher) {
         updateData.qualification = qualification || undefined;
@@ -1329,6 +1453,187 @@ export function UserManagementTab({ role }: { role: Role }) {
         if (csvInputRef.current) csvInputRef.current.value = '';
       }
     });
+  };
+
+  const renderStudentAdmissionFields = (mode: 'create' | 'edit') => {
+    const createMode = mode === 'create';
+    return (
+      <>
+        <Row className="g-3">
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>{t('auto.bFormNumber', 'B-form Number')}</Form.Label>
+              <Form.Control
+                type="text"
+                value={createMode ? newBFormNumber : bFormNumber}
+                onChange={(e) => createMode ? setNewBFormNumber(e.target.value) : setBFormNumber(e.target.value)}
+                placeholder={t('auto.enterBFormNumber', 'Enter child B-form number')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>{t('auto.dateOfBirthInWords', 'Date of Birth in Words')}</Form.Label>
+              <Form.Control
+                type="text"
+                value={createMode ? newDateOfBirthInWords : dateOfBirthInWords}
+                onChange={(e) => createMode ? setNewDateOfBirthInWords(e.target.value) : setDateOfBirthInWords(e.target.value)}
+                placeholder={t('auto.enterDateOfBirthInWords', 'e.g. Fifteen March Two Thousand Ten')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>{t('auto.admissionClass', 'Admission Class')}</Form.Label>
+              <Form.Control
+                type="text"
+                value={createMode ? newAdmissionClass : admissionClass}
+                onChange={(e) => createMode ? setNewAdmissionClass(e.target.value) : setAdmissionClass(e.target.value)}
+                placeholder={t('auto.enterAdmissionClass', 'Class / grade')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>{t('auto.admissionDepartment', 'Admission Department')}</Form.Label>
+              <Form.Control
+                type="text"
+                value={createMode ? newAdmissionDepartment : admissionDepartment}
+                onChange={(e) => createMode ? setNewAdmissionDepartment(e.target.value) : setAdmissionDepartment(e.target.value)}
+                placeholder={t('auto.enterAdmissionDepartment', 'Department / section')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>{t('auto.fatherAlive', 'Father Alive?')}</Form.Label>
+              <Form.Select
+                value={createMode ? newFatherAlive : fatherAlive}
+                onChange={(e) => createMode ? setNewFatherAlive(e.target.value) : setFatherAlive(e.target.value)}
+                size={createMode ? 'sm' : undefined}
+              >
+                <option value="">{t('auto.unknown', 'Unknown')}</option>
+                <option value="true">{t('auto.yes', 'Yes')}</option>
+                <option value="false">{t('auto.no', 'No')}</option>
+              </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={4}>
+            <Form.Group>
+              <Form.Label>{t('auto.motherAlive', 'Mother Alive?')}</Form.Label>
+              <Form.Select
+                value={createMode ? newMotherAlive : motherAlive}
+                onChange={(e) => createMode ? setNewMotherAlive(e.target.value) : setMotherAlive(e.target.value)}
+                size={createMode ? 'sm' : undefined}
+              >
+                <option value="">{t('auto.unknown', 'Unknown')}</option>
+                <option value="true">{t('auto.yes', 'Yes')}</option>
+                <option value="false">{t('auto.no', 'No')}</option>
+              </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group>
+              <Form.Label>{t('auto.religiousEducation', 'Religious Education')}</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                value={createMode ? newReligiousEducation : religiousEducation}
+                onChange={(e) => createMode ? setNewReligiousEducation(e.target.value) : setReligiousEducation(e.target.value)}
+                placeholder={t('auto.enterReligiousEducation', 'Quran, Nazra, Hifz, etc.')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group>
+              <Form.Label>{t('auto.formalEducation', 'Formal Education')}</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                value={createMode ? newFormalEducation : formalEducation}
+                onChange={(e) => createMode ? setNewFormalEducation(e.target.value) : setFormalEducation(e.target.value)}
+                placeholder={t('auto.enterFormalEducation', 'School education / grade completed')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group>
+              <Form.Label>{t('auto.previousMadrasaOrSchool', 'Previous Madrasa / School')}</Form.Label>
+              <Form.Control
+                type="text"
+                value={createMode ? newPreviousInstitution : previousInstitution}
+                onChange={(e) => createMode ? setNewPreviousInstitution(e.target.value) : setPreviousInstitution(e.target.value)}
+                placeholder={t('auto.enterPreviousMadrasaOrSchool', 'Previous institution name')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={6}>
+            <Form.Group>
+              <Form.Label>{t('auto.reasonForLeaving', 'Reason for Leaving')}</Form.Label>
+              <Form.Control
+                type="text"
+                value={createMode ? newPreviousInstitutionReason : previousInstitutionReason}
+                onChange={(e) => createMode ? setNewPreviousInstitutionReason(e.target.value) : setPreviousInstitutionReason(e.target.value)}
+                placeholder={t('auto.enterReasonForLeaving', 'Reason student left previous institution')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={12}>
+            <Form.Group>
+              <Form.Label>{t('auto.admissionNotes', 'Admission Notes')}</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                value={createMode ? newStudentNotes : studentNotes}
+                onChange={(e) => createMode ? setNewStudentNotes(e.target.value) : setStudentNotes(e.target.value)}
+                placeholder={t('auto.enterAdmissionNotes', 'Any additional admission or record keeping notes')}
+                size={createMode ? 'sm' : undefined}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+      </>
+    );
+  };
+
+  const renderParentRecordFields = (mode: 'create' | 'edit') => {
+    const createMode = mode === 'create';
+    return (
+      <>
+        <Col md={4}>
+          <Form.Group className={createMode ? 'mb-0' : 'mb-3'}>
+            <Form.Label>{t('auto.occupation', 'Occupation')}</Form.Label>
+            <Form.Control
+              type="text"
+              value={createMode ? newProfession : profession}
+              onChange={(e) => createMode ? setNewProfession(e.target.value) : setProfession(e.target.value)}
+              placeholder={t('auto.enterOccupation', 'Parent / guardian occupation')}
+              size={createMode ? 'sm' : undefined}
+            />
+          </Form.Group>
+        </Col>
+        <Col md={4}>
+          <Form.Group className={createMode ? 'mb-0' : 'mb-3'}>
+            <Form.Label>{t('auto.cnicNumber', 'CNIC Number')}</Form.Label>
+            <Form.Control
+              type="text"
+              value={createMode ? newParentCnic : parentCnic}
+              onChange={(e) => createMode ? setNewParentCnic(e.target.value) : setParentCnic(e.target.value)}
+              placeholder={t('auto.enterCnicNumber', 'Parent / guardian CNIC')}
+              size={createMode ? 'sm' : undefined}
+            />
+          </Form.Group>
+        </Col>
+      </>
+    );
   };
 
   return (
@@ -1769,6 +2074,18 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Form.Select>
                       </Form.Group>
                     </Col>
+                    {isParent && renderParentRecordFields('create')}
+                    {isStudent && (
+                      <Col md={12}>
+                        <div className="border-top pt-3 mt-1">
+                          <div className="fw-semibold mb-3">
+                            <i className="bi bi-file-earmark-text me-2"></i>
+                            Admission Details
+                          </div>
+                          {renderStudentAdmissionFields('create')}
+                        </div>
+                      </Col>
+                    )}
                   </Row>
 
                   <div className="d-flex justify-content-end gap-2 mt-3">
@@ -1952,6 +2269,35 @@ export function UserManagementTab({ role }: { role: Role }) {
                               <i className="bi bi-check-circle me-2"></i>
                               {t('auto.update', `Update`)}
                                                                                   </>
+                          )}
+                        </Button>
+                      </div>
+                    </Form>
+                  </Tab>
+                  
+                  <Tab eventKey="admission" title={
+                    <span>
+                      <i className="bi bi-file-earmark-text me-2"></i>
+                      Admission Details
+                    </span>
+                  }>
+                    <Form onSubmit={handleUpdateUser} className="mt-3">
+                      {renderStudentAdmissionFields('edit')}
+                      <div className="d-flex justify-content-end gap-2 mt-3">
+                        <Button variant="secondary" onClick={closeEditModal}>
+                          {t('auto.cancel', `Cancel`)}
+                        </Button>
+                        <Button type="submit" variant="warning" disabled={editing}>
+                          {editing ? (
+                            <>
+                              <Spinner animation="border" size="sm" className="me-2" />
+                              {t('auto.updating', `Updating...`)}
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-check-circle me-2"></i>
+                              {t('auto.update', `Update`)}
+                            </>
                           )}
                         </Button>
                       </div>
@@ -2595,58 +2941,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                         </Form.Select>
                       </Form.Group>
                     </Col>
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>{t('auto.qualification', `Qualification`)}</Form.Label>
-                        <Form.Control 
-                          type="text" 
-                          value={qualification} 
-                          onChange={(e) => setQualification(e.target.value)} 
-                          placeholder={t('auto.enterQualification', `Enter qualification`)}
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>{t('auto.payRate', `Pay Rate`)}</Form.Label>
-                        <Form.Control 
-                          type="number" 
-                          step="0.01"
-                          value={payRate} 
-                          onChange={(e) => setPayRate(e.target.value)} 
-                          placeholder="0.00"
-                        />
-                      </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>{t('auto.salaryType', `Salary Type`)}</Form.Label>
-                        <Form.Select 
-                          value={payType}
-                          onChange={(e) => setPayType(e.target.value as PayType)}
-                        >
-                          <option value="DAILY">{t('auto.daily', `Daily`)}</option>
-                          <option value="WEEKLY">{t('auto.weekly', `Weekly`)}</option>
-                          <option value="FORTNIGHTLY">{t('auto.fortnightly', `Fortnightly`)}</option>
-                          <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
-                    <Col md={4}>
-                      <Form.Group>
-                        <Form.Label>{t('auto.payCurrency', `Pay Currency`)}</Form.Label>
-                        <Form.Select 
-                          value={payCurrency}
-                          onChange={(e) => setPayCurrency(e.target.value)}
-                        >
-                          {currencies.map(currency => (
-                            <option key={currency.code} value={currency.code}>
-                              {currency.code} - {currency.name}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      </Form.Group>
-                    </Col>
+                    {renderParentRecordFields('edit')}
                     <Col md={4}>
                       <Form.Group className="mb-1">
                         <Form.Label>{t('auto.password', `Password`)}</Form.Label>
