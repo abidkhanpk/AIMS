@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Form, Button, Table, Card, Row, Col, Modal, Alert, Spinner, Badge, Tabs, Tab } from 'react-bootstrap';
 import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
 import { currencies } from '../../utils/currencies';
@@ -1784,13 +1785,21 @@ export default function DeveloperDashboard() {
     const { t } = useTranslation('common');
   return (
     <div className="container-fluid">
-      <div className="row mb-4">
-        <div className="col-12">
+      <div className="row mb-4 align-items-center">
+        <div className="col-md-8">
           <h1 className="h2 mb-0">
             <i className="bi bi-code-slash me-2 text-secondary"></i>
             {t('auto.developerDashboard', `Developer Dashboard`)}
-                                </h1>
-          <p className="text-muted">{t('auto.manageSystemAdministratorsAndG', `Manage system administrators and global settings`)}</p>
+          </h1>
+          <p className="text-muted mb-0">{t('auto.manageSystemAdministratorsAndG', `Manage system administrators and global settings`)}</p>
+        </div>
+        <div className="col-md-4 text-md-end mt-3 mt-md-0">
+          <Link href="/dashboard/videos" passHref legacyBehavior>
+            <Button variant="danger" className="d-flex align-items-center justify-content-center gap-2 shadow-sm rounded-pill ms-md-auto py-2 px-4">
+              <i className="bi bi-question-circle"></i>
+              <span>{t('menu.help', 'Help')} / {t('auto.addVideo', 'Add Video')}</span>
+            </Button>
+          </Link>
         </div>
       </div>
 

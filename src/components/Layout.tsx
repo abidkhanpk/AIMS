@@ -617,6 +617,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       {t('layout.role')} <bdi>{user.role}</bdi>
                     </NavDropdown.Item>
                     <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={() => router.push('/dashboard/videos')}>
+                      <i className="bi bi-question-circle me-2"></i>
+                      {t('menu.help', 'Help')}
+                    </NavDropdown.Item>
                     <NavDropdown.Item onClick={() => setShowSettingsModal(true)}>
                       <i className="bi bi-gear me-2"></i>
                       {t('layout.userSettings', 'User Settings')}
