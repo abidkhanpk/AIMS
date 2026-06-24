@@ -2080,7 +2080,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                         <div className="border-top pt-3 mt-1">
                           <div className="fw-semibold mb-3">
                             <i className="bi bi-file-earmark-text me-2"></i>
-                            Admission Details
+                            {t('auto.additionalInformation', 'Additional Information')}
                           </div>
                           {renderStudentAdmissionFields('create')}
                         </div>
@@ -2278,7 +2278,7 @@ export function UserManagementTab({ role }: { role: Role }) {
                   <Tab eventKey="admission" title={
                     <span>
                       <i className="bi bi-file-earmark-text me-2"></i>
-                      Admission Details
+                      {t('auto.additionalInformation', 'Additional Information')}
                     </span>
                   }>
                     <Form onSubmit={handleUpdateUser} className="mt-3">
