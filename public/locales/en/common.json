@@ -907,6 +907,7 @@
     "paymentProofAlt": "Payment Proof Screenshot",
     "approve": "Approve",
     "reject": "Reject",
+    "additionalInformation": "Additional Information",
     "bFormNumber": "B-form Number",
     "enterBFormNumber": "Enter child B-form number",
     "dateOfBirthInWords": "Date of Birth in Words",
