@@ -118,7 +118,7 @@ export default function VideosPage() {
     const detectMediaAndShowArrow = () => {
       const hasAudio = document.querySelector('audio') !== null;
       const hasVideo = document.querySelector('video') !== null;
-      
+
       const hasYtIframe = Array.from(document.querySelectorAll('iframe')).some(iframe => {
         const src = iframe.src || '';
         return src.includes('youtube.com') || src.includes('youtu.be');
@@ -431,9 +431,9 @@ export default function VideosPage() {
               dir={currentLocale === 'ur' ? 'rtl' : 'ltr'}
             />
             {searchQuery && (
-              <Button 
-                variant="white" 
-                className="border-0 pe-3 text-muted" 
+              <Button
+                variant="white"
+                className="border-0 pe-3 text-muted"
                 onClick={() => setSearchQuery('')}
               >
                 <i className="bi bi-x-circle-fill"></i>
@@ -478,15 +478,15 @@ export default function VideosPage() {
         <Row className="g-4">
           {filteredVideos.map((video) => {
             const ytId = getYoutubeId(video.youtubeUrl);
-            const thumbnail = ytId 
+            const thumbnail = ytId
               ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
               : '/assets/default-logo.png';
-            
+
             const title = currentLocale === 'ur' ? video.titleUr : video.titleEn;
 
             return (
               <Col key={video.id} xs={12} sm={6} lg={4}>
-                <Card 
+                <Card
                   className="h-100 border-0 shadow-sm overflow-hidden video-card"
                   style={{
                     borderRadius: '16px',
@@ -498,7 +498,7 @@ export default function VideosPage() {
                   }}
                   onClick={() => handlePlayVideo(video)}
                 >
-                  <div 
+                  <div
                     className="position-relative overflow-hidden"
                     style={{ aspectRatio: '16/9', backgroundColor: '#000' }}
                   >
@@ -512,14 +512,14 @@ export default function VideosPage() {
                         (e.target as HTMLImageElement).src = '/assets/default-logo.png';
                       }}
                     />
-                    <div 
+                    <div
                       className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center card-play-overlay"
                       style={{
                         background: 'rgba(0,0,0,0.3)',
                         transition: 'background 0.2s ease'
                       }}
                     >
-                      <div 
+                      <div
                         className="d-flex align-items-center justify-content-center bg-danger text-white rounded-circle shadow-lg play-btn-circle"
                         style={{
                           width: '50px',
@@ -535,22 +535,22 @@ export default function VideosPage() {
                   <Card.Body className="d-flex flex-column p-3">
                     <div className="d-flex flex-wrap gap-1 mb-2">
                       {video.roles.map((role) => (
-                        <Badge 
-                          key={role} 
-                          bg="secondary" 
+                        <Badge
+                          key={role}
+                          bg="secondary"
                           className="text-capitalize"
-                          style={{ 
+                          style={{
                             fontSize: '0.75rem',
                             fontWeight: 500,
                             background: role === 'ADMIN' ? 'rgba(13, 110, 253, 0.1)' :
-                                        role === 'TEACHER' ? 'rgba(25, 135, 84, 0.1)' :
-                                        role === 'STUDENT' ? 'rgba(255, 193, 7, 0.1)' : 'rgba(108, 117, 125, 0.1)',
+                              role === 'TEACHER' ? 'rgba(25, 135, 84, 0.1)' :
+                                role === 'STUDENT' ? 'rgba(255, 193, 7, 0.1)' : 'rgba(108, 117, 125, 0.1)',
                             color: role === 'ADMIN' ? '#0d6efd' :
-                                   role === 'TEACHER' ? '#198754' :
-                                   role === 'STUDENT' ? '#ffc107' : '#6c757d',
+                              role === 'TEACHER' ? '#198754' :
+                                role === 'STUDENT' ? '#ffc107' : '#6c757d',
                             border: role === 'ADMIN' ? '1px solid rgba(13, 110, 253, 0.2)' :
-                                    role === 'TEACHER' ? '1px solid rgba(25, 135, 84, 0.2)' :
-                                    role === 'STUDENT' ? '1px solid rgba(255, 193, 7, 0.2)' : '1px solid rgba(108, 117, 125, 0.2)'
+                              role === 'TEACHER' ? '1px solid rgba(25, 135, 84, 0.2)' :
+                                role === 'STUDENT' ? '1px solid rgba(255, 193, 7, 0.2)' : '1px solid rgba(108, 117, 125, 0.2)'
                           }}
                         >
                           {t(`auto.roles.${role}`, role)}
@@ -558,11 +558,11 @@ export default function VideosPage() {
                       ))}
                     </div>
 
-                    <Card.Title 
+                    <Card.Title
                       className="h6 mb-2 text-truncate-2 fw-bold text-dark flex-grow-1"
-                      style={{ 
-                        fontSize: '1rem', 
-                        lineHeight: '1.4', 
+                      style={{
+                        fontSize: '1rem',
+                        lineHeight: '1.4',
                         height: '2.8em',
                         overflow: 'hidden',
                         display: '-webkit-box',
@@ -645,9 +645,9 @@ export default function VideosPage() {
           >
             <svg width="10" height="20" viewBox="0 0 10 20">
               {drawerCollapsed ? (
-                <polygon points="10,2 0,10 10,18" fill="#ccc"/>
+                <polygon points="10,2 0,10 10,18" fill="#ccc" />
               ) : (
-                <polygon points="0,2 10,10 0,18" fill="#ccc"/>
+                <polygon points="0,2 10,10 0,18" fill="#ccc" />
               )}
             </svg>
           </button>
@@ -656,8 +656,8 @@ export default function VideosPage() {
           <div className="absons-wp-header">
             <div className="absons-wp-header-left">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#7B2BFC" style={{ marginRight: '5px' }}>
-                <circle cx="12" cy="12" r="11" fill="#7B2BFC"/>
-                <polygon points="9,7 17,12 9,17" fill="#fff"/>
+                <circle cx="12" cy="12" r="11" fill="#7B2BFC" />
+                <polygon points="9,7 17,12 9,17" fill="#fff" />
               </svg>
               <span className="absons-wp-brand">ABSONS Webplayer</span>
             </div>
@@ -672,10 +672,10 @@ export default function VideosPage() {
                   ref={playerRef}
                   title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
                   src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
-                  poster={`https://img.youtube.com/vi/${getYoutubeId(activeVideo.youtubeUrl)}/hqdefault.jpg`}
+                  viewType="video"
+                  streamType="on-demand"
                   autoplay={shouldAutoPlay}
                   playsInline
-                  crossOrigin
                   style={{ width: '100%', height: '100%' }}
                   onPlay={() => {
                     hasStartedPlayingRef.current = true;
@@ -701,7 +701,10 @@ export default function VideosPage() {
                   }}
                 >
                   <MediaProvider />
-                  <DefaultVideoLayout icons={defaultLayoutIcons} />
+                  {/* smallLayoutWhen (true) pins vidstack to its small layout,
+                      which has exactly one centered circular translucent
+                      play/pause button. */}
+                  <DefaultVideoLayout icons={defaultLayoutIcons} smallLayoutWhen />
                 </MediaPlayer>
               )}
             </div>
@@ -849,8 +852,8 @@ export default function VideosPage() {
       )}
 
       {/* Sleek Modal Form to Add/Edit Video (Admin/Developer Only) */}
-      <Modal 
-        show={showFormModal} 
+      <Modal
+        show={showFormModal}
         onHide={() => setShowFormModal(false)}
         centered
         size="lg"
@@ -952,9 +955,9 @@ export default function VideosPage() {
                     <Form.Label className="fw-bold small text-muted uppercase mb-0">
                       {t('auto.roles', 'Target Roles')}
                     </Form.Label>
-                    <Button 
-                      variant="link" 
-                      className="p-0 text-decoration-none small text-danger" 
+                    <Button
+                      variant="link"
+                      className="p-0 text-decoration-none small text-danger"
                       onClick={handleSelectAllRoles}
                       type="button"
                     >
@@ -985,10 +988,10 @@ export default function VideosPage() {
             <Button variant="outline-secondary" className="px-4" onClick={() => setShowFormModal(false)}>
               {t('auto.cancel', 'Cancel')}
             </Button>
-            <Button 
-              variant="danger" 
-              type="submit" 
-              disabled={formSubmitting} 
+            <Button
+              variant="danger"
+              type="submit"
+              disabled={formSubmitting}
               className="px-4 shadow-sm"
               style={{ background: '#dc3545', border: 'none' }}
             >
@@ -1035,11 +1038,29 @@ export default function VideosPage() {
           --media-focus-ring: none !important;
           --media-focus-ring-color: transparent !important;
         }
-        /* Hide Vidstack circular big play button — keep only YouTube's native one */
-        .absons-wp-video-area .vds-play-button[data-media-button],
-        .absons-wp-video-area [data-media-player] .vds-play-button,
-        .absons-wp-video-area [data-media-player] .vds-big-play-button {
+        /* 1) Keep the video area pure black until playback starts.
+           YouTube's iframe in its unstarted state is what renders the native
+           red play button — hiding the iframe until [data-started] means the
+           red button can never be seen, and no thumbnail preview shows.
+           vidstack resets data-started on every src change, so switching
+           videos in the playlist goes back to black automatically. */
+        .absons-wp-video-area [data-media-player]:not([data-started]) iframe.vds-youtube {
+          opacity: 0 !important;
+        }
+
+        /* 2) Remove the keyboard-action bezel — the rounded-SQUARE badge
+           vidstack flashes in the center with a play/pause icon. This was
+           the second centered button. */
+        .absons-wp-video-area .vds-kb-action {
           display: none !important;
+        }
+
+        /* 3) Hard-enforce the single centered play/pause button as circular
+           translucent (vidstack styles it via zero-specificity :where()
+           rules, so any global stylesheet can accidentally square it). */
+        .absons-wp-video-area .vds-video-layout[data-sm] .vds-controls .vds-play-button {
+          border-radius: 50% !important;
+          background-color: rgba(0, 0, 0, 0.6) !important;
         }
 
         /* ====== WebPlayer-Style Floating Panel (Bottom-Right) ====== */
