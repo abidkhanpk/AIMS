@@ -53,6 +53,7 @@ export default function VideosPage() {
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isCollapsedDown, setIsCollapsedDown] = useState(false);
 
   // Playback Progress Ref (in-memory, until page reload)
   const videoProgressRef = useRef<Record<string, number>>({});
@@ -97,6 +98,7 @@ export default function VideosPage() {
       // Save playlist state before collapse
       playlistWasOpenRef.current = showPlaylist;
       setIsMaximized(false);
+      setIsCollapsedDown(false);
     } else {
       // Opening
       if (isFirstOpenRef.current) {
@@ -639,7 +641,7 @@ export default function VideosPage() {
       {/* ABSONS WebPlayer Bottom-Right Panel */}
       {showDrawer && activeVideo && (
         <div
-          className={`absons-webplayer-drawer ${drawerCollapsed ? 'absons-webplayer-collapsed' : ''} ${!drawerCollapsed && showPlaylist ? 'absons-wp-with-playlist' : ''} ${isMaximized ? 'absons-wp-maximized' : ''}`}
+          className={`absons-webplayer-drawer ${drawerCollapsed ? 'absons-webplayer-collapsed' : ''} ${!drawerCollapsed && showPlaylist ? 'absons-wp-with-playlist' : ''} ${isMaximized ? 'absons-wp-maximized' : ''} ${isCollapsedDown ? 'absons-wp-collapsed-down' : ''}`}
           style={{ direction: 'ltr' }}
         >
           {/* Left-edge slide tab — WebPlayer-style arrow to slide in/out */}
@@ -879,11 +881,31 @@ export default function VideosPage() {
               >
                 <i className="bi bi-list-ul"></i>
               </button>
+              {/* Collapse Down / Expand Up Button */}
+              <button
+                className="absons-wp-ctrl-btn"
+                title={isCollapsedDown ? 'Expand Player' : 'Collapse Player'}
+                onClick={() => {
+                  const nextVal = !isCollapsedDown;
+                  setIsCollapsedDown(nextVal);
+                  if (nextVal) {
+                    setIsMaximized(false);
+                  }
+                }}
+              >
+                <i className={`bi ${isCollapsedDown ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+              </button>
               {/* Maximize Button */}
               <button
                 className="absons-wp-ctrl-btn"
                 title={isMaximized ? 'Restore Size' : 'Maximize'}
-                onClick={() => setIsMaximized(!isMaximized)}
+                onClick={() => {
+                  const nextVal = !isMaximized;
+                  setIsMaximized(nextVal);
+                  if (nextVal) {
+                    setIsCollapsedDown(false);
+                  }
+                }}
               >
                 <i className={`bi ${isMaximized ? 'bi-arrows-angle-contract' : 'bi-arrows-angle-expand'}`}></i>
               </button>
@@ -1166,13 +1188,25 @@ export default function VideosPage() {
           display: none !important;
         }
 
+        /* Collapsed down audio-only mode styles */
+        .absons-webplayer-drawer.absons-wp-collapsed-down {
+          height: 45px !important;
+          min-height: 45px !important;
+          border-top-left-radius: 5px !important;
+          box-shadow: 0 -2px 10px rgba(0,0,0,0.3) !important;
+        }
+        .absons-webplayer-drawer.absons-wp-collapsed-down .absons-wp-header,
+        .absons-webplayer-drawer.absons-wp-collapsed-down .absons-wp-main {
+          display: none !important;
+        }
+
         /* Left-edge slide tab — arrow to slide panel in/out */
         .absons-wp-edge-tab {
           position: absolute;
           left: -22px;
           bottom: 0; /* Aligned exactly at the bottom */
           width: 22px;
-          height: 75px;
+          height: 45px;
           background: linear-gradient(to bottom, #6b6b6b, #3c3c3c); /* Sleek vertical gradient contrasting with player */
           border: 1px solid #777; /* Premium light grey border outline */
           border-right: none;
@@ -1365,7 +1399,7 @@ export default function VideosPage() {
           padding: 0 8px;
           background: #222;
           border-top: 1px solid #333;
-          min-height: 36px;
+          min-height: 45px;
           flex-shrink: 0;
           gap: 2px;
         }
