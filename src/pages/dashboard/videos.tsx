@@ -52,6 +52,7 @@ export default function VideosPage() {
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
 
   // Playback Progress Ref (in-memory, until page reload)
   const videoProgressRef = useRef<Record<string, number>>({});
@@ -95,6 +96,7 @@ export default function VideosPage() {
     if (nextCollapsed) {
       // Save playlist state before collapse
       playlistWasOpenRef.current = showPlaylist;
+      setIsMaximized(false);
     } else {
       // Opening
       if (isFirstOpenRef.current) {
@@ -637,7 +639,7 @@ export default function VideosPage() {
       {/* ABSONS WebPlayer Bottom-Right Panel */}
       {showDrawer && activeVideo && (
         <div
-          className={`absons-webplayer-drawer ${drawerCollapsed ? 'absons-webplayer-collapsed' : ''} ${!drawerCollapsed && showPlaylist ? 'absons-wp-with-playlist' : ''}`}
+          className={`absons-webplayer-drawer ${drawerCollapsed ? 'absons-webplayer-collapsed' : ''} ${!drawerCollapsed && showPlaylist ? 'absons-wp-with-playlist' : ''} ${isMaximized ? 'absons-wp-maximized' : ''}`}
           style={{ direction: 'ltr' }}
         >
           {/* Left-edge slide tab — WebPlayer-style arrow to slide in/out */}
@@ -877,21 +879,13 @@ export default function VideosPage() {
               >
                 <i className="bi bi-list-ul"></i>
               </button>
-              {/* Fullscreen Button */}
+              {/* Maximize Button */}
               <button
                 className="absons-wp-ctrl-btn"
-                title={fullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-                onClick={() => {
-                  if (playerRef.current) {
-                    if (fullscreen) {
-                      playerRef.current.exitFullscreen();
-                    } else {
-                      playerRef.current.enterFullscreen();
-                    }
-                  }
-                }}
+                title={isMaximized ? 'Restore Size' : 'Maximize'}
+                onClick={() => setIsMaximized(!isMaximized)}
               >
-                <i className={`bi ${fullscreen ? 'bi-fullscreen-exit' : 'bi-fullscreen'}`}></i>
+                <i className={`bi ${isMaximized ? 'bi-arrows-angle-contract' : 'bi-arrows-angle-expand'}`}></i>
               </button>
             </div>
           </div>
@@ -1138,6 +1132,38 @@ export default function VideosPage() {
         /* Collapsed: slide off-screen to the right, only the edge tab remains visible */
         .absons-webplayer-collapsed {
           transform: translateX(100%);
+        }
+
+        /* Maximized states (viewport-filling) */
+        .absons-webplayer-drawer.absons-wp-maximized {
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          max-width: 100vw !important;
+          max-height: 100vh !important;
+          border-radius: 0 !important;
+          border: none !important;
+          z-index: 1070 !important;
+          transform: none !important;
+          transition: none !important;
+        }
+        .absons-webplayer-drawer.absons-wp-maximized .absons-wp-main {
+          flex: 1 !important;
+          height: auto !important;
+        }
+        .absons-webplayer-drawer.absons-wp-maximized .absons-wp-video-area {
+          width: auto !important;
+          flex: 1 !important;
+        }
+        .absons-webplayer-drawer.absons-wp-maximized .absons-wp-playlist {
+          width: 300px !important;
+          height: 100% !important;
+        }
+        .absons-webplayer-drawer.absons-wp-maximized .absons-wp-edge-tab {
+          display: none !important;
         }
 
         /* Left-edge slide tab — arrow to slide panel in/out */
