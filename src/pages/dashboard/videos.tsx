@@ -2,7 +2,7 @@ import { serverSideTranslations } from 'next-i18next/pages/serverSideTranslation
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import { Container, Row, Col, Card, Form, Button, Modal, Spinner, Offcanvas, Badge, ListGroup, InputGroup } from 'react-bootstrap';
+import { Container, Row, Col, Card, Form, Button, Modal, Spinner, Badge, InputGroup } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import Head from 'next/head';
 
@@ -48,6 +48,8 @@ export default function VideosPage() {
   const [showDrawer, setShowDrawer] = useState(false);
   const [activeVideo, setActiveVideo] = useState<VideoTutorial | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [drawerCollapsed, setDrawerCollapsed] = useState(false);
+  const [showPlaylist, setShowPlaylist] = useState(true);
 
   // Playback Progress Ref (in-memory, until page reload)
   const videoProgressRef = useRef<Record<string, number>>({});
@@ -131,12 +133,6 @@ export default function VideosPage() {
       return matchTitleEn || matchTitleUr || matchKeywordsEn || matchKeywordsUr;
     });
   }, [videos, searchQuery]);
-
-  // Playlist of other videos matching the current visibility (except active video)
-  const playlistVideos = useMemo(() => {
-    if (!activeVideo) return [];
-    return filteredVideos.filter((v) => v.id !== activeVideo.id);
-  }, [filteredVideos, activeVideo]);
 
   const handleOpenAddModal = () => {
     setEditingVideo(null);
@@ -255,6 +251,7 @@ export default function VideosPage() {
   const handlePlayVideo = (video: VideoTutorial) => {
     setActiveVideo(video);
     setShowDrawer(true);
+    setDrawerCollapsed(false);
   };
 
   const handleSelect = (key?: string | null) => {
@@ -530,147 +527,202 @@ export default function VideosPage() {
         pageContent
       )}
 
-      {/* Side Sliding Offcanvas Drawer for Playing Video */}
-      <Offcanvas
-        show={showDrawer}
-        onHide={() => setShowDrawer(false)}
-        onExited={() => setActiveVideo(null)}
-        placement={currentLocale === 'ur' ? 'start' : 'end'}
-        style={{ 
-          width: '500px', 
-          maxWidth: '100%',
-          borderLeft: currentLocale === 'ur' ? 'none' : '1px solid rgba(0,0,0,0.1)',
-          borderRight: currentLocale === 'ur' ? '1px solid rgba(0,0,0,0.1)' : 'none',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.15)'
-        }}
-      >
-        <Offcanvas.Header closeButton className="border-bottom">
-          <Offcanvas.Title className="fw-bold fs-5">
-            {t('auto.playVideo', 'Play Tutorial')}
-          </Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body className="p-0 d-flex flex-column h-100 bg-light">
-          {activeVideo && (
-            <div className="d-flex flex-column h-100">
-              <div 
-                className="w-100 position-relative shadow-sm"
-                style={{ aspectRatio: '16/9', backgroundColor: '#000' }}
-              >
-                {isMounted && (
-                  <MediaPlayer
-                    ref={playerRef}
-                    title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
-                    src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
-                    autoplay
-                    style={{ width: '100%', height: '100%' }}
-                    onTimeUpdate={(detail) => {
-                      const { currentTime } = detail;
-                      if (activeVideo) {
-                        videoProgressRef.current[activeVideo.id] = currentTime;
-                      }
-                    }}
-                    onCanPlay={() => {
-                      if (activeVideo && playerRef.current && !hasSeekedRef.current) {
-                        const savedTime = videoProgressRef.current[activeVideo.id];
-                        if (savedTime && savedTime > 2) {
-                          playerRef.current.currentTime = savedTime;
-                        }
-                        hasSeekedRef.current = true;
-                      }
-                    }}
-                  >
-                    <MediaProvider />
-                    <DefaultVideoLayout icons={defaultLayoutIcons} />
-                  </MediaPlayer>
-                )}
-              </div>
+      {/* Yahoo WebPlayer-Style Bottom-Right Panel */}
+      {showDrawer && activeVideo && (
+        <div
+          className={`yahoo-webplayer-drawer ${drawerCollapsed ? 'yahoo-webplayer-collapsed' : ''} ${!drawerCollapsed && showPlaylist ? 'yahoo-wp-with-playlist' : ''}`}
+          style={{ direction: 'ltr' }}
+        >
+          {/* Left-edge slide tab — Yahoo-style arrow to slide in/out */}
+          <button
+            className="yahoo-wp-edge-tab"
+            onClick={() => setDrawerCollapsed(!drawerCollapsed)}
+            title={drawerCollapsed ? 'Open Player' : 'Close Player'}
+          >
+            <svg width="10" height="20" viewBox="0 0 10 20">
+              {drawerCollapsed ? (
+                <polygon points="10,2 0,10 10,18" fill="#ccc"/>
+              ) : (
+                <polygon points="0,2 10,10 0,18" fill="#ccc"/>
+              )}
+            </svg>
+          </button>
 
-              <div className="p-3 bg-white border-bottom shadow-sm">
-                <h2 className="h6 fw-bold mb-2" style={{ lineHeight: '1.4' }}>
-                  {currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
-                </h2>
-                <div className="d-flex flex-wrap gap-1 mb-2">
-                  {activeVideo.roles.map((role) => (
-                    <Badge key={role} bg="light" className="text-muted text-capitalize border small">
-                      {t(`auto.roles.${role}`, role)}
-                    </Badge>
-                  ))}
+          {/* Top Header Bar */}
+          <div className="yahoo-wp-header">
+            <div className="yahoo-wp-header-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#7B2BFC" style={{ marginRight: '5px' }}>
+                <circle cx="12" cy="12" r="11" fill="#7B2BFC"/>
+                <polygon points="9,7 17,12 9,17" fill="#fff"/>
+              </svg>
+              <span className="yahoo-wp-brand">webplayer</span>
+            </div>
+          </div>
+
+          {/* Main Content: Video + Playlist */}
+          <div className="yahoo-wp-main">
+            {/* Video Area */}
+            <div className="yahoo-wp-video-area">
+              {isMounted && (
+                <MediaPlayer
+                  ref={playerRef}
+                  title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
+                  src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
+                  autoplay
+                  style={{ width: '100%', height: '100%' }}
+                  onTimeUpdate={(detail) => {
+                    const { currentTime } = detail;
+                    if (activeVideo) {
+                      videoProgressRef.current[activeVideo.id] = currentTime;
+                    }
+                  }}
+                  onCanPlay={() => {
+                    if (activeVideo && playerRef.current && !hasSeekedRef.current) {
+                      const savedTime = videoProgressRef.current[activeVideo.id];
+                      if (savedTime && savedTime > 2) {
+                        playerRef.current.currentTime = savedTime;
+                      }
+                      hasSeekedRef.current = true;
+                    }
+                  }}
+                >
+                  <MediaProvider />
+                  <DefaultVideoLayout icons={defaultLayoutIcons} />
+                </MediaPlayer>
+              )}
+            </div>
+
+            {/* Playlist Panel */}
+            {showPlaylist && (
+              <div className="yahoo-wp-playlist">
+                <div className="yahoo-wp-playlist-header">
+                  <span className="yahoo-wp-playlist-title">
+                    {t('auto.playlist', 'PLAYLIST')} ({filteredVideos.length})
+                  </span>
+                  <button
+                    className="yahoo-wp-playlist-close"
+                    onClick={() => setShowPlaylist(false)}
+                  >
+                    Close <i className="bi bi-x-circle-fill" style={{ fontSize: '0.85rem', marginLeft: '4px' }}></i>
+                  </button>
                 </div>
-                <small className="text-muted d-block">
-                  <i className="bi bi-calendar3 me-1"></i>
-                  {new Date(activeVideo.createdAt).toLocaleDateString()}
-                </small>
-              </div>
-
-              <div className="flex-grow-1 overflow-auto p-3">
-                <h3 className="h6 fw-bold text-muted mb-3 uppercase tracking-wider small">
-                  <i className="bi bi-collection-play-fill me-2 text-danger"></i>
-                  {t('auto.playlist', 'Playlist')} ({playlistVideos.length + 1})
-                </h3>
-                <ListGroup variant="flush" className="rounded-3 overflow-hidden shadow-sm">
-                  <ListGroup.Item 
-                    className="p-2 border-bottom d-flex gap-2 align-items-center active bg-danger bg-opacity-10 border-danger border-opacity-20"
-                    style={{ cursor: 'default' }}
-                  >
-                    <div className="position-relative" style={{ width: '80px', aspectRatio: '16/9' }}>
-                      <img 
-                        src={`https://img.youtube.com/vi/${getYoutubeId(activeVideo.youtubeUrl)}/mqdefault.jpg`}
-                        className="w-100 h-100 object-fit-cover rounded"
-                        alt="Current Thumbnail"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/assets/default-logo.png';
-                        }}
-                      />
-                      <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded bg-dark bg-opacity-40">
-                        <i className="bi bi-volume-up-fill text-white"></i>
-                      </div>
-                    </div>
-                    <div className="flex-grow-1 min-width-0">
-                      <div className="text-danger fw-bold small text-truncate">
-                        {currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
-                      </div>
-                      <small className="text-muted block mt-1" style={{ fontSize: '0.7rem' }}>
-                        {t('auto.playVideo', 'Playing')}
-                      </small>
-                    </div>
-                  </ListGroup.Item>
-
-                  {playlistVideos.map((video) => {
-                    const ytId = getYoutubeId(video.youtubeUrl);
-                    const thumb = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
+                <div className="yahoo-wp-playlist-items">
+                  {filteredVideos.map((video, index) => {
+                    const isActive = video.id === activeVideo.id;
                     const vTitle = currentLocale === 'ur' ? video.titleUr : video.titleEn;
-
                     return (
-                      <ListGroup.Item 
+                      <div
                         key={video.id}
-                        action
-                        onClick={() => handlePlayVideo(video)}
-                        className="p-2 border-bottom d-flex gap-2 align-items-center bg-white"
+                        className={`yahoo-wp-playlist-item ${isActive ? 'yahoo-wp-playlist-item-active' : ''}`}
+                        onClick={() => {
+                          if (!isActive) {
+                            setActiveVideo(video);
+                            setDrawerCollapsed(false);
+                          }
+                        }}
                       >
-                        <div style={{ width: '80px', aspectRatio: '16/9' }}>
-                          <img 
-                            src={thumb} 
-                            className="w-100 h-100 object-fit-cover rounded"
-                            alt={vTitle}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/assets/default-logo.png';
-                            }}
-                          />
-                        </div>
-                        <div className="flex-grow-1 min-width-0">
-                          <div className="text-dark fw-medium small text-truncate-2" style={{ maxHeight: '2.8em', overflow: 'hidden' }}>
-                            {vTitle}
-                          </div>
-                        </div>
-                      </ListGroup.Item>
+                        <span className="yahoo-wp-playlist-num">{index + 1}.</span>
+                        <span className="yahoo-wp-playlist-item-title">{vTitle}</span>
+                        {isActive && (
+                          <i className="bi bi-disc" style={{ fontSize: '0.7rem', color: '#aaa', marginLeft: 'auto', animation: 'yahoo-spin 2s linear infinite' }}></i>
+                        )}
+                      </div>
                     );
                   })}
-                </ListGroup>
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* Bottom Control Bar */}
+          <div className="yahoo-wp-controls">
+            <div className="yahoo-wp-controls-left">
+              {/* Prev */}
+              <button
+                className="yahoo-wp-ctrl-btn"
+                title="Previous"
+                onClick={() => {
+                  const idx = filteredVideos.findIndex(v => v.id === activeVideo.id);
+                  if (idx > 0) {
+                    setActiveVideo(filteredVideos[idx - 1]);
+                    setDrawerCollapsed(false);
+                  }
+                }}
+              >
+                <i className="bi bi-skip-start-fill"></i>
+              </button>
+              {/* Play/Pause */}
+              <button
+                className="yahoo-wp-ctrl-btn"
+                title="Play/Pause"
+                onClick={() => {
+                  if (playerRef.current) {
+                    if (playerRef.current.paused) {
+                      playerRef.current.play();
+                    } else {
+                      playerRef.current.pause();
+                    }
+                  }
+                }}
+              >
+                <i className="bi bi-pause-fill"></i>
+              </button>
+              {/* Next */}
+              <button
+                className="yahoo-wp-ctrl-btn"
+                title="Next"
+                onClick={() => {
+                  const idx = filteredVideos.findIndex(v => v.id === activeVideo.id);
+                  if (idx < filteredVideos.length - 1) {
+                    setActiveVideo(filteredVideos[idx + 1]);
+                    setDrawerCollapsed(false);
+                  }
+                }}
+              >
+                <i className="bi bi-skip-end-fill"></i>
+              </button>
             </div>
-          )}
-        </Offcanvas.Body>
-      </Offcanvas>
+
+            <div className="yahoo-wp-controls-center">
+              <span className="yahoo-wp-now-playing">
+                {currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
+              </span>
+            </div>
+
+            <div className="yahoo-wp-controls-right">
+              {/* Open in YouTube */}
+              {getYoutubeId(activeVideo.youtubeUrl) && (
+                <a
+                  href={activeVideo.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="yahoo-wp-ctrl-btn yahoo-wp-yt-btn"
+                  title={t('auto.openInYouTube', 'Open in YouTube')}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <i className="bi bi-youtube"></i>
+                </a>
+              )}
+              {/* Playlist toggle */}
+              <button
+                className="yahoo-wp-ctrl-btn"
+                title="Playlist"
+                onClick={() => setShowPlaylist(!showPlaylist)}
+              >
+                <i className="bi bi-list-ul"></i>
+              </button>
+              {/* Fullscreen-style expand/contract */}
+              <button
+                className="yahoo-wp-ctrl-btn"
+                title={drawerCollapsed ? 'Open Player' : 'Close Player'}
+                onClick={() => setDrawerCollapsed(!drawerCollapsed)}
+              >
+                <i className={`bi ${drawerCollapsed ? 'bi-arrows-angle-expand' : 'bi-arrows-angle-contract'}`}></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sleek Modal Form to Add/Edit Video (Admin/Developer Only) */}
       <Modal 
@@ -852,6 +904,293 @@ export default function VideosPage() {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
+        }
+
+        /* ====== Yahoo WebPlayer-Style Floating Panel (Bottom-Right) ====== */
+        .yahoo-webplayer-drawer {
+          position: fixed;
+          bottom: 0;
+          right: 0;
+          z-index: 1060;
+          width: 40%;
+          min-width: 320px;
+          max-width: 90vw;
+          display: flex;
+          flex-direction: column;
+          background: #1a1a1a;
+          box-shadow: 0 -2px 20px rgba(0,0,0,0.45), -4px 0 12px rgba(0,0,0,0.25);
+          border-top-left-radius: 5px;
+          border-left: 1px solid #444;
+          border-top: 1px solid #444;
+          overflow: visible;
+          transition: transform 0.3s ease, width 0.25s ease;
+          transform: translateX(0);
+        }
+        .yahoo-webplayer-drawer.yahoo-wp-with-playlist {
+          width: 58%;
+        }
+        /* Collapsed: slide off-screen to the right, only the edge tab remains visible */
+        .yahoo-webplayer-collapsed {
+          transform: translateX(100%);
+        }
+
+        /* Left-edge slide tab — arrow to slide panel in/out */
+        .yahoo-wp-edge-tab {
+          position: absolute;
+          left: -22px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 22px;
+          height: 48px;
+          background: #2d2d2d;
+          border: 1px solid #444;
+          border-right: none;
+          border-radius: 5px 0 0 5px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          transition: background 0.15s;
+          z-index: 1;
+        }
+        .yahoo-wp-edge-tab:hover {
+          background: #444;
+        }
+        .yahoo-wp-edge-tab svg polygon {
+          transition: fill 0.15s;
+        }
+        .yahoo-wp-edge-tab:hover svg polygon {
+          fill: #fff;
+        }
+
+        /* Header bar */
+        .yahoo-wp-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 3px 10px;
+          background: #222;
+          border-bottom: 1px solid #333;
+          min-height: 26px;
+          flex-shrink: 0;
+        }
+        .yahoo-wp-header-left {
+          display: flex;
+          align-items: center;
+        }
+        .yahoo-wp-brand {
+          color: #bbb;
+          font-size: 0.72rem;
+          font-weight: 500;
+          letter-spacing: 0.5px;
+        }
+
+        /* Main content area: video left, playlist right */
+        .yahoo-wp-main {
+          display: flex;
+          flex-shrink: 0;
+          overflow: hidden;
+        }
+
+        /* Video area — fills drawer width, height from aspect-ratio */
+        .yahoo-wp-video-area {
+          width: 100%;
+          flex-shrink: 1;
+          background: #000;
+          position: relative;
+          aspect-ratio: 16 / 9;
+        }
+        .yahoo-wp-with-playlist .yahoo-wp-video-area {
+          width: 58%;
+          flex-shrink: 0;
+        }
+        .yahoo-wp-video-area [data-media-player] {
+          width: 100% !important;
+          height: 100% !important;
+        }
+
+        /* Playlist panel — right side, light background */
+        .yahoo-wp-playlist {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          background: #f5f5f5;
+          border-left: 1px solid #ddd;
+        }
+        .yahoo-wp-playlist-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 7px 12px;
+          background: #eee;
+          border-bottom: 1px solid #ddd;
+          flex-shrink: 0;
+        }
+        .yahoo-wp-playlist-title {
+          font-size: 0.82rem;
+          font-weight: 700;
+          color: #333;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .yahoo-wp-playlist-close {
+          background: none;
+          border: none;
+          color: #666;
+          font-size: 0.78rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          padding: 2px 6px;
+          border-radius: 3px;
+          transition: background 0.15s;
+        }
+        .yahoo-wp-playlist-close:hover {
+          background: rgba(0,0,0,0.08);
+          color: #333;
+        }
+        .yahoo-wp-playlist-items {
+          flex: 1;
+          overflow-y: auto;
+          padding: 2px 0;
+        }
+        .yahoo-wp-playlist-item {
+          display: flex;
+          align-items: center;
+          padding: 6px 12px;
+          cursor: pointer;
+          transition: background 0.15s;
+          gap: 6px;
+          border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .yahoo-wp-playlist-item:hover {
+          background: rgba(0,0,0,0.06);
+        }
+        .yahoo-wp-playlist-item-active {
+          background: #dce7f5 !important;
+          font-weight: 600;
+        }
+        .yahoo-wp-playlist-num {
+          color: #999;
+          font-size: 0.78rem;
+          min-width: 20px;
+          flex-shrink: 0;
+        }
+        .yahoo-wp-playlist-item-title {
+          font-size: 0.8rem;
+          color: #333;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 1;
+          min-width: 0;
+        }
+        .yahoo-wp-playlist-item-active .yahoo-wp-playlist-item-title {
+          color: #1a1a1a;
+        }
+
+        /* Bottom control bar */
+        .yahoo-wp-controls {
+          display: flex;
+          align-items: center;
+          padding: 0 8px;
+          background: #222;
+          border-top: 1px solid #333;
+          min-height: 36px;
+          flex-shrink: 0;
+          gap: 2px;
+        }
+        .yahoo-wp-controls-left {
+          display: flex;
+          align-items: center;
+          gap: 1px;
+          flex-shrink: 0;
+        }
+        .yahoo-wp-controls-center {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          padding: 0 8px;
+        }
+        .yahoo-wp-controls-right {
+          display: flex;
+          align-items: center;
+          gap: 1px;
+          flex-shrink: 0;
+        }
+        .yahoo-wp-ctrl-btn {
+          background: none;
+          border: none;
+          color: #ccc;
+          font-size: 1rem;
+          padding: 4px 6px;
+          cursor: pointer;
+          border-radius: 3px;
+          transition: color 0.15s, background 0.15s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-decoration: none;
+        }
+        .yahoo-wp-ctrl-btn:hover {
+          color: #fff;
+          background: rgba(255,255,255,0.1);
+        }
+        .yahoo-wp-yt-btn {
+          color: #ff4444;
+        }
+        .yahoo-wp-yt-btn:hover {
+          color: #ff0000;
+          background: rgba(255,0,0,0.1);
+        }
+        .yahoo-wp-now-playing {
+          color: #ccc;
+          font-size: 0.78rem;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        @keyframes yahoo-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .yahoo-webplayer-drawer,
+          .yahoo-webplayer-drawer.yahoo-wp-with-playlist {
+            width: 85%;
+            min-width: 280px;
+          }
+          .yahoo-wp-main {
+            flex-direction: column;
+          }
+          .yahoo-wp-video-area,
+          .yahoo-wp-with-playlist .yahoo-wp-video-area {
+            width: 100%;
+          }
+          .yahoo-wp-playlist {
+            max-height: 140px;
+            border-left: none;
+            border-top: 1px solid #ddd;
+          }
+        }
+        @media (max-width: 480px) {
+          .yahoo-webplayer-drawer,
+          .yahoo-webplayer-drawer.yahoo-wp-with-playlist {
+            width: 100%;
+            max-width: 100vw;
+            border-top-left-radius: 0;
+            border-left: none;
+          }
+          .yahoo-wp-edge-tab {
+            display: none;
+          }
         }
       `}</style>
     </>
