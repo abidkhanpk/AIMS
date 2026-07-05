@@ -49,12 +49,112 @@ export default function VideosPage() {
   const [activeVideo, setActiveVideo] = useState<VideoTutorial | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [drawerCollapsed, setDrawerCollapsed] = useState(false);
-  const [showPlaylist, setShowPlaylist] = useState(true);
+  const [showPlaylist, setShowPlaylist] = useState(false);
+  const [shouldAutoPlay, setShouldAutoPlay] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Playback Progress Ref (in-memory, until page reload)
   const videoProgressRef = useRef<Record<string, number>>({});
   const playerRef = useRef<MediaPlayerInstance>(null);
   const hasSeekedRef = useRef(false);
+
+  // Refs for tracking open/close logic
+  const isFirstOpenRef = useRef(true);
+  const hasStartedPlayingRef = useRef(false);
+  const playlistWasOpenRef = useRef(false);
+
+  const safePlay = () => {
+    if (playerRef.current) {
+      try {
+        playerRef.current.play().catch(err => {
+          console.warn("Vidstack safePlay catch:", err);
+        });
+      } catch (err) {
+        console.warn("Vidstack safePlay try-catch:", err);
+      }
+    }
+  };
+
+  const safePause = () => {
+    if (playerRef.current) {
+      try {
+        playerRef.current.pause();
+      } catch (err) {
+        console.warn("Vidstack safePause try-catch:", err);
+      }
+    }
+  };
+
+  const toggleDrawerCollapsed = () => {
+    const nextCollapsed = !drawerCollapsed;
+    setDrawerCollapsed(nextCollapsed);
+
+    if (nextCollapsed) {
+      // Save playlist state before collapse
+      playlistWasOpenRef.current = showPlaylist;
+    } else {
+      // Opening
+      if (isFirstOpenRef.current) {
+        isFirstOpenRef.current = false;
+        setShouldAutoPlay(false);
+        setShowPlaylist(true);
+      } else {
+        if (hasStartedPlayingRef.current) {
+          setShouldAutoPlay(true);
+          setTimeout(() => {
+            safePlay();
+          }, 50);
+        }
+        setShowPlaylist(playlistWasOpenRef.current);
+      }
+    }
+  };
+
+  // Auto-detect audio, video, or YouTube links on the page to show the arrow button
+  const hasDetectedRef = useRef(false);
+  useEffect(() => {
+    if (!isMounted || hasDetectedRef.current) return;
+
+    const detectMediaAndShowArrow = () => {
+      const hasAudio = document.querySelector('audio') !== null;
+      const hasVideo = document.querySelector('video') !== null;
+      
+      const hasYtIframe = Array.from(document.querySelectorAll('iframe')).some(iframe => {
+        const src = iframe.src || '';
+        return src.includes('youtube.com') || src.includes('youtu.be');
+      });
+
+      const hasYtLink = Array.from(document.querySelectorAll('a')).some(a => {
+        const href = a.href || '';
+        return href.includes('youtube.com') || href.includes('youtu.be');
+      });
+
+      const hasTutorials = videos.length > 0;
+
+      if (hasAudio || hasVideo || hasYtIframe || hasYtLink || hasTutorials) {
+        hasDetectedRef.current = true;
+        if (!activeVideo && videos.length > 0) {
+          setActiveVideo(videos[0]);
+        }
+        setShowDrawer(true);
+        setDrawerCollapsed(true);
+      }
+    };
+
+    detectMediaAndShowArrow();
+  }, [isMounted, videos, activeVideo]);
+
+  // Pause playback when player is collapsed (pushed back)
+  useEffect(() => {
+    if (drawerCollapsed) {
+      safePause();
+      document.querySelectorAll('audio, video').forEach((el) => {
+        if (el instanceof HTMLMediaElement) {
+          el.pause();
+        }
+      });
+    }
+  }, [drawerCollapsed]);
 
   useEffect(() => {
     hasSeekedRef.current = false;
@@ -252,6 +352,10 @@ export default function VideosPage() {
     setActiveVideo(video);
     setShowDrawer(true);
     setDrawerCollapsed(false);
+    setShowPlaylist(false);
+    setShouldAutoPlay(true);
+    hasStartedPlayingRef.current = true;
+    isFirstOpenRef.current = false;
   };
 
   const handleSelect = (key?: string | null) => {
@@ -536,7 +640,7 @@ export default function VideosPage() {
           {/* Left-edge slide tab — Yahoo-style arrow to slide in/out */}
           <button
             className="yahoo-wp-edge-tab"
-            onClick={() => setDrawerCollapsed(!drawerCollapsed)}
+            onClick={toggleDrawerCollapsed}
             title={drawerCollapsed ? 'Open Player' : 'Close Player'}
           >
             <svg width="10" height="20" viewBox="0 0 10 20">
@@ -562,33 +666,68 @@ export default function VideosPage() {
           {/* Main Content: Video + Playlist */}
           <div className="yahoo-wp-main">
             {/* Video Area */}
-            <div className="yahoo-wp-video-area">
+            <div className={`yahoo-wp-video-area ${(!shouldAutoPlay && !hasStartedPlayingRef.current) ? 'yahoo-wp-has-cover' : ''}`}>
               {isMounted && (
-                <MediaPlayer
-                  ref={playerRef}
-                  title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
-                  src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
-                  autoplay
-                  style={{ width: '100%', height: '100%' }}
-                  onTimeUpdate={(detail) => {
-                    const { currentTime } = detail;
-                    if (activeVideo) {
-                      videoProgressRef.current[activeVideo.id] = currentTime;
-                    }
-                  }}
-                  onCanPlay={() => {
-                    if (activeVideo && playerRef.current && !hasSeekedRef.current) {
-                      const savedTime = videoProgressRef.current[activeVideo.id];
-                      if (savedTime && savedTime > 2) {
-                        playerRef.current.currentTime = savedTime;
+                <>
+                  <MediaPlayer
+                    ref={playerRef}
+                    title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
+                    src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
+                    autoplay={shouldAutoPlay}
+                    style={{ width: '100%', height: '100%' }}
+                    onPlay={() => {
+                      hasStartedPlayingRef.current = true;
+                      setIsPlaying(true);
+                    }}
+                    onPause={() => {
+                      setIsPlaying(false);
+                    }}
+                    onTimeUpdate={(detail) => {
+                      const { currentTime } = detail;
+                      if (activeVideo) {
+                        videoProgressRef.current[activeVideo.id] = currentTime;
                       }
-                      hasSeekedRef.current = true;
-                    }
-                  }}
-                >
-                  <MediaProvider />
-                  <DefaultVideoLayout icons={defaultLayoutIcons} />
-                </MediaPlayer>
+                    }}
+                    onCanPlay={() => {
+                      if (activeVideo && playerRef.current && !hasSeekedRef.current) {
+                        const savedTime = videoProgressRef.current[activeVideo.id];
+                        if (savedTime && savedTime > 2) {
+                          playerRef.current.currentTime = savedTime;
+                        }
+                        hasSeekedRef.current = true;
+                      }
+                    }}
+                  >
+                    <MediaProvider />
+                    <DefaultVideoLayout icons={defaultLayoutIcons} />
+                  </MediaPlayer>
+
+                  {/* Custom Cover Overlay before video starts playing */}
+                  {!shouldAutoPlay && !hasStartedPlayingRef.current && (
+                    <div 
+                      className="yahoo-wp-cover-overlay"
+                      onClick={() => {
+                        hasStartedPlayingRef.current = true;
+                        setShouldAutoPlay(true);
+                        setTimeout(() => {
+                          safePlay();
+                        }, 50);
+                      }}
+                    >
+                      <img 
+                        src={`https://img.youtube.com/vi/${getYoutubeId(activeVideo.youtubeUrl)}/hqdefault.jpg`}
+                        alt="Play Video"
+                        className="yahoo-wp-cover-img"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/assets/default-logo.png';
+                        }}
+                      />
+                      <div className="yahoo-wp-cover-play-btn">
+                        <i className="bi bi-play-fill"></i>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -618,6 +757,8 @@ export default function VideosPage() {
                           if (!isActive) {
                             setActiveVideo(video);
                             setDrawerCollapsed(false);
+                            hasStartedPlayingRef.current = true;
+                            setShouldAutoPlay(true);
                           }
                         }}
                       >
@@ -646,6 +787,8 @@ export default function VideosPage() {
                   if (idx > 0) {
                     setActiveVideo(filteredVideos[idx - 1]);
                     setDrawerCollapsed(false);
+                    hasStartedPlayingRef.current = true;
+                    setShouldAutoPlay(true);
                   }
                 }}
               >
@@ -658,14 +801,18 @@ export default function VideosPage() {
                 onClick={() => {
                   if (playerRef.current) {
                     if (playerRef.current.paused) {
-                      playerRef.current.play();
+                      safePlay();
                     } else {
-                      playerRef.current.pause();
+                      safePause();
                     }
                   }
                 }}
               >
-                <i className="bi bi-pause-fill"></i>
+                {isPlaying ? (
+                  <i className="bi bi-pause-fill"></i>
+                ) : (
+                  <i className="bi bi-play-fill"></i>
+                )}
               </button>
               {/* Next */}
               <button
@@ -676,6 +823,8 @@ export default function VideosPage() {
                   if (idx < filteredVideos.length - 1) {
                     setActiveVideo(filteredVideos[idx + 1]);
                     setDrawerCollapsed(false);
+                    hasStartedPlayingRef.current = true;
+                    setShouldAutoPlay(true);
                   }
                 }}
               >
@@ -715,7 +864,7 @@ export default function VideosPage() {
               <button
                 className="yahoo-wp-ctrl-btn"
                 title={drawerCollapsed ? 'Open Player' : 'Close Player'}
-                onClick={() => setDrawerCollapsed(!drawerCollapsed)}
+                onClick={toggleDrawerCollapsed}
               >
                 <i className={`bi ${drawerCollapsed ? 'bi-arrows-angle-expand' : 'bi-arrows-angle-contract'}`}></i>
               </button>
@@ -906,15 +1055,51 @@ export default function VideosPage() {
           overflow: hidden;
         }
 
+        /* ====== Vidstack Player Colors & Overrides ====== */
+        [data-media-player] {
+          --media-focus-ring: none !important;
+          --media-focus-ring-color: transparent !important;
+          --media-brand: #fff !important;
+          --media-controls-color: #fff !important;
+        }
+
+        /* Enforce circular play button exact style */
+        .vds-big-play-button,
+        .vds-play-button {
+          background-color: rgba(0, 0, 0, 0.5) !important;
+          color: #fff !important;
+          border-radius: 50% !important;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+        }
+        .vds-big-play-button:hover,
+        .vds-play-button:hover {
+          background-color: rgba(0, 0, 0, 0.7) !important;
+          transform: scale(1.05) !important;
+        }
+
+        /* Hide Vidstack default layout overlays and buttons when our cover is active */
+        .yahoo-wp-has-cover [data-media-player] .vds-video-layout,
+        .yahoo-wp-has-cover [data-media-player] .vds-controls,
+        .yahoo-wp-has-cover [data-media-player] .vds-big-play-button,
+        .yahoo-wp-has-cover [data-media-player] .vds-play-button,
+        .yahoo-wp-has-cover [data-media-player] .vds-buffering-indicator {
+          display: none !important;
+          opacity: 0 !important;
+          visibility: hidden !important;
+          pointer-events: none !important;
+        }
+
         /* ====== Yahoo WebPlayer-Style Floating Panel (Bottom-Right) ====== */
         .yahoo-webplayer-drawer {
           position: fixed;
           bottom: 0;
           right: 0;
           z-index: 1060;
-          width: 40%;
+          --player-width: 50vw;
+          --playlist-width: 25vw;
+          width: var(--player-width) !important;
           min-width: 320px;
-          max-width: 90vw;
+          max-width: 95vw;
           display: flex;
           flex-direction: column;
           background: #1a1a1a;
@@ -923,11 +1108,11 @@ export default function VideosPage() {
           border-left: 1px solid #444;
           border-top: 1px solid #444;
           overflow: visible;
-          transition: transform 0.3s ease, width 0.25s ease;
+          transition: transform 0.3s ease, width 0.3s ease;
           transform: translateX(0);
         }
         .yahoo-webplayer-drawer.yahoo-wp-with-playlist {
-          width: 58%;
+          width: calc(var(--player-width) + var(--playlist-width)) !important;
         }
         /* Collapsed: slide off-screen to the right, only the edge tab remains visible */
         .yahoo-webplayer-collapsed {
@@ -938,10 +1123,9 @@ export default function VideosPage() {
         .yahoo-wp-edge-tab {
           position: absolute;
           left: -22px;
-          top: 50%;
-          transform: translateY(-50%);
+          bottom: 0; /* Aligned exactly at the bottom */
           width: 22px;
-          height: 48px;
+          height: 75px;
           background: #2d2d2d;
           border: 1px solid #444;
           border-right: none;
@@ -991,33 +1175,85 @@ export default function VideosPage() {
           display: flex;
           flex-shrink: 0;
           overflow: hidden;
+          height: calc(var(--player-width) * 9 / 16);
         }
 
         /* Video area — fills drawer width, height from aspect-ratio */
         .yahoo-wp-video-area {
-          width: 100%;
-          flex-shrink: 1;
+          width: var(--player-width) !important;
+          height: 100%;
           background: #000;
           position: relative;
-          aspect-ratio: 16 / 9;
-        }
-        .yahoo-wp-with-playlist .yahoo-wp-video-area {
-          width: 58%;
           flex-shrink: 0;
         }
         .yahoo-wp-video-area [data-media-player] {
           width: 100% !important;
           height: 100% !important;
         }
+        /* Disable mouse pointer events on the YouTube iframe to fully suppress native player UI overlays */
+        .yahoo-wp-video-area iframe {
+          pointer-events: none !important;
+        }
+
+        /* Custom Cover Overlay before video starts playing */
+        .yahoo-wp-cover-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: 10;
+          cursor: pointer;
+          background: #000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .yahoo-wp-cover-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0.6;
+          transition: opacity 0.2s ease;
+        }
+        .yahoo-wp-cover-overlay:hover .yahoo-wp-cover-img {
+          opacity: 0.8;
+        }
+        .yahoo-wp-cover-play-btn {
+          position: absolute;
+          width: 72px;
+          height: 72px;
+          background: rgba(0, 0, 0, 0.5) !important;
+          color: #fff !important;
+          border-radius: 50% !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 2.2rem;
+          padding-left: 5px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+          transition: transform 0.2s ease, background 0.2s ease;
+          pointer-events: none;
+        }
+        .yahoo-wp-cover-overlay:hover .yahoo-wp-cover-play-btn {
+          transform: scale(1.05);
+          background: rgba(0, 0, 0, 0.7) !important;
+        }
+
+        /* Hide duplicate Vidstack spinners to keep exactly one */
+        .vds-buffering-indicator {
+          display: none !important;
+        }
 
         /* Playlist panel — right side, light background */
         .yahoo-wp-playlist {
-          flex: 1;
-          min-width: 0;
+          width: var(--playlist-width) !important;
           display: flex;
           flex-direction: column;
           background: #f5f5f5;
           border-left: 1px solid #ddd;
+          height: 100%;
+          flex-shrink: 0;
         }
         .yahoo-wp-playlist-header {
           display: flex;
@@ -1162,31 +1398,48 @@ export default function VideosPage() {
 
         /* Responsive */
         @media (max-width: 768px) {
-          .yahoo-webplayer-drawer,
-          .yahoo-webplayer-drawer.yahoo-wp-with-playlist {
-            width: 85%;
+          .yahoo-webplayer-drawer {
+            --player-width: 60vw;
+            --playlist-width: 35vw;
             min-width: 280px;
           }
           .yahoo-wp-main {
-            flex-direction: column;
+            flex-direction: row;
+            height: calc(var(--player-width) * 9 / 16);
           }
-          .yahoo-wp-video-area,
-          .yahoo-wp-with-playlist .yahoo-wp-video-area {
-            width: 100%;
+          .yahoo-wp-video-area {
+            width: var(--player-width) !important;
+            height: 100% !important;
           }
           .yahoo-wp-playlist {
-            max-height: 140px;
-            border-left: none;
-            border-top: 1px solid #ddd;
+            width: var(--playlist-width) !important;
+            height: 100% !important;
+            border-left: 1px solid #ddd;
+            border-top: none;
           }
         }
         @media (max-width: 480px) {
-          .yahoo-webplayer-drawer,
-          .yahoo-webplayer-drawer.yahoo-wp-with-playlist {
-            width: 100%;
+          .yahoo-webplayer-drawer {
+            --player-width: 100vw;
+            --playlist-width: 100vw;
             max-width: 100vw;
             border-top-left-radius: 0;
             border-left: none;
+          }
+          .yahoo-webplayer-drawer.yahoo-wp-with-playlist {
+            width: 100vw !important;
+          }
+          .yahoo-wp-main {
+            flex-direction: column;
+            height: calc(var(--player-width) * 9 / 16 + 140px);
+          }
+          .yahoo-wp-with-playlist .yahoo-wp-video-area {
+            height: calc(var(--player-width) * 9 / 16) !important;
+            width: 100% !important;
+          }
+          .yahoo-wp-playlist {
+            width: 100% !important;
+            height: 140px !important;
           }
           .yahoo-wp-edge-tab {
             display: none;
