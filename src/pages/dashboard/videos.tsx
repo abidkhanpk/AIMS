@@ -666,68 +666,43 @@ export default function VideosPage() {
           {/* Main Content: Video + Playlist */}
           <div className="yahoo-wp-main">
             {/* Video Area */}
-            <div className={`yahoo-wp-video-area ${(!shouldAutoPlay && !hasStartedPlayingRef.current) ? 'yahoo-wp-has-cover' : ''}`}>
+            <div className="yahoo-wp-video-area">
               {isMounted && (
-                <>
-                  <MediaPlayer
-                    ref={playerRef}
-                    title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
-                    src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
-                    autoplay={shouldAutoPlay}
-                    style={{ width: '100%', height: '100%' }}
-                    onPlay={() => {
-                      hasStartedPlayingRef.current = true;
-                      setIsPlaying(true);
-                    }}
-                    onPause={() => {
-                      setIsPlaying(false);
-                    }}
-                    onTimeUpdate={(detail) => {
-                      const { currentTime } = detail;
-                      if (activeVideo) {
-                        videoProgressRef.current[activeVideo.id] = currentTime;
+                <MediaPlayer
+                  ref={playerRef}
+                  title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
+                  src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
+                  poster={`https://img.youtube.com/vi/${getYoutubeId(activeVideo.youtubeUrl)}/hqdefault.jpg`}
+                  autoplay={shouldAutoPlay}
+                  playsInline
+                  crossOrigin
+                  style={{ width: '100%', height: '100%' }}
+                  onPlay={() => {
+                    hasStartedPlayingRef.current = true;
+                    setIsPlaying(true);
+                  }}
+                  onPause={() => {
+                    setIsPlaying(false);
+                  }}
+                  onTimeUpdate={(detail) => {
+                    const { currentTime } = detail;
+                    if (activeVideo) {
+                      videoProgressRef.current[activeVideo.id] = currentTime;
+                    }
+                  }}
+                  onCanPlay={() => {
+                    if (activeVideo && playerRef.current && !hasSeekedRef.current) {
+                      const savedTime = videoProgressRef.current[activeVideo.id];
+                      if (savedTime && savedTime > 2) {
+                        playerRef.current.currentTime = savedTime;
                       }
-                    }}
-                    onCanPlay={() => {
-                      if (activeVideo && playerRef.current && !hasSeekedRef.current) {
-                        const savedTime = videoProgressRef.current[activeVideo.id];
-                        if (savedTime && savedTime > 2) {
-                          playerRef.current.currentTime = savedTime;
-                        }
-                        hasSeekedRef.current = true;
-                      }
-                    }}
-                  >
-                    <MediaProvider />
-                    <DefaultVideoLayout icons={defaultLayoutIcons} />
-                  </MediaPlayer>
-
-                  {/* Custom Cover Overlay before video starts playing */}
-                  {!shouldAutoPlay && !hasStartedPlayingRef.current && (
-                    <div 
-                      className="yahoo-wp-cover-overlay"
-                      onClick={() => {
-                        hasStartedPlayingRef.current = true;
-                        setShouldAutoPlay(true);
-                        setTimeout(() => {
-                          safePlay();
-                        }, 50);
-                      }}
-                    >
-                      <img 
-                        src={`https://img.youtube.com/vi/${getYoutubeId(activeVideo.youtubeUrl)}/hqdefault.jpg`}
-                        alt="Play Video"
-                        className="yahoo-wp-cover-img"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/assets/default-logo.png';
-                        }}
-                      />
-                      <div className="yahoo-wp-cover-play-btn">
-                        <i className="bi bi-play-fill"></i>
-                      </div>
-                    </div>
-                  )}
-                </>
+                      hasSeekedRef.current = true;
+                    }
+                  }}
+                >
+                  <MediaProvider />
+                  <DefaultVideoLayout icons={defaultLayoutIcons} />
+                </MediaPlayer>
               )}
             </div>
 
@@ -1055,38 +1030,16 @@ export default function VideosPage() {
           overflow: hidden;
         }
 
-        /* ====== Vidstack Player Colors & Overrides ====== */
+        /* ====== Vidstack Player Overrides ====== */
         [data-media-player] {
           --media-focus-ring: none !important;
           --media-focus-ring-color: transparent !important;
-          --media-brand: #fff !important;
-          --media-controls-color: #fff !important;
         }
-
-        /* Enforce circular play button exact style */
-        .vds-big-play-button,
-        .vds-play-button {
-          background-color: rgba(0, 0, 0, 0.5) !important;
-          color: #fff !important;
-          border-radius: 50% !important;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-        }
-        .vds-big-play-button:hover,
-        .vds-play-button:hover {
-          background-color: rgba(0, 0, 0, 0.7) !important;
-          transform: scale(1.05) !important;
-        }
-
-        /* Hide Vidstack default layout overlays and buttons when our cover is active */
-        .yahoo-wp-has-cover [data-media-player] .vds-video-layout,
-        .yahoo-wp-has-cover [data-media-player] .vds-controls,
-        .yahoo-wp-has-cover [data-media-player] .vds-big-play-button,
-        .yahoo-wp-has-cover [data-media-player] .vds-play-button,
-        .yahoo-wp-has-cover [data-media-player] .vds-buffering-indicator {
+        /* Hide Vidstack circular big play button — keep only YouTube's native one */
+        .yahoo-wp-video-area .vds-play-button[data-media-button],
+        .yahoo-wp-video-area [data-media-player] .vds-play-button,
+        .yahoo-wp-video-area [data-media-player] .vds-big-play-button {
           display: none !important;
-          opacity: 0 !important;
-          visibility: hidden !important;
-          pointer-events: none !important;
         }
 
         /* ====== Yahoo WebPlayer-Style Floating Panel (Bottom-Right) ====== */
@@ -1126,8 +1079,8 @@ export default function VideosPage() {
           bottom: 0; /* Aligned exactly at the bottom */
           width: 22px;
           height: 75px;
-          background: #2d2d2d;
-          border: 1px solid #444;
+          background: linear-gradient(to bottom, #6b6b6b, #3c3c3c); /* Sleek vertical gradient contrasting with player */
+          border: 1px solid #777; /* Premium light grey border outline */
           border-right: none;
           border-radius: 5px 0 0 5px;
           cursor: pointer;
@@ -1135,17 +1088,20 @@ export default function VideosPage() {
           align-items: center;
           justify-content: center;
           padding: 0;
-          transition: background 0.15s;
+          box-shadow: -2px 0 8px rgba(0, 0, 0, 0.3);
+          transition: background 0.2s ease, border-color 0.2s ease;
           z-index: 1;
         }
         .yahoo-wp-edge-tab:hover {
-          background: #444;
+          background: linear-gradient(to bottom, #7a7a7a, #4a4a4a);
+          border-color: #888;
         }
         .yahoo-wp-edge-tab svg polygon {
-          transition: fill 0.15s;
+          fill: #eaeaea; /* Light grey arrow fill */
+          transition: fill 0.2s ease;
         }
         .yahoo-wp-edge-tab:hover svg polygon {
-          fill: #fff;
+          fill: #ffffff; /* Brighter white arrow on hover */
         }
 
         /* Header bar */
@@ -1190,61 +1146,6 @@ export default function VideosPage() {
           width: 100% !important;
           height: 100% !important;
         }
-        /* Disable mouse pointer events on the YouTube iframe to fully suppress native player UI overlays */
-        .yahoo-wp-video-area iframe {
-          pointer-events: none !important;
-        }
-
-        /* Custom Cover Overlay before video starts playing */
-        .yahoo-wp-cover-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          z-index: 10;
-          cursor: pointer;
-          background: #000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .yahoo-wp-cover-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          opacity: 0.6;
-          transition: opacity 0.2s ease;
-        }
-        .yahoo-wp-cover-overlay:hover .yahoo-wp-cover-img {
-          opacity: 0.8;
-        }
-        .yahoo-wp-cover-play-btn {
-          position: absolute;
-          width: 72px;
-          height: 72px;
-          background: rgba(0, 0, 0, 0.5) !important;
-          color: #fff !important;
-          border-radius: 50% !important;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 2.2rem;
-          padding-left: 5px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-          transition: transform 0.2s ease, background 0.2s ease;
-          pointer-events: none;
-        }
-        .yahoo-wp-cover-overlay:hover .yahoo-wp-cover-play-btn {
-          transform: scale(1.05);
-          background: rgba(0, 0, 0, 0.7) !important;
-        }
-
-        /* Hide duplicate Vidstack spinners to keep exactly one */
-        .vds-buffering-indicator {
-          display: none !important;
-        }
-
         /* Playlist panel — right side, light background */
         .yahoo-wp-playlist {
           width: var(--playlist-width) !important;
