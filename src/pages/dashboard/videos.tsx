@@ -98,7 +98,7 @@ export default function VideosPage() {
       // Save playlist state before collapse
       playlistWasOpenRef.current = showPlaylist;
       setIsMaximized(false);
-      setIsCollapsedDown(false);
+      // Preserve isCollapsedDown so it retains its status when reopened
     } else {
       // Opening
       if (isFirstOpenRef.current) {
@@ -363,6 +363,7 @@ export default function VideosPage() {
     setShouldAutoPlay(true);
     hasStartedPlayingRef.current = true;
     isFirstOpenRef.current = false;
+    setIsCollapsedDown(false);
   };
 
   const handleSelect = (key?: string | null) => {
