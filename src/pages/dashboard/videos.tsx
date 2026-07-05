@@ -631,15 +631,15 @@ export default function VideosPage() {
         pageContent
       )}
 
-      {/* AIMS WebPlayer Bottom-Right Panel */}
+      {/* ABSONS WebPlayer Bottom-Right Panel */}
       {showDrawer && activeVideo && (
         <div
-          className={`aims-webplayer-drawer ${drawerCollapsed ? 'aims-webplayer-collapsed' : ''} ${!drawerCollapsed && showPlaylist ? 'aims-wp-with-playlist' : ''}`}
+          className={`absons-webplayer-drawer ${drawerCollapsed ? 'absons-webplayer-collapsed' : ''} ${!drawerCollapsed && showPlaylist ? 'absons-wp-with-playlist' : ''}`}
           style={{ direction: 'ltr' }}
         >
           {/* Left-edge slide tab — WebPlayer-style arrow to slide in/out */}
           <button
-            className="aims-wp-edge-tab"
+            className="absons-wp-edge-tab"
             onClick={toggleDrawerCollapsed}
             title={drawerCollapsed ? 'Open Player' : 'Close Player'}
           >
@@ -653,20 +653,20 @@ export default function VideosPage() {
           </button>
 
           {/* Top Header Bar */}
-          <div className="aims-wp-header">
-            <div className="aims-wp-header-left">
+          <div className="absons-wp-header">
+            <div className="absons-wp-header-left">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="#7B2BFC" style={{ marginRight: '5px' }}>
                 <circle cx="12" cy="12" r="11" fill="#7B2BFC"/>
                 <polygon points="9,7 17,12 9,17" fill="#fff"/>
               </svg>
-              <span className="aims-wp-brand">ABSONS Webplayer</span>
+              <span className="absons-wp-brand">ABSONS Webplayer</span>
             </div>
           </div>
 
           {/* Main Content: Video + Playlist */}
-          <div className="aims-wp-main">
+          <div className="absons-wp-main">
             {/* Video Area */}
-            <div className="aims-wp-video-area">
+            <div className="absons-wp-video-area">
               {isMounted && (
                 <MediaPlayer
                   ref={playerRef}
@@ -708,26 +708,26 @@ export default function VideosPage() {
 
             {/* Playlist Panel */}
             {showPlaylist && (
-              <div className="aims-wp-playlist">
-                <div className="aims-wp-playlist-header">
-                  <span className="aims-wp-playlist-title">
+              <div className="absons-wp-playlist">
+                <div className="absons-wp-playlist-header">
+                  <span className="absons-wp-playlist-title">
                     {t('auto.playlist', 'PLAYLIST')} ({filteredVideos.length})
                   </span>
                   <button
-                    className="aims-wp-playlist-close"
+                    className="absons-wp-playlist-close"
                     onClick={() => setShowPlaylist(false)}
                   >
                     Close <i className="bi bi-x-circle-fill" style={{ fontSize: '0.85rem', marginLeft: '4px' }}></i>
                   </button>
                 </div>
-                <div className="aims-wp-playlist-items">
+                <div className="absons-wp-playlist-items">
                   {filteredVideos.map((video, index) => {
                     const isActive = video.id === activeVideo.id;
                     const vTitle = currentLocale === 'ur' ? video.titleUr : video.titleEn;
                     return (
                       <div
                         key={video.id}
-                        className={`aims-wp-playlist-item ${isActive ? 'aims-wp-playlist-item-active' : ''}`}
+                        className={`absons-wp-playlist-item ${isActive ? 'absons-wp-playlist-item-active' : ''}`}
                         onClick={() => {
                           if (!isActive) {
                             setActiveVideo(video);
@@ -737,10 +737,10 @@ export default function VideosPage() {
                           }
                         }}
                       >
-                        <span className="aims-wp-playlist-num">{index + 1}.</span>
-                        <span className="aims-wp-playlist-item-title">{vTitle}</span>
+                        <span className="absons-wp-playlist-num">{index + 1}.</span>
+                        <span className="absons-wp-playlist-item-title">{vTitle}</span>
                         {isActive && (
-                          <i className="bi bi-disc" style={{ fontSize: '0.7rem', color: '#aaa', marginLeft: 'auto', animation: 'aims-spin 2s linear infinite' }}></i>
+                          <i className="bi bi-disc" style={{ fontSize: '0.7rem', color: '#aaa', marginLeft: 'auto', animation: 'absons-spin 2s linear infinite' }}></i>
                         )}
                       </div>
                     );
@@ -751,11 +751,11 @@ export default function VideosPage() {
           </div>
 
           {/* Bottom Control Bar */}
-          <div className="aims-wp-controls">
-            <div className="aims-wp-controls-left">
+          <div className="absons-wp-controls">
+            <div className="absons-wp-controls-left">
               {/* Prev */}
               <button
-                className="aims-wp-ctrl-btn"
+                className="absons-wp-ctrl-btn"
                 title="Previous"
                 onClick={() => {
                   const idx = filteredVideos.findIndex(v => v.id === activeVideo.id);
@@ -771,7 +771,7 @@ export default function VideosPage() {
               </button>
               {/* Play/Pause */}
               <button
-                className="aims-wp-ctrl-btn"
+                className="absons-wp-ctrl-btn"
                 title="Play/Pause"
                 onClick={() => {
                   if (playerRef.current) {
@@ -791,7 +791,7 @@ export default function VideosPage() {
               </button>
               {/* Next */}
               <button
-                className="aims-wp-ctrl-btn"
+                className="absons-wp-ctrl-btn"
                 title="Next"
                 onClick={() => {
                   const idx = filteredVideos.findIndex(v => v.id === activeVideo.id);
@@ -807,20 +807,20 @@ export default function VideosPage() {
               </button>
             </div>
 
-            <div className="aims-wp-controls-center">
-              <span className="aims-wp-now-playing">
+            <div className="absons-wp-controls-center">
+              <span className="absons-wp-now-playing">
                 {currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
               </span>
             </div>
 
-            <div className="aims-wp-controls-right">
+            <div className="absons-wp-controls-right">
               {/* Open in YouTube */}
               {getYoutubeId(activeVideo.youtubeUrl) && (
                 <a
                   href={activeVideo.youtubeUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="aims-wp-ctrl-btn aims-wp-yt-btn"
+                  className="absons-wp-ctrl-btn absons-wp-yt-btn"
                   title={t('auto.openInYouTube', 'Open in YouTube')}
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -829,7 +829,7 @@ export default function VideosPage() {
               )}
               {/* Playlist toggle */}
               <button
-                className="aims-wp-ctrl-btn"
+                className="absons-wp-ctrl-btn"
                 title="Playlist"
                 onClick={() => setShowPlaylist(!showPlaylist)}
               >
@@ -837,7 +837,7 @@ export default function VideosPage() {
               </button>
               {/* Fullscreen-style expand/contract */}
               <button
-                className="aims-wp-ctrl-btn"
+                className="absons-wp-ctrl-btn"
                 title={drawerCollapsed ? 'Open Player' : 'Close Player'}
                 onClick={toggleDrawerCollapsed}
               >
@@ -1036,14 +1036,14 @@ export default function VideosPage() {
           --media-focus-ring-color: transparent !important;
         }
         /* Hide Vidstack circular big play button — keep only YouTube's native one */
-        .aims-wp-video-area .vds-play-button[data-media-button],
-        .aims-wp-video-area [data-media-player] .vds-play-button,
-        .aims-wp-video-area [data-media-player] .vds-big-play-button {
+        .absons-wp-video-area .vds-play-button[data-media-button],
+        .absons-wp-video-area [data-media-player] .vds-play-button,
+        .absons-wp-video-area [data-media-player] .vds-big-play-button {
           display: none !important;
         }
 
         /* ====== WebPlayer-Style Floating Panel (Bottom-Right) ====== */
-        .aims-webplayer-drawer {
+        .absons-webplayer-drawer {
           position: fixed;
           bottom: 0;
           right: 0;
@@ -1064,16 +1064,16 @@ export default function VideosPage() {
           transition: transform 0.3s ease, width 0.3s ease;
           transform: translateX(0);
         }
-        .aims-webplayer-drawer.aims-wp-with-playlist {
+        .absons-webplayer-drawer.absons-wp-with-playlist {
           width: calc(var(--player-width) + var(--playlist-width)) !important;
         }
         /* Collapsed: slide off-screen to the right, only the edge tab remains visible */
-        .aims-webplayer-collapsed {
+        .absons-webplayer-collapsed {
           transform: translateX(100%);
         }
 
         /* Left-edge slide tab — arrow to slide panel in/out */
-        .aims-wp-edge-tab {
+        .absons-wp-edge-tab {
           position: absolute;
           left: -22px;
           bottom: 0; /* Aligned exactly at the bottom */
@@ -1092,20 +1092,20 @@ export default function VideosPage() {
           transition: background 0.2s ease, border-color 0.2s ease;
           z-index: 1;
         }
-        .aims-wp-edge-tab:hover {
+        .absons-wp-edge-tab:hover {
           background: linear-gradient(to bottom, #7a7a7a, #4a4a4a);
           border-color: #888;
         }
-        .aims-wp-edge-tab svg polygon {
+        .absons-wp-edge-tab svg polygon {
           fill: #eaeaea; /* Light grey arrow fill */
           transition: fill 0.2s ease;
         }
-        .aims-wp-edge-tab:hover svg polygon {
+        .absons-wp-edge-tab:hover svg polygon {
           fill: #ffffff; /* Brighter white arrow on hover */
         }
 
         /* Header bar */
-        .aims-wp-header {
+        .absons-wp-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1115,11 +1115,11 @@ export default function VideosPage() {
           min-height: 26px;
           flex-shrink: 0;
         }
-        .aims-wp-header-left {
+        .absons-wp-header-left {
           display: flex;
           align-items: center;
         }
-        .aims-wp-brand {
+        .absons-wp-brand {
           color: #bbb;
           font-size: 0.72rem;
           font-weight: 500;
@@ -1127,7 +1127,7 @@ export default function VideosPage() {
         }
 
         /* Main content area: video left, playlist right */
-        .aims-wp-main {
+        .absons-wp-main {
           display: flex;
           flex-shrink: 0;
           overflow: hidden;
@@ -1135,19 +1135,19 @@ export default function VideosPage() {
         }
 
         /* Video area — fills drawer width, height from aspect-ratio */
-        .aims-wp-video-area {
+        .absons-wp-video-area {
           width: var(--player-width) !important;
           height: 100%;
           background: #000;
           position: relative;
           flex-shrink: 0;
         }
-        .aims-wp-video-area [data-media-player] {
+        .absons-wp-video-area [data-media-player] {
           width: 100% !important;
           height: 100% !important;
         }
         /* Playlist panel — right side, light background */
-        .aims-wp-playlist {
+        .absons-wp-playlist {
           width: var(--playlist-width) !important;
           display: flex;
           flex-direction: column;
@@ -1156,7 +1156,7 @@ export default function VideosPage() {
           height: 100%;
           flex-shrink: 0;
         }
-        .aims-wp-playlist-header {
+        .absons-wp-playlist-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -1165,14 +1165,14 @@ export default function VideosPage() {
           border-bottom: 1px solid #ddd;
           flex-shrink: 0;
         }
-        .aims-wp-playlist-title {
+        .absons-wp-playlist-title {
           font-size: 0.82rem;
           font-weight: 700;
           color: #333;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
-        .aims-wp-playlist-close {
+        .absons-wp-playlist-close {
           background: none;
           border: none;
           color: #666;
@@ -1185,16 +1185,16 @@ export default function VideosPage() {
           border-radius: 3px;
           transition: background 0.15s;
         }
-        .aims-wp-playlist-close:hover {
+        .absons-wp-playlist-close:hover {
           background: rgba(0,0,0,0.08);
           color: #333;
         }
-        .aims-wp-playlist-items {
+        .absons-wp-playlist-items {
           flex: 1;
           overflow-y: auto;
           padding: 2px 0;
         }
-        .aims-wp-playlist-item {
+        .absons-wp-playlist-item {
           display: flex;
           align-items: center;
           padding: 6px 12px;
@@ -1203,20 +1203,20 @@ export default function VideosPage() {
           gap: 6px;
           border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        .aims-wp-playlist-item:hover {
+        .absons-wp-playlist-item:hover {
           background: rgba(0,0,0,0.06);
         }
-        .aims-wp-playlist-item-active {
+        .absons-wp-playlist-item-active {
           background: #dce7f5 !important;
           font-weight: 600;
         }
-        .aims-wp-playlist-num {
+        .absons-wp-playlist-num {
           color: #999;
           font-size: 0.78rem;
           min-width: 20px;
           flex-shrink: 0;
         }
-        .aims-wp-playlist-item-title {
+        .absons-wp-playlist-item-title {
           font-size: 0.8rem;
           color: #333;
           white-space: nowrap;
@@ -1225,12 +1225,12 @@ export default function VideosPage() {
           flex: 1;
           min-width: 0;
         }
-        .aims-wp-playlist-item-active .aims-wp-playlist-item-title {
+        .absons-wp-playlist-item-active .absons-wp-playlist-item-title {
           color: #1a1a1a;
         }
 
         /* Bottom control bar */
-        .aims-wp-controls {
+        .absons-wp-controls {
           display: flex;
           align-items: center;
           padding: 0 8px;
@@ -1240,26 +1240,26 @@ export default function VideosPage() {
           flex-shrink: 0;
           gap: 2px;
         }
-        .aims-wp-controls-left {
+        .absons-wp-controls-left {
           display: flex;
           align-items: center;
           gap: 1px;
           flex-shrink: 0;
         }
-        .aims-wp-controls-center {
+        .absons-wp-controls-center {
           flex: 1;
           min-width: 0;
           display: flex;
           align-items: center;
           padding: 0 8px;
         }
-        .aims-wp-controls-right {
+        .absons-wp-controls-right {
           display: flex;
           align-items: center;
           gap: 1px;
           flex-shrink: 0;
         }
-        .aims-wp-ctrl-btn {
+        .absons-wp-ctrl-btn {
           background: none;
           border: none;
           color: #ccc;
@@ -1273,18 +1273,18 @@ export default function VideosPage() {
           justify-content: center;
           text-decoration: none;
         }
-        .aims-wp-ctrl-btn:hover {
+        .absons-wp-ctrl-btn:hover {
           color: #fff;
           background: rgba(255,255,255,0.1);
         }
-        .aims-wp-yt-btn {
+        .absons-wp-yt-btn {
           color: #ff4444;
         }
-        .aims-wp-yt-btn:hover {
+        .absons-wp-yt-btn:hover {
           color: #ff0000;
           background: rgba(255,0,0,0.1);
         }
-        .aims-wp-now-playing {
+        .absons-wp-now-playing {
           color: #ccc;
           font-size: 0.78rem;
           white-space: nowrap;
@@ -1292,27 +1292,27 @@ export default function VideosPage() {
           text-overflow: ellipsis;
         }
 
-        @keyframes aims-spin {
+        @keyframes absons-spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
 
         /* Responsive */
         @media (max-width: 768px) {
-          .aims-webplayer-drawer {
+          .absons-webplayer-drawer {
             --player-width: 60vw;
             --playlist-width: 35vw;
             min-width: 280px;
           }
-          .aims-wp-main {
+          .absons-wp-main {
             flex-direction: row;
             height: calc(var(--player-width) * 9 / 16);
           }
-          .aims-wp-video-area {
+          .absons-wp-video-area {
             width: var(--player-width) !important;
             height: 100% !important;
           }
-          .aims-wp-playlist {
+          .absons-wp-playlist {
             width: var(--playlist-width) !important;
             height: 100% !important;
             border-left: 1px solid #ddd;
@@ -1320,29 +1320,29 @@ export default function VideosPage() {
           }
         }
         @media (max-width: 480px) {
-          .aims-webplayer-drawer {
+          .absons-webplayer-drawer {
             --player-width: 100vw;
             --playlist-width: 100vw;
             max-width: 100vw;
             border-top-left-radius: 0;
             border-left: none;
           }
-          .aims-webplayer-drawer.aims-wp-with-playlist {
+          .absons-webplayer-drawer.absons-wp-with-playlist {
             width: 100vw !important;
           }
-          .aims-wp-main {
+          .absons-wp-main {
             flex-direction: column;
             height: calc(var(--player-width) * 9 / 16 + 140px);
           }
-          .aims-wp-with-playlist .aims-wp-video-area {
+          .absons-wp-with-playlist .absons-wp-video-area {
             height: calc(var(--player-width) * 9 / 16) !important;
             width: 100% !important;
           }
-          .aims-wp-playlist {
+          .absons-wp-playlist {
             width: 100% !important;
             height: 140px !important;
           }
-          .aims-wp-edge-tab {
+          .absons-wp-edge-tab {
             display: none;
           }
         }
