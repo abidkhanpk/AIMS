@@ -11,7 +11,7 @@ import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
 
 // Import Vidstack components
-import { MediaPlayer, MediaProvider, type MediaPlayerInstance } from '@vidstack/react';
+import { MediaPlayer, MediaProvider, type MediaPlayerInstance, useMediaStore } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
 
 // Import Vidstack styles
@@ -62,6 +62,9 @@ export default function VideosPage() {
   const isFirstOpenRef = useRef(true);
   const hasStartedPlayingRef = useRef(false);
   const playlistWasOpenRef = useRef(false);
+
+  // Subscribe to Vidstack player state
+  const { fullscreen, volume, muted } = useMediaStore(playerRef);
 
   const safePlay = () => {
     if (playerRef.current) {
@@ -817,6 +820,42 @@ export default function VideosPage() {
             </div>
 
             <div className="absons-wp-controls-right">
+              {/* Volume Controls */}
+              <div className="absons-wp-vol-container">
+                <button
+                  className="absons-wp-ctrl-btn"
+                  title={muted ? 'Unmute' : 'Mute'}
+                  onClick={() => {
+                    if (playerRef.current) {
+                      playerRef.current.muted = !playerRef.current.muted;
+                    }
+                  }}
+                >
+                  {muted || volume === 0 ? (
+                    <i className="bi bi-volume-mute-fill"></i>
+                  ) : volume > 0.5 ? (
+                    <i className="bi bi-volume-up-fill"></i>
+                  ) : (
+                    <i className="bi bi-volume-down-fill"></i>
+                  )}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  className="absons-wp-vol-slider"
+                  value={muted ? 0 : volume}
+                  onChange={(e) => {
+                    if (playerRef.current) {
+                      playerRef.current.volume = parseFloat(e.target.value);
+                      playerRef.current.muted = false;
+                    }
+                  }}
+                  title={`Volume: ${Math.round((muted ? 0 : volume) * 100)}%`}
+                />
+              </div>
+
               {/* Open in YouTube */}
               {getYoutubeId(activeVideo.youtubeUrl) && (
                 <a
@@ -838,13 +877,21 @@ export default function VideosPage() {
               >
                 <i className="bi bi-list-ul"></i>
               </button>
-              {/* Fullscreen-style expand/contract */}
+              {/* Fullscreen Button */}
               <button
                 className="absons-wp-ctrl-btn"
-                title={drawerCollapsed ? 'Open Player' : 'Close Player'}
-                onClick={toggleDrawerCollapsed}
+                title={fullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                onClick={() => {
+                  if (playerRef.current) {
+                    if (fullscreen) {
+                      playerRef.current.exitFullscreen();
+                    } else {
+                      playerRef.current.enterFullscreen();
+                    }
+                  }
+                }}
               >
-                <i className={`bi ${drawerCollapsed ? 'bi-arrows-angle-expand' : 'bi-arrows-angle-contract'}`}></i>
+                <i className={`bi ${fullscreen ? 'bi-fullscreen-exit' : 'bi-fullscreen'}`}></i>
               </button>
             </div>
           </div>
@@ -1248,6 +1295,41 @@ export default function VideosPage() {
         }
         .absons-wp-playlist-item-active .absons-wp-playlist-item-title {
           color: #1a1a1a;
+        }
+
+        /* Volume controls container & sleek expanding slider range */
+        .absons-wp-vol-container {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          margin-right: 4px;
+        }
+        .absons-wp-vol-slider {
+          width: 50px;
+          height: 3px;
+          background: #555;
+          outline: none;
+          border-radius: 2px;
+          cursor: pointer;
+          accent-color: #7B2BFC;
+          transition: width 0.15s ease;
+          border: none;
+          -webkit-appearance: none;
+        }
+        .absons-wp-vol-slider::-webkit-slider-runnable-track {
+          background: transparent;
+        }
+        .absons-wp-vol-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: #fff;
+          cursor: pointer;
+          margin-top: -2.5px;
+        }
+        .absons-wp-vol-container:hover .absons-wp-vol-slider {
+          width: 70px;
         }
 
         /* Bottom control bar */
