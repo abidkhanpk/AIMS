@@ -167,6 +167,62 @@ export default function VideosPage() {
     hasSeekedRef.current = false;
   }, [activeVideo?.id]);
 
+  // Intercept generic media and YouTube link clicks inside this page
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+      if (!anchor) return;
+
+      const href = anchor.getAttribute('href') || '';
+      if (!href) return;
+
+      // Check if it is a YouTube URL or direct media file
+      const isYoutube = href.includes('youtube.com') || href.includes('youtu.be');
+      const isDirectMedia = /\.(mp3|mp4|m4a|wav|mov|ogg|webm)(\?.*)?$/i.test(href);
+
+      if (isYoutube || isDirectMedia) {
+        // Prevent normal navigation/download
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Check if there is an existing video in our list with this URL
+        const existingVideo = videos.find(v => v.youtubeUrl === href);
+        if (existingVideo) {
+          handlePlayVideo(existingVideo);
+        } else {
+          // If not in the list, construct a temporary item to append to the playlist
+          const tempId = `temp-${Date.now()}`;
+          const linkText = anchor.textContent?.trim() || '';
+          const cleanTitle = linkText || (isYoutube ? 'YouTube Video' : href.substring(href.lastIndexOf('/') + 1));
+
+          const tempVideo: VideoTutorial = {
+            id: tempId,
+            titleEn: cleanTitle,
+            titleUr: cleanTitle,
+            keywordsEn: '',
+            keywordsUr: '',
+            youtubeUrl: href,
+            roles: ['STUDENT', 'TEACHER', 'PARENT', 'ADMIN'],
+            createdAt: new Date().toISOString()
+          };
+
+          // Append to playlist
+          setVideos((prev) => [...prev, tempVideo]);
+          // Directly play it
+          handlePlayVideo(tempVideo);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleLinkClick, true);
+    return () => {
+      document.removeEventListener('click', handleLinkClick, true);
+    };
+  }, [isMounted, videos]);
+
   // Form / Modal States for Admin/Developer
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingVideo, setEditingVideo] = useState<VideoTutorial | null>(null);
@@ -220,6 +276,12 @@ export default function VideosPage() {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     return match && match[2].length === 11 ? match[2] : '';
+  };
+
+  // Helper to resolve player source
+  const getPlayerSrc = (url: string) => {
+    const ytId = getYoutubeId(url);
+    return ytId ? `youtube/${ytId}` : url;
   };
 
   // Check if current user is Developer
@@ -679,7 +741,7 @@ export default function VideosPage() {
                 <MediaPlayer
                   ref={playerRef}
                   title={currentLocale === 'ur' ? activeVideo.titleUr : activeVideo.titleEn}
-                  src={`youtube/${getYoutubeId(activeVideo.youtubeUrl)}`}
+                  src={getPlayerSrc(activeVideo.youtubeUrl)}
                   viewType="video"
                   streamType="on-demand"
                   autoplay={shouldAutoPlay}
