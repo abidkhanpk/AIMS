@@ -1,0 +1,19 @@
+/**
+ * WhatsApp Session API — Health Check Route
+ */
+
+const express = require('express');
+const router = express.Router();
+const { getAllSessions } = require('../lib/session-manager');
+
+// GET /api/health — server health check
+router.get('/', (req, res) => {
+  const sessions = getAllSessions();
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    activeSessions: sessions.length,
+  });
+});
+
+module.exports = router;
