@@ -244,6 +244,16 @@ You can configure and override the message delays and daily send limit dynamical
 
 If you are new to API integrations, this guide will walk you through exactly how to hook up this WhatsApp service into your new web application. 
 
+> [!CAUTION]
+> **Security Warning: Do NOT call this server directly from Frontend (Browser) code!**
+> If you write these `fetch` requests inside your frontend code (such as React components, Vue scripts, or vanilla HTML/JS files), your `X-WA-SECRET` passcode **will be exposed** to any user who opens Chrome DevTools (Network tab) or inspects your source code.
+> 
+> **How to keep it safe**:
+> 1. Always run these `fetch` calls from your client application's **backend / server code** (such as Next.js API routes, Node/Express handlers, Python scripts, or PHP controllers).
+> 2. Retrieve the secret passcode securely from your backend's environment variable (e.g. `process.env.WHATSAPP_API_SECRET` which is set to match the secret key defined in the VPS server `.env` file).
+> 3. Your frontend browser should talk to your own application's backend endpoint, and your backend will attach the secret header securely and proxy the request to the WhatsApp server.
+
+
 ### Core Concepts to Know:
 - **`clientId`**: A unique label to identify who is sending the message (e.g. `admin_45`). You should use the database ID of the user logging in.
 - **`X-WA-SECRET` (Password Header)**: This is a secure passcode header that prevents unauthorized apps from using your WhatsApp server.
