@@ -47,7 +47,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     subscriptionAmount,
     subscriptionCurrency,
     subscriptionStartDate,
-    subscriptionEndDate
+    subscriptionEndDate,
+    isWhatsApp
   } = req.body;
 
   if (!name || !email || !password || !role) {
@@ -109,6 +110,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Add additional fields if provided
     if (mobile) userData.mobile = mobile;
+    if (isWhatsApp !== undefined) userData.isWhatsApp = typeof isWhatsApp === 'boolean' ? isWhatsApp : isWhatsApp === 'true';
     if (address) userData.address = address;
     if (country) userData.country = country;
     if (role === 'PARENT' && profession) userData.profession = profession;
@@ -163,6 +165,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         email: true,
         role: true,
         mobile: true,
+        isWhatsApp: true,
         dateOfBirth: true,
         address: true,
         country: true,

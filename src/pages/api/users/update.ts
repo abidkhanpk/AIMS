@@ -42,7 +42,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     payType,
     payCurrency,
     // Admin status update (only for developers)
-    isActive
+    isActive,
+    isWhatsApp
   } = req.body;
 
   if (!id || !name || !email) {
@@ -104,6 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Add additional fields if provided
     if (mobile !== undefined) updateData.mobile = mobile;
+    if (isWhatsApp !== undefined) updateData.isWhatsApp = typeof isWhatsApp === 'boolean' ? isWhatsApp : isWhatsApp === 'true';
     if (dateOfBirth) updateData.dateOfBirth = new Date(dateOfBirth);
     if (address !== undefined) updateData.address = address;
     if (country !== undefined) updateData.country = country;
@@ -180,6 +182,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         email: true,
         role: true,
         mobile: true,
+        isWhatsApp: true,
         dateOfBirth: true,
         address: true,
         country: true,

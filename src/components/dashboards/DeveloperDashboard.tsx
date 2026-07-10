@@ -24,6 +24,7 @@ interface Admin {
   role: string;
   isActive: boolean;
   mobile?: string;
+  isWhatsApp?: boolean;
   address?: string;
   createdAt: string;
   studentCount?: number;
@@ -107,6 +108,7 @@ function AdminManagementTab() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mobile, setMobile] = useState('');
+  const [isWhatsApp, setIsWhatsApp] = useState(false);
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -143,6 +145,7 @@ function AdminManagementTab() {
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editMobile, setEditMobile] = useState('');
+  const [editIsWhatsApp, setEditIsWhatsApp] = useState(false);
   const [editAddress, setEditAddress] = useState('');
   const [editPassword, setEditPassword] = useState('');
   const [updating, setUpdating] = useState(false);
@@ -233,6 +236,7 @@ function AdminManagementTab() {
           password, 
           role: 'ADMIN',
           mobile: mobile || null,
+          isWhatsApp,
           address: address || null,
           subscriptionType,
           subscriptionAmount,
@@ -249,6 +253,7 @@ function AdminManagementTab() {
         setEmail('');
         setPassword('');
         setMobile('');
+        setIsWhatsApp(false);
         setAddress('');
         setSubscriptionType('MONTHLY');
         setSubscriptionAmount(29.99);
@@ -271,6 +276,7 @@ function AdminManagementTab() {
     setEditName(admin.name);
     setEditEmail(admin.email);
     setEditMobile(admin.mobile || '');
+    setEditIsWhatsApp(admin.isWhatsApp || false);
     setEditAddress(admin.address || '');
     setEditPassword('');
     setShowEditModal(true);
@@ -289,6 +295,7 @@ function AdminManagementTab() {
         name: editName,
         email: editEmail,
         mobile: editMobile || null,
+        isWhatsApp: editIsWhatsApp,
         address: editAddress || null,
       };
 
@@ -551,6 +558,15 @@ function AdminManagementTab() {
                     value={mobile} 
                     onChange={(e) => setMobile(e.target.value)} 
                     placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Check 
+                    type="checkbox"
+                    id="isWhatsApp"
+                    label={t('auto.isWhatsAppNumber', 'Is this a WhatsApp number?')}
+                    checked={isWhatsApp}
+                    onChange={(e) => setIsWhatsApp(e.target.checked)}
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
@@ -847,6 +863,15 @@ function AdminManagementTab() {
                     type="tel" 
                     value={editMobile} 
                     onChange={(e) => setEditMobile(e.target.value)}
+                  />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Check 
+                    type="checkbox"
+                    id="editIsWhatsApp"
+                    label={t('auto.isWhatsAppNumber', 'Is this a WhatsApp number?')}
+                    checked={editIsWhatsApp}
+                    onChange={(e) => setEditIsWhatsApp(e.target.checked)}
                   />
                 </Form.Group>
               </Col>

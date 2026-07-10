@@ -29,6 +29,7 @@ export interface User {
   role: Role;
   createdAt: string;
   mobile?: string;
+  isWhatsApp?: boolean;
   dateOfBirth?: string;
   address?: string;
   country?: string;
@@ -827,6 +828,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newMobile, setNewMobile] = useState('');
+  const [newIsWhatsApp, setNewIsWhatsApp] = useState(false);
   const [newDateOfBirth, setNewDateOfBirth] = useState('');
   const [newAddress, setNewAddress] = useState('');
   const [newCountry, setNewCountry] = useState('');
@@ -853,6 +855,7 @@ export function UserManagementTab({ role }: { role: Role }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mobile, setMobile] = useState('');
+  const [isWhatsApp, setIsWhatsApp] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [address, setAddress] = useState('');
   const [country, setCountry] = useState('');
@@ -964,6 +967,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         password: newPassword, 
         role,
         mobile: newMobile || undefined,
+        isWhatsApp: newIsWhatsApp,
         dateOfBirth: newDateOfBirth || undefined,
         address: newAddress || undefined,
         country: newCountry || undefined
@@ -1023,6 +1027,7 @@ export function UserManagementTab({ role }: { role: Role }) {
     setNewEmail('');
     setNewPassword('');
     setNewMobile('');
+    setNewIsWhatsApp(false);
     setNewDateOfBirth('');
     setNewAddress('');
     setNewCountry('');
@@ -1105,6 +1110,7 @@ export function UserManagementTab({ role }: { role: Role }) {
     setEmail(user.email);
     setPassword('');
     setMobile(user.mobile || '');
+    setIsWhatsApp(user.isWhatsApp || false);
     setDateOfBirth(user.dateOfBirth ? user.dateOfBirth.split('T')[0] : '');
     setAddress(user.address || '');
     setCountry(user.country || '');
@@ -1301,6 +1307,7 @@ export function UserManagementTab({ role }: { role: Role }) {
         isActive,
         ...(password && { password }),
         mobile: mobile || undefined,
+        isWhatsApp,
         dateOfBirth: dateOfBirth || undefined,
         address: address || undefined,
         country: country || undefined
@@ -1719,6 +1726,14 @@ export function UserManagementTab({ role }: { role: Role }) {
                           placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                           size="sm"
                         />
+                        <Form.Check 
+                          type="checkbox"
+                          id="newIsWhatsAppTeacher"
+                          label={t('auto.isWhatsAppNumber', 'Is WhatsApp?')}
+                          checked={newIsWhatsApp}
+                          onChange={(e) => setNewIsWhatsApp(e.target.checked)}
+                          className="mt-1 small"
+                        />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
@@ -2032,6 +2047,14 @@ export function UserManagementTab({ role }: { role: Role }) {
                           placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                           size="sm"
                         />
+                        <Form.Check 
+                          type="checkbox"
+                          id="newIsWhatsAppStudentParent"
+                          label={t('auto.isWhatsAppNumber', 'Is WhatsApp?')}
+                          checked={newIsWhatsApp}
+                          onChange={(e) => setNewIsWhatsApp(e.target.checked)}
+                          className="mt-1 small"
+                        />
                       </Form.Group>
                     </Col>
                     {isStudent && (
@@ -2187,6 +2210,14 @@ export function UserManagementTab({ role }: { role: Role }) {
                               value={mobile} 
                               onChange={(e) => setMobile(e.target.value)} 
                               placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
+                            />
+                            <Form.Check 
+                              type="checkbox"
+                              id="editIsWhatsAppTeacher"
+                              label={t('auto.isWhatsAppNumber', 'Is WhatsApp?')}
+                              checked={isWhatsApp}
+                              onChange={(e) => setIsWhatsApp(e.target.checked)}
+                              className="mt-1 small"
                             />
                           </Form.Group>
                         </Col>
@@ -2444,6 +2475,14 @@ export function UserManagementTab({ role }: { role: Role }) {
                               value={mobile} 
                               onChange={(e) => setMobile(e.target.value)} 
                               placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
+                            />
+                            <Form.Check 
+                              type="checkbox"
+                              id="editIsWhatsAppStudent"
+                              label={t('auto.isWhatsAppNumber', 'Is WhatsApp?')}
+                              checked={isWhatsApp}
+                              onChange={(e) => setIsWhatsApp(e.target.checked)}
+                              className="mt-1 small"
                             />
                           </Form.Group>
                         </Col>
@@ -2904,6 +2943,14 @@ export function UserManagementTab({ role }: { role: Role }) {
                           onChange={(e) => setMobile(e.target.value)} 
                           placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
                         />
+                        <Form.Check 
+                          type="checkbox"
+                          id="editIsWhatsAppParent"
+                          label={t('auto.isWhatsAppNumber', 'Is WhatsApp?')}
+                          checked={isWhatsApp}
+                          onChange={(e) => setIsWhatsApp(e.target.checked)}
+                          className="mt-1 small"
+                        />
                       </Form.Group>
                     </Col>
                     <Col md={4}>
@@ -3115,6 +3162,14 @@ export function UserManagementTab({ role }: { role: Role }) {
                       value={mobile} 
                       onChange={(e) => setMobile(e.target.value)} 
                       placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
+                    />
+                    <Form.Check 
+                      type="checkbox"
+                      id="editIsWhatsAppModalNonStudent"
+                      label={t('auto.isWhatsAppNumber', 'Is WhatsApp?')}
+                      checked={isWhatsApp}
+                      onChange={(e) => setIsWhatsApp(e.target.checked)}
+                      className="mt-1 small"
                     />
                   </Form.Group>
                   <Form.Group className="mb-3">
@@ -3401,6 +3456,14 @@ export function UserManagementTab({ role }: { role: Role }) {
                   value={mobile} 
                   onChange={(e) => setMobile(e.target.value)} 
                   placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
+                />
+                <Form.Check 
+                  type="checkbox"
+                  id="editIsWhatsAppModalParentBasic"
+                  label={t('auto.isWhatsAppNumber', 'Is WhatsApp?')}
+                  checked={isWhatsApp}
+                  onChange={(e) => setIsWhatsApp(e.target.checked)}
+                  className="mt-1 small"
                 />
               </Form.Group>
                             <Form.Group className="mb-3">

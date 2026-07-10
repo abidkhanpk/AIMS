@@ -61,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(500).json({ message: 'Internal server error' });
     }
   } else if (req.method === 'POST') {
-    const { studentId, parentId, relationType } = req.body;
+    const { studentId, parentId, relationType, contactForStudentInfo } = req.body;
 
     if (!studentId || !parentId || !relationType) {
       return res.status(400).json({ message: 'Student ID, parent ID, and relation type are required' });
@@ -119,6 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           parentId,
           studentId,
           relationType: relationType as RelationType,
+          contactForStudentInfo: contactForStudentInfo !== undefined ? (typeof contactForStudentInfo === 'boolean' ? contactForStudentInfo : contactForStudentInfo === 'true') : true,
         },
         include: {
           parent: {
@@ -159,10 +160,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.status(500).json({ message: 'Internal server error' });
     }
   } else if (req.method === 'PUT') {
-    const { associationId, relationType } = req.body;
+    const { associationId, relationType, contactForStudentInfo } = req.body;
 
-    if (!associationId || !relationType) {
-      return res.status(400).json({ message: 'Association ID and relation type are required' });
+    if (!associationId || (!relationType && contactForStudentInfo === undefined)) {
+      return res.status(400).json({ message: 'Association ID and fields to update are required' });
     }
 
     // Validate relation type
@@ -193,7 +194,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const updatedAssociation = await prisma.parentStudent.update({
         where: { id: associationId },
         data: {
-          relationType: relationType as RelationType,
+          relationType: relationType ? (relationType as RelationType) : undefined,
+          contactForStudentInfo: contactForStudentInfo !== undefined ? (typeof contactForStudentInfo === 'boolean' ? contactForStudentInfo : contactForStudentInfo === 'true') : undefined,
         },
         include: {
           parent: {
