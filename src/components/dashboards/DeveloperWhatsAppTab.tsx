@@ -563,7 +563,18 @@ export default function DeveloperWhatsAppTab() {
             <i className="bi bi-clock-history me-2"></i>
             {t('auto.messageLogs', 'Message Logs')}
           </h5>
-          <Badge bg="secondary">{logsTotal} {t('auto.total', 'total')}</Badge>
+          <div className="d-flex gap-2 align-items-center">
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              onClick={() => fetchLogs(logsPage)}
+              title={t('auto.refreshLogs', 'Refresh')}
+              disabled={loadingLogs}
+            >
+              <i className={`bi bi-arrow-clockwise ${loadingLogs ? 'spin' : ''}`}></i>
+            </Button>
+            <Badge bg="secondary">{logsTotal} {t('auto.total', 'total')}</Badge>
+          </div>
         </Card.Header>
         <Card.Body className="p-0">
           {loadingLogs ? (
