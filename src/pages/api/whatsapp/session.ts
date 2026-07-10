@@ -87,38 +87,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  // DELETE — Disconnect session
-  if (req.method === 'DELETE') {
+  // PUT — Disconnect / sleep session (free RAM, preserve auth)
+  if (req.method === 'PUT') {
     try {
-      const removeAuth = req.query.removeAuth !== 'false'; // default: true
-      const waRes = await waFetch(`/api/session/${clientId}?removeAuth=${removeAuth}`, {
-        method: 'DELETE',
+      const waRes = await waFetch(`/api/session/disconnect/${clientId}`, {
+        method: 'POST',
       });
       const data = await waRes.json();
 
-      // Update DB record
-      if (removeAuth) {
-        await prisma.whatsAppSession.updateMany({
-          where: { userId: clientId },
-          data: {
-            isConnected: false,
-            phoneNumber: null,
-            lastConnected: null,
-          },
-        });
-      } else {
-        await prisma.whatsAppSession.updateMany({
-          where: { userId: clientId },
-          data: {
-            isConnected: false,
-          },
-        });
-      }
+      // Update DB record to disconnected, but keep credentials and phone
+      await prisma.whatsAppSession.updateMany({
+        where: { userId: clientId },
+        data: {
+          isConnected: false,
+        },
+      });
 
       return res.json(data);
     } catch (error) {
       console.error('WhatsApp session disconnect error:', error);
       return res.status(500).json({ message: 'Failed to disconnect WhatsApp session' });
+    }
+  }
+
+  // DELETE — Full logout / unlink (delete credentials)
+  if (req.method === 'DELETE') {
+    try {
+      const waRes = await waFetch(`/api/session/${clientId}?removeAuth=true`, {
+        method: 'DELETE',
+      });
+      const data = await waRes.json();
+
+      // Update DB record - clear phone and connection info
+      await prisma.whatsAppSession.updateMany({
+        where: { userId: clientId },
+        data: {
+          isConnected: false,
+          phoneNumber: null,
+          lastConnected: null,
+        },
+      });
+
+      return res.json(data);
+    } catch (error) {
+      console.error('WhatsApp session logout error:', error);
+      return res.status(500).json({ message: 'Failed to log out WhatsApp session' });
     }
   }
 
