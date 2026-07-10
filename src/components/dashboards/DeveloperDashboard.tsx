@@ -108,7 +108,7 @@ function AdminManagementTab() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mobile, setMobile] = useState('');
-  const [isWhatsApp, setIsWhatsApp] = useState(false);
+  const [isWhatsApp, setIsWhatsApp] = useState(true);
   const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -161,7 +161,7 @@ function AdminManagementTab() {
       case 'WELCOME':
         return `Assalam-o-Alaikum ${adminName},\n\nWelcome to AIMS! Your administrator account has been created successfully. You can log in using the credentials below:\n\nEmail: ${email}\nPassword: ${whatsAppWelcomePassword || ''}\nLogin URL: https://aims.absons.net\n\nRegards,\nAIMS Support Team`;
       case 'INACTIVITY':
-        return `السلام علیکم ${adminName}،\n\nیہ AIMS سسٹم کی طرف سے ایک خودکار پیغام ہے۔ ایسا لگتا ہے کہ آپ نے کچھ وقت سے AIMS پورٹل استعمال نہیں کیا ہے۔ اگر آپ کو سسٹم استعمال کرنے میں کوئی مشکل پیش آ رہی ہے یا کوئی اور مسئلہ ہے تو براہ کرم ہمارے ساتھ شیئر کریں تاکہ ہم سسٹم کو مزید بہتر بنا سکیں۔\n\nشکریہ،\nAIMS ٹیم`;
+        return `السلام علیکم ${adminName}،\n\nامید ہے آپ خیریت سے ہوں گے۔\n\nیہ AIMS (اکیڈمی انفارمیشن مینجمنٹ سسٹم) کی طرف سے ایک خودکار پیغام ہے۔ ہمارے ریکارڈ کے مطابق، آپ نے گزشتہ کچھ دنوں سے AIMS پورٹل لاگ ان یا استعمال نہیں کیا ہے۔\n\nہم یہ جاننا چاہتے ہیں کہ آیا آپ کو سسٹم استعمال کرنے میں کسی قسم کی دشواری یا فنی خرابی کا سامنا تو نہیں کرنا پڑ رہا؟ یا اگر کوئی اور وجہ ہے جس کی وجہ سے آپ اسے استعمال نہیں کر پا رہے، تو براہ کرم ہمیں ضرور آگاہ کریں۔ آپ کا فیڈ بیک ہمارے لیے انتہائی قیمتی ہے اور ہم آپ کے تعاون سے اپنے سسٹم کو مزید بہتر اور آسان بنانا چاہتے ہیں۔\n\nاگر آپ کو کسی قسم کی تکنیکی مدد یا گائیڈنس کی ضرورت ہو، تو آپ کسی بھی وقت ہم سے رابطہ کر سکتے ہیں۔ ہم آپ کی رہنمائی اور مدد کے لیے ہمیشہ دستیاب ہیں۔\n\nنیک تمناؤں کے ساتھ،\nAIMS سپورٹ ٹیم`;
       case 'SUBSCRIPTION':
         return `Assalam-o-Alaikum ${adminName},\n\nThis is a reminder that your AIMS subscription is due/expired. To avoid any service interruption, please renew your subscription. The end date was: ${endDate}.\n\nThank you,\nAIMS Team`;
       case 'CUSTOM':
@@ -377,7 +377,7 @@ function AdminManagementTab() {
         setEmail('');
         setPassword('');
         setMobile('');
-        setIsWhatsApp(false);
+        setIsWhatsApp(true);
         setAddress('');
         setSubscriptionType('MONTHLY');
         setSubscriptionAmount(29.99);
