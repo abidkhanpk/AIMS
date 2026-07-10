@@ -44,7 +44,8 @@ When modifying or discussing this server with future AI agents, refer to these f
 Copy `.env.example` to `.env` and fill in the parameters:
 
 - `PORT`: Express server port (default `3001`).
-- `API_SECRET`: Shared secret key. Clients must pass this key in the `X-WA-SECRET` header on all API requests.
+- `API_SECRET`: Fallback shared secret key. Used if `API_SECRETS_MAP` is not set.
+- `API_SECRETS_MAP`: Multi-tenant key-value JSON mapping (e.g. `{"secret_aims":"aims","secret_crm":"crm"}`). Automatically maps a specific client app's `X-WA-SECRET` header to its prefix, isolating session IDs and preventing collisions.
 - `DATABASE_URL`: PostgreSQL connection string (e.g., `postgresql://postgres:password@localhost:5432/whatsapp_service`).
 - `WHATSAPP_MODE`:
   - `SLEEP`: Sockets connect on demand (lazy loading) and close when idle to save RAM.
