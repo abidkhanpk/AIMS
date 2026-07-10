@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Card, Spinner, Alert } from 'react-bootstrap';
+import { Form, Button, Card, Spinner, Alert, Row, Col } from 'react-bootstrap';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from 'react-i18next';
 import { currencies } from '../../utils/currencies';
@@ -24,6 +24,12 @@ export default function AcademySettingsTab() {
   const [testingSmtp, setTestingSmtp] = useState(false);
   const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
+  // WhatsApp states
+  const [minDelay, setMinDelay] = useState(5);
+  const [maxDelay, setMaxDelay] = useState(15);
+  const [maxBatch, setMaxBatch] = useState(50);
+  const [loadingWa, setLoadingWa] = useState(true);
+
   useEffect(() => {
     async function fetchSettings() {
       try {
@@ -46,7 +52,23 @@ export default function AcademySettingsTab() {
         setLoading(false);
       }
     }
+    async function fetchWaSettings() {
+      try {
+        const res = await fetch('/api/whatsapp/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setMinDelay(Math.round(data.minDelayMs / 1000));
+          setMaxDelay(Math.round(data.maxDelayMs / 1000));
+          setMaxBatch(data.maxBatchSize);
+        }
+      } catch (err) {
+        console.error('Failed to load WhatsApp settings:', err);
+      } finally {
+        setLoadingWa(false);
+      }
+    }
     fetchSettings();
+    fetchWaSettings();
   }, []);
 
   const handleSave = async () => {
@@ -70,6 +92,20 @@ export default function AcademySettingsTab() {
       });
 
       if (!res.ok) throw new Error('Failed to update academy settings');
+
+      // Save WhatsApp Settings
+      const waRes = await fetch('/api/whatsapp/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          minDelayMs: minDelay * 1000,
+          maxDelayMs: maxDelay * 1000,
+          maxBatchSize: maxBatch
+        })
+      });
+
+      if (!waRes.ok) throw new Error('Failed to update WhatsApp settings');
+
       setSuccess(t('auto.academySettingsUpdatedSuccessfully', `Academy settings updated successfully.`));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error updating settings');
@@ -158,6 +194,61 @@ export default function AcademySettingsTab() {
               {t('auto.defaultCurrencyDesc', `This is the default currency used for courses, fee invoices, and teacher pay rates.`)}
             </Form.Text>
           </Form.Group>
+        </Card.Body>
+      </Card>
+
+      <Card className="shadow-sm border-0 mb-4">
+        <Card.Header className="bg-white py-3">
+          <h5 className="mb-0 fw-bold text-muted">{t('auto.whatsappSettings', `WhatsApp Settings`)}</h5>
+        </Card.Header>
+        <Card.Body>
+          <p className="text-muted small">
+            {t('auto.whatsappSettingsDesc', `Configure message rate-limiting limits for automated WhatsApp alerts. Higher delays help prevent account suspensions.`)}
+          </p>
+          <Row className="g-3">
+            <Col md={4}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.minDelaySeconds', 'Min Delay (seconds)')}</Form.Label>
+                <Form.Control 
+                  type="number" 
+                  min={1} 
+                  value={minDelay} 
+                  onChange={(e) => setMinDelay(parseInt(e.target.value) || 1)} 
+                />
+                <Form.Text className="text-muted">
+                  {t('auto.minimumWaitBetweenMessages', 'Minimum wait between messages')}
+                </Form.Text>
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.maxDelaySeconds', 'Max Delay (seconds)')}</Form.Label>
+                <Form.Control 
+                  type="number" 
+                  min={1} 
+                  value={maxDelay} 
+                  onChange={(e) => setMaxDelay(parseInt(e.target.value) || 1)} 
+                />
+                <Form.Text className="text-muted">
+                  {t('auto.maximumWaitBetweenMessages', 'Maximum wait between messages')}
+                </Form.Text>
+              </Form.Group>
+            </Col>
+            <Col md={4}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.dailyMessageLimit', 'Daily Limit')}</Form.Label>
+                <Form.Control 
+                  type="number" 
+                  min={1} 
+                  value={maxBatch} 
+                  onChange={(e) => setMaxBatch(parseInt(e.target.value) || 1)} 
+                />
+                <Form.Text className="text-muted">
+                  {t('auto.maxMessagesPerDay', 'Max messages per day')}
+                </Form.Text>
+              </Form.Group>
+            </Col>
+          </Row>
         </Card.Body>
       </Card>
 
