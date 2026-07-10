@@ -100,7 +100,7 @@ const getUploadErrorMessage = (errorData: any, fallback: string) => {
 };
 
 function AdminManagementTab() {
-    const { t } = useTranslation('common');
+  const { t } = useTranslation('common');
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -150,30 +150,55 @@ function AdminManagementTab() {
     return whatsAppTarget ? [whatsAppTarget] : [];
   };
 
-  const getWhatsAppMessageText = (admin: Admin | null, type: string) => {
+  const getTemplateText = (type: string) => {
+    switch (type) {
+      case 'WELCOME':
+        return `Assalam-o-Alaikum {name},\n\nWelcome to AIMS! Your administrator account has been created successfully. You can log in using the credentials below:\n\nEmail: {email}\nPassword: {password}\nLogin URL: https://aims.absons.net\n\nRegards,\nAIMS Support Team`;
+      case 'INACTIVITY':
+        return `السلام علیکم {name}،\n\nامید ہے آپ خیریت سے ہوں گے۔\n\nیہ AIMS (اکیڈمی انفارمیشن مینجمنٹ سسٹم) کی طرف سے ایک خودکار پیغام ہے۔ ہمارے ریکارڈ کے مطابق، آپ نے گزشتہ کچھ دنوں سے AIMS پورٹل لاگ ان یا استعمال نہیں کیا ہے۔\n\nہم یہ جاننا چاہتے ہیں کہ آیا آپ کو سسٹم استعمال کرنے میں کسی قسم کی دشواری یا فنی خرابی کا سامنا تو نہیں کرنا پڑ رہا؟ یا اگر کوئی اور وجہ ہے جس کی وجہ سے آپ اسے استعمال نہیں کر پا رہے، تو براہ کرم ہمیں ضرور آگاہ کریں۔ آپ کا فیڈ بیک ہمارے لیے انتہائی قیمتی ہے اور ہم آپ کے تعاون سے اپنے سسٹم کو مزید بہتر اور آسان بنانا چاہتے ہیں۔\n\nمزید برآں، اگر آپ کسی بھی وجہ سے مستقبل میں AIMS سسٹم استعمال کرنا جاری نہیں رکھنا چاہتے، تو براہ کرم ہمیں مطلع کر دیں تاکہ ہم آپ کا ڈیٹا اور یوزرز حذف کر  دوسرے صارفین کے لیے جگہ خالی کی جا سکے۔\n\nاگر آپ کو کسی قسم کی تکنیکی مدد یا گائیڈنس کی ضرورت ہو، تو آپ کسی بھی وقت ہم سے رابطہ کر سکتے ہیں۔ ہم آپ کی رہنمائی اور مدد کے لیے ہمیشہ دستیاب ہیں۔\n\nنیک تمناؤں کے ساتھ،\nAIMS سپورٹ ٹیم`;
+      case 'SUBSCRIPTION':
+        return `Assalam-o-Alaikum {name},\n\nThis is a reminder that your AIMS subscription is due/expired. To avoid any service interruption, please renew your subscription. The end date was: {endDate}.\n\nThank you,\nAIMS Team`;
+      case 'CUSTOM':
+      default:
+        return '';
+    }
+  };
+
+  const resolvePlaceholders = (text: string, admin: Admin | null, password?: string) => {
+    if (!text) return '';
     const adminName = admin ? admin.name : '{AdminName}';
     const email = admin ? admin.email : '{AdminEmail}';
     const endDate = admin?.settings?.subscriptionStartDate
       ? calculateEndDate(admin.settings.subscriptionStartDate, admin.settings.subscriptionType) || 'N/A'
       : '{EndDate}';
 
-    switch (type) {
-      case 'WELCOME':
-        return `Assalam-o-Alaikum ${adminName},\n\nWelcome to AIMS! Your administrator account has been created successfully. You can log in using the credentials below:\n\nEmail: ${email}\nPassword: ${whatsAppWelcomePassword || ''}\nLogin URL: https://aims.absons.net\n\nRegards,\nAIMS Support Team`;
-      case 'INACTIVITY':
-        return `السلام علیکم ${adminName}،\n\nامید ہے آپ خیریت سے ہوں گے۔\n\nیہ AIMS (اکیڈمی انفارمیشن مینجمنٹ سسٹم) کی طرف سے ایک خودکار پیغام ہے۔ ہمارے ریکارڈ کے مطابق، آپ نے گزشتہ کچھ دنوں سے AIMS پورٹل لاگ ان یا استعمال نہیں کیا ہے۔\n\nہم یہ جاننا چاہتے ہیں کہ آیا آپ کو سسٹم استعمال کرنے میں کسی قسم کی دشواری یا فنی خرابی کا سامنا تو نہیں کرنا پڑ رہا؟ یا اگر کوئی اور وجہ ہے جس کی وجہ سے آپ اسے استعمال نہیں کر پا رہے، تو براہ کرم ہمیں ضرور آگاہ کریں۔ آپ کا فیڈ بیک ہمارے لیے انتہائی قیمتی ہے اور ہم آپ کے تعاون سے اپنے سسٹم کو مزید بہتر اور آسان بنانا چاہتے ہیں۔\n\nاگر آپ کو کسی قسم کی تکنیکی مدد یا گائیڈنس کی ضرورت ہو، تو آپ کسی بھی وقت ہم سے رابطہ کر سکتے ہیں۔ ہم آپ کی رہنمائی اور مدد کے لیے ہمیشہ دستیاب ہیں۔\n\nنیک تمناؤں کے ساتھ،\nAIMS سپورٹ ٹیم`;
-      case 'SUBSCRIPTION':
-        return `Assalam-o-Alaikum ${adminName},\n\nThis is a reminder that your AIMS subscription is due/expired. To avoid any service interruption, please renew your subscription. The end date was: ${endDate}.\n\nThank you,\nAIMS Team`;
-      case 'CUSTOM':
-      default:
-        return whatsAppCustomText;
-    }
+    return text
+      .replace(/{name}/g, adminName)
+      .replace(/{Name}/g, adminName)
+      .replace(/{email}/g, email)
+      .replace(/{Email}/g, email)
+      .replace(/{password}/g, password || '')
+      .replace(/{Password}/g, password || '')
+      .replace(/{endDate}/g, endDate)
+      .replace(/{EndDate}/g, endDate);
   };
+
+  const getWhatsAppPreviewText = () => {
+    const admin = whatsAppTarget === 'ALL' ? (admins.find(a => a.mobile) || null) : whatsAppTarget;
+    return resolvePlaceholders(whatsAppCustomText, admin, whatsAppWelcomePassword);
+  };
+
+  // Sync the edited text state when message type changes
+  useEffect(() => {
+    if (showWhatsAppModal) {
+      setWhatsAppCustomText(getTemplateText(whatsAppMessageType));
+    }
+  }, [whatsAppMessageType, showWhatsAppModal]);
 
   const handleSendWhatsApp = async () => {
     setWhatsAppError('');
     setWhatsAppSuccess('');
-    
+
     const targets = getAdminsToMessage();
     const withPhones = targets.filter(t => t.mobile && t.mobile.trim() !== '');
     if (withPhones.length === 0) {
@@ -186,8 +211,8 @@ function AdminManagementTab() {
       if (withPhones.length === 1) {
         // Send single message
         const admin = withPhones[0];
-        const text = getWhatsAppMessageText(admin, whatsAppMessageType);
-        
+        const text = resolvePlaceholders(whatsAppCustomText, admin, whatsAppWelcomePassword);
+
         const res = await fetch('/api/whatsapp/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -210,7 +235,7 @@ function AdminManagementTab() {
         // Send bulk message
         const messages = withPhones.map(admin => ({
           to: admin.mobile,
-          text: getWhatsAppMessageText(admin, whatsAppMessageType),
+          text: resolvePlaceholders(whatsAppCustomText, admin, whatsAppWelcomePassword),
           recipientName: admin.name,
           messageType: whatsAppMessageType,
         }));
@@ -284,10 +309,10 @@ function AdminManagementTab() {
   // Calculate subscription end date automatically
   const calculateEndDate = (startDate: string, type: string) => {
     if (!startDate || type === 'LIFETIME') return null;
-    
+
     const start = new Date(startDate);
     const end = new Date(start);
-    
+
     switch (type) {
       case 'MONTHLY':
         end.setMonth(end.getMonth() + 1);
@@ -298,7 +323,7 @@ function AdminManagementTab() {
       default:
         return null;
     }
-    
+
     return end.toISOString().split('T')[0];
   };
 
@@ -350,14 +375,14 @@ function AdminManagementTab() {
 
     try {
       const endDate = calculateEndDate(subscriptionStartDate, subscriptionType);
-      
+
       const res = await fetch('/api/users/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          name, 
-          email, 
-          password, 
+        body: JSON.stringify({
+          name,
+          email,
+          password,
           role: 'ADMIN',
           mobile: mobile || null,
           isWhatsApp,
@@ -453,9 +478,9 @@ function AdminManagementTab() {
       const res = await fetch('/api/users/enable-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           adminId,
-          enable: !currentStatus 
+          enable: !currentStatus
         }),
       });
 
@@ -507,7 +532,7 @@ function AdminManagementTab() {
     setDefaultCurrency(admin.settings?.defaultCurrency || 'USD');
     setSubscriptionType(admin.settings?.subscriptionType || 'MONTHLY');
     setSubscriptionAmount(admin.settings?.subscriptionAmount || 29.99);
-    
+
     const getSubEffectiveDate = (sub: any) => {
       if (sub?.plan === 'LIFETIME') {
         return new Date('9999-12-31');
@@ -519,15 +544,15 @@ function AdminManagementTab() {
 
     const activeSub = activeSubs.length > 0
       ? activeSubs.reduce((latest: any, sub: any) =>
-          getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
-          activeSubs[0])
+        getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
+        activeSubs[0])
       : (admin.subscriptions?.length
-          ? admin.subscriptions.reduce((latest: any, sub: any) =>
-              getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
-              admin.subscriptions[0])
-          : null);
+        ? admin.subscriptions.reduce((latest: any, sub: any) =>
+          getSubEffectiveDate(sub) > getSubEffectiveDate(latest) ? sub : latest,
+          admin.subscriptions[0])
+        : null);
     setSubscriptionCurrency(activeSub?.currency || 'USD');
-    
+
     setSubscriptionStartDate(admin.settings?.subscriptionStartDate ? admin.settings.subscriptionStartDate.split('T')[0] : '');
     setShowSettingsModal(true);
   };
@@ -588,13 +613,13 @@ function AdminManagementTab() {
     try {
       const endDate = calculateEndDate(subscriptionStartDate, subscriptionType);
       const resolvedHeader = headerImageUrl || headerImage || null;
-      
+
       const res = await fetch('/api/settings/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          adminId: selectedAdmin.id, 
-          appTitle, 
+        body: JSON.stringify({
+          adminId: selectedAdmin.id,
+          appTitle,
           headerImg: resolvedHeader || '/assets/default-logo.png',
           headerImgUrl: resolvedHeader,
           tagline,
@@ -641,344 +666,344 @@ function AdminManagementTab() {
           </Card.Header>
           <Card.Body>
             <Form onSubmit={handleCreateAdmin}>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.fullName', `Full Name *`)}</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    required 
-                    placeholder={t('auto.enterAdminsFullName', `Enter admin's full name`)}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.emailAddress', `Email Address *`)}</Form.Label>
-                  <Form.Control 
-                    type="email" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                    required 
-                    placeholder={t('auto.enterAdminsEmail', `Enter admin's email`)}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.password', `Password *`)}</Form.Label>
-                  <Form.Control 
-                    type="password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required 
-                    placeholder={t('auto.enterSecurePassword', `Enter secure password`)}
-                    minLength={6}
-                  />
-                  <Form.Text className="text-muted">
-                    {t('auto.passwordMustBeAtLeast6Characte', `Password must be at least 6 characters long`)}
-                                                        </Form.Text>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
-                  <Form.Control 
-                    type="tel" 
-                    value={mobile} 
-                    onChange={(e) => setMobile(e.target.value)} 
-                    placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Check 
-                    type="checkbox"
-                    id="isWhatsApp"
-                    label={t('auto.isWhatsAppNumber', 'Is this a WhatsApp number?')}
-                    checked={isWhatsApp}
-                    onChange={(e) => setIsWhatsApp(e.target.checked)}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>{t('auto.address', `Address`)}</Form.Label>
-                  <Form.Control 
-                    as="textarea"
-                    rows={2}
-                    value={address} 
-                    onChange={(e) => setAddress(e.target.value)} 
-                    placeholder={t('auto.enterAddress', `Enter address`)}
-                  />
-                </Form.Group>
-                
-                {/* Subscription Settings */}
-                <hr />
-                <h6 className="text-muted mb-3">{t('auto.subscriptionSettings', `Subscription Settings`)}</h6>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('auto.subscriptionType', `Subscription Type`)}</Form.Label>
-                      <Form.Select 
-                        value={subscriptionType} 
-                        onChange={(e) => setSubscriptionType(e.target.value)}
-                      >
-                        <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
-                        <option value="YEARLY">{t('auto.yearly', `Yearly`)}</option>
-                        <option value="LIFETIME">{t('auto.lifetime', `Lifetime`)}</option>
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
-                      <Form.Select 
-                        value={subscriptionCurrency} 
-                        onChange={(e) => setSubscriptionCurrency(e.target.value)}
-                      >
-                        {currencies.map((currency) => (
-                          <option key={currency.code} value={currency.code}>
-                            {currency.symbol} {currency.code}
-                          </option>
-                        ))}
-                      </Form.Select>
-                    </Form.Group>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
-                      <Form.Control 
-                        type="number" 
-                        step="0.01"
-                        value={subscriptionAmount} 
-                        onChange={(e) => setSubscriptionAmount(parseFloat(e.target.value))} 
-                        placeholder="0.00"
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group className="mb-3">
-                      <Form.Label>{t('auto.startDate', `Start Date`)}</Form.Label>
-                      <Form.Control 
-                        type="date" 
-                        value={subscriptionStartDate} 
-                        onChange={(e) => setSubscriptionStartDate(e.target.value)} 
-                      />
-                    </Form.Group>
-                  </Col>
-                </Row>
-                {subscriptionStartDate && subscriptionType !== 'LIFETIME' && (
-                  <Row>
-                    <Col md={12}>
-                      <Form.Group className="mb-3">
-                        <Form.Label>{t('auto.endDateAutocalculated', `End Date (Auto-calculated)`)}</Form.Label>
-                        <Form.Control 
-                          type="text" 
-                          value={calculateEndDate(subscriptionStartDate, subscriptionType) || 'N/A'}
-                          disabled
-                          className="bg-light"
-                        />
-                        <Form.Text className="text-muted">
-                          {t('auto.endDateIsAutomaticallyCalculat', `End date is automatically calculated based on subscription type`)}
-                                                                          </Form.Text>
-                      </Form.Group>
-                    </Col>
-                  </Row>
-                )}
-                
-                <Button 
-                  variant="primary" 
-                  type="submit" 
-                  disabled={creating}
-                  className="w-100"
-                >
-                  {creating ? (
-                    <>
-                      <Spinner animation="border" size="sm" className="me-2" />
-                      {t('auto.creating', `Creating...`)}
-                                                              </>
-                  ) : (
-                    <>
-                      <i className="bi bi-plus-circle me-2"></i>
-                      {t('auto.createAdmin', `Create Admin`)}
-                                                                  </>
-                  )}
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        )}
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.fullName', `Full Name *`)}</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  placeholder={t('auto.enterAdminsFullName', `Enter admin's full name`)}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.emailAddress', `Email Address *`)}</Form.Label>
+                <Form.Control
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder={t('auto.enterAdminsEmail', `Enter admin's email`)}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.password', `Password *`)}</Form.Label>
+                <Form.Control
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder={t('auto.enterSecurePassword', `Enter secure password`)}
+                  minLength={6}
+                />
+                <Form.Text className="text-muted">
+                  {t('auto.passwordMustBeAtLeast6Characte', `Password must be at least 6 characters long`)}
+                </Form.Text>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
+                <Form.Control
+                  type="tel"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  placeholder={t('auto.enterMobileNumber', `Enter mobile number`)}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="checkbox"
+                  id="isWhatsApp"
+                  label={t('auto.isWhatsAppNumber', 'Is this a WhatsApp number?')}
+                  checked={isWhatsApp}
+                  onChange={(e) => setIsWhatsApp(e.target.checked)}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.address', `Address`)}</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={2}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder={t('auto.enterAddress', `Enter address`)}
+                />
+              </Form.Group>
 
-        <Card className="shadow-sm">
-          <Card.Header className="bg-light">
-              <div className="d-flex justify-content-between align-items-center">
-                <h5 className="mb-0">
-                  <i className="bi bi-people me-2"></i>
-                  {t('auto.systemAdministrators', `System Administrators`)}
-                </h5>
-                <div className="d-flex align-items-center gap-2">
-                  <Badge bg="secondary">{admins.length} {t('auto.total', `Total`)}</Badge>
-                  <Button
-                    size="sm"
-                    variant="outline-success"
-                    onClick={() => {
-                      setWhatsAppTarget('ALL');
-                      setWhatsAppMessageType('CUSTOM');
-                      setWhatsAppWelcomePassword('');
-                      setWhatsAppCustomText('');
-                      setWhatsAppError('');
-                      setWhatsAppSuccess('');
-                      setShowWhatsAppModal(true);
-                    }}
-                    disabled={admins.filter(a => a.mobile).length === 0}
-                    title={t('auto.sendMessageToAllAdmins', 'Send message to all admins')}
-                  >
-                    <i className="bi bi-whatsapp me-1"></i>
-                    {t('auto.messageAll', 'Message All')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={showCreateForm ? 'secondary' : 'primary'}
-                    onClick={() => setShowCreateForm((v) => !v)}
-                  >
-                    <i className="bi bi-person-plus me-1"></i>
-                    {showCreateForm ? t('auto.cancel', 'Cancel') : t('auto.addNewAdmin', 'Add New Admin')}
-                  </Button>
-                </div>
-              </div>
-            </Card.Header>
-            <Card.Body className="p-0">
-              {loading ? (
-                <div className="text-center py-5">
-                  <Spinner animation="border" />
-                  <p className="mt-2 text-muted">{t('auto.loadingAdministrators', `Loading administrators...`)}</p>
-                </div>
-              ) : admins.length === 0 ? (
-                <div className="text-center py-5">
-                  <i className="bi bi-people display-4 text-muted"></i>
-                  <p className="mt-2 text-muted">{t('auto.noAdministratorsFound', `No administrators found`)}</p>
-                </div>
-              ) : (
-                <div className="table-responsive">
-                  <Table hover className="mb-0">
-                    <thead className="table-light">
-                      <tr>
-                        <th>{t('auto.name', `Name`)}</th>
-                        <th>{t('auto.email', `Email`)}</th>
-                        <th>{t('auto.status', `Status`)}</th>
-                        <th>{t('auto.studentsCount', 'Students')}</th>
-                        <th>{t('auto.subscription', `Subscription`)}</th>
-                        <th>{t('auto.appTitle', `App Title`)}</th>
-                        <th>{t('auto.currency', `Currency`)}</th>
-                        <th>{t('auto.created', `Created`)}</th>
-                        <th>{t('auto.actions', `Actions`)}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {admins.map((admin) => (
-                        <tr key={admin.id}>
-                          <td className="fw-medium">
-                            {admin.name}
-                            {admin.subscriptions?.some(sub => sub.status === 'PROCESSING') && (
-                              <Badge bg="danger" className="ms-2 align-middle">
-                                <i className="bi bi-exclamation-triangle-fill me-1"></i>
-                                {t('auto.actionRequired', 'Action Required')}
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="text-muted">{admin.email}</td>
-                           <td>
-                             <Badge bg={admin.isActive ? 'success' : 'danger'}>
-                               {admin.isActive ? 'Active' : 'Disabled'}
-                             </Badge>
-                           </td>
-                           <td>
-                             <Badge bg="info" className="text-dark">
-                               {admin.studentCount !== undefined ? admin.studentCount : 0}
-                             </Badge>
-                           </td>
-                           <td>
-                             <Badge bg="warning" className="text-dark">
-                               {admin.settings?.subscriptionType || 'MONTHLY'}
-                             </Badge>
-                           </td>
-                           <td>
-                             <Badge bg="info" className="text-dark">
-                               {admin.settings?.appTitle || 'Default'}
-                             </Badge>
-                           </td>
-                           <td>
-                             <Badge bg="secondary">
-                               {admin.settings?.defaultCurrency || 'USD'}
-                             </Badge>
-                           </td>
-                           <td className="text-muted small">
-                             {new Date(admin.createdAt).toLocaleDateString()}
-                           </td>
-                           <td>
-                             <div className="d-flex gap-1">
-                               <Button 
-                                 variant="outline-success" 
-                                 size="sm" 
-                                 onClick={() => {
-                                   setWhatsAppTarget(admin);
-                                   setWhatsAppMessageType('CUSTOM');
-                                   setWhatsAppWelcomePassword('');
-                                   setWhatsAppCustomText('');
-                                   setWhatsAppError('');
-                                   setWhatsAppSuccess('');
-                                   setShowWhatsAppModal(true);
-                                 }}
-                                 title={t('auto.sendWhatsappMessage', 'Send WhatsApp Message')}
-                                 disabled={!admin.mobile}
-                               >
-                                 <i className="bi bi-whatsapp"></i>
-                               </Button>
-                               <Button 
-                                 variant="outline-info" 
-                                 size="sm" 
-                                 onClick={() => handleShowStats(admin)}
-                                 title={t('auto.viewStatsAndTrends', `View Stats & Trends`)}
-                               >
-                                 <i className="bi bi-graph-up"></i>
-                               </Button>
-                               <Button 
-                                 variant="outline-primary" 
-                                 size="sm" 
-                                 onClick={() => handleShowEdit(admin)}
-                                 title={t('auto.editAdmin', `Edit Admin`)}
-                               >
-                                 <i className="bi bi-pencil"></i>
-                               </Button>
-                               <Button 
-                                 variant="outline-secondary" 
-                                 size="sm" 
-                                 onClick={() => handleShowSettings(admin)}
-                                 title={t('auto.settingsSubscription', `Settings & Subscription`)}
-                               >
-                                 <i className="bi bi-gear"></i>
-                               </Button>
-                               <Button 
-                                 variant={admin.isActive ? "outline-danger" : "outline-success"}
-                                 size="sm" 
-                                 onClick={() => handleToggleAdminStatus(admin.id, admin.isActive)}
-                                 title={admin.isActive ? "Disable Admin (Manual)" : "Enable Admin"}
-                               >
-                                 <i className={`bi bi-${admin.isActive ? 'x-circle' : 'check-circle'}`}></i>
-                               </Button>
-                               <Button
-                                 variant="outline-danger"
-                                 size="sm"
-                                 onClick={() => handleDeleteAdmin(admin.id)}
-                                 title={t('auto.deleteAdmin', `Delete Admin`)}
-                                 disabled={deletingAdminId === admin.id}
-                               >
-                                 <i className="bi bi-trash"></i>
-                               </Button>
-                             </div>
-                           </td>
-                        </tr>
+              {/* Subscription Settings */}
+              <hr />
+              <h6 className="text-muted mb-3">{t('auto.subscriptionSettings', `Subscription Settings`)}</h6>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('auto.subscriptionType', `Subscription Type`)}</Form.Label>
+                    <Form.Select
+                      value={subscriptionType}
+                      onChange={(e) => setSubscriptionType(e.target.value)}
+                    >
+                      <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
+                      <option value="YEARLY">{t('auto.yearly', `Yearly`)}</option>
+                      <option value="LIFETIME">{t('auto.lifetime', `Lifetime`)}</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
+                    <Form.Select
+                      value={subscriptionCurrency}
+                      onChange={(e) => setSubscriptionCurrency(e.target.value)}
+                    >
+                      {currencies.map((currency) => (
+                        <option key={currency.code} value={currency.code}>
+                          {currency.symbol} {currency.code}
+                        </option>
                       ))}
-                    </tbody>
-                  </Table>
-                </div>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
+                    <Form.Control
+                      type="number"
+                      step="0.01"
+                      value={subscriptionAmount}
+                      onChange={(e) => setSubscriptionAmount(parseFloat(e.target.value))}
+                      placeholder="0.00"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>{t('auto.startDate', `Start Date`)}</Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={subscriptionStartDate}
+                      onChange={(e) => setSubscriptionStartDate(e.target.value)}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              {subscriptionStartDate && subscriptionType !== 'LIFETIME' && (
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>{t('auto.endDateAutocalculated', `End Date (Auto-calculated)`)}</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={calculateEndDate(subscriptionStartDate, subscriptionType) || 'N/A'}
+                        disabled
+                        className="bg-light"
+                      />
+                      <Form.Text className="text-muted">
+                        {t('auto.endDateIsAutomaticallyCalculat', `End date is automatically calculated based on subscription type`)}
+                      </Form.Text>
+                    </Form.Group>
+                  </Col>
+                </Row>
               )}
-            </Card.Body>
-          </Card>
+
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={creating}
+                className="w-100"
+              >
+                {creating ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    {t('auto.creating', `Creating...`)}
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-plus-circle me-2"></i>
+                    {t('auto.createAdmin', `Create Admin`)}
+                  </>
+                )}
+              </Button>
+            </Form>
+          </Card.Body>
+        </Card>
+      )}
+
+      <Card className="shadow-sm">
+        <Card.Header className="bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">
+              <i className="bi bi-people me-2"></i>
+              {t('auto.systemAdministrators', `System Administrators`)}
+            </h5>
+            <div className="d-flex align-items-center gap-2">
+              <Badge bg="secondary">{admins.length} {t('auto.total', `Total`)}</Badge>
+              <Button
+                size="sm"
+                variant="outline-success"
+                onClick={() => {
+                  setWhatsAppTarget('ALL');
+                  setWhatsAppMessageType('CUSTOM');
+                  setWhatsAppWelcomePassword('');
+                  setWhatsAppCustomText('');
+                  setWhatsAppError('');
+                  setWhatsAppSuccess('');
+                  setShowWhatsAppModal(true);
+                }}
+                disabled={admins.filter(a => a.mobile).length === 0}
+                title={t('auto.sendMessageToAllAdmins', 'Send message to all admins')}
+              >
+                <i className="bi bi-whatsapp me-1"></i>
+                {t('auto.messageAll', 'Message All')}
+              </Button>
+              <Button
+                size="sm"
+                variant={showCreateForm ? 'secondary' : 'primary'}
+                onClick={() => setShowCreateForm((v) => !v)}
+              >
+                <i className="bi bi-person-plus me-1"></i>
+                {showCreateForm ? t('auto.cancel', 'Cancel') : t('auto.addNewAdmin', 'Add New Admin')}
+              </Button>
+            </div>
+          </div>
+        </Card.Header>
+        <Card.Body className="p-0">
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner animation="border" />
+              <p className="mt-2 text-muted">{t('auto.loadingAdministrators', `Loading administrators...`)}</p>
+            </div>
+          ) : admins.length === 0 ? (
+            <div className="text-center py-5">
+              <i className="bi bi-people display-4 text-muted"></i>
+              <p className="mt-2 text-muted">{t('auto.noAdministratorsFound', `No administrators found`)}</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover className="mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>{t('auto.name', `Name`)}</th>
+                    <th>{t('auto.email', `Email`)}</th>
+                    <th>{t('auto.status', `Status`)}</th>
+                    <th>{t('auto.studentsCount', 'Students')}</th>
+                    <th>{t('auto.subscription', `Subscription`)}</th>
+                    <th>{t('auto.appTitle', `App Title`)}</th>
+                    <th>{t('auto.currency', `Currency`)}</th>
+                    <th>{t('auto.created', `Created`)}</th>
+                    <th>{t('auto.actions', `Actions`)}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {admins.map((admin) => (
+                    <tr key={admin.id}>
+                      <td className="fw-medium">
+                        {admin.name}
+                        {admin.subscriptions?.some(sub => sub.status === 'PROCESSING') && (
+                          <Badge bg="danger" className="ms-2 align-middle">
+                            <i className="bi bi-exclamation-triangle-fill me-1"></i>
+                            {t('auto.actionRequired', 'Action Required')}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="text-muted">{admin.email}</td>
+                      <td>
+                        <Badge bg={admin.isActive ? 'success' : 'danger'}>
+                          {admin.isActive ? 'Active' : 'Disabled'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge bg="info" className="text-dark">
+                          {admin.studentCount !== undefined ? admin.studentCount : 0}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge bg="warning" className="text-dark">
+                          {admin.settings?.subscriptionType || 'MONTHLY'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge bg="info" className="text-dark">
+                          {admin.settings?.appTitle || 'Default'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Badge bg="secondary">
+                          {admin.settings?.defaultCurrency || 'USD'}
+                        </Badge>
+                      </td>
+                      <td className="text-muted small">
+                        {new Date(admin.createdAt).toLocaleDateString()}
+                      </td>
+                      <td>
+                        <div className="d-flex gap-1">
+                          <Button
+                            variant="outline-success"
+                            size="sm"
+                            onClick={() => {
+                              setWhatsAppTarget(admin);
+                              setWhatsAppMessageType('CUSTOM');
+                              setWhatsAppWelcomePassword('');
+                              setWhatsAppCustomText('');
+                              setWhatsAppError('');
+                              setWhatsAppSuccess('');
+                              setShowWhatsAppModal(true);
+                            }}
+                            title={t('auto.sendWhatsappMessage', 'Send WhatsApp Message')}
+                            disabled={!admin.mobile}
+                          >
+                            <i className="bi bi-whatsapp"></i>
+                          </Button>
+                          <Button
+                            variant="outline-info"
+                            size="sm"
+                            onClick={() => handleShowStats(admin)}
+                            title={t('auto.viewStatsAndTrends', `View Stats & Trends`)}
+                          >
+                            <i className="bi bi-graph-up"></i>
+                          </Button>
+                          <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => handleShowEdit(admin)}
+                            title={t('auto.editAdmin', `Edit Admin`)}
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </Button>
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            onClick={() => handleShowSettings(admin)}
+                            title={t('auto.settingsSubscription', `Settings & Subscription`)}
+                          >
+                            <i className="bi bi-gear"></i>
+                          </Button>
+                          <Button
+                            variant={admin.isActive ? "outline-danger" : "outline-success"}
+                            size="sm"
+                            onClick={() => handleToggleAdminStatus(admin.id, admin.isActive)}
+                            title={admin.isActive ? "Disable Admin (Manual)" : "Enable Admin"}
+                          >
+                            <i className={`bi bi-${admin.isActive ? 'x-circle' : 'check-circle'}`}></i>
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDeleteAdmin(admin.id)}
+                            title={t('auto.deleteAdmin', `Delete Admin`)}
+                            disabled={deletingAdminId === admin.id}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
 
       {/* Edit Admin Modal */}
       <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
@@ -994,9 +1019,9 @@ function AdminManagementTab() {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>{t('auto.fullName', `Full Name *`)}</Form.Label>
-                  <Form.Control 
-                    type="text" 
-                    value={editName} 
+                  <Form.Control
+                    type="text"
+                    value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     required
                   />
@@ -1005,9 +1030,9 @@ function AdminManagementTab() {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>{t('auto.emailAddress', `Email Address *`)}</Form.Label>
-                  <Form.Control 
-                    type="email" 
-                    value={editEmail} 
+                  <Form.Control
+                    type="email"
+                    value={editEmail}
                     onChange={(e) => setEditEmail(e.target.value)}
                     required
                   />
@@ -1018,14 +1043,14 @@ function AdminManagementTab() {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>{t('auto.mobileNumber', `Mobile Number`)}</Form.Label>
-                  <Form.Control 
-                    type="tel" 
-                    value={editMobile} 
+                  <Form.Control
+                    type="tel"
+                    value={editMobile}
                     onChange={(e) => setEditMobile(e.target.value)}
                   />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Check 
+                  <Form.Check
                     type="checkbox"
                     id="editIsWhatsApp"
                     label={t('auto.isWhatsAppNumber', 'Is this a WhatsApp number?')}
@@ -1037,34 +1062,34 @@ function AdminManagementTab() {
             </Row>
             <Form.Group className="mb-3">
               <Form.Label>{t('auto.address', `Address`)}</Form.Label>
-              <Form.Control 
+              <Form.Control
                 as="textarea"
                 rows={2}
-                value={editAddress} 
+                value={editAddress}
                 onChange={(e) => setEditAddress(e.target.value)}
               />
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>{t('auto.newPassword', `New Password`)}</Form.Label>
-              <Form.Control 
-                type="password" 
-                value={editPassword} 
+              <Form.Control
+                type="password"
+                value={editPassword}
                 onChange={(e) => setEditPassword(e.target.value)}
                 placeholder={t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
                 minLength={6}
               />
               <Form.Text className="text-muted">
                 {t('auto.leaveBlankToKeepCurrentPasswor', `Leave blank to keep current password`)}
-                                            </Form.Text>
+              </Form.Text>
             </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowEditModal(false)}>
             {t('auto.cancel', `Cancel`)}
-                                </Button>
-          <Button 
-            variant="primary" 
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleUpdateAdmin}
             disabled={updating}
           >
@@ -1072,12 +1097,12 @@ function AdminManagementTab() {
               <>
                 <Spinner animation="border" size="sm" className="me-2" />
                 {t('auto.updating', `Updating...`)}
-                                            </>
+              </>
             ) : (
               <>
                 <i className="bi bi-check-circle me-2"></i>
                 {t('auto.updateAdmin', `Update Admin`)}
-                                                </>
+              </>
             )}
           </Button>
         </Modal.Footer>
@@ -1099,9 +1124,9 @@ function AdminManagementTab() {
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.appTitle', `App Title`)}</Form.Label>
-                      <Form.Control 
-                        type="text" 
-                        value={appTitle} 
+                      <Form.Control
+                        type="text"
+                        value={appTitle}
                         onChange={(e) => setAppTitle(e.target.value)}
                         placeholder={t('auto.enterAppTitle', `Enter app title`)}
                       />
@@ -1110,8 +1135,8 @@ function AdminManagementTab() {
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.defaultCurrency', `Default Currency`)}</Form.Label>
-                      <Form.Select 
-                        value={defaultCurrency} 
+                      <Form.Select
+                        value={defaultCurrency}
                         onChange={(e) => setDefaultCurrency(e.target.value)}
                       >
                         {currencies.map((currency) => (
@@ -1127,9 +1152,9 @@ function AdminManagementTab() {
                   <Col md={12}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.tagline', `Tagline`)}</Form.Label>
-                      <Form.Control 
-                        type="text" 
-                        value={tagline} 
+                      <Form.Control
+                        type="text"
+                        value={tagline}
                         onChange={(e) => setTagline(e.target.value)}
                         placeholder={t('auto.enterTagline', `Enter tagline`)}
                       />
@@ -1141,7 +1166,7 @@ function AdminManagementTab() {
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.headerLogoUpload', `Header Logo (Upload)`)}</Form.Label>
                       <div className="d-flex gap-2">
-                        <Form.Control 
+                        <Form.Control
                           type="file"
                           ref={fileInputRef}
                           onChange={handleLogoUpload}
@@ -1154,15 +1179,15 @@ function AdminManagementTab() {
                       </div>
                       <Form.Text className="text-muted">
                         {t('auto.uploadJpegPngGifOrWebpMax5mb', `Upload JPEG, PNG, GIF, or WebP (max 5MB)`)}
-                                                                    </Form.Text>
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.headerLogoUrl', `Header Logo (URL)`)}</Form.Label>
-                      <Form.Control 
-                        type="url" 
-                        value={headerImageUrl} 
+                      <Form.Control
+                        type="url"
+                        value={headerImageUrl}
                         onChange={(e) => {
                           setHeaderImageUrl(e.target.value);
                           if (e.target.value) {
@@ -1173,13 +1198,13 @@ function AdminManagementTab() {
                       />
                       <Form.Text className="text-muted">
                         {t('auto.alternativeToFileUpload', `Alternative to file upload`)}
-                                                                    </Form.Text>
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>
 
                 {/* Enable Homepage toggle removed from admin settings. This is controlled globally in Global Settings. */}
-                
+
                 {headerImage && (
                   <div className="mb-3">
                     <Form.Label>{t('auto.currentLogoPreview', `Current Logo Preview`)}</Form.Label>
@@ -1206,8 +1231,8 @@ function AdminManagementTab() {
                   <Col md={8}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.subscriptionType', `Subscription Type`)}</Form.Label>
-                      <Form.Select 
-                        value={subscriptionType} 
+                      <Form.Select
+                        value={subscriptionType}
                         onChange={(e) => setSubscriptionType(e.target.value)}
                       >
                         <option value="MONTHLY">{t('auto.monthly', `Monthly`)}</option>
@@ -1219,8 +1244,8 @@ function AdminManagementTab() {
                   <Col md={4}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.currency', `Currency`)}</Form.Label>
-                      <Form.Select 
-                        value={subscriptionCurrency} 
+                      <Form.Select
+                        value={subscriptionCurrency}
                         onChange={(e) => setSubscriptionCurrency(e.target.value)}
                       >
                         {currencies.map((currency) => (
@@ -1234,11 +1259,11 @@ function AdminManagementTab() {
                   <Col md={4}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.amount', `Amount`)}</Form.Label>
-                      <Form.Control 
-                        type="number" 
+                      <Form.Control
+                        type="number"
                         step="0.01"
-                        value={subscriptionAmount} 
-                        onChange={(e) => setSubscriptionAmount(parseFloat(e.target.value))} 
+                        value={subscriptionAmount}
+                        onChange={(e) => setSubscriptionAmount(parseFloat(e.target.value))}
                         placeholder="0.00"
                       />
                     </Form.Group>
@@ -1248,19 +1273,19 @@ function AdminManagementTab() {
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.startDate', `Start Date`)}</Form.Label>
-                      <Form.Control 
-                        type="date" 
-                        value={subscriptionStartDate} 
-                        onChange={(e) => setSubscriptionStartDate(e.target.value)} 
+                      <Form.Control
+                        type="date"
+                        value={subscriptionStartDate}
+                        onChange={(e) => setSubscriptionStartDate(e.target.value)}
                       />
                     </Form.Group>
                   </Col>
                   <Col md={6}>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('auto.endDateAutocalculated', `End Date (Auto-calculated)`)}</Form.Label>
-                      <Form.Control 
-                        type="text" 
-                        value={subscriptionStartDate && subscriptionType !== 'LIFETIME' 
+                      <Form.Control
+                        type="text"
+                        value={subscriptionStartDate && subscriptionType !== 'LIFETIME'
                           ? calculateEndDate(subscriptionStartDate, subscriptionType) || 'N/A'
                           : subscriptionType === 'LIFETIME' ? 'Lifetime - No Expiry' : 'N/A'
                         }
@@ -1269,7 +1294,7 @@ function AdminManagementTab() {
                       />
                       <Form.Text className="text-muted">
                         {t('auto.endDateIsAutomaticallyCalculat', `End date is automatically calculated based on subscription type and start date`)}
-                                                                    </Form.Text>
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>
@@ -1285,9 +1310,9 @@ function AdminManagementTab() {
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowSettingsModal(false)}>
             {t('auto.cancel', `Cancel`)}
-                                </Button>
-          <Button 
-            variant="primary" 
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleSaveSettings}
             disabled={updatingSettings}
           >
@@ -1295,12 +1320,12 @@ function AdminManagementTab() {
               <>
                 <Spinner animation="border" size="sm" className="me-2" />
                 {t('auto.saving', `Saving...`)}
-                                            </>
+              </>
             ) : (
               <>
                 <i className="bi bi-check-circle me-2"></i>
                 {t('auto.saveChanges', `Save Changes`)}
-                                                </>
+              </>
             )}
           </Button>
         </Modal.Footer>
@@ -1400,39 +1425,39 @@ function AdminManagementTab() {
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
                           <XAxis dataKey="name" axisLine={false} tickLine={false} dy={10} style={{ fontSize: '12px', fill: '#6b7280' }} />
                           <YAxis axisLine={false} tickLine={false} dx={-10} style={{ fontSize: '12px', fill: '#6b7280' }} />
-                          <Tooltip 
+                          <Tooltip
                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)', backgroundColor: '#fff' }}
                             labelStyle={{ fontWeight: 'bold', color: '#1f2937' }}
                           />
                           <Legend verticalAlign="top" height={36} iconType="circle" style={{ fontSize: '14px' }} />
-                          <Line 
-                            type="monotone" 
-                            dataKey="Students" 
-                            stroke="#3b82f6" 
+                          <Line
+                            type="monotone"
+                            dataKey="Students"
+                            stroke="#3b82f6"
                             strokeWidth={3}
                             dot={{ r: 4, strokeWidth: 2 }}
                             activeDot={{ r: 6 }}
                           />
-                          <Line 
-                            type="monotone" 
-                            dataKey="Teachers" 
-                            stroke="#10b981" 
+                          <Line
+                            type="monotone"
+                            dataKey="Teachers"
+                            stroke="#10b981"
                             strokeWidth={3}
                             dot={{ r: 4, strokeWidth: 2 }}
                             activeDot={{ r: 6 }}
                           />
-                          <Line 
-                            type="monotone" 
-                            dataKey="Parents" 
-                            stroke="#8b5cf6" 
+                          <Line
+                            type="monotone"
+                            dataKey="Parents"
+                            stroke="#8b5cf6"
                             strokeWidth={3}
                             dot={{ r: 4, strokeWidth: 2 }}
                             activeDot={{ r: 6 }}
                           />
-                          <Line 
-                            type="monotone" 
-                            dataKey="Courses" 
-                            stroke="#f59e0b" 
+                          <Line
+                            type="monotone"
+                            dataKey="Courses"
+                            stroke="#f59e0b"
                             strokeWidth={3}
                             dot={{ r: 4, strokeWidth: 2 }}
                             activeDot={{ r: 6 }}
@@ -1473,9 +1498,9 @@ function AdminManagementTab() {
           <Form>
             <Form.Group className="mb-3">
               <Form.Label className="fw-bold">{t('auto.recipient', 'Recipient')}</Form.Label>
-              <Form.Control 
-                type="text" 
-                readOnly 
+              <Form.Control
+                type="text"
+                readOnly
                 className="bg-light fw-bold"
                 value={
                   whatsAppTarget === 'ALL'
@@ -1487,8 +1512,8 @@ function AdminManagementTab() {
 
             <Form.Group className="mb-3">
               <Form.Label className="fw-bold">{t('auto.messageType', 'Message Type')}</Form.Label>
-              <Form.Select 
-                value={whatsAppMessageType} 
+              <Form.Select
+                value={whatsAppMessageType}
                 onChange={(e) => {
                   setWhatsAppMessageType(e.target.value as any);
                   setWhatsAppError('');
@@ -1503,16 +1528,16 @@ function AdminManagementTab() {
                 {/* Subscription option only if due */}
                 {((whatsAppTarget !== 'ALL' && whatsAppTarget && isSubscriptionDue(whatsAppTarget)) ||
                   (whatsAppTarget === 'ALL' && admins.some(a => a.mobile && isSubscriptionDue(a)))) && (
-                  <option value="SUBSCRIPTION">{t('auto.subscriptionDueMessage', 'Subscription Due Message')}</option>
-                )}
+                    <option value="SUBSCRIPTION">{t('auto.subscriptionDueMessage', 'Subscription Due Message')}</option>
+                  )}
               </Form.Select>
             </Form.Group>
 
             {whatsAppMessageType === 'WELCOME' && (
               <Form.Group className="mb-3">
                 <Form.Label className="fw-bold">{t('auto.defaultPassword', 'Default Password')}</Form.Label>
-                <Form.Control 
-                  type="text" 
+                <Form.Control
+                  type="text"
                   placeholder={t('auto.enterDefaultPassword', 'Enter default password for the admin')}
                   value={whatsAppWelcomePassword}
                   onChange={(e) => setWhatsAppWelcomePassword(e.target.value)}
@@ -1521,24 +1546,29 @@ function AdminManagementTab() {
               </Form.Group>
             )}
 
-            {whatsAppMessageType === 'CUSTOM' && (
-              <Form.Group className="mb-3">
-                <Form.Label className="fw-bold">{t('auto.messageText', 'Message Text')}</Form.Label>
-                <Form.Control 
-                  as="textarea"
-                  rows={4}
-                  placeholder={t('auto.typeYourMessage', 'Type your message...')}
-                  value={whatsAppCustomText}
-                  onChange={(e) => setWhatsAppCustomText(e.target.value)}
-                  required
-                />
-              </Form.Group>
-            )}
+            <Form.Group className="mb-3">
+              <Form.Label className="fw-bold">{t('auto.messageText', 'Message Text (Editable)')}</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={6}
+                placeholder={t('auto.typeYourMessage', 'Type your message...')}
+                value={whatsAppCustomText}
+                onChange={(e) => setWhatsAppCustomText(e.target.value)}
+                required
+                style={{
+                  fontFamily: 'inherit',
+                  direction: whatsAppMessageType === 'INACTIVITY' ? 'rtl' : 'ltr'
+                }}
+              />
+              <Form.Text className="text-muted">
+                {t('auto.placeholdersHint', 'You can use placeholders like {name}, {email}, {endDate}, or {password} to personalize the message.')}
+              </Form.Text>
+            </Form.Group>
 
             {/* Preview Button */}
             <div className="mb-3">
-              <Button 
-                variant="outline-secondary" 
+              <Button
+                variant="outline-secondary"
                 size="sm"
                 onClick={() => {
                   setWhatsAppError('');
@@ -1555,8 +1585,8 @@ function AdminManagementTab() {
             </div>
 
             {/* Preview Box */}
-            <div 
-              id="whatsapp-preview-box" 
+            <div
+              id="whatsapp-preview-box"
               style={{ display: 'none', border: '1px solid #ced4da', borderRadius: '8px', overflow: 'hidden' }}
               className="mb-3 shadow-sm"
             >
@@ -1564,16 +1594,17 @@ function AdminManagementTab() {
                 <i className="bi bi-whatsapp"></i>
                 <span className="fw-bold small">{t('auto.whatsappPreview', 'WhatsApp Message Preview')}</span>
               </div>
-              <div 
+              <div
                 className="p-3 bg-light"
-                style={{ 
-                  fontFamily: 'Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Georgia, serif', 
+                style={{
+                  fontFamily: 'Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Georgia, serif',
                   whiteSpace: 'pre-line',
                   fontSize: '0.95rem',
-                  lineHeight: '1.4'
+                  lineHeight: '1.4',
+                  direction: whatsAppMessageType === 'INACTIVITY' ? 'rtl' : 'ltr'
                 }}
               >
-                {getWhatsAppMessageText(whatsAppTarget === 'ALL' ? (admins.find(a => a.mobile) || null) : whatsAppTarget, whatsAppMessageType)}
+                {getWhatsAppPreviewText()}
               </div>
             </div>
           </Form>
@@ -1582,11 +1613,11 @@ function AdminManagementTab() {
           <Button variant="secondary" onClick={() => setShowWhatsAppModal(false)}>
             {t('auto.close', 'Close')}
           </Button>
-          <Button 
-            variant="success" 
-            onClick={handleSendWhatsApp} 
+          <Button
+            variant="success"
+            onClick={handleSendWhatsApp}
             disabled={
-              sendingWhatsApp || 
+              sendingWhatsApp ||
               (whatsAppMessageType === 'WELCOME' && !whatsAppWelcomePassword.trim()) ||
               (whatsAppMessageType === 'CUSTOM' && !whatsAppCustomText.trim())
             }
@@ -1599,7 +1630,7 @@ function AdminManagementTab() {
             ) : (
               <>
                 <i className="bi bi-send me-2"></i>
-                {whatsAppTarget === 'ALL' 
+                {whatsAppTarget === 'ALL'
                   ? `${t('auto.sendToAll', 'Send to All')} (${getAdminsToMessage().filter(t => t.mobile).length})`
                   : t('auto.sendMessage', 'Send Message')
                 }
@@ -1613,7 +1644,7 @@ function AdminManagementTab() {
 }
 
 function GlobalSettingsTab() {
-    const { t } = useTranslation('common');
+  const { t } = useTranslation('common');
   const [appSettings, setAppSettings] = useState<AppSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -1731,8 +1762,8 @@ function GlobalSettingsTab() {
       const res = await fetch('/api/settings/developer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          appName, 
+        body: JSON.stringify({
+          appName,
           appLogo,
           tagline,
           enableHomePage,
@@ -1819,16 +1850,16 @@ function GlobalSettingsTab() {
           <h5 className="mb-0">
             <i className="bi bi-globe me-2"></i>
             {t('auto.globalApplicationSettings', `Global Application Settings`)}
-                                </h5>
+          </h5>
         </Card.Header>
         <Card.Body>
           <Row>
             <Col md={6}>
               <Form.Group className="mb-3">
                 <Form.Label>{t('auto.applicationName', `Application Name`)}</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  value={appName} 
+                <Form.Control
+                  type="text"
+                  value={appName}
                   onChange={(e) => setAppName(e.target.value)}
                   placeholder={t('auto.enterApplicationName', `Enter application name`)}
                 />
@@ -1837,9 +1868,9 @@ function GlobalSettingsTab() {
             <Col md={6}>
               <Form.Group className="mb-3">
                 <Form.Label>{t('auto.applicationTagline', `Application Tagline`)}</Form.Label>
-                <Form.Control 
-                  type="text" 
-                  value={tagline} 
+                <Form.Control
+                  type="text"
+                  value={tagline}
                   onChange={(e) => setTagline(e.target.value)}
                   placeholder={t('auto.enterApplicationTagline', `Enter application tagline`)}
                 />
@@ -1910,7 +1941,7 @@ function GlobalSettingsTab() {
               <Form.Group className="mb-3">
                 <Form.Label>{t('auto.applicationLogo', `Application Logo`)}</Form.Label>
                 <div className="d-flex gap-2">
-                  <Form.Control 
+                  <Form.Control
                     type="file"
                     ref={fileInputRef}
                     onChange={handleLogoUpload}
@@ -1923,7 +1954,7 @@ function GlobalSettingsTab() {
                 </div>
                 <Form.Text className="text-muted">
                   {t('auto.uploadJpegPngGifOrWebpMax5mb', `Upload JPEG, PNG, GIF, or WebP (max 5MB)`)}
-                                                  </Form.Text>
+                </Form.Text>
               </Form.Group>
             </Col>
           </Row>
@@ -1981,7 +2012,7 @@ function GlobalSettingsTab() {
             <Col md={4}>
               <Form.Group className="mb-3">
                 <Form.Label>{t('auto.smtpSecure', `Security Protocol (TLS/SSL)`)}</Form.Label>
-                <Form.Select 
+                <Form.Select
                   value={smtpSecure}
                   onChange={e => setSmtpSecure(e.target.value)}
                 >
@@ -2003,16 +2034,16 @@ function GlobalSettingsTab() {
             </Col>
             <Col md={4}>
               <Form.Group className="mb-3">
-                 <Form.Label>{t('auto.smtpReplyTo', `SMTP Reply-To Email`)}</Form.Label>
-                 <Form.Control
-                   type="email"
-                   value={smtpReplyTo}
-                   onChange={e => setSmtpReplyTo(e.target.value)}
-                   placeholder={t('auto.egSupportaimscom', `e.g. support@aims.com`)}
-                 />
-               </Form.Group>
-             </Col>
-           </Row>
+                <Form.Label>{t('auto.smtpReplyTo', `SMTP Reply-To Email`)}</Form.Label>
+                <Form.Control
+                  type="email"
+                  value={smtpReplyTo}
+                  onChange={e => setSmtpReplyTo(e.target.value)}
+                  placeholder={t('auto.egSupportaimscom', `e.g. support@aims.com`)}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
 
           <Row className="mb-4">
             <Col md={12}>
@@ -2028,14 +2059,14 @@ function GlobalSettingsTab() {
                     style={{ maxWidth: '300px' }}
                     className="bg-white"
                   />
-                  <Button 
-                    variant="outline-primary" 
+                  <Button
+                    variant="outline-primary"
                     onClick={handleTestSmtp}
                     disabled={testingSmtp || !testEmail}
                   >
                     {testingSmtp ? (
                       <>
-                        <Spinner size="sm" animation="border" className="me-2"/>
+                        <Spinner size="sm" animation="border" className="me-2" />
                         {t('auto.testing', 'Testing...')}
                       </>
                     ) : (
@@ -2044,8 +2075,8 @@ function GlobalSettingsTab() {
                   </Button>
                 </div>
                 {smtpTestResult && (
-                  <Alert 
-                    variant={smtpTestResult.success ? 'success' : 'danger'} 
+                  <Alert
+                    variant={smtpTestResult.success ? 'success' : 'danger'}
                     className="mt-3 mb-0 py-2 small"
                   >
                     {smtpTestResult.message}
@@ -2067,11 +2098,11 @@ function GlobalSettingsTab() {
                 />
                 <Form.Text className="text-muted">
                   <strong>{t('auto.globalHomepageControl', `Global Homepage Control:`)}</strong> {t('auto.whenDisabledAllUsersWillBeRedi', `When disabled, all users will be redirected directly to the sign-in page instead of the homepage.`)}
-                                                  </Form.Text>
+                </Form.Text>
               </Form.Group>
             </Col>
           </Row>
-          
+
           {appLogo && (
             <div className="mb-4">
               <Form.Label>{t('auto.currentLogoPreview', `Current Logo Preview`)}</Form.Label>
@@ -2092,8 +2123,8 @@ function GlobalSettingsTab() {
           )}
 
           <div className="d-flex justify-content-end">
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={handleSaveGlobalSettings}
               disabled={updating}
               size="lg"
@@ -2102,12 +2133,12 @@ function GlobalSettingsTab() {
                 <>
                   <Spinner animation="border" size="sm" className="me-2" />
                   {t('auto.updating', `Updating...`)}
-                                                  </>
+                </>
               ) : (
                 <>
                   <i className="bi bi-check-circle me-2"></i>
                   {t('auto.saveGlobalSettings', `Save Global Settings`)}
-                                                      </>
+                </>
               )}
             </Button>
           </div>
@@ -2118,7 +2149,7 @@ function GlobalSettingsTab() {
 }
 
 export default function DeveloperDashboard() {
-    const { t } = useTranslation('common');
+  const { t } = useTranslation('common');
   return (
     <div className="container-fluid">
       <div className="row mb-4 align-items-center">
@@ -2140,30 +2171,30 @@ export default function DeveloperDashboard() {
       </div>
 
       <Tabs defaultActiveKey="global-settings" id="developer-dashboard-tabs" className="mb-4">
-        <Tab 
-          eventKey="global-settings" 
+        <Tab
+          eventKey="global-settings"
           title={
             <span>
               <i className="bi bi-globe me-2"></i>
               {t('auto.globalSettings', `Global Settings`)}
-                              </span>
+            </span>
           }
         >
           <GlobalSettingsTab />
         </Tab>
-        <Tab 
-          eventKey="admins" 
+        <Tab
+          eventKey="admins"
           title={
             <span>
               <i className="bi bi-people me-2"></i>
               {t('auto.administrators', `Administrators`)}
-                              </span>
+            </span>
           }
         >
           <AdminManagementTab />
         </Tab>
-        <Tab 
-          eventKey="whatsapp" 
+        <Tab
+          eventKey="whatsapp"
           title={
             <span>
               <i className="bi bi-whatsapp me-2"></i>
@@ -2174,11 +2205,11 @@ export default function DeveloperDashboard() {
           <DeveloperWhatsAppTab />
         </Tab>
       </Tabs>
-      
+
       <div className="text-center mt-5 pt-4 border-top">
         <small className="text-muted">
           © {new Date().getFullYear()} {t('auto.aimsAcademyInformationAndManag', `AIMS - Academy Information and Management System. All rights reserved.`)}
-                          </small>
+        </small>
       </div>
     </div>
   );
