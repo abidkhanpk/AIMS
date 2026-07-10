@@ -90,19 +90,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // DELETE — Disconnect session
   if (req.method === 'DELETE') {
     try {
-      const waRes = await waFetch(`/api/session/${clientId}`, {
+      const removeAuth = req.query.removeAuth !== 'false'; // default: true
+      const waRes = await waFetch(`/api/session/${clientId}?removeAuth=${removeAuth}`, {
         method: 'DELETE',
       });
       const data = await waRes.json();
 
       // Update DB record
-      await prisma.whatsAppSession.updateMany({
-        where: { userId: clientId },
-        data: {
-          isConnected: false,
-          phoneNumber: null,
-        },
-      });
+      if (removeAuth) {
+        await prisma.whatsAppSession.updateMany({
+          where: { userId: clientId },
+          data: {
+            isConnected: false,
+            phoneNumber: null,
+            lastConnected: null,
+          },
+        });
+      } else {
+        await prisma.whatsAppSession.updateMany({
+          where: { userId: clientId },
+          data: {
+            isConnected: false,
+          },
+        });
+      }
 
       return res.json(data);
     } catch (error) {

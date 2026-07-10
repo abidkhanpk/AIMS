@@ -115,6 +115,130 @@ function AdminManagementTab() {
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
+  // WhatsApp Message Modal States
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [whatsAppTarget, setWhatsAppTarget] = useState<Admin | 'ALL' | null>(null);
+  const [whatsAppMessageType, setWhatsAppMessageType] = useState<'WELCOME' | 'INACTIVITY' | 'SUBSCRIPTION' | 'CUSTOM'>('CUSTOM');
+  const [whatsAppWelcomePassword, setWhatsAppWelcomePassword] = useState('');
+  const [whatsAppCustomText, setWhatsAppCustomText] = useState('');
+  const [whatsAppError, setWhatsAppError] = useState('');
+  const [whatsAppSuccess, setWhatsAppSuccess] = useState('');
+  const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
+
+  // Helper to check if an admin's subscription is due (expired or expiring in <= 7 days)
+  const isSubscriptionDue = (admin: Admin) => {
+    if (!admin?.settings?.subscriptionStartDate) return false;
+    if (admin?.settings?.subscriptionType === 'LIFETIME') return false;
+    const endDateStr = calculateEndDate(admin.settings.subscriptionStartDate, admin.settings.subscriptionType);
+    if (!endDateStr) return false;
+    const endDate = new Date(endDateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  };
+
+  const getAdminsToMessage = () => {
+    if (whatsAppTarget === 'ALL') {
+      const activeAdmins = admins.filter(admin => admin.mobile);
+      if (whatsAppMessageType === 'SUBSCRIPTION') {
+        return activeAdmins.filter(admin => isSubscriptionDue(admin));
+      }
+      return activeAdmins;
+    }
+    return whatsAppTarget ? [whatsAppTarget] : [];
+  };
+
+  const getWhatsAppMessageText = (admin: Admin | null, type: string) => {
+    const adminName = admin ? admin.name : '{AdminName}';
+    const email = admin ? admin.email : '{AdminEmail}';
+    const endDate = admin?.settings?.subscriptionStartDate
+      ? calculateEndDate(admin.settings.subscriptionStartDate, admin.settings.subscriptionType) || 'N/A'
+      : '{EndDate}';
+
+    switch (type) {
+      case 'WELCOME':
+        return `Assalam-o-Alaikum ${adminName},\n\nWelcome to AIMS! Your administrator account has been created successfully. You can log in using the credentials below:\n\nEmail: ${email}\nPassword: ${whatsAppWelcomePassword || ''}\nLogin URL: https://aims.absons.net\n\nRegards,\nAIMS Support Team`;
+      case 'INACTIVITY':
+        return `السلام علیکم ${adminName}،\n\nیہ AIMS سسٹم کی طرف سے ایک خودکار پیغام ہے۔ ایسا لگتا ہے کہ آپ نے کچھ وقت سے AIMS پورٹل استعمال نہیں کیا ہے۔ اگر آپ کو سسٹم استعمال کرنے میں کوئی مشکل پیش آ رہی ہے یا کوئی اور مسئلہ ہے تو براہ کرم ہمارے ساتھ شیئر کریں تاکہ ہم سسٹم کو مزید بہتر بنا سکیں۔\n\nشکریہ،\nAIMS ٹیم`;
+      case 'SUBSCRIPTION':
+        return `Assalam-o-Alaikum ${adminName},\n\nThis is a reminder that your AIMS subscription is due/expired. To avoid any service interruption, please renew your subscription. The end date was: ${endDate}.\n\nThank you,\nAIMS Team`;
+      case 'CUSTOM':
+      default:
+        return whatsAppCustomText;
+    }
+  };
+
+  const handleSendWhatsApp = async () => {
+    setWhatsAppError('');
+    setWhatsAppSuccess('');
+    
+    const targets = getAdminsToMessage();
+    const withPhones = targets.filter(t => t.mobile && t.mobile.trim() !== '');
+    if (withPhones.length === 0) {
+      setWhatsAppError(t('auto.noAdminsToMessage', 'No admins found with mobile numbers matching the criteria.'));
+      return;
+    }
+
+    setSendingWhatsApp(true);
+    try {
+      if (withPhones.length === 1) {
+        // Send single message
+        const admin = withPhones[0];
+        const text = getWhatsAppMessageText(admin, whatsAppMessageType);
+        
+        const res = await fetch('/api/whatsapp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: admin.mobile,
+            text,
+            recipientName: admin.name,
+            messageType: whatsAppMessageType,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          setWhatsAppSuccess(t('auto.messageSentSuccessfully', 'Message enqueued successfully!'));
+          setTimeout(() => setShowWhatsAppModal(false), 1500);
+        } else {
+          setWhatsAppError(data.message || 'Failed to send message');
+        }
+      } else {
+        // Send bulk message
+        const messages = withPhones.map(admin => ({
+          to: admin.mobile,
+          text: getWhatsAppMessageText(admin, whatsAppMessageType),
+          recipientName: admin.name,
+          messageType: whatsAppMessageType,
+        }));
+
+        const res = await fetch('/api/whatsapp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages,
+            messageType: whatsAppMessageType,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          setWhatsAppSuccess(t('auto.bulkMessagesSentSuccessfully', 'All messages enqueued successfully!'));
+          setTimeout(() => setShowWhatsAppModal(false), 1500);
+        } else {
+          setWhatsAppError(data.message || 'Failed to send messages');
+        }
+      }
+    } catch (e) {
+      setWhatsAppError('Failed to contact server');
+    } finally {
+      setSendingWhatsApp(false);
+    }
+  };
+
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
@@ -690,6 +814,24 @@ function AdminManagementTab() {
                   <Badge bg="secondary">{admins.length} {t('auto.total', `Total`)}</Badge>
                   <Button
                     size="sm"
+                    variant="outline-success"
+                    onClick={() => {
+                      setWhatsAppTarget('ALL');
+                      setWhatsAppMessageType('CUSTOM');
+                      setWhatsAppWelcomePassword('');
+                      setWhatsAppCustomText('');
+                      setWhatsAppError('');
+                      setWhatsAppSuccess('');
+                      setShowWhatsAppModal(true);
+                    }}
+                    disabled={admins.filter(a => a.mobile).length === 0}
+                    title={t('auto.sendMessageToAllAdmins', 'Send message to all admins')}
+                  >
+                    <i className="bi bi-whatsapp me-1"></i>
+                    {t('auto.messageAll', 'Message All')}
+                  </Button>
+                  <Button
+                    size="sm"
                     variant={showCreateForm ? 'secondary' : 'primary'}
                     onClick={() => setShowCreateForm((v) => !v)}
                   >
@@ -769,6 +911,23 @@ function AdminManagementTab() {
                            </td>
                            <td>
                              <div className="d-flex gap-1">
+                               <Button 
+                                 variant="outline-success" 
+                                 size="sm" 
+                                 onClick={() => {
+                                   setWhatsAppTarget(admin);
+                                   setWhatsAppMessageType('CUSTOM');
+                                   setWhatsAppWelcomePassword('');
+                                   setWhatsAppCustomText('');
+                                   setWhatsAppError('');
+                                   setWhatsAppSuccess('');
+                                   setShowWhatsAppModal(true);
+                                 }}
+                                 title={t('auto.sendWhatsappMessage', 'Send WhatsApp Message')}
+                                 disabled={!admin.mobile}
+                               >
+                                 <i className="bi bi-whatsapp"></i>
+                               </Button>
                                <Button 
                                  variant="outline-info" 
                                  size="sm" 
@@ -1295,6 +1454,157 @@ function AdminManagementTab() {
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowStatsModal(false)}>
             {t('auto.close', 'Close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* WhatsApp Message Modal */}
+      <Modal show={showWhatsAppModal} onHide={() => setShowWhatsAppModal(false)} size="lg" centered>
+        <Modal.Header closeButton className="bg-success text-white">
+          <Modal.Title>
+            <i className="bi bi-whatsapp me-2"></i>
+            {t('auto.sendWhatsappMessage', 'Send WhatsApp Message')}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {whatsAppError && <Alert variant="danger">{whatsAppError}</Alert>}
+          {whatsAppSuccess && <Alert variant="success">{whatsAppSuccess}</Alert>}
+
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label className="fw-bold">{t('auto.recipient', 'Recipient')}</Form.Label>
+              <Form.Control 
+                type="text" 
+                readOnly 
+                className="bg-light fw-bold"
+                value={
+                  whatsAppTarget === 'ALL'
+                    ? `${t('auto.allAdmins', 'All Admins')} (${admins.filter(a => a.mobile).length} ${t('auto.withMobileNumber', 'with mobile number')})`
+                    : whatsAppTarget ? `${whatsAppTarget.name} (${whatsAppTarget.mobile || t('auto.noMobileNumber', 'No mobile number')})` : ''
+                }
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label className="fw-bold">{t('auto.messageType', 'Message Type')}</Form.Label>
+              <Form.Select 
+                value={whatsAppMessageType} 
+                onChange={(e) => {
+                  setWhatsAppMessageType(e.target.value as any);
+                  setWhatsAppError('');
+                  setWhatsAppSuccess('');
+                }}
+              >
+                <option value="CUSTOM">{t('auto.customMessage', 'Custom Message')}</option>
+                {whatsAppTarget !== 'ALL' && (
+                  <option value="WELCOME">{t('auto.welcomeMessage', 'Welcome Message')}</option>
+                )}
+                <option value="INACTIVITY">{t('auto.inactivityMessage', 'Inactivity Message')}</option>
+                {/* Subscription option only if due */}
+                {((whatsAppTarget !== 'ALL' && whatsAppTarget && isSubscriptionDue(whatsAppTarget)) ||
+                  (whatsAppTarget === 'ALL' && admins.some(a => a.mobile && isSubscriptionDue(a)))) && (
+                  <option value="SUBSCRIPTION">{t('auto.subscriptionDueMessage', 'Subscription Due Message')}</option>
+                )}
+              </Form.Select>
+            </Form.Group>
+
+            {whatsAppMessageType === 'WELCOME' && (
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-bold">{t('auto.defaultPassword', 'Default Password')}</Form.Label>
+                <Form.Control 
+                  type="text" 
+                  placeholder={t('auto.enterDefaultPassword', 'Enter default password for the admin')}
+                  value={whatsAppWelcomePassword}
+                  onChange={(e) => setWhatsAppWelcomePassword(e.target.value)}
+                  required
+                />
+              </Form.Group>
+            )}
+
+            {whatsAppMessageType === 'CUSTOM' && (
+              <Form.Group className="mb-3">
+                <Form.Label className="fw-bold">{t('auto.messageText', 'Message Text')}</Form.Label>
+                <Form.Control 
+                  as="textarea"
+                  rows={4}
+                  placeholder={t('auto.typeYourMessage', 'Type your message...')}
+                  value={whatsAppCustomText}
+                  onChange={(e) => setWhatsAppCustomText(e.target.value)}
+                  required
+                />
+              </Form.Group>
+            )}
+
+            {/* Preview Button */}
+            <div className="mb-3">
+              <Button 
+                variant="outline-secondary" 
+                size="sm"
+                onClick={() => {
+                  setWhatsAppError('');
+                  setWhatsAppSuccess('');
+                  const previewEl = document.getElementById('whatsapp-preview-box');
+                  if (previewEl) {
+                    previewEl.style.display = previewEl.style.display === 'none' ? 'block' : 'none';
+                  }
+                }}
+              >
+                <i className="bi bi-eye me-1"></i>
+                {t('auto.previewMessage', 'Preview Message')}
+              </Button>
+            </div>
+
+            {/* Preview Box */}
+            <div 
+              id="whatsapp-preview-box" 
+              style={{ display: 'none', border: '1px solid #ced4da', borderRadius: '8px', overflow: 'hidden' }}
+              className="mb-3 shadow-sm"
+            >
+              <div className="bg-success text-white px-3 py-2 d-flex align-items-center gap-2">
+                <i className="bi bi-whatsapp"></i>
+                <span className="fw-bold small">{t('auto.whatsappPreview', 'WhatsApp Message Preview')}</span>
+              </div>
+              <div 
+                className="p-3 bg-light"
+                style={{ 
+                  fontFamily: 'Segoe UI, Helvetica Neue, Helvetica, Lucida Grande, Arial, Ubuntu, Cantarell, Georgia, serif', 
+                  whiteSpace: 'pre-line',
+                  fontSize: '0.95rem',
+                  lineHeight: '1.4'
+                }}
+              >
+                {getWhatsAppMessageText(whatsAppTarget === 'ALL' ? (admins.find(a => a.mobile) || null) : whatsAppTarget, whatsAppMessageType)}
+              </div>
+            </div>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowWhatsAppModal(false)}>
+            {t('auto.close', 'Close')}
+          </Button>
+          <Button 
+            variant="success" 
+            onClick={handleSendWhatsApp} 
+            disabled={
+              sendingWhatsApp || 
+              (whatsAppMessageType === 'WELCOME' && !whatsAppWelcomePassword.trim()) ||
+              (whatsAppMessageType === 'CUSTOM' && !whatsAppCustomText.trim())
+            }
+          >
+            {sendingWhatsApp ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                {t('auto.sending', 'Sending...')}
+              </>
+            ) : (
+              <>
+                <i className="bi bi-send me-2"></i>
+                {whatsAppTarget === 'ALL' 
+                  ? `${t('auto.sendToAll', 'Send to All')} (${getAdminsToMessage().filter(t => t.mobile).length})`
+                  : t('auto.sendMessage', 'Send Message')
+                }
+              </>
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

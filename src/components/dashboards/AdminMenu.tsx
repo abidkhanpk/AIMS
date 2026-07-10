@@ -73,6 +73,12 @@ const menuItems: MenuItem[] = [
 export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; onSelect: (key: string) => void }) {
   const router = useRouter();
   const { t } = useTranslation('common');
+  const translateLabel = (label: string, key: string) => {
+    if (key === 'whatsapp') {
+      return router.locale === 'ur' ? 'واٹس ایپ' : 'WhatsApp';
+    }
+    return t(label);
+  };
   const { data: session, status } = useSession();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -251,7 +257,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
             <div className={`${styles.iconWrapper}`}>
               <i className={`bi ${item.icon}`} aria-hidden />
             </div>
-            <span className={styles.linkText}>{t(item.label)}</span>
+            <span className={styles.linkText}>{translateLabel(item.label, item.key)}</span>
           </div>
           {hasChildren && (
             <i className={`bi ${expanded ? 'bi-chevron-up' : 'bi-chevron-down'} ${styles.arrow}`} aria-hidden />
@@ -304,7 +310,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
         >
           <span className="d-flex align-items-center">
             <i className={`bi ${item.icon} me-2`}></i>
-            {t(item.label)}
+            {translateLabel(item.label, item.key)}
           </span>
           {hasChildren && (
             <i className={`bi ${expanded ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
@@ -324,7 +330,7 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
                 style={{ fontSize: '1.05rem' }}
               >
                 <i className={`bi ${child.icon} me-2`}></i>
-                {t(child.label)}
+                {translateLabel(child.label, child.key)}
               </ListGroup.Item>
             ))}
           </ListGroup>
