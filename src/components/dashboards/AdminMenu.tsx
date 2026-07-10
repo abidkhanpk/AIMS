@@ -65,6 +65,7 @@ const menuItems: MenuItem[] = [
       { key: 'audit-logs', label: 'menu.auditLogs', icon: 'bi-file-earmark-code' },
       { key: 'academy-settings', label: 'menu.academySettings', icon: 'bi-gear-fill' },
       { key: 'subscription-management', label: 'menu.subscriptionManagement', icon: 'bi-credit-card' },
+      { key: 'whatsapp', label: 'menu.whatsapp', icon: 'bi-whatsapp' },
     ],
   },
 ];

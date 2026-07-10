@@ -17,6 +17,7 @@ import AttendanceReportsTab from './AttendanceReportsTab';
 import ReportCardsTab from './ReportCardsTab';
 import AuditLogsTab from './AuditLogsTab';
 import AcademySettingsTab from './AcademySettingsTab';
+import AdminWhatsAppTab from './AdminWhatsAppTab';
 import { useTranslation } from 'react-i18next';
 import Papa from 'papaparse';
 import Head from 'next/head';
@@ -6487,6 +6488,9 @@ export default function AdminDashboard() {
                 </Tab>
                 <Tab eventKey="subscription-management" title={<span><i className="bi bi-credit-card me-2"></i>{t('menu.subscriptionManagement')}</span>}>
                   <AdminSubscriptionTab />
+                </Tab>
+                <Tab eventKey="whatsapp" title={<span><i className="bi bi-whatsapp me-2"></i>{t('menu.whatsapp', 'WhatsApp')}</span>}>
+                  <AdminWhatsAppTab />
                 </Tab>
               </Tabs>
             )}
