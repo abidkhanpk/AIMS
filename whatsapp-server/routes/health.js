@@ -13,11 +13,6 @@ router.get('/', (req, res) => {
     status: 'ok',
     uptime: process.uptime(),
     activeSessions: sessions.length,
-    sessions: sessions.map(s => ({
-      clientId: s.clientId,
-      status: s.status,
-      phoneNumber: s.phoneNumber,
-    })),
   });
 });
 

@@ -148,46 +148,50 @@ async function processQueue(clientId) {
   if (q.processing) return;
   q.processing = true;
 
-  while (true) {
-    // Find next queued message
-    const nextMsg = q.queue.find(m => m.status === 'queued');
-    if (!nextMsg) break;
+  try {
+    while (true) {
+      // Find next queued message
+      const nextMsg = q.queue.find(m => m.status === 'queued');
+      if (!nextMsg) break;
 
-    // Check daily limit
-    checkDailyReset(q);
-    if (q.stats.sentToday >= q.settings.maxDailyMessages) {
-      console.log(`[${clientId}] Daily message limit (${q.settings.maxDailyMessages}) reached. Remaining messages stay queued.`);
-      break;
+      // Check daily limit
+      checkDailyReset(q);
+      if (q.stats.sentToday >= q.settings.maxDailyMessages) {
+        console.log(`[${clientId}] Daily message limit (${q.settings.maxDailyMessages}) reached. Remaining messages stay queued.`);
+        break;
+      }
+
+      // Get socket
+      const socket = await getOrInitSocket(clientId);
+      if (!socket) {
+        console.error(`[${clientId}] No active socket — cannot send messages. Queue paused.`);
+        break;
+      }
+
+      // Send the message
+      nextMsg.status = 'sending';
+      try {
+        const jid = formatPhoneJid(nextMsg.to);
+        await socket.sendMessage(jid, { text: nextMsg.text });
+        nextMsg.status = 'sent';
+        nextMsg.sentAt = new Date().toISOString();
+        q.stats.sentToday++;
+        console.log(`[${clientId}] Sent message to ${nextMsg.to} (${q.stats.sentToday}/${q.settings.maxDailyMessages} today)`);
+      } catch (error) {
+        nextMsg.status = 'failed';
+        nextMsg.error = error.message || 'Unknown error';
+        console.error(`[${clientId}] Failed to send to ${nextMsg.to}:`, error.message);
+      }
+
+      // Wait random delay before next message
+      const delay = randomDelay(q.settings.minDelayMs, q.settings.maxDelayMs);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-
-    // Get socket
-    const socket = await getOrInitSocket(clientId);
-    if (!socket) {
-      console.error(`[${clientId}] No active socket — cannot send messages. Queue paused.`);
-      break;
-    }
-
-    // Send the message
-    nextMsg.status = 'sending';
-    try {
-      const jid = formatPhoneJid(nextMsg.to);
-      await socket.sendMessage(jid, { text: nextMsg.text });
-      nextMsg.status = 'sent';
-      nextMsg.sentAt = new Date().toISOString();
-      q.stats.sentToday++;
-      console.log(`[${clientId}] Sent message to ${nextMsg.to} (${q.stats.sentToday}/${q.settings.maxDailyMessages} today)`);
-    } catch (error) {
-      nextMsg.status = 'failed';
-      nextMsg.error = error.message || 'Unknown error';
-      console.error(`[${clientId}] Failed to send to ${nextMsg.to}:`, error.message);
-    }
-
-    // Wait random delay before next message
-    const delay = randomDelay(q.settings.minDelayMs, q.settings.maxDelayMs);
-    await new Promise(resolve => setTimeout(resolve, delay));
+  } catch (error) {
+    console.error(`[${clientId}] Critical error in queue processor loop:`, error.message);
+  } finally {
+    q.processing = false;
   }
-
-  q.processing = false;
 
   // Trigger fast-sleep on queue completion if enabled and in sleep mode
   if (process.env.WHATSAPP_MODE === 'SLEEP' && process.env.WHATSAPP_SLEEP_ON_QUEUE_COMPLETION === 'true') {

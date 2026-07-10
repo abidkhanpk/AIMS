@@ -155,7 +155,8 @@ async function initSession(clientId) {
 
     if (connection === 'close') {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      const wasSleeping = sessionData.status === 'sleeping';
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut && !wasSleeping;
 
       // Clear existing idle timer
       if (idleTimers[clientId]) {
@@ -163,7 +164,12 @@ async function initSession(clientId) {
         delete idleTimers[clientId];
       }
 
-      sessionData.status = 'disconnected';
+      // Preserve sleeping status if closed intentionally by sleepSession()
+      if (wasSleeping) {
+        sessionData.status = 'sleeping';
+      } else {
+        sessionData.status = 'disconnected';
+      }
       sessionData.qr = null;
       sessionData.qrDataUrl = null;
 
@@ -178,7 +184,7 @@ async function initSession(clientId) {
         logger.info(`Reconnecting in ${delay}ms (attempt ${sessionData.retryCount})...`);
         setTimeout(() => initSession(clientId), delay);
         emitEvent(clientId, 'reconnecting', { attempt: sessionData.retryCount });
-      } else {
+      } else if (!wasSleeping) {
         logger.error('Max reconnection attempts reached or connection closed');
         sessions.delete(clientId);
         emitEvent(clientId, 'disconnected', { reason: 'max_retries' });
@@ -255,6 +261,7 @@ function sleepSession(clientId) {
   if (session) {
     const logger = getLogger(clientId);
     logger.info('Suspending WhatsApp socket connection (Sleep Mode)');
+    session.status = 'sleeping'; // Set state first so close listener doesn't trigger reconnect
     if (session.socket) {
       try {
         session.socket.end(); // Gracefully close WebSocket
@@ -263,7 +270,6 @@ function sleepSession(clientId) {
       }
     }
     session.socket = null;
-    session.status = 'sleeping';
   }
 
   if (idleTimers[clientId]) {
