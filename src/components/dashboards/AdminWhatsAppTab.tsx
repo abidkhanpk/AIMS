@@ -807,17 +807,28 @@ export default function AdminWhatsAppTab() {
       <Card className="shadow-sm">
         <Card.Header className="bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
           <h5 className="mb-0"><i className="bi bi-clock-history me-2"></i>{t('auto.messageLogs', 'Message Logs')} <Badge bg="secondary">{logsTotal}</Badge></h5>
-          <Form.Select
-            style={{ width: 200 }}
-            size="sm"
-            value={logTypeFilter}
-            onChange={(e) => { setLogTypeFilter(e.target.value); fetchLogs(1, e.target.value); }}
-          >
-            <option value="">{t('auto.allTypes', 'All Types')}</option>
-            {Object.entries(MESSAGE_TYPE_LABELS).map(([key, val]) => (
-              <option key={key} value={key}>{val.en}</option>
-            ))}
-          </Form.Select>
+          <div className="d-flex gap-2">
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              onClick={() => fetchLogs(logsPage, logTypeFilter)}
+              title={t('auto.refreshLogs', 'Refresh Logs')}
+              disabled={loadingLogs}
+            >
+              <i className={`bi bi-arrow-clockwise ${loadingLogs ? 'spin' : ''}`}></i>
+            </Button>
+            <Form.Select
+              style={{ width: 200 }}
+              size="sm"
+              value={logTypeFilter}
+              onChange={(e) => { setLogTypeFilter(e.target.value); fetchLogs(1, e.target.value); }}
+            >
+              <option value="">{t('auto.allTypes', 'All Types')}</option>
+              {Object.entries(MESSAGE_TYPE_LABELS).map(([key, val]) => (
+                <option key={key} value={key}>{val.en}</option>
+              ))}
+            </Form.Select>
+          </div>
         </Card.Header>
         <Card.Body className="p-0">
           {loadingLogs ? (
