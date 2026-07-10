@@ -95,6 +95,9 @@ No third-party packages required. Uses the native process supervisor built direc
    RestartSec=5
    Environment=NODE_ENV=production
 
+   # Optional: Load environment secrets from a secure path outside the code directory
+   # EnvironmentFile=/etc/secrets/whatsapp-server.env
+
    [Install]
    WantedBy=multi-user.target
    ```
