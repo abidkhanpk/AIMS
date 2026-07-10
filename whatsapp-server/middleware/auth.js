@@ -40,16 +40,27 @@ function authMiddleware(req, res, next) {
   // 4. If prefix is found, automatically prepend it to any clientId parameter
   if (matchedPrefix) {
     // Prepend to body if present
-    if (req.body && req.body.clientId) {
+    if (req.body && req.body.clientId && !req.body.clientId.startsWith(`${matchedPrefix}_`)) {
       req.body.clientId = `${matchedPrefix}_${req.body.clientId}`;
     }
-    // Prepend to url params if present (e.g. /api/session/status/:clientId)
-    if (req.params && req.params.clientId) {
-      req.params.clientId = `${matchedPrefix}_${req.params.clientId}`;
-    }
     // Prepend to query strings if present
-    if (req.query && req.query.clientId) {
+    if (req.query && req.query.clientId && !req.query.clientId.startsWith(`${matchedPrefix}_`)) {
       req.query.clientId = `${matchedPrefix}_${req.query.clientId}`;
+    }
+    
+    // Prepend to URL path parameters (e.g. /init/:clientId, /status/:clientId)
+    // Note: In Express, route params are parsed on the router level, meaning req.params is empty
+    // when this parent middleware runs. We rewrite req.url to inject the prefix for the router.
+    const urlParts = req.url.split('?');
+    const pathParts = urlParts[0].split('/');
+    if (pathParts.length > 1) {
+      const lastPart = pathParts[pathParts.length - 1];
+      const keywords = ['init', 'qr', 'status', 'queue', 'settings'];
+      if (lastPart && !keywords.includes(lastPart) && !lastPart.startsWith(`${matchedPrefix}_`)) {
+        pathParts[pathParts.length - 1] = `${matchedPrefix}_${lastPart}`;
+        urlParts[0] = pathParts.join('/');
+        req.url = urlParts.join('?');
+      }
     }
   }
 
