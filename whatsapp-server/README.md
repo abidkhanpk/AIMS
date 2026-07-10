@@ -68,14 +68,67 @@ sudo apt install nodejs npm -y
 node -v
 ```
 
-### 2. Install PM2 Process Manager
-Keep the server running continuously in the background and ensure it recovers from crashes:
-```bash
-sudo npm install -g pm2
-pm2 start server.js --name "whatsapp-server"
-pm2 startup
-pm2 save
-```
+### 2. Process Manager Setup (Choose Option A or B)
+
+Choose one of the following methods to keep the server running continuously and restart automatically on crash or system reboots.
+
+#### Option A: Native System Service (systemd/systemctl) - *Recommended*
+No third-party packages required. Uses the native process supervisor built directly into Linux.
+
+1. Create a service file `/etc/systemd/system/whatsapp.service`:
+   ```bash
+   sudo nano /etc/systemd/system/whatsapp.service
+   ```
+2. Paste the configuration:
+   ```ini
+   [Unit]
+   Description=WhatsApp Session Automation Service
+   After=network.target
+
+   [Service]
+   Type=simple
+   User=root
+   WorkingDirectory=/var/www/whatsapp-server
+   ExecStart=/usr/bin/node server.js
+   Restart=on-failure
+   RestartSec=5
+   Environment=NODE_ENV=production
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+   *(Be sure to replace `/var/www/whatsapp-server` with the path where you placed the files).*
+3. Reload, enable, and start:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable whatsapp
+   sudo systemctl start whatsapp
+   ```
+4. Manage the service:
+   ```bash
+   # Check status
+   sudo systemctl status whatsapp
+
+   # View live logs
+   sudo journalctl -u whatsapp -f
+   ```
+
+#### Option B: PM2 Process Manager
+Useful if you want to use Node-specific process monitoring and cluster management.
+
+1. Install PM2 globally:
+   ```bash
+   sudo npm install -g pm2
+   ```
+2. Start the service:
+   ```bash
+   pm2 start server.js --name "whatsapp-server"
+   ```
+3. Configure PM2 to start automatically on system reboot:
+   ```bash
+   pm2 startup
+   pm2 save
+   ```
 
 ### 3. Expose under Subdomain with SSL (Nginx Reverse Proxy)
 Install Nginx and map a domain name (e.g., `whatsapp.yourdomain.com`) to the Node port:
