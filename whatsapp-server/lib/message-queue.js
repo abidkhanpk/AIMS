@@ -8,7 +8,7 @@
  * messages via a Baileys socket.
  */
 
-const { getSocket } = require('./session-manager');
+const { getOrInitSocket } = require('./session-manager');
 
 // Default settings from env
 const DEFAULT_MIN_DELAY = parseInt(process.env.DEFAULT_MIN_DELAY_MS) || 5000;
@@ -161,7 +161,7 @@ async function processQueue(clientId) {
     }
 
     // Get socket
-    const socket = getSocket(clientId);
+    const socket = await getOrInitSocket(clientId);
     if (!socket) {
       console.error(`[${clientId}] No active socket — cannot send messages. Queue paused.`);
       break;
@@ -188,6 +188,18 @@ async function processQueue(clientId) {
   }
 
   q.processing = false;
+
+  // Trigger fast-sleep on queue completion if in sleep mode
+  if (process.env.WHATSAPP_MODE === 'SLEEP') {
+    setTimeout(() => {
+      // Re-verify no new messages have been queued in the meantime
+      const nextMsg = q.queue.find(m => m.status === 'queued');
+      if (!nextMsg && !q.processing) {
+        const { sleepSession } = require('./session-manager');
+        sleepSession(clientId);
+      }
+    }, 10000); // 10 seconds grace period (to allow consecutive queued requests)
+  }
 }
 
 /**

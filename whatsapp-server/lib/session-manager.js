@@ -1,31 +1,33 @@
 /**
- * WhatsApp Session Manager — Baileys Multi-Session Handler
+ * WhatsApp Session Manager — Baileys Session Handler with PostgreSQL and Sleep Mode
  * 
  * Generic, app-agnostic session management:
  * - Manages multiple concurrent WhatsApp sessions (one per clientId)
- * - Handles QR code generation, connection state, reconnection
- * - Persists auth state to disk via Baileys' useMultiFileAuthState
- * - Restores saved sessions on server start
+ * - Persists session auth state to PostgreSQL database (JSONB)
+ * - Supports SLEEP mode: Lazy loads connections on demand and goes to sleep when idle to save RAM.
+ * - Supports DAEMON mode: Keeps connections open continuously.
  */
 
 const {
   default: makeWASocket,
-  useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
   makeCacheableSignalKeyStore,
 } = require('@whiskeysockets/baileys');
 const pino = require('pino');
-const path = require('path');
-const fs = require('fs');
 const QRCode = require('qrcode');
+const db = require('./db');
+const { usePostgresAuthState } = require('./pg-session-store');
 
-const AUTH_DIR = process.env.AUTH_DIR || './auth_info';
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 
-// In-memory store of active sessions
-// Map<clientId, { socket, qr, status, phoneNumber, retryCount }>
+// In-memory store of active/sleeping sessions
+// Map<clientId, { socket, qr, qrDataUrl, status, phoneNumber, retryCount }>
 const sessions = new Map();
+
+// Timer storage for Sleep mode idle-disconnects
+// Map<clientId, NodeJS.Timeout>
+const idleTimers = {};
 
 // Event listeners map for external consumers
 // Map<clientId, Map<event, Set<callback>>>
@@ -82,18 +84,14 @@ async function initSession(clientId) {
   // If already connected, return existing session
   const existing = sessions.get(clientId);
   if (existing && existing.status === 'connected') {
+    resetIdleTimer(clientId);
     return { status: 'connected', phoneNumber: existing.phoneNumber };
   }
 
   const logger = getLogger(clientId);
-  const authDir = path.join(AUTH_DIR, clientId);
+  logger.info('Initializing Postgres-backed WhatsApp session');
 
-  // Ensure auth directory exists
-  if (!fs.existsSync(authDir)) {
-    fs.mkdirSync(authDir, { recursive: true });
-  }
-
-  const { state, saveCreds } = await useMultiFileAuthState(authDir);
+  const { state, saveCreds } = await usePostgresAuthState(clientId);
   const { version } = await fetchLatestBaileysVersion();
 
   const sessionData = {
@@ -125,7 +123,6 @@ async function initSession(clientId) {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      // New QR code generated — convert to data URL
       sessionData.qr = qr;
       try {
         sessionData.qrDataUrl = await QRCode.toDataURL(qr, { width: 300, margin: 2 });
@@ -143,7 +140,7 @@ async function initSession(clientId) {
       sessionData.qrDataUrl = null;
       sessionData.retryCount = 0;
 
-      // Extract phone number from socket
+      // Extract phone number from socket user id
       const jid = socket.user?.id;
       if (jid) {
         sessionData.phoneNumber = jid.split(':')[0].split('@')[0];
@@ -151,31 +148,38 @@ async function initSession(clientId) {
 
       emitEvent(clientId, 'connected', { phoneNumber: sessionData.phoneNumber });
       logger.info(`Connected as ${sessionData.phoneNumber}`);
+
+      // Start the idle timeout timer
+      resetIdleTimer(clientId);
     }
 
     if (connection === 'close') {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
+      // Clear existing idle timer
+      if (idleTimers[clientId]) {
+        clearTimeout(idleTimers[clientId]);
+        delete idleTimers[clientId];
+      }
+
       sessionData.status = 'disconnected';
       sessionData.qr = null;
       sessionData.qrDataUrl = null;
 
       if (statusCode === DisconnectReason.loggedOut) {
-        // User logged out — clean up auth data
-        logger.info('Session logged out — cleaning auth data');
-        cleanupAuthData(clientId);
+        logger.info('Session logged out — cleaning Postgres credentials');
+        await db.query('DELETE FROM whatsapp_sessions WHERE session_id = $1', [clientId]);
         sessions.delete(clientId);
         emitEvent(clientId, 'disconnected', { reason: 'logged_out' });
       } else if (shouldReconnect && sessionData.retryCount < 5) {
-        // Reconnect with backoff
         sessionData.retryCount++;
         const delay = Math.min(sessionData.retryCount * 2000, 30000);
         logger.info(`Reconnecting in ${delay}ms (attempt ${sessionData.retryCount})...`);
         setTimeout(() => initSession(clientId), delay);
         emitEvent(clientId, 'reconnecting', { attempt: sessionData.retryCount });
       } else {
-        logger.error('Max reconnection attempts reached or unrecoverable error');
+        logger.error('Max reconnection attempts reached or connection closed');
         sessions.delete(clientId);
         emitEvent(clientId, 'disconnected', { reason: 'max_retries' });
       }
@@ -189,14 +193,94 @@ async function initSession(clientId) {
 }
 
 /**
- * Get the current session for a clientId (or null if not found)
+ * Get or initialize socket connection (Lazy loading helper for routes/message queues)
+ */
+async function getOrInitSocket(clientId) {
+  const status = await getStatus(clientId);
+  if (!status.hasAuthData) {
+    return null; // No credentials in Postgres, cannot open socket
+  }
+
+  const session = sessions.get(clientId);
+  if (session && session.socket && session.status === 'connected') {
+    resetIdleTimer(clientId);
+    return session.socket;
+  }
+
+  // Session exists in database but socket is not open/connected (e.g. sleeping or not loaded in memory)
+  console.log(`[${clientId}] Lazy loading WhatsApp socket for message dispatch...`);
+  await initSession(clientId);
+
+  // Poll connection state until open (wait up to 15 seconds)
+  let attempts = 0;
+  while (attempts < 30) {
+    const currentSession = sessions.get(clientId);
+    if (currentSession && currentSession.status === 'connected' && currentSession.socket) {
+      resetIdleTimer(clientId);
+      return currentSession.socket;
+    }
+    if (currentSession && currentSession.status === 'disconnected') {
+      return null; // Connection closed or failed
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    attempts++;
+  }
+
+  console.error(`[${clientId}] Lazy load socket handshake timed out`);
+  return null;
+}
+
+/**
+ * Resets the idle timeout timer. If a session remains idle, it goes to sleep.
+ */
+function resetIdleTimer(clientId) {
+  if (process.env.WHATSAPP_MODE !== 'SLEEP') return;
+
+  if (idleTimers[clientId]) {
+    clearTimeout(idleTimers[clientId]);
+  }
+
+  const timeoutMs = parseInt(process.env.WHATSAPP_IDLE_TIMEOUT) || 300000; // Default: 5 minutes
+
+  idleTimers[clientId] = setTimeout(() => {
+    sleepSession(clientId);
+  }, timeoutMs);
+}
+
+/**
+ * Gracefully puts a connected session to sleep to free up memory, preserving auth credentials.
+ */
+function sleepSession(clientId) {
+  const session = sessions.get(clientId);
+  if (session) {
+    const logger = getLogger(clientId);
+    logger.info('Suspending WhatsApp socket connection (Sleep Mode)');
+    if (session.socket) {
+      try {
+        session.socket.end(); // Gracefully close WebSocket
+      } catch (e) {
+        // Ignore close errors
+      }
+    }
+    session.socket = null;
+    session.status = 'sleeping';
+  }
+
+  if (idleTimers[clientId]) {
+    clearTimeout(idleTimers[clientId]);
+    delete idleTimers[clientId];
+  }
+}
+
+/**
+ * Get the current session in memory
  */
 function getSession(clientId) {
   return sessions.get(clientId) || null;
 }
 
 /**
- * Get the Baileys socket for a clientId (for sending messages)
+ * Get the Baileys socket for a clientId (if currently open)
  */
 function getSocket(clientId) {
   const session = sessions.get(clientId);
@@ -222,14 +306,24 @@ function getQR(clientId) {
 }
 
 /**
- * Get the connection status for a clientId
+ * Get the connection status for a clientId (checks memory & database)
  */
-function getStatus(clientId) {
+async function getStatus(clientId) {
   const session = sessions.get(clientId);
+  
+  // Query database to see if valid credentials exist
+  let hasAuthData = false;
+  try {
+    const res = await db.query(
+      "SELECT COUNT(*) FROM whatsapp_sessions WHERE session_id = $1 AND key = 'creds'",
+      [clientId]
+    );
+    hasAuthData = parseInt(res.rows[0].count) > 0;
+  } catch (err) {
+    console.error(`Postgres connection error in getStatus for ${clientId}:`, err.message);
+  }
+
   if (!session) {
-    // Check if auth data exists on disk (session can be restored)
-    const authDir = path.join(AUTH_DIR, clientId);
-    const hasAuthData = fs.existsSync(authDir) && fs.readdirSync(authDir).length > 0;
     return {
       exists: false,
       hasAuthData,
@@ -237,18 +331,17 @@ function getStatus(clientId) {
       phoneNumber: null,
     };
   }
+
   return {
     exists: true,
-    hasAuthData: true,
+    hasAuthData,
     status: session.status,
     phoneNumber: session.phoneNumber,
   };
 }
 
 /**
- * Disconnect and optionally remove a session
- * @param {string} clientId
- * @param {boolean} removeAuth - If true, also delete auth data from disk
+ * Disconnect and remove session credentials from memory and database
  */
 async function disconnectSession(clientId, removeAuth = true) {
   const session = sessions.get(clientId);
@@ -256,66 +349,72 @@ async function disconnectSession(clientId, removeAuth = true) {
     try {
       await session.socket.logout();
     } catch (e) {
-      // If logout fails, just end the connection
       try { session.socket.end(); } catch (e2) { /* ignore */ }
     }
+  }
+
+  // Clear idle timers
+  if (idleTimers[clientId]) {
+    clearTimeout(idleTimers[clientId]);
+    delete idleTimers[clientId];
   }
 
   sessions.delete(clientId);
 
   if (removeAuth) {
-    cleanupAuthData(clientId);
+    await db.query('DELETE FROM whatsapp_sessions WHERE session_id = $1', [clientId]);
   }
 
-  // Clean up event listeners
   eventListeners.delete(clientId);
-
   return { success: true, message: 'Session disconnected' };
 }
 
 /**
- * Remove auth data from disk for a clientId
- */
-function cleanupAuthData(clientId) {
-  const authDir = path.join(AUTH_DIR, clientId);
-  if (fs.existsSync(authDir)) {
-    fs.rmSync(authDir, { recursive: true, force: true });
-  }
-}
-
-/**
- * Restore all saved sessions from disk on server startup.
- * Scans the AUTH_DIR for subdirectories (each is a clientId) and
- * attempts to reconnect.
+ * Restore all saved sessions from database on server startup.
+ * Queries PostgreSQL for all unique session_ids with a registered creds state.
  */
 async function restoreAllSessions() {
-  if (!fs.existsSync(AUTH_DIR)) {
-    fs.mkdirSync(AUTH_DIR, { recursive: true });
+  try {
+    const res = await db.query("SELECT DISTINCT session_id FROM whatsapp_sessions WHERE key = 'creds'");
+    const clientIds = res.rows.map(r => r.session_id);
+
+    const results = [];
+    const mode = process.env.WHATSAPP_MODE || 'SLEEP';
+
+    for (const clientId of clientIds) {
+      if (mode === 'SLEEP') {
+        // In Sleep mode, do not open WebSockets on startup. Register them as sleeping.
+        sessions.set(clientId, {
+          socket: null,
+          qr: null,
+          qrDataUrl: null,
+          status: 'sleeping',
+          phoneNumber: null,
+          retryCount: 0,
+        });
+        results.push({ clientId, restored: true, mode: 'sleeping' });
+      } else {
+        // DAEMON mode — establish connection immediately
+        try {
+          console.log(`Restoring session (Daemon mode): ${clientId}`);
+          await initSession(clientId);
+          results.push({ clientId, restored: true, mode: 'daemon' });
+        } catch (e) {
+          console.error(`Failed to restore session ${clientId}:`, e.message);
+          results.push({ clientId, restored: false, error: e.message });
+        }
+      }
+    }
+
+    return results;
+  } catch (err) {
+    console.error('Failed to restore sessions from database:', err.message);
     return [];
   }
-
-  const entries = fs.readdirSync(AUTH_DIR, { withFileTypes: true });
-  const clientIds = entries
-    .filter(e => e.isDirectory())
-    .map(e => e.name);
-
-  const results = [];
-  for (const clientId of clientIds) {
-    try {
-      console.log(`Restoring session: ${clientId}`);
-      await initSession(clientId);
-      results.push({ clientId, restored: true });
-    } catch (e) {
-      console.error(`Failed to restore session ${clientId}:`, e.message);
-      results.push({ clientId, restored: false, error: e.message });
-    }
-  }
-
-  return results;
 }
 
 /**
- * Get list of all active session IDs and their statuses
+ * Get list of all registered session IDs and their statuses
  */
 function getAllSessions() {
   const result = [];
@@ -331,6 +430,8 @@ function getAllSessions() {
 
 module.exports = {
   initSession,
+  getOrInitSocket,
+  sleepSession,
   getSession,
   getSocket,
   getQR,

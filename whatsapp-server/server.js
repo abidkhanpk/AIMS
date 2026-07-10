@@ -16,6 +16,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const authMiddleware = require('./middleware/auth');
+const { initDatabase } = require('./lib/db');
 const { restoreAllSessions } = require('./lib/session-manager');
 
 const app = express();
@@ -51,11 +52,19 @@ app.listen(PORT, async () => {
   console.log(`  Health: http://localhost:${PORT}/api/health`);
   console.log(`========================================\n`);
 
+  // Initialize PostgreSQL schema
+  try {
+    await initDatabase();
+  } catch (error) {
+    console.error('Failed to initialize database schema. Exiting.');
+    process.exit(1);
+  }
+
   // Restore any previously saved sessions
   try {
     const restored = await restoreAllSessions();
     if (restored.length > 0) {
-      console.log(`Restored ${restored.filter(r => r.restored).length}/${restored.length} sessions`);
+      console.log(`Restored ${restored.filter(r => r.restored).length}/${restored.length} sessions (mode: ${process.env.WHATSAPP_MODE || 'SLEEP'})`);
     } else {
       console.log('No saved sessions to restore');
     }

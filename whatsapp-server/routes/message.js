@@ -23,18 +23,18 @@ const {
 const { getStatus } = require('../lib/session-manager');
 
 // POST /api/message/send — Send a single message
-router.post('/send', (req, res) => {
+router.post('/send', async (req, res) => {
   const { clientId, to, text } = req.body;
 
   if (!clientId || !to || !text) {
     return res.status(400).json({ error: 'clientId, to, and text are required' });
   }
 
-  // Check if session is connected
-  const status = getStatus(clientId);
-  if (status.status !== 'connected') {
+  // Check if session has auth data (for lazy loading)
+  const status = await getStatus(clientId);
+  if (!status.hasAuthData && status.status !== 'connected') {
     return res.status(400).json({
-      error: 'Session is not connected',
+      error: 'Session is not connected and has no saved credentials. Please scan QR first.',
       sessionStatus: status.status,
     });
   }
@@ -48,7 +48,7 @@ router.post('/send', (req, res) => {
 });
 
 // POST /api/message/send-bulk — Send multiple messages
-router.post('/send-bulk', (req, res) => {
+router.post('/send-bulk', async (req, res) => {
   const { clientId, messages } = req.body;
 
   if (!clientId || !Array.isArray(messages) || messages.length === 0) {
@@ -62,11 +62,11 @@ router.post('/send-bulk', (req, res) => {
     }
   }
 
-  // Check if session is connected
-  const status = getStatus(clientId);
-  if (status.status !== 'connected') {
+  // Check if session has auth data (for lazy loading)
+  const status = await getStatus(clientId);
+  if (!status.hasAuthData && status.status !== 'connected') {
     return res.status(400).json({
-      error: 'Session is not connected',
+      error: 'Session is not connected and has no saved credentials. Please scan QR first.',
       sessionStatus: status.status,
     });
   }

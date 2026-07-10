@@ -47,14 +47,14 @@ router.get('/qr/:clientId', (req, res) => {
 });
 
 // GET /api/session/status/:clientId — Get session status
-router.get('/status/:clientId', (req, res) => {
+router.get('/status/:clientId', async (req, res) => {
   const { clientId } = req.params;
 
   if (!clientId) {
     return res.status(400).json({ error: 'clientId is required' });
   }
 
-  const result = getStatus(clientId);
+  const result = await getStatus(clientId);
   res.json(result);
 });
 
