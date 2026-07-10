@@ -350,6 +350,12 @@ async function getStatus(clientId) {
  * Disconnect and remove session credentials from memory and database
  */
 async function disconnectSession(clientId, removeAuth = true) {
+  if (!removeAuth) {
+    // Sleep mode disconnect: just suspend socket connection and keep credentials
+    sleepSession(clientId);
+    return { success: true, message: 'Session disconnected (sleeping)' };
+  }
+
   const session = sessions.get(clientId);
   if (session?.socket) {
     try {
@@ -367,12 +373,10 @@ async function disconnectSession(clientId, removeAuth = true) {
 
   sessions.delete(clientId);
 
-  if (removeAuth) {
-    await db.query('DELETE FROM whatsapp_sessions WHERE session_id = $1', [clientId]);
-  }
+  await db.query('DELETE FROM whatsapp_sessions WHERE session_id = $1', [clientId]);
 
   eventListeners.delete(clientId);
-  return { success: true, message: 'Session disconnected' };
+  return { success: true, message: 'Session logged out' };
 }
 
 /**

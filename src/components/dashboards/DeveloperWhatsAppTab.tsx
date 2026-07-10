@@ -356,10 +356,22 @@ export default function DeveloperWhatsAppTab() {
             </Col>
             <Col md={6} className="text-md-end mt-3 mt-md-0">
               {!isConnected && !connecting ? (
-                <Button variant="success" onClick={handleConnect}>
-                  <i className="bi bi-qr-code me-2"></i>
-                  {t('auto.connectWhatsapp', 'Connect WhatsApp')}
-                </Button>
+                sessionStatus?.hasAuthData ? (
+                  <div className="d-flex gap-2 justify-content-md-end flex-wrap">
+                    <Button variant="success" onClick={handleConnect}>
+                      <i className="bi bi-play-circle me-2"></i>
+                      {t('auto.connect', 'Connect')}
+                    </Button>
+                    <Button variant="outline-danger" onClick={() => handleDisconnect(true)} disabled={disconnecting}>
+                      {disconnecting ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.loggingOut', 'Logging out...')}</> : <><i className="bi bi-box-arrow-right me-2"></i>{t('auto.logout', 'Logout')}</>}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="success" onClick={handleConnect}>
+                    <i className="bi bi-qr-code me-2"></i>
+                    {t('auto.connectWhatsapp', 'Connect WhatsApp')}
+                  </Button>
+                )
               ) : isConnected ? (
                 <div className="d-flex gap-2 justify-content-md-end flex-wrap">
                   <Button variant="outline-warning" onClick={() => handleDisconnect(false)} disabled={disconnecting}>
@@ -387,7 +399,11 @@ export default function DeveloperWhatsAppTab() {
               ) : (
                 <>
                   <Spinner animation="border" variant="success" />
-                  <p className="mt-2 text-muted">{t('auto.generatingQrCode', 'Generating QR code...')}</p>
+                  <p className="mt-2 text-muted">
+                    {sessionStatus?.hasAuthData
+                      ? t('auto.connectingWithSavedSession', 'Connecting using saved session details...')
+                      : t('auto.generatingQrCode', 'Generating QR code...')}
+                  </p>
                 </>
               )}
             </div>

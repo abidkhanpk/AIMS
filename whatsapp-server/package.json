@@ -1,6 +1,6 @@
 {
   "name": "whatsapp-session-api",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Generic WhatsApp Web Session Management API using Baileys. App-agnostic — manages sessions and sends messages by phone number.",
   "main": "server.js",
   "scripts": {
