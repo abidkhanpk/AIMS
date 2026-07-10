@@ -20,6 +20,7 @@ interface ParentAssociation {
   parentId: string;
   studentId: string;
   relationType: RelationType;
+  contactForStudentInfo: boolean;
   createdAt: string;
   updatedAt: string;
   parent: User;
@@ -85,11 +86,13 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedParent, setSelectedParent] = useState('');
   const [relationType, setRelationType] = useState<RelationType>('GUARDIAN');
+  const [contactForStudentInfo, setContactForStudentInfo] = useState(true);
 
   // Edit modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingAssociation, setEditingAssociation] = useState<ParentAssociation | null>(null);
   const [editRelationType, setEditRelationType] = useState<RelationType>('GUARDIAN');
+  const [editContact, setEditContact] = useState(true);
   const [updating, setUpdating] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -140,6 +143,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
           studentId,
           parentId: selectedParent,
           relationType,
+          contactForStudentInfo,
         }),
       });
 
@@ -149,6 +153,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
         onAssociationChange();
         setSelectedParent('');
         setRelationType('GUARDIAN');
+        setContactForStudentInfo(true);
         setShowAddForm(false);
       } else {
         const errorData = await res.json();
@@ -164,6 +169,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
   const handleEditAssociation = (association: ParentAssociation) => {
     setEditingAssociation(association);
     setEditRelationType(association.relationType);
+    setEditContact(association.contactForStudentInfo);
     setShowEditModal(true);
   };
 
@@ -182,6 +188,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
         body: JSON.stringify({
           associationId: editingAssociation.id,
           relationType: editRelationType,
+          contactForStudentInfo: editContact,
         }),
       });
 
@@ -274,7 +281,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
           <Card.Body>
             <Form onSubmit={handleCreateAssociation}>
               <Row className="g-3 align-items-end">
-                <Col md={5}>
+                <Col md={4}>
                   <Form.Group>
                     <Form.Label>{t('auto.selectParent', `Select Parent *`)}</Form.Label>
                     <Form.Select 
@@ -293,7 +300,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                   </Form.Group>
                 </Col>
                 
-                <Col md={4}>
+                <Col md={3}>
                   <Form.Group>
                     <Form.Label>{t('auto.relationType', `Relation Type *`)}</Form.Label>
                     <Form.Select 
@@ -312,6 +319,18 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                 </Col>
 
                 <Col md={3}>
+                  <Form.Group className="mb-2">
+                    <Form.Check 
+                      type="checkbox"
+                      id="contactForStudentInfo"
+                      label={t('auto.contactForAlerts', 'Contact for Alerts')}
+                      checked={contactForStudentInfo}
+                      onChange={(e) => setContactForStudentInfo(e.target.checked)}
+                    />
+                  </Form.Group>
+                </Col>
+                
+                <Col md={2}>
                   <Button 
                     variant="info" 
                     type="submit" 
@@ -362,6 +381,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                     <th>{t('auto.cnic', 'CNIC')}</th>
                     <th>{t('auto.occupation', 'Occupation')}</th>
                     <th>{t('auto.relation', `Relation`)}</th>
+                    <th>{t('auto.contactForAlerts', 'Contact for Alerts')}</th>
                     <th>{t('auto.actions', `Actions`)}</th>
                   </tr>
                 </thead>
@@ -377,6 +397,15 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                         <Badge bg={getRelationTypeBadgeColor(association.relationType)}>
                           {getRelationTypeLabel(association.relationType, t)}
                         </Badge>
+                      </td>
+                      <td>
+                        <span className="ms-3">
+                          {association.contactForStudentInfo ? (
+                            <i className="bi bi-check-circle-fill text-success" style={{ fontSize: '1.2rem' }}></i>
+                          ) : (
+                            <i className="bi bi-dash-circle text-muted" style={{ fontSize: '1.2rem' }}></i>
+                          )}
+                        </span>
                       </td>
                       <td>
                         <div className="d-flex gap-1">
@@ -421,7 +450,7 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
               <div className="mb-3">
                 <strong>{t('auto.parent', `Parent:`)}</strong> {editingAssociation.parent.name}
               </div>
-              <Form.Group className="mb-4">
+              <Form.Group className="mb-3">
                 <Form.Label>{t('auto.relationType', `Relation Type *`)}</Form.Label>
                 <Form.Select 
                   value={editRelationType}
@@ -434,6 +463,15 @@ export default function ParentAssociationSubform({ studentId, onAssociationChang
                     </option>
                   ))}
                 </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Check 
+                  type="checkbox"
+                  id="editContact"
+                  label={t('auto.contactForAlerts', 'Contact for Alerts')}
+                  checked={editContact}
+                  onChange={(e) => setEditContact(e.target.checked)}
+                />
               </Form.Group>
               <div className="d-flex justify-content-end gap-2">
                 <Button variant="secondary" onClick={() => setShowEditModal(false)}>

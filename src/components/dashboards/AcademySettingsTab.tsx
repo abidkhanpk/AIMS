@@ -70,6 +70,7 @@ export default function AcademySettingsTab() {
       });
 
       if (!res.ok) throw new Error('Failed to update academy settings');
+
       setSuccess(t('auto.academySettingsUpdatedSuccessfully', `Academy settings updated successfully.`));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error updating settings');
