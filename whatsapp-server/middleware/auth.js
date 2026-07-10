@@ -55,7 +55,7 @@ function authMiddleware(req, res, next) {
     const pathParts = urlParts[0].split('/');
     if (pathParts.length > 1) {
       const lastPart = pathParts[pathParts.length - 1];
-      const keywords = ['init', 'qr', 'status', 'queue', 'settings'];
+      const keywords = ['init', 'qr', 'status', 'queue', 'settings', 'send', 'send-bulk'];
       if (lastPart && !keywords.includes(lastPart) && !lastPart.startsWith(`${matchedPrefix}_`)) {
         pathParts[pathParts.length - 1] = `${matchedPrefix}_${lastPart}`;
         urlParts[0] = pathParts.join('/');
