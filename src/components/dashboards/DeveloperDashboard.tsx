@@ -124,6 +124,20 @@ function AdminManagementTab() {
   const [whatsAppError, setWhatsAppError] = useState('');
   const [whatsAppSuccess, setWhatsAppSuccess] = useState('');
   const [sendingWhatsApp, setSendingWhatsApp] = useState(false);
+  const [isSenderSessionConnected, setIsSenderSessionConnected] = useState(false);
+
+  const checkSenderSession = async () => {
+    try {
+      const res = await fetch('/api/whatsapp/session');
+      if (res.ok) {
+        const data = await res.json();
+        const connected = data.status === 'connected' || !!data.dbSession?.phoneNumber;
+        setIsSenderSessionConnected(connected);
+      }
+    } catch (e) {
+      console.error("Failed to check sender WhatsApp session:", e);
+    }
+  };
 
   // Helper to check if an admin's subscription is due (expired or expiring in <= 7 days)
   const isSubscriptionDue = (admin: Admin) => {
@@ -153,7 +167,7 @@ function AdminManagementTab() {
   const getTemplateText = (type: string) => {
     switch (type) {
       case 'WELCOME':
-        return `السلام علیکم ورحمۃ اللہ وبرکاتہ\n\nایمز (AIMS) ایپ میں خوش آمدید!\n\nآپ کا ایڈمن اکاؤنٹ کامیابی کے ساتھ بنا دیا گیا ہے۔ لاگ اِن کے لیے درج ذیل معلومات استعمال کریں:\n\nلنک: https://aims.absons.net\nیوزر نیم: {email}\nپاس ورڈ: {password}\n\nبراہِ کرم پہلی مرتبہ لاگ اِن کرنے کے فوراً بعد اپنا پاس ورڈ تبدیل کر لیں۔\n\nلاگ اِن کرنے کے بعد آپ معلمین، طلبہ اور رشتہ داروں کے اکاؤنٹس اپنے ایڈمن اکاؤنٹ سے خود بنا سکیں گے۔\n\nکسی بھی رہنمائی کی ضرورت ہو تو رابطہ کر سکتے ہیں۔\n\nجزاکم اللہ خیراً`;
+        return `السلام علیکم ورحمۃ اللہ وبرکاتہ\n\nمحترم  {name}، ایمز (AIMS) ایپ میں آپ کو خوش آمدید!\n\nآپ کا ایڈمن اکاؤنٹ کامیابی کے ساتھ بنا دیا گیا ہے۔ لاگ اِن کے لیے درج ذیل معلومات استعمال کریں:\n\nلنک: https://aims.absons.net\nیوزر نیم: آپ کا فراہم کردہ ای میل ایڈریس\nپاس ورڈ: {password}\n\nبراہِ کرم پہلی مرتبہ لاگ اِن کرنے کے فوراً بعد اپنا پاس ورڈ تبدیل کر لیں۔\n\nلاگ اِن کرنے کے بعد آپ معلمین، طلبہ اور رشتہ داروں کے اکاؤنٹس اپنے ایڈمن اکاؤنٹ سے خود بنا سکیں گے۔\n\nکسی بھی رہنمائی کی ضرورت ہو تو رابطہ کر سکتے ہیں۔\n\nجزاکم اللہ خیراً`;
       case 'INACTIVITY':
         return `السلام علیکم {name}،\n\nامید ہے آپ خیریت سے ہوں گے۔\n\nیہ AIMS (اکیڈمی انفارمیشن مینجمنٹ سسٹم) کی طرف سے ایک خودکار پیغام ہے۔ ہمارے ریکارڈ کے مطابق، آپ نے گزشتہ کچھ دنوں سے AIMS پورٹل لاگ ان یا استعمال نہیں کیا ہے۔\n\nہم یہ جاننا چاہتے ہیں کہ آیا آپ کو سسٹم استعمال کرنے میں کسی قسم کی دشواری یا فنی خرابی کا سامنا تو نہیں کرنا پڑ رہا؟ یا اگر کوئی اور وجہ ہے جس کی وجہ سے آپ اسے استعمال نہیں کر پا رہے، تو براہ کرم ہمیں ضرور آگاہ کریں۔ آپ کا فیڈ بیک ہمارے لیے انتہائی قیمتی ہے اور ہم آپ کے تعاون سے اپنے سسٹم کو مزید بہتر اور آسان بنانا چاہتے ہیں۔\n\nمزید برآں، اگر آپ کسی بھی وجہ سے مستقبل میں AIMS سسٹم استعمال کرنا جاری نہیں رکھنا چاہتے، تو براہ کرم ہمیں مطلع کر دیں تاکہ آپ کا ڈیٹا اور یوزرز حذف کر کے دوسرے صارفین کے لیے جگہ خالی کی جا سکے۔\n\nاگر آپ کو کسی قسم کی تکنیکی مدد یا گائیڈنس کی ضرورت ہو، تو آپ کسی بھی وقت ہم سے رابطہ کر سکتے ہیں۔ ہم آپ کی رہنمائی اور مدد کے لیے ہمیشہ دستیاب ہیں۔\n\nنیک تمناؤں کے ساتھ،\nAIMS سپورٹ ٹیم`;
       case 'SUBSCRIPTION':
@@ -303,6 +317,7 @@ function AdminManagementTab() {
 
   useEffect(() => {
     fetchAdmins();
+    checkSenderSession();
   }, []);
 
 
@@ -837,24 +852,26 @@ function AdminManagementTab() {
             </h5>
             <div className="d-flex align-items-center gap-2">
               <Badge bg="secondary">{admins.length} {t('auto.total', `Total`)}</Badge>
-              <Button
-                size="sm"
-                variant="outline-success"
-                onClick={() => {
-                  setWhatsAppTarget('ALL');
-                  setWhatsAppMessageType('CUSTOM');
-                  setWhatsAppWelcomePassword('');
-                  setWhatsAppCustomText('');
-                  setWhatsAppError('');
-                  setWhatsAppSuccess('');
-                  setShowWhatsAppModal(true);
-                }}
-                disabled={admins.filter(a => a.mobile).length === 0}
-                title={t('auto.sendMessageToAllAdmins', 'Send message to all admins')}
-              >
-                <i className="bi bi-whatsapp me-1"></i>
-                {t('auto.messageAll', 'Message All')}
-              </Button>
+              {isSenderSessionConnected && (
+                <Button
+                  size="sm"
+                  variant="outline-success"
+                  onClick={() => {
+                    setWhatsAppTarget('ALL');
+                    setWhatsAppMessageType('CUSTOM');
+                    setWhatsAppWelcomePassword('');
+                    setWhatsAppCustomText('');
+                    setWhatsAppError('');
+                    setWhatsAppSuccess('');
+                    setShowWhatsAppModal(true);
+                  }}
+                  disabled={admins.filter(a => a.mobile).length === 0}
+                  title={t('auto.sendMessageToAllAdmins', 'Send message to all admins')}
+                >
+                  <i className="bi bi-whatsapp me-1"></i>
+                  {t('auto.messageAll', 'Message All')}
+                </Button>
+              )}
               <Button
                 size="sm"
                 variant={showCreateForm ? 'secondary' : 'primary'}
@@ -936,23 +953,25 @@ function AdminManagementTab() {
                       </td>
                       <td>
                         <div className="d-flex gap-1">
-                          <Button
-                            variant="outline-success"
-                            size="sm"
-                            onClick={() => {
-                              setWhatsAppTarget(admin);
-                              setWhatsAppMessageType('CUSTOM');
-                              setWhatsAppWelcomePassword('');
-                              setWhatsAppCustomText('');
-                              setWhatsAppError('');
-                              setWhatsAppSuccess('');
-                              setShowWhatsAppModal(true);
-                            }}
-                            title={t('auto.sendWhatsappMessage', 'Send WhatsApp Message')}
-                            disabled={!admin.mobile}
-                          >
-                            <i className="bi bi-whatsapp"></i>
-                          </Button>
+                            {isSenderSessionConnected && (
+                              <Button
+                                variant="outline-success"
+                                size="sm"
+                                onClick={() => {
+                                  setWhatsAppTarget(admin);
+                                  setWhatsAppMessageType('CUSTOM');
+                                  setWhatsAppWelcomePassword('');
+                                  setWhatsAppCustomText('');
+                                  setWhatsAppError('');
+                                  setWhatsAppSuccess('');
+                                  setShowWhatsAppModal(true);
+                                }}
+                                title={!admin.mobile ? t('auto.noMobileNumber', 'No mobile number') : t('auto.sendWhatsappMessage', 'Send WhatsApp Message')}
+                                disabled={!admin.mobile}
+                              >
+                                <i className="bi bi-whatsapp"></i>
+                              </Button>
+                            )}
                           <Button
                             variant="outline-info"
                             size="sm"
@@ -1525,7 +1544,9 @@ function AdminManagementTab() {
                   <option value="WELCOME">{t('auto.welcomeMessage', 'Welcome Message')}</option>
                 )}
                 <option value="INACTIVITY">{t('auto.inactivityMessage', 'Inactivity Message')}</option>
-                <option value="SUBSCRIPTION">{t('auto.subscriptionDueMessage', 'Subscription Due Message')}</option>
+                {(whatsAppTarget === 'ALL' || (whatsAppTarget && isSubscriptionDue(whatsAppTarget))) && (
+                  <option value="SUBSCRIPTION">{t('auto.subscriptionDueMessage', 'Subscription Due Message')}</option>
+                )}
               </Form.Select>
             </Form.Group>
 
