@@ -248,10 +248,9 @@ If you are new to API integrations, this guide will walk you through exactly how
 - **`clientId`**: A unique label to identify who is sending the message (e.g. `admin_45`). You should use the database ID of the user logging in.
 - **`X-WA-SECRET` (Password Header)**: This is a secure passcode header that prevents unauthorized apps from using your WhatsApp server.
   - **Where do I get it?**
-    1. Look inside the WhatsApp server folder's `.env` file for the line: `API_SECRET=your_super_secret_shared_key_here`. 
-    2. Set a secure, random password there on your server (e.g., `my_secret_token_123`).
-    3. Copy this exact same password and store it inside your new client application's variables.
-    4. Pass it under the header name `X-WA-SECRET` in every API call you make to the server.
+    - You can choose **either** a single global secret or a multi-tenant secrets map:
+      - **Option A (Single App)**: Use `API_SECRET` in `.env` (e.g. `API_SECRET=my_secret_token_123`). The client app passes this secret directly. No session prefixing is applied.
+      - **Option B (Multi-App Isolation - Recommended)**: Use `API_SECRETS_MAP` in `.env` (e.g. `API_SECRETS_MAP={"secret_for_aims":"aims", "secret_for_crm":"crm"}`). AIMS will configure its client secret as `secret_for_aims`, and the CRM configures `secret_for_crm`. The server automatically isolates their sessions under the `aims_` or `crm_` namespace.
 - **`fetch()`**: The built-in function in JavaScript to talk to a remote server.
 
 ---
