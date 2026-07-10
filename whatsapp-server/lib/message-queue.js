@@ -189,8 +189,8 @@ async function processQueue(clientId) {
 
   q.processing = false;
 
-  // Trigger fast-sleep on queue completion if in sleep mode
-  if (process.env.WHATSAPP_MODE === 'SLEEP') {
+  // Trigger fast-sleep on queue completion if enabled and in sleep mode
+  if (process.env.WHATSAPP_MODE === 'SLEEP' && process.env.WHATSAPP_SLEEP_ON_QUEUE_COMPLETION === 'true') {
     setTimeout(() => {
       // Re-verify no new messages have been queued in the meantime
       const nextMsg = q.queue.find(m => m.status === 'queued');
