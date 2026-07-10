@@ -58,7 +58,24 @@ router.get('/status/:clientId', async (req, res) => {
   res.json(result);
 });
 
-// DELETE /api/session/:clientId — Disconnect session
+// POST /api/session/disconnect/:clientId — Temporarily disconnect/sleep session (free RAM, keep credentials)
+router.post('/disconnect/:clientId', async (req, res) => {
+  const { clientId } = req.params;
+
+  if (!clientId) {
+    return res.status(400).json({ error: 'clientId is required' });
+  }
+
+  try {
+    const result = await disconnectSession(clientId, false);
+    res.json(result);
+  } catch (error) {
+    console.error(`Error disconnecting session ${clientId}:`, error.message);
+    res.status(500).json({ error: 'Failed to disconnect session', details: error.message });
+  }
+});
+
+// DELETE /api/session/:clientId — Disconnect and remove session (full logout)
 router.delete('/:clientId', async (req, res) => {
   const { clientId } = req.params;
   const removeAuth = req.query.removeAuth !== 'false'; // default: true

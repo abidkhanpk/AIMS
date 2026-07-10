@@ -416,10 +416,30 @@ async function sendBulkMessages(adminUserId, messageList) {
 
 ---
 
-### Step 4: Disconnect (Log Out)
+### Step 4: Disconnect or Log Out
 
-If the user unlinks or logs out of their WhatsApp account, call this endpoint to clean up. This stops the server connection and deletes the login credentials from the database.
+You can call the endpoints below to either temporarily disconnect the socket (placing the session into sleep mode to free VPS memory while preserving credentials) or fully log out (unlinking the device and deleting database credentials).
 
+#### Option A: Disconnect / Sleep (Keeps credentials)
+To suspend the connection temporarily (e.g. to manually release RAM):
+```javascript
+async function disconnectWhatsApp(adminUserId) {
+  const SERVER_URL = "https://wa.yourdomain.com";
+  const SECRET = "your_super_secret_shared_key_here";
+
+  await fetch(`${SERVER_URL}/api/session/disconnect/${adminUserId}`, {
+    method: "POST",
+    headers: {
+      "X-WA-SECRET": SECRET
+    }
+  });
+  
+  alert("WhatsApp disconnected (session put to sleep).");
+}
+```
+
+#### Option B: Full Logout / Unlink (Deletes credentials)
+To fully unlink the WhatsApp account and remove session credentials:
 ```javascript
 async function unlinkWhatsApp(adminUserId) {
   const SERVER_URL = "https://wa.yourdomain.com";
@@ -432,7 +452,7 @@ async function unlinkWhatsApp(adminUserId) {
     }
   });
   
-  alert("WhatsApp account unlinked successfully.");
+  alert("WhatsApp account fully unlinked.");
 }
 ```
 

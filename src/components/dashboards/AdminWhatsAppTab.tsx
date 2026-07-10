@@ -47,6 +47,7 @@ export default function AdminWhatsAppTab() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [activeAction, setActiveAction] = useState<'disconnect' | 'logout' | null>(null);
   const [qrPolling, setQrPolling] = useState(false);
 
   // Quick action data
@@ -221,9 +222,12 @@ export default function AdminWhatsAppTab() {
       : t('auto.confirmDisconnectWhatsapp', 'Are you sure you want to disconnect WhatsApp? This will temporarily close the connection, but it will automatically wake up and reconnect when the next message is sent.');
       
     if (!confirm(msg)) return;
+    setActiveAction(removeAuth ? 'logout' : 'disconnect');
     setDisconnecting(true);
     try {
-      const res = await fetch(`/api/whatsapp/session?removeAuth=${removeAuth}`, { method: 'DELETE' });
+      const res = await fetch('/api/whatsapp/session', { 
+        method: removeAuth ? 'DELETE' : 'PUT' 
+      });
       if (res.ok) {
         setSessionStatus(null);
         setQrCode(null);
@@ -239,6 +243,7 @@ export default function AdminWhatsAppTab() {
       setError(removeAuth ? 'Failed to log out' : 'Failed to disconnect');
     } finally {
       setDisconnecting(false);
+      setActiveAction(null);
     }
   };
 
@@ -499,7 +504,7 @@ export default function AdminWhatsAppTab() {
                       {t('auto.connect', 'Connect')}
                     </Button>
                     <Button variant="outline-danger" onClick={() => handleDisconnect(true)} disabled={disconnecting}>
-                      {disconnecting ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.loggingOut', 'Logging out...')}</> : <><i className="bi bi-box-arrow-right me-2"></i>{t('auto.logout', 'Logout')}</>}
+                      {activeAction === 'logout' ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.loggingOut', 'Logging out...')}</> : <><i className="bi bi-box-arrow-right me-2"></i>{t('auto.logout', 'Logout')}</>}
                     </Button>
                   </div>
                 ) : (
@@ -510,10 +515,10 @@ export default function AdminWhatsAppTab() {
               ) : isConnected ? (
                 <div className="d-flex gap-2 justify-content-md-end flex-wrap">
                   <Button variant="outline-warning" onClick={() => handleDisconnect(false)} disabled={disconnecting}>
-                    {disconnecting ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.disconnecting', 'Disconnecting...')}</> : <><i className="bi bi-pause-circle me-2"></i>{t('auto.disconnect', 'Disconnect')}</>}
+                    {activeAction === 'disconnect' ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.disconnecting', 'Disconnecting...')}</> : <><i className="bi bi-pause-circle me-2"></i>{t('auto.disconnect', 'Disconnect')}</>}
                   </Button>
                   <Button variant="outline-danger" onClick={() => handleDisconnect(true)} disabled={disconnecting}>
-                    {disconnecting ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.loggingOut', 'Logging out...')}</> : <><i className="bi bi-box-arrow-right me-2"></i>{t('auto.logout', 'Logout')}</>}
+                    {activeAction === 'logout' ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.loggingOut', 'Logging out...')}</> : <><i className="bi bi-box-arrow-right me-2"></i>{t('auto.logout', 'Logout')}</>}
                   </Button>
                 </div>
               ) : null}
