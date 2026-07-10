@@ -33,6 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             isActive: true,
             country: true,
             mobile: true,
+            isWhatsApp: true,
             address: true,
             createdAt: true,
             settings: {
@@ -88,6 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             isActive: true,
             country: true,
             mobile: true,
+            isWhatsApp: true,
             dateOfBirth: true,
             address: true,
             qualification: true,
@@ -117,6 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           isActive: true,
           country: true,
           mobile: true,
+          isWhatsApp: true,
           dateOfBirth: true,
           address: true,
           profession: true,
