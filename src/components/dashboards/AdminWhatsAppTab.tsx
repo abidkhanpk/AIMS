@@ -214,21 +214,29 @@ export default function AdminWhatsAppTab() {
     }
   };
 
-  // Disconnect
-  const handleDisconnect = async () => {
-    if (!confirm(t('auto.confirmDisconnectWhatsapp', 'Are you sure you want to disconnect WhatsApp?'))) return;
+  // Disconnect / Logout
+  const handleDisconnect = async (removeAuth: boolean) => {
+    const msg = removeAuth 
+      ? t('auto.confirmLogoutWhatsapp', 'Are you sure you want to log out from WhatsApp? This will unlink your device, and you will need to scan the QR code again.')
+      : t('auto.confirmDisconnectWhatsapp', 'Are you sure you want to disconnect WhatsApp? This will temporarily close the connection, but it will automatically wake up and reconnect when the next message is sent.');
+      
+    if (!confirm(msg)) return;
     setDisconnecting(true);
     try {
-      const res = await fetch('/api/whatsapp/session', { method: 'DELETE' });
+      const res = await fetch(`/api/whatsapp/session?removeAuth=${removeAuth}`, { method: 'DELETE' });
       if (res.ok) {
         setSessionStatus(null);
         setQrCode(null);
         setQrPolling(false);
-        setSuccess(t('auto.whatsappDisconnectedSuccessfully', 'WhatsApp disconnected'));
+        setSuccess(
+          removeAuth 
+            ? t('auto.whatsappLoggedOutSuccessfully', 'WhatsApp logged out successfully')
+            : t('auto.whatsappDisconnectedSuccessfully', 'WhatsApp disconnected successfully')
+        );
         fetchStatus();
       }
     } catch (e) {
-      setError('Failed to disconnect');
+      setError(removeAuth ? 'Failed to log out' : 'Failed to disconnect');
     } finally {
       setDisconnecting(false);
     }
@@ -488,9 +496,14 @@ export default function AdminWhatsAppTab() {
                   <i className="bi bi-qr-code me-2"></i>{t('auto.connectWhatsapp', 'Connect WhatsApp')}
                 </Button>
               ) : isConnected ? (
-                <Button variant="outline-danger" onClick={handleDisconnect} disabled={disconnecting}>
-                  {disconnecting ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.disconnecting', 'Disconnecting...')}</> : <><i className="bi bi-x-circle me-2"></i>{t('auto.disconnect', 'Disconnect')}</>}
-                </Button>
+                <div className="d-flex gap-2 justify-content-md-end flex-wrap">
+                  <Button variant="outline-warning" onClick={() => handleDisconnect(false)} disabled={disconnecting}>
+                    {disconnecting ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.disconnecting', 'Disconnecting...')}</> : <><i className="bi bi-pause-circle me-2"></i>{t('auto.disconnect', 'Disconnect')}</>}
+                  </Button>
+                  <Button variant="outline-danger" onClick={() => handleDisconnect(true)} disabled={disconnecting}>
+                    {disconnecting ? <><Spinner animation="border" size="sm" className="me-2" />{t('auto.loggingOut', 'Logging out...')}</> : <><i className="bi bi-box-arrow-right me-2"></i>{t('auto.logout', 'Logout')}</>}
+                  </Button>
+                </div>
               ) : null}
             </Col>
           </Row>
