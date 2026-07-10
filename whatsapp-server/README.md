@@ -31,7 +31,7 @@ When modifying or discussing this server with future AI agents, refer to these f
 ---
 
 ## Key Features
-- **PostgreSQL Session Storage**: Keeps all authentication states, credentials, and cryptographic keys compiled as `JSONB` blobs inside a single database table. Very lightweight on disk and enables easy backups.
+- **PostgreSQL Session Storage**: Keeps all authentication states, credentials, and cryptographic keys compiled as `JSONB` blobs inside a single database table. Very lightweight on disk and enables easy backups. *(The table schema and indexes are automatically verified and created upon server startup — no manual database migrations are required).*
 - **Resource-Efficient Sleep Mode (Lazy Loading)**: Sockets are automatically loaded on demand when a send request arrives, and closed (placed to sleep) after a configurable idle time to conserve VPS RAM.
 - **Human-Like Queuing Delay**: Messages are queued and sent with a random delay (e.g. 5–15 seconds) to mimic human typing and prevent WhatsApp spam detection bans.
 - **Daily Message Limits**: Enforces daily caps on messages sent per number.
