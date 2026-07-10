@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Form, Button, Table, Card, Row, Col, Modal, Alert, Spinner, Badge, Tabs, Tab } from 'react-bootstrap';
 import SubscriptionHistoryTab from '../SubscriptionHistoryTab';
+import DeveloperWhatsAppTab from './DeveloperWhatsAppTab';
 import { currencies } from '../../utils/currencies';
 import { useTranslation } from 'react-i18next';
 import {
@@ -1825,6 +1826,17 @@ export default function DeveloperDashboard() {
           }
         >
           <AdminManagementTab />
+        </Tab>
+        <Tab 
+          eventKey="whatsapp" 
+          title={
+            <span>
+              <i className="bi bi-whatsapp me-2"></i>
+              {t('menu.whatsapp', `WhatsApp`)}
+            </span>
+          }
+        >
+          <DeveloperWhatsAppTab />
         </Tab>
       </Tabs>
       

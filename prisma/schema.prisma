@@ -163,6 +163,7 @@ model User {
   
   // Additional user details
   mobile    String?
+  isWhatsApp Boolean  @default(false) // Whether mobile number is a WhatsApp number
   dateOfBirth DateTime? // Only for STUDENT and TEACHER
   address   String?
   country   String?
@@ -218,6 +219,7 @@ model User {
   auditLogs           AuditLog[]       @relation("UserAuditLogs")
   studentProfile      StudentProfile?
   parentProfile       ParentProfile?
+  whatsappSession     WhatsAppSession?
 }
 
 model StudentProfile {
@@ -312,6 +314,7 @@ model ParentStudent {
   parentId     String
   studentId    String
   relationType RelationType @default(GUARDIAN)
+  contactForStudentInfo Boolean @default(true) // Whether this relative should receive automated messages about the student
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -698,4 +701,34 @@ model VideoTutorial {
   roles      Role[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model WhatsAppSession {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  phoneNumber     String?
+  isConnected     Boolean  @default(false)
+  lastConnected   DateTime?
+  minDelayMs      Int      @default(5000)   // Min delay between queued messages (ms)
+  maxDelayMs      Int      @default(15000)  // Max delay between queued messages (ms)
+  maxBatchSize    Int      @default(50)     // Max messages per day
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user        User                 @relation(fields: [userId], references: [id])
+  messageLogs WhatsAppMessageLog[]
+}
+
+model WhatsAppMessageLog {
+  id             String   @id @default(uuid())
+  sessionId      String
+  recipientPhone String
+  recipientName  String?
+  messageType    String   // e.g., WELCOME_ADMIN, FEE_REMINDER, ATTENDANCE_ALERT, etc.
+  messageText    String   @db.Text
+  status         String   @default("QUEUED") // QUEUED, SENT, FAILED
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+
+  session WhatsAppSession @relation(fields: [sessionId], references: [id])
 }
