@@ -131,7 +131,7 @@ Useful if you want to use Node-specific process monitoring and cluster managemen
    ```
 
 ### 3. Expose under Subdomain with SSL (Nginx Reverse Proxy)
-Install Nginx and map a domain name (e.g., `whatsapp.yourdomain.com`) to the Node port:
+Install Nginx and map a domain name (e.g., `wa.yourdomain.com`) to the Node port:
 ```bash
 sudo apt install nginx -y
 ```
@@ -140,7 +140,7 @@ Create `/etc/nginx/sites-available/whatsapp-server`:
 ```nginx
 server {
     listen 80;
-    server_name whatsapp.yourdomain.com;
+    server_name wa.yourdomain.com;
 
     location / {
         proxy_pass http://localhost:3001;
@@ -161,7 +161,7 @@ sudo systemctl restart nginx
 
 # Install certbot and request SSL certificates
 sudo apt install certbot python3-certbot-nginx -y
-sudo certbot --nginx -d whatsapp.yourdomain.com
+sudo certbot --nginx -d wa.yourdomain.com
 ```
 
 ---
