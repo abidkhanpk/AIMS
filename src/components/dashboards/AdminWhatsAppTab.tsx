@@ -523,7 +523,261 @@ export default function AdminWhatsAppTab() {
         </Card.Body>
       </Card>
 
+      {/* Quick Actions (only when connected) */}
+      {isConnected && (
+        <Card className="shadow-sm mb-4">
+          <Card.Header className="bg-primary text-white">
+            <h5 className="mb-0">
+              <i className="bi bi-lightning me-2"></i>
+              {t('auto.quickMessageActions', 'Quick Message Actions')}
+            </h5>
+          </Card.Header>
+          <Card.Body>
+            {loadingData ? (
+              <div className="text-center py-3"><Spinner animation="border" size="sm" /></div>
+            ) : (
+              <Tabs defaultActiveKey="fee-reminders" className="mb-3">
+                {/* Fee Reminders Tab */}
+                <Tab eventKey="fee-reminders" title={<span><i className="bi bi-cash-coin me-1"></i>{t('auto.feeReminders', 'Fee Reminders')} <Badge bg="danger">{overdueFees.length}</Badge></span>}>
+                  <div className="mb-3">
+                    <p className="text-muted small">{t('auto.feeRemindersDesc', 'Send fee reminders to parents of students with overdue/pending fees')}</p>
+                    {overdueFees.length > 0 ? (
+                      <>
+                        <div className="table-responsive">
+                          <Table size="sm" hover className="mb-3">
+                            <thead className="table-light">
+                              <tr>
+                                <th>{t('auto.student', 'Student')}</th>
+                                <th>{t('auto.fee', 'Fee')}</th>
+                                <th>{t('auto.amount', 'Amount')}</th>
+                                <th>{t('auto.dueDate', 'Due Date')}</th>
+                                <th>{t('auto.parent', 'Parent')}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {overdueFees.map(fee => (
+                                <tr key={fee.id}>
+                                  <td>{fee.student?.name}</td>
+                                  <td>{fee.title}</td>
+                                  <td>{fee.currency} {fee.amount}</td>
+                                  <td className="small">{new Date(fee.dueDate).toLocaleDateString()}</td>
+                                  <td>
+                                    {fee.student?.studentParents?.map((ps: any) => (
+                                      <Badge key={ps.parent.id} bg="info" className="text-dark me-1">{ps.parent.name}</Badge>
+                                    )) || <span className="text-muted">-</span>}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                        <Button variant="warning" onClick={handleSendFeeReminders} disabled={sending}>
+                          <i className="bi bi-send me-2"></i>
+                          {t('auto.sendAllFeeReminders', 'Send All Fee Reminders')} ({overdueFees.length})
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="text-center text-muted py-3">
+                        <i className="bi bi-check-circle display-6"></i>
+                        <p className="mt-2">{t('auto.noOverdueFees', 'No overdue fees found')}</p>
+                      </div>
+                    )}
+                  </div>
+                </Tab>
 
+                {/* Attendance Alerts Tab */}
+                <Tab eventKey="attendance" title={<span><i className="bi bi-calendar-x me-1"></i>{t('auto.attendanceAlerts', 'Attendance')} <Badge bg="warning" className="text-dark">{absentToday.length}</Badge></span>}>
+                  <p className="text-muted small">{t('auto.attendanceAlertsDesc', "Send absence alerts to parents for today's absent students")}</p>
+                  {absentToday.length > 0 ? (
+                    <>
+                      <div className="table-responsive">
+                        <Table size="sm" hover className="mb-3">
+                          <thead className="table-light">
+                            <tr>
+                              <th>{t('auto.student', 'Student')}</th>
+                              <th>{t('auto.course', 'Course')}</th>
+                              <th>{t('auto.teacher', 'Teacher')}</th>
+                              <th>{t('auto.parent', 'Parent')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {absentToday.map((a: any) => (
+                              <tr key={a.id}>
+                                <td>{a.student?.name}</td>
+                                <td>{a.course?.name}</td>
+                                <td>{a.teacher?.name}</td>
+                                <td>
+                                  {a.student?.studentParents?.map((ps: any) => (
+                                    <Badge key={ps.parent.id} bg="info" className="text-dark me-1">{ps.parent.name}</Badge>
+                                  )) || '-'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </Table>
+                      </div>
+                      <Button variant="warning" onClick={handleSendAttendanceAlerts} disabled={sending}>
+                        <i className="bi bi-send me-2"></i>
+                        {t('auto.sendAllAttendanceAlerts', 'Send All Attendance Alerts')} ({absentToday.length})
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-center text-muted py-3">
+                      <i className="bi bi-emoji-smile display-6"></i>
+                      <p className="mt-2">{t('auto.noAbsencesToday', 'No absences recorded today')}</p>
+                    </div>
+                  )}
+                </Tab>
+
+                {/* Payment Confirmations Tab */}
+                <Tab eventKey="payments" title={<span><i className="bi bi-check-circle me-1"></i>{t('auto.paymentConfirmations', 'Payments')} <Badge bg="success">{recentPayments.length}</Badge></span>}>
+                  <p className="text-muted small">{t('auto.paymentConfirmationsDesc', 'Send payment confirmation to parents for recently paid fees (last 7 days)')}</p>
+                  {recentPayments.length > 0 ? (
+                    <>
+                      <div className="table-responsive">
+                        <Table size="sm" hover className="mb-3">
+                          <thead className="table-light">
+                            <tr>
+                              <th>{t('auto.student', 'Student')}</th>
+                              <th>{t('auto.fee', 'Fee')}</th>
+                              <th>{t('auto.amount', 'Amount')}</th>
+                              <th>{t('auto.paidDate', 'Paid Date')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {recentPayments.map((p: any) => (
+                              <tr key={p.id}>
+                                <td>{p.student?.name}</td>
+                                <td>{p.title}</td>
+                                <td>{p.currency} {p.amount}</td>
+                                <td className="small">{p.paidDate ? new Date(p.paidDate).toLocaleDateString() : '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </Table>
+                      </div>
+                      <Button variant="success" onClick={handleSendPaymentConfirmations} disabled={sending}>
+                        <i className="bi bi-send me-2"></i>
+                        {t('auto.sendAllConfirmations', 'Send All Confirmations')} ({recentPayments.length})
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-center text-muted py-3">
+                      <i className="bi bi-inbox display-6"></i>
+                      <p className="mt-2">{t('auto.noRecentPayments', 'No recent payments found')}</p>
+                    </div>
+                  )}
+                </Tab>
+
+                {/* Welcome Messages Tab */}
+                <Tab eventKey="welcome" title={<span><i className="bi bi-person-plus me-1"></i>{t('auto.welcome', 'Welcome')}</span>}>
+                  <p className="text-muted small">{t('auto.welcomeDesc', 'Send welcome message with login credentials to new parents or teachers')}</p>
+                  <Row className="g-3">
+                    <Col md={3}>
+                      <Form.Group>
+                        <Form.Label>{t('auto.recipientType', 'Type')}</Form.Label>
+                        <Form.Select value={welcomeType} onChange={(e) => { setWelcomeType(e.target.value as any); setWelcomeRecipient(''); }}>
+                          <option value="parent">{t('auto.parent', 'Parent')}</option>
+                          <option value="teacher">{t('auto.teacher', 'Teacher')}</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>{t('auto.selectRecipient', 'Recipient')}</Form.Label>
+                        <Form.Select value={welcomeRecipient} onChange={(e) => setWelcomeRecipient(e.target.value)}>
+                          <option value="">{t('auto.choose', 'Choose...')}</option>
+                          {(welcomeType === 'parent' ? parents : teachers).map((r: any) => (
+                            <option key={r.id} value={r.id}>{r.name} ({r.mobile})</option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={3}>
+                      <Form.Group>
+                        <Form.Label>{t('auto.password', 'Password')}</Form.Label>
+                        <Form.Control
+                          type="text"
+                          value={welcomePassword}
+                          onChange={(e) => setWelcomePassword(e.target.value)}
+                          placeholder={t('auto.enterPassword', 'Enter password')}
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={2} className="d-flex align-items-end">
+                      <Button variant="primary" onClick={handleSendWelcome} disabled={sending || !welcomeRecipient || !welcomePassword} className="w-100">
+                        <i className="bi bi-send me-1"></i>{t('auto.send', 'Send')}
+                      </Button>
+                    </Col>
+                  </Row>
+                </Tab>
+
+                {/* Custom Message Tab */}
+                <Tab eventKey="custom" title={<span><i className="bi bi-pencil-square me-1"></i>{t('auto.customMessage', 'Custom')}</span>}>
+                  <p className="text-muted small">{t('auto.customMessageDesc', 'Send a custom message to selected parents or teachers')}</p>
+                  <Row className="g-3">
+                    <Col md={3}>
+                      <Form.Group>
+                        <Form.Label>{t('auto.sendTo', 'Send To')}</Form.Label>
+                        <Form.Select value={customRecipientType} onChange={(e) => { setCustomRecipientType(e.target.value); setCustomSelectedRecipients([]); }}>
+                          <option value="parents">{t('auto.parents', 'Parents')}</option>
+                          <option value="teachers">{t('auto.teachers', 'Teachers')}</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={9}>
+                      <Form.Group>
+                        <Form.Label>
+                          {t('auto.message', 'Message')}
+                        </Form.Label>
+                        <Form.Control
+                          as="textarea"
+                          rows={3}
+                          value={customText}
+                          onChange={(e) => setCustomText(e.target.value)}
+                          placeholder={t('auto.typeYourMessage', 'Type your message...')}
+                          dir="rtl"
+                        />
+                      </Form.Group>
+                    </Col>
+                    <Col md={12}>
+                      <div className="border rounded p-3" style={{ maxHeight: 200, overflowY: 'auto' }}>
+                        <Form.Check
+                          type="checkbox"
+                          label={<strong>{t('auto.selectAll', 'Select All')}</strong>}
+                          checked={customSelectedRecipients.length === (customRecipientType === 'parents' ? parents : teachers).length && customSelectedRecipients.length > 0}
+                          onChange={toggleAllRecipients}
+                          className="mb-2"
+                        />
+                        <hr className="my-1" />
+                        {(customRecipientType === 'parents' ? parents : teachers).map((r: any) => (
+                          <Form.Check
+                            key={r.id}
+                            type="checkbox"
+                            label={`${r.name} (${r.mobile})`}
+                            checked={customSelectedRecipients.includes(r.id)}
+                            onChange={() => toggleRecipient(r.id)}
+                          />
+                        ))}
+                      </div>
+                    </Col>
+                    <Col md={12}>
+                      <Button
+                        variant="primary"
+                        onClick={handleSendCustomMessages}
+                        disabled={sending || customSelectedRecipients.length === 0 || !customText.trim()}
+                      >
+                        <i className="bi bi-send me-2"></i>
+                        {t('auto.sendToSelected', 'Send to Selected')} ({customSelectedRecipients.length})
+                      </Button>
+                    </Col>
+                  </Row>
+                </Tab>
+              </Tabs>
+            )}
+          </Card.Body>
+        </Card>
+      )}
 
       {/* Settings Section */}
       <Card className="shadow-sm mb-4">
