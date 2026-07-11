@@ -21,7 +21,8 @@ export default function SignIn() {
     // Check if user is already signed in
     getSession().then((session) => {
       if (session) {
-        router.push('/dashboard');
+        const slug = (session.user as any).academySlug;
+        router.push(slug ? `/${slug}/dashboard` : '/dashboard');
       }
     });
 
@@ -31,6 +32,28 @@ export default function SignIn() {
 
   const fetchAppSettings = async () => {
     try {
+      let slug = '';
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        const segments = path.split('/').filter(Boolean);
+        const RESERVED_WORDS = new Set(['auth', 'signin', 'register', 'messages', 'dashboard', 'en', 'ur']);
+        if (segments[0] && !RESERVED_WORDS.has(segments[0])) {
+          slug = segments[0];
+        }
+      }
+
+      if (slug) {
+        const res = await fetch(`/api/public/academy-branding?slug=${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSettings({
+            appTitle: data.appTitle || 'AIMS',
+            headerImg: data.headerImg || '/assets/app-logo.png'
+          });
+          return;
+        }
+      }
+
       const res = await fetch('/api/settings/developer');
       if (res.ok) {
         const data = await res.json();
@@ -49,7 +72,7 @@ export default function SignIn() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
+ 
     try {
       const result = await signIn('credentials', {
         email,
@@ -64,7 +87,9 @@ export default function SignIn() {
           setError(t('auto.invalidEmailOrPassword', `Invalid email or password`));
         }
       } else {
-        router.push('/dashboard');
+        const session = await getSession();
+        const slug = (session?.user as any)?.academySlug;
+        router.push(slug ? `/${slug}/dashboard` : '/dashboard');
       }
     } catch (error) {
       setError(t('auto.anErrorOccurredDuringSign', `An error occurred during sign in`));

@@ -95,18 +95,24 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
 
   const handleSignOut = async () => {
     try {
+      const slug = (session?.user as any)?.academySlug;
+      const isDeveloper = session?.user?.role === 'DEVELOPER';
+      const targetUrl = slug && !isDeveloper ? `/${slug}/auth/signin` : '/auth/signin';
+
       localStorage.clear();
       sessionStorage.clear();
       await signOut({ 
         redirect: false,
-        callbackUrl: '/auth/signin'
+        callbackUrl: targetUrl
       });
       setTimeout(() => {
-        window.location.href = '/auth/signin';
+        window.location.href = targetUrl;
       }, 100);
     } catch (error) {
       console.error('Sign out error:', error);
-      window.location.href = '/auth/signin';
+      const slug = (session?.user as any)?.academySlug;
+      const isDeveloper = session?.user?.role === 'DEVELOPER';
+      window.location.href = slug && !isDeveloper ? `/${slug}/auth/signin` : '/auth/signin';
     }
   };
 

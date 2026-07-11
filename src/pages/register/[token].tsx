@@ -328,9 +328,14 @@ export default function PublicRegisterPage() {
 
       <Navbar bg="dark" variant="dark" expand="lg" className="px-4 py-3 justify-content-between shadow-sm">
         <Navbar.Brand className="fw-bold d-flex align-items-center gap-2">
-          {academyInfo?.logo && (
-            <img src={academyInfo.logo} alt="Logo" style={{ maxHeight: '40px', borderRadius: '4px' }} />
-          )}
+          <img 
+            src={academyInfo?.logo || '/assets/default-logo.png'} 
+            alt="Logo" 
+            style={{ maxHeight: '40px', borderRadius: '4px' }} 
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = '/assets/default-logo.png';
+            }}
+          />
           <span>{academyInfo?.academyName || 'Academy'}</span>
         </Navbar.Brand>
         <div className="d-flex gap-2">

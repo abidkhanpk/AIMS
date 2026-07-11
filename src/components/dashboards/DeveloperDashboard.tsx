@@ -35,6 +35,7 @@ interface Admin {
     tagline: string;
     enableHomePage: boolean;
     defaultCurrency: string;
+    slug?: string;
     storageProvider?: 'DRIVE' | 'CLOUDINARY';
     driveFolderId?: string | null;
     cloudinaryFolder?: string | null;
@@ -110,6 +111,7 @@ function AdminManagementTab() {
   const [mobile, setMobile] = useState('');
   const [isWhatsApp, setIsWhatsApp] = useState(true);
   const [address, setAddress] = useState('');
+  const [createSlug, setCreateSlug] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [deletingAdminId, setDeletingAdminId] = useState<string | null>(null);
@@ -294,6 +296,7 @@ function AdminManagementTab() {
   const [tagline, setTagline] = useState('');
   const [enableHomePage, setEnableHomePage] = useState(true);
   const [defaultCurrency, setDefaultCurrency] = useState('USD');
+  const [slug, setSlug] = useState('');
   const [updatingSettings, setUpdatingSettings] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -311,6 +314,7 @@ function AdminManagementTab() {
   const [editIsWhatsApp, setEditIsWhatsApp] = useState(false);
   const [editAddress, setEditAddress] = useState('');
   const [editPassword, setEditPassword] = useState('');
+  const [editSlug, setEditSlug] = useState('');
   const [updating, setUpdating] = useState(false);
 
   // currencies imported from utils/currencies
@@ -406,7 +410,8 @@ function AdminManagementTab() {
           subscriptionAmount,
           subscriptionCurrency,
           subscriptionStartDate: subscriptionStartDate || new Date().toISOString(),
-          subscriptionEndDate: endDate
+          subscriptionEndDate: endDate,
+          slug: createSlug || null,
         }),
       });
 
@@ -423,6 +428,7 @@ function AdminManagementTab() {
         setSubscriptionAmount(29.99);
         setSubscriptionCurrency('USD');
         setSubscriptionStartDate('');
+        setCreateSlug('');
         setShowCreateForm(false);
       } else {
         const errorData = await res.json();
@@ -443,6 +449,7 @@ function AdminManagementTab() {
     setEditIsWhatsApp(admin.isWhatsApp || false);
     setEditAddress(admin.address || '');
     setEditPassword('');
+    setEditSlug(admin.settings?.slug || '');
     setShowEditModal(true);
   };
 
@@ -461,6 +468,7 @@ function AdminManagementTab() {
         mobile: editMobile || null,
         isWhatsApp: editIsWhatsApp,
         address: editAddress || null,
+        slug: editSlug || null,
       };
 
       if (editPassword) {
@@ -545,6 +553,7 @@ function AdminManagementTab() {
     setTagline(admin.settings?.tagline || 'Academy Information and Management System');
     setEnableHomePage(admin.settings?.enableHomePage ?? true);
     setDefaultCurrency(admin.settings?.defaultCurrency || 'USD');
+    setSlug(admin.settings?.slug || '');
     setSubscriptionType(admin.settings?.subscriptionType || 'MONTHLY');
     setSubscriptionAmount(admin.settings?.subscriptionAmount || 29.99);
 
@@ -644,7 +653,8 @@ function AdminManagementTab() {
           subscriptionAmount,
           subscriptionCurrency,
           subscriptionStartDate: subscriptionStartDate ? new Date(subscriptionStartDate).toISOString() : null,
-          subscriptionEndDate: endDate ? new Date(endDate).toISOString() : null
+          subscriptionEndDate: endDate ? new Date(endDate).toISOString() : null,
+          slug: slug || null
         }),
       });
 
@@ -742,6 +752,18 @@ function AdminManagementTab() {
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder={t('auto.enterAddress', `Enter address`)}
                 />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.customLinkSlug', `Custom Link (Slug)`)}</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={createSlug}
+                  onChange={(e) => setCreateSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                  placeholder="e.g. greenwood-academy"
+                />
+                <Form.Text className="text-muted">
+                  Configure the academy's brand URL suffix (aims.absons.net/<strong>your-slug</strong>). Use lowercase letters, numbers, and hyphens only.
+                </Form.Text>
               </Form.Group>
 
               {/* Subscription Settings */}
@@ -1089,6 +1111,18 @@ function AdminManagementTab() {
               />
             </Form.Group>
             <Form.Group className="mb-3">
+              <Form.Label>{t('auto.customLinkSlug', `Custom Link (Slug)`)}</Form.Label>
+              <Form.Control
+                type="text"
+                value={editSlug}
+                onChange={(e) => setEditSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                placeholder="e.g. greenwood-academy"
+              />
+              <Form.Text className="text-muted">
+                Configure the academy's brand URL suffix (aims.absons.net/<strong>your-slug</strong>). Use lowercase letters, numbers, and hyphens only.
+              </Form.Text>
+            </Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>{t('auto.newPassword', `New Password`)}</Form.Label>
               <Form.Control
                 type="password"
@@ -1164,6 +1198,22 @@ function AdminManagementTab() {
                           </option>
                         ))}
                       </Form.Select>
+                    </Form.Group>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={12}>
+                    <Form.Group className="mb-3">
+                      <Form.Label>{t('auto.customLinkSlug', `Custom Link (Slug)`)}</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={slug}
+                        onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                        placeholder={t('auto.enterCustomSlug', `e.g. greenwood-academy`)}
+                      />
+                      <Form.Text className="text-muted">
+                        Use only lowercase letters, numbers, and hyphens. This sets the custom URL link: aims.absons.net/slug
+                      </Form.Text>
                     </Form.Group>
                   </Col>
                 </Row>

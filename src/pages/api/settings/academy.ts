@@ -26,6 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpReplyTo: true,
           smtpFrom: true,
           defaultCurrency: true,
+          slug: true,
         }
       });
       
@@ -46,8 +47,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'POST') {
     try {
-      const { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom, defaultCurrency } = req.body;
+      let { smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom, defaultCurrency, slug } = req.body;
       
+      if (slug !== undefined) {
+        if (slug === '' || slug === null) {
+          slug = null;
+        } else {
+          slug = slug.trim().toLowerCase();
+          const RESERVED_WORDS = new Set([
+            'auth', 'dashboard', 'register', 'messages', 'privacy-policy', 'developer',
+            '404', 'api', '_next', 'assets', 'icons', 'public', 'sw.js', 'favicon.ico',
+            'manifest.json', 'robots.txt'
+          ]);
+          if (RESERVED_WORDS.has(slug) || !/^[a-z0-9-]+$/.test(slug)) {
+            return res.status(400).json({ message: 'Invalid custom link. Use only lowercase letters, numbers, and hyphens. Reserved words are not allowed.' });
+          }
+
+          // Check if slug is already taken
+          const existingSettings = await prisma.settings.findFirst({
+            where: {
+              slug,
+              NOT: { adminId }
+            }
+          });
+
+          if (existingSettings) {
+            return res.status(400).json({ message: 'This custom link is already in use by another academy.' });
+          }
+        }
+      }
+
       let finalSmtpPass: string | null | undefined = undefined;
       if (smtpPass !== undefined) {
         if (smtpPass === '********') {
@@ -69,7 +98,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpSecure,
           smtpReplyTo,
           smtpFrom,
-          defaultCurrency: defaultCurrency || 'PKR'
+          defaultCurrency: defaultCurrency || 'PKR',
+          ...(slug !== undefined && { slug }),
         },
         create: {
           adminId,
@@ -80,7 +110,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           smtpSecure,
           smtpReplyTo,
           smtpFrom,
-          defaultCurrency: defaultCurrency || 'PKR'
+          defaultCurrency: defaultCurrency || 'PKR',
+          slug: slug || null,
         }
       });
       

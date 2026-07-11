@@ -48,6 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 subscriptionAmount: true,
                 subscriptionStartDate: true,
                 subscriptionEndDate: true,
+                slug: true,
               }
             },
             subscriptions: {

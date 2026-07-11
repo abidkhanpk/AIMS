@@ -43,7 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     payCurrency,
     // Admin status update (only for developers)
     isActive,
-    isWhatsApp
+    isWhatsApp,
+    slug
   } = req.body;
 
   if (!id || !name || !email) {
@@ -171,6 +172,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           update: { cnic: parentCnic || null },
         },
       };
+    }
+
+    // If updating an ADMIN and developer updates them, update their settings slug too
+    if (existingUser.role === 'ADMIN' && session.user.role === 'DEVELOPER' && slug !== undefined) {
+      let finalSlug = null;
+      if (slug === '' || slug === null) {
+        finalSlug = null;
+      } else {
+        finalSlug = slug.trim().toLowerCase();
+        const RESERVED_WORDS = new Set([
+          'auth', 'dashboard', 'register', 'messages', 'privacy-policy', 'developer',
+          '404', 'api', '_next', 'assets', 'icons', 'public', 'sw.js', 'favicon.ico',
+          'manifest.json', 'robots.txt'
+        ]);
+        if (RESERVED_WORDS.has(finalSlug) || !/^[a-z0-9-]+$/.test(finalSlug)) {
+          return res.status(400).json({ message: 'Invalid custom link. Use only lowercase letters, numbers, and hyphens. Reserved words are not allowed.' });
+        }
+
+        // Check if slug is already taken
+        const existingSettings = await prisma.settings.findFirst({
+          where: {
+            slug: finalSlug,
+            NOT: { adminId: id }
+          }
+        });
+
+        if (existingSettings) {
+          return res.status(400).json({ message: 'This custom link is already in use by another academy.' });
+        }
+      }
+
+      await prisma.settings.upsert({
+        where: { adminId: id },
+        update: { slug: finalSlug },
+        create: {
+          adminId: id,
+          appTitle: 'AIMS',
+          headerImg: '/assets/default-logo.png',
+          defaultCurrency: 'PKR',
+          slug: finalSlug
+        }
+      });
     }
 
     const updatedUser = await prisma.user.update({

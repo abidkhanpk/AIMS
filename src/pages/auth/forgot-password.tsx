@@ -36,6 +36,28 @@ export default function ForgotPassword() {
 
   const fetchAppSettings = async () => {
     try {
+      let slug = '';
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        const segments = path.split('/').filter(Boolean);
+        const RESERVED_WORDS = new Set(['auth', 'signin', 'register', 'messages', 'dashboard', 'en', 'ur']);
+        if (segments[0] && !RESERVED_WORDS.has(segments[0])) {
+          slug = segments[0];
+        }
+      }
+
+      if (slug) {
+        const res = await fetch(`/api/public/academy-branding?slug=${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSettings({
+            appTitle: data.appTitle || 'AIMS',
+            headerImg: data.headerImg || '/assets/app-logo.png'
+          });
+          return;
+        }
+      }
+
       const res = await fetch('/api/settings/developer');
       if (res.ok) {
         const data = await res.json();
