@@ -48,7 +48,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     subscriptionCurrency,
     subscriptionStartDate,
     subscriptionEndDate,
-    isWhatsApp
+    isWhatsApp,
+    slug
   } = req.body;
 
   if (!name || !email || !password || !role) {
@@ -182,6 +183,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // If creating an admin, also create default settings and subscription
     if (role === 'ADMIN') {
+      // Validate slug if provided
+      let finalSlug = null;
+      if (slug) {
+        finalSlug = slug.trim().toLowerCase();
+        const RESERVED_WORDS = new Set([
+          'auth', 'dashboard', 'register', 'messages', 'privacy-policy', 'developer',
+          '404', 'api', '_next', 'assets', 'icons', 'public', 'sw.js', 'favicon.ico',
+          'manifest.json', 'robots.txt'
+        ]);
+        if (RESERVED_WORDS.has(finalSlug) || !/^[a-z0-9-]+$/.test(finalSlug)) {
+          return res.status(400).json({ message: 'Invalid custom link slug. Use only lowercase letters, numbers, and hyphens.' });
+        }
+        
+        // Check uniqueness
+        const existingSettings = await prisma.settings.findFirst({
+          where: { slug: finalSlug }
+        });
+        if (existingSettings) {
+          return res.status(400).json({ message: 'This custom link slug is already in use.' });
+        }
+      }
+
       // Determine subscription details
       let subType = subscriptionType || 'MONTHLY';
       let subAmount = subscriptionAmount || 29.99;
@@ -211,6 +234,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           subscriptionAmount: subAmount,
           subscriptionStartDate: subStartDate,
           subscriptionEndDate: subEndDate,
+          slug: finalSlug,
         }
       });
 

@@ -132,12 +132,24 @@ export const authOptions: NextAuthOptions = {
             return null;
           }
 
+          // Fetch settings to get academy slug
+          const adminIdForSettings = user.role === 'ADMIN' ? user.id : user.adminId;
+          let academySlug = '';
+          if (adminIdForSettings) {
+            const settings = await prisma.settings.findUnique({
+              where: { adminId: adminIdForSettings },
+              select: { slug: true }
+            });
+            academySlug = settings?.slug || '';
+          }
+
           return {
             id: user.id,
             name: user.name,
             email: user.email,
             role: user.role,
             adminId: user.adminId,
+            academySlug,
           };
         } catch (error) {
           console.error('Auth error:', error);
@@ -161,6 +173,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.adminId = user.adminId;
+        token.academySlug = (user as any).academySlug;
       }
       return token;
     },
@@ -169,6 +182,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.sub!;
         session.user.role = token.role as Role;
         session.user.adminId = token.adminId as string;
+        session.user.academySlug = token.academySlug as string;
       }
       return session;
     },

@@ -60,6 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           tagline: true,
           enableHomePage: true,
           defaultCurrency: true,
+          slug: true,
         }
       });
 
@@ -82,6 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               headerImgUrl: true,
               tagline: true,
               enableHomePage: true,
+              slug: true,
             }
           });
         } catch (err: any) {
@@ -124,6 +126,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             tagline: true,
             enableHomePage: true,
             defaultCurrency: true,
+            slug: true,
           }
         });
 
@@ -145,6 +148,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               headerImgUrl: true,
               tagline: true,
               enableHomePage: true,
+              slug: true,
             }
           });
         }

@@ -36,30 +36,70 @@ const Home: NextPage = () => {
     // Wait for both settings and session to load
     if (loading || status === 'loading') return;
 
+    let academyName = '';
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const segments = path.split('/').filter(Boolean);
+      const RESERVED_WORDS = new Set(['auth', 'signin', 'register', 'messages', 'dashboard', 'en', 'ur']);
+      if (segments[0] && !RESERVED_WORDS.has(segments[0])) {
+        academyName = segments[0];
+      }
+    }
+
     // If user is authenticated, redirect to dashboard
     if (status === 'authenticated') {
-      router.push('/dashboard');
+      const sessionSlug = (session?.user as any)?.academySlug;
+      const targetSlug = sessionSlug || academyName;
+      router.push(targetSlug ? `/${targetSlug}/dashboard` : '/dashboard');
       return;
     }
 
     // If homepage is disabled and user is not authenticated, redirect to signin
     if (!appSettings.enableHomePage && status === 'unauthenticated') {
-      router.push('/auth/signin');
+      router.push(academyName ? `/${academyName}/auth/signin` : '/auth/signin');
       return;
     }
-  }, [appSettings.enableHomePage, status, loading, router]);
+  }, [appSettings.enableHomePage, status, loading, router, session]);
 
   const fetchAppSettings = async () => {
     try {
-      const res = await fetch('/api/settings/developer');
-      if (res.ok) {
-        const data = await res.json();
-        setAppSettings({
-          appName: data.appName || 'AIMS',
-          appLogo: data.appLogo || '/assets/app-logo.png',
-          enableHomePage: data.enableHomePage !== false,
-          tagline: data.tagline || 'Academy Information and Management System'
-        });
+      let slug = '';
+      if (typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        const segments = path.split('/').filter(Boolean);
+        const RESERVED_WORDS = new Set(['auth', 'signin', 'register', 'messages', 'dashboard', 'en', 'ur']);
+        if (segments[0] && !RESERVED_WORDS.has(segments[0])) {
+          slug = segments[0];
+        }
+      }
+
+      let fetched = false;
+
+      if (slug) {
+        const res = await fetch(`/api/public/academy-branding?slug=${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAppSettings({
+            appName: data.appTitle || 'AIMS',
+            appLogo: data.headerImg || '/assets/app-logo.png',
+            enableHomePage: data.enableHomePage !== false,
+            tagline: data.tagline || 'Academy Information and Management System'
+          });
+          fetched = true;
+        }
+      }
+
+      if (!fetched) {
+        const res = await fetch('/api/settings/developer');
+        if (res.ok) {
+          const data = await res.json();
+          setAppSettings({
+            appName: data.appName || 'AIMS',
+            appLogo: data.appLogo || '/assets/app-logo.png',
+            enableHomePage: data.enableHomePage !== false,
+            tagline: data.tagline || 'Academy Information and Management System'
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching app settings:', error);
@@ -111,10 +151,23 @@ const Home: NextPage = () => {
                                                   </p>
                 {status === 'unauthenticated' && (
                   <div className="d-flex gap-3 flex-wrap">
-                    <Link href="/auth/signin" className="btn btn-light btn-lg px-4">
-                      <i className="bi bi-box-arrow-in-right me-2"></i>
-                      {t('auto.signIn', `Sign In`)}
-                    </Link>
+                    {(() => {
+                      let academyName = '';
+                      if (typeof window !== 'undefined') {
+                        const path = window.location.pathname;
+                        const segments = path.split('/').filter(Boolean);
+                        const RESERVED_WORDS = new Set(['auth', 'signin', 'register', 'messages', 'dashboard', 'en', 'ur']);
+                        if (segments[0] && !RESERVED_WORDS.has(segments[0])) {
+                          academyName = segments[0];
+                        }
+                      }
+                      return (
+                        <Link href={academyName ? `/${academyName}/auth/signin` : '/auth/signin'} className="btn btn-light btn-lg px-4">
+                          <i className="bi bi-box-arrow-in-right me-2"></i>
+                          {t('auto.signIn', `Sign In`)}
+                        </Link>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -306,10 +359,23 @@ const Home: NextPage = () => {
                 <p className="lead text-muted mb-4">
                   {t('auto.joinThousandsOfEducationalInst', `Join thousands of educational institutions already using our platform`)}
                                                   </p>
-                <Link href="/auth/signin" className="btn btn-primary btn-lg px-5">
-                  <i className="bi bi-box-arrow-in-right me-2"></i>
-                  {t('auto.signInNow', `Sign In Now`)}
-                </Link>
+                {(() => {
+                  let academyName = '';
+                  if (typeof window !== 'undefined') {
+                    const path = window.location.pathname;
+                    const segments = path.split('/').filter(Boolean);
+                    const RESERVED_WORDS = new Set(['auth', 'signin', 'register', 'messages', 'dashboard', 'en', 'ur']);
+                    if (segments[0] && !RESERVED_WORDS.has(segments[0])) {
+                      academyName = segments[0];
+                    }
+                  }
+                  return (
+                    <Link href={academyName ? `/${academyName}/auth/signin` : '/auth/signin'} className="btn btn-primary btn-lg px-5">
+                      <i className="bi bi-box-arrow-in-right me-2"></i>
+                      {t('auto.signInNow', `Sign In Now`)}
+                    </Link>
+                  );
+                })()}
               </div>
             </Col>
           </Row>

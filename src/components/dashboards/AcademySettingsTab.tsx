@@ -20,6 +20,7 @@ export default function AcademySettingsTab() {
   const [smtpReplyTo, setSmtpReplyTo] = useState('');
   const [smtpFrom, setSmtpFrom] = useState('');
   const [defaultCurrency, setDefaultCurrency] = useState('USD');
+  const [slug, setSlug] = useState('');
   const [testEmail, setTestEmail] = useState('');
   const [testingSmtp, setTestingSmtp] = useState(false);
   const [smtpTestResult, setSmtpTestResult] = useState<{ success: boolean; message: string } | null>(null);
@@ -39,6 +40,7 @@ export default function AcademySettingsTab() {
           setSmtpReplyTo(data.smtpReplyTo || '');
           setSmtpFrom(data.smtpFrom || '');
           setDefaultCurrency(data.defaultCurrency || 'USD');
+          setSlug(data.slug || '');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error fetching settings');
@@ -65,7 +67,8 @@ export default function AcademySettingsTab() {
           smtpSecure: smtpSecure || null,
           smtpReplyTo: smtpReplyTo || null,
           smtpFrom: smtpFrom || null,
-          defaultCurrency: defaultCurrency || 'USD'
+          defaultCurrency: defaultCurrency || 'USD',
+          slug: slug || null
         })
       });
 
@@ -157,6 +160,20 @@ export default function AcademySettingsTab() {
             </Form.Select>
             <Form.Text className="text-muted">
               {t('auto.defaultCurrencyDesc', `This is the default currency used for courses, fee invoices, and teacher pay rates.`)}
+            </Form.Text>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
+            <Form.Label>{t('auto.customLinkSlug', `Custom Link (Slug)`)}</Form.Label>
+            <Form.Control
+              type="text"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+              placeholder="e.g. greenwood-academy"
+              className="bg-white"
+            />
+            <Form.Text className="text-muted">
+              Configure your academy's brand URL suffix (e.g. aims.absons.net/<strong>your-slug</strong>). Use only lowercase letters, numbers, and hyphens.
             </Form.Text>
           </Form.Group>
         </Card.Body>
@@ -274,7 +291,7 @@ export default function AcademySettingsTab() {
             </div>
             
             <Button variant="primary" onClick={handleSave} disabled={updating}>
-              {updating ? <><Spinner size="sm" animation="border" className="me-2"/>{t('auto.saving', `Saving...`)}</> : 'Save SMTP Settings'}
+              {updating ? <><Spinner size="sm" animation="border" className="me-2"/>{t('auto.saving', `Saving...`)}</> : 'Save Academy Settings'}
             </Button>
           </Form>
         </Card.Body>

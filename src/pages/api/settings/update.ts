@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(403).json({ message: 'Only developers can update admin settings' });
   }
 
-  const { 
+  let { 
     adminId, 
     appTitle, 
     headerImg, 
@@ -30,11 +30,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     subscriptionAmount,
     subscriptionCurrency,
     subscriptionStartDate,
-    subscriptionEndDate
+    subscriptionEndDate,
+    slug
   } = req.body;
 
   if (!adminId) {
     return res.status(400).json({ message: 'Admin ID is required' });
+  }
+
+  if (slug !== undefined) {
+    if (slug === '' || slug === null) {
+      slug = null;
+    } else {
+      slug = slug.trim().toLowerCase();
+      const RESERVED_WORDS = new Set([
+        'auth', 'dashboard', 'register', 'messages', 'privacy-policy', 'developer',
+        '404', 'api', '_next', 'assets', 'icons', 'public', 'sw.js', 'favicon.ico',
+        'manifest.json', 'robots.txt'
+      ]);
+      if (RESERVED_WORDS.has(slug) || !/^[a-z0-9-]+$/.test(slug)) {
+        return res.status(400).json({ message: 'Invalid custom link. Use only lowercase letters, numbers, and hyphens. Reserved words are not allowed.' });
+      }
+
+      // Check if slug is already taken
+      const existingSettings = await prisma.settings.findFirst({
+        where: {
+          slug,
+          NOT: { adminId }
+        }
+      });
+
+      if (existingSettings) {
+        return res.status(400).json({ message: 'This custom link is already in use by another academy.' });
+      }
+    }
   }
 
   try {
@@ -76,6 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ...(subscriptionAmount && { subscriptionAmount: parseFloat(subscriptionAmount) }),
         ...(subscriptionStartDate && { subscriptionStartDate: new Date(subscriptionStartDate) }),
         ...(calculatedEndDate !== undefined && { subscriptionEndDate: calculatedEndDate }),
+        ...(slug !== undefined && { slug }),
       };
 
       await tx.settings.upsert({
@@ -93,6 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           subscriptionAmount: subscriptionAmount ? parseFloat(subscriptionAmount) : 29.99,
           subscriptionStartDate: subscriptionStartDate ? new Date(subscriptionStartDate) : new Date(),
           subscriptionEndDate: calculatedEndDate,
+          slug: slug || null,
         }
       });
 

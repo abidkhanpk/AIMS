@@ -616,6 +616,7 @@ model Settings {
   tagline        String  @default("Academy Information and Management System")
   enableHomePage Boolean @default(true) // Developer can enable/disable homepage
   defaultCurrency String @default("USD") // Admin's default currency
+  slug           String? @unique // New field for custom link routing
   
   // Subscription settings for this admin
   subscriptionType SubscriptionPlan @default(MONTHLY)

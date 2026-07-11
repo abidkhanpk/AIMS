@@ -268,7 +268,10 @@ export default function AdminRegistrationsPage() {
 
   const getFullLink = (tokenValue: string) => {
     if (typeof window === 'undefined') return '';
-    return `${window.location.origin}/register/${tokenValue}`;
+    const sessionSlug = (session?.user as any)?.academySlug;
+    return sessionSlug
+      ? `${window.location.origin}/${sessionSlug}/register/${tokenValue}`
+      : `${window.location.origin}/register/${tokenValue}`;
   };
 
   const handleCopyLink = (tokenValue: string, id: string) => {

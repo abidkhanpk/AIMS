@@ -440,6 +440,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const handleSignOut = async () => {
     try {
+      const slug = (session?.user as any)?.academySlug;
+      const isDeveloper = session?.user?.role === 'DEVELOPER';
+      const targetUrl = slug && !isDeveloper ? `/${slug}/auth/signin` : '/auth/signin';
+
       // Clear any local storage or session storage if needed
       localStorage.clear();
       sessionStorage.clear();
@@ -447,17 +451,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       // Force sign out with redirect
       await signOut({ 
         redirect: false,
-        callbackUrl: '/auth/signin'
+        callbackUrl: targetUrl
       });
       
       // Force redirect after a short delay
       setTimeout(() => {
-        window.location.href = '/auth/signin';
+        window.location.href = targetUrl;
       }, 100);
     } catch (error) {
       console.error('Sign out error:', error);
       // Force redirect if signOut fails
-      window.location.href = '/auth/signin';
+      const slug = (session?.user as any)?.academySlug;
+      const isDeveloper = session?.user?.role === 'DEVELOPER';
+      window.location.href = slug && !isDeveloper ? `/${slug}/auth/signin` : '/auth/signin';
     }
   };
 
