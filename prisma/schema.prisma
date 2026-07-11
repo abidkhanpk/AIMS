@@ -752,6 +752,9 @@ model RegistrationRequest {
   parentAddress    String?
   parentCountry    String?
 
+  // JSON payload containing list of additional relatives/guardians (if any)
+  relativesJson    Json?
+
   // JSON payload containing list of children, their profile details and requested subjects/schedules
   studentsJson     Json
 

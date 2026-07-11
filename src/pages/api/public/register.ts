@@ -18,6 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     parentRelation,
     parentAddress,
     parentCountry,
+    relatives, // Array of additional relatives: { name, email, mobile, isWhatsApp, cnic, relation }
     students,
   } = req.body;
 
@@ -64,6 +65,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ message: 'Academy not found' });
     }
 
+    // Validate additional relatives details if provided
+    if (relatives && Array.isArray(relatives)) {
+      for (let i = 0; i < relatives.length; i++) {
+        const rel = relatives[i];
+        if (!rel.name) {
+          return res.status(400).json({ message: `Relative #${i + 1} is missing a name` });
+        }
+        if (!rel.email) {
+          return res.status(400).json({ message: `Relative #${i + 1} (${rel.name}) is missing an email address` });
+        }
+        if (!rel.mobile) {
+          return res.status(400).json({ message: `Relative #${i + 1} (${rel.name}) is missing a mobile number` });
+        }
+        if (!rel.relation) {
+          return res.status(400).json({ message: `Relative #${i + 1} (${rel.name}) is missing a relation type` });
+        }
+
+        // Check if relative email is already in use by an active user
+        const existingRel = await prisma.user.findUnique({
+          where: { email: rel.email }
+        });
+        if (existingRel) {
+          return res.status(400).json({ message: `Email ${rel.email} of relative ${rel.name} is already in use` });
+        }
+      }
+    }
+
     // Validate students details
     for (let index = 0; index < students.length; index++) {
       const student = students[index];
@@ -102,6 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           parentRelation: parentRelation,
           parentAddress: parentAddress || null,
           parentCountry: parentCountry || null,
+          relativesJson: relatives || null,
           studentsJson: students,
         },
       });

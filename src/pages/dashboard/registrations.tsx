@@ -54,6 +54,16 @@ interface StudentRequest {
   subjects: SubjectRequest[];
 }
 
+interface RelativeRequest {
+  name: string;
+  email: string;
+  mobile: string;
+  isWhatsApp: boolean;
+  cnic?: string;
+  relation: string;
+  password?: string;
+}
+
 interface RegistrationRequest {
   id: string;
   adminId: string;
@@ -68,6 +78,7 @@ interface RegistrationRequest {
   parentRelation: string;
   parentAddress?: string;
   parentCountry?: string;
+  relativesJson?: any;
   studentsJson: any;
   createdAt: string;
 }
@@ -147,6 +158,7 @@ export default function AdminRegistrationsPage() {
   // Review Modal State
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequest | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRelatives, setReviewRelatives] = useState<RelativeRequest[]>([]);
   const [reviewStudents, setReviewStudents] = useState<StudentRequest[]>([]);
   const [parentPassword, setParentPassword] = useState('');
 
@@ -324,7 +336,23 @@ export default function AdminRegistrationsPage() {
   const handleOpenReview = (request: RegistrationRequest) => {
     setSelectedRequest(request);
     
-    // Parse students array and enrich with simple memorable passwords
+    // 1. Parse additional relatives array
+    let relativesArray: RelativeRequest[] = [];
+    try {
+      relativesArray = typeof request.relativesJson === 'string'
+        ? JSON.parse(request.relativesJson)
+        : request.relativesJson || [];
+    } catch (e) {
+      relativesArray = [];
+    }
+
+    const enrichedRelatives = relativesArray.map(rel => ({
+      ...rel,
+      password: rel.password || generateSimplePassword()
+    }));
+    setReviewRelatives(enrichedRelatives);
+
+    // 2. Parse students array and enrich with simple memorable passwords
     let studentsArray: StudentRequest[] = [];
     try {
       studentsArray = typeof request.studentsJson === 'string' 
@@ -342,7 +370,8 @@ export default function AdminRegistrationsPage() {
         teacherId: sub.teacherId || '',
         timezone: sub.timezone || 'Asia/Karachi',
         monthlyFee: sub.monthlyFee || 0,
-        currency: sub.currency || 'PKR'
+        currency: sub.currency || 'PKR',
+        duration: sub.duration || 30 // Changed default from 60 to 30 mins as requested
       }))
     }));
 
@@ -398,6 +427,7 @@ export default function AdminRegistrationsPage() {
         body: JSON.stringify({
           registrationRequestId: selectedRequest.id,
           parentPassword,
+          relatives: reviewRelatives,
           students: reviewStudents
         })
       });
@@ -409,6 +439,7 @@ export default function AdminRegistrationsPage() {
           parentPassword,
           welcomeMessageText: data.welcomeMessageText,
           notificationSent: data.notificationSent,
+          relatives: data.relatives,
           students: data.students
         });
         setShowReviewModal(false);
@@ -747,11 +778,11 @@ export default function AdminRegistrationsPage() {
           {selectedRequest && (
             <Row className="g-4">
               
-              {/* Parent Info Card */}
+              {/* Parent Info Column */}
               <Col lg={4}>
                 <Card className="border-0 shadow-sm rounded-3 mb-3">
                   <Card.Header className="bg-white border-bottom fw-bold text-dark">
-                    Parent Details
+                    Parent Details (Primary)
                   </Card.Header>
                   <Card.Body>
                     <div className="mb-3">
@@ -798,10 +829,56 @@ export default function AdminRegistrationsPage() {
                   </Card.Body>
                 </Card>
 
+                {/* Additional Relatives List in Left Column */}
+                {reviewRelatives.length > 0 && (
+                  <Card className="border-0 shadow-sm rounded-3 mb-3">
+                    <Card.Header className="bg-white border-bottom fw-bold text-dark">
+                      Additional Relatives / Guardians
+                    </Card.Header>
+                    <Card.Body className="p-3">
+                      {reviewRelatives.map((rel, rIdx) => (
+                        <div key={rIdx} className="mb-3 border-bottom pb-3">
+                          <div className="fw-semibold text-primary">{rel.name}</div>
+                          <div className="small text-muted"><strong>Relation:</strong> {rel.relation}</div>
+                          <div className="small text-muted"><strong>Email:</strong> {rel.email}</div>
+                          <div className="small text-muted mb-2">
+                            <strong>Mobile:</strong> {rel.mobile}
+                            {rel.isWhatsApp && <Badge bg="success" className="ms-1">WhatsApp</Badge>}
+                          </div>
+                          {selectedRequest.status === 'PENDING' && (
+                            <Form.Group>
+                              <Form.Label className="small fw-semibold text-dark">Set Password</Form.Label>
+                              <InputGroup size="sm">
+                                <Form.Control
+                                  type="text"
+                                  required
+                                  value={rel.password || ''}
+                                  onChange={(e) => {
+                                    const copy = [...reviewRelatives];
+                                    copy[rIdx].password = e.target.value;
+                                    setReviewRelatives(copy);
+                                  }}
+                                />
+                                <Button variant="outline-secondary" onClick={() => {
+                                  const copy = [...reviewRelatives];
+                                  copy[rIdx].password = generateSimplePassword();
+                                  setReviewRelatives(copy);
+                                }}>
+                                  <i className="bi bi-arrow-clockwise"></i>
+                                </Button>
+                              </InputGroup>
+                            </Form.Group>
+                          )}
+                        </div>
+                      ))}
+                    </Card.Body>
+                  </Card>
+                )}
+
                 {selectedRequest.status === 'PENDING' && (
                   <Card className="border-0 shadow-sm rounded-3">
                     <Card.Header className="bg-white border-bottom fw-bold text-dark">
-                      Parent Account Setup
+                      Primary Parent Account Setup
                     </Card.Header>
                     <Card.Body>
                       <Form.Group>
@@ -817,7 +894,7 @@ export default function AdminRegistrationsPage() {
                             <i className="bi bi-arrow-clockwise"></i>
                           </Button>
                         </InputGroup>
-                        <Form.Text className="text-muted font-monospace small">Memorable password word generated for parent.</Form.Text>
+                        <Form.Text className="text-muted font-monospace small">Password for parent credentials login.</Form.Text>
                       </Form.Group>
                     </Card.Body>
                   </Card>
@@ -995,7 +1072,7 @@ export default function AdminRegistrationsPage() {
                                   type="number"
                                   readOnly={selectedRequest.status !== 'PENDING'}
                                   value={sub.duration}
-                                  onChange={(e) => handleStudentSubjectFieldChange(sIdx, subIdx, 'duration', parseInt(e.target.value) || 60)}
+                                  onChange={(e) => handleStudentSubjectFieldChange(sIdx, subIdx, 'duration', parseInt(e.target.value) || 30)}
                                 />
                               </Form.Group>
                             </Col>
@@ -1095,13 +1172,26 @@ export default function AdminRegistrationsPage() {
                 }</strong>
               </Alert>
 
-              <h5 className="fw-bold mb-3 text-dark border-bottom pb-2">Parent Credentials:</h5>
+              <h5 className="fw-bold mb-3 text-dark border-bottom pb-2">Parent Credentials (Primary):</h5>
               <Row className="mb-4 bg-light p-3 rounded">
                 <Col sm={6}><strong>Username:</strong> {successDetails.parentEmail}</Col>
                 <Col sm={6}><strong>Password:</strong> {successDetails.parentPassword}</Col>
               </Row>
 
-              <h5 className="fw-bold mb-3 text-dark border-bottom pb-2">Students Credentials:</h5>
+              {successDetails.relatives && successDetails.relatives.length > 0 && (
+                <>
+                  <h5 className="fw-bold mb-3 text-dark border-bottom pb-2">Additional Relatives Credentials:</h5>
+                  {successDetails.relatives.map((rel: any, idx: number) => (
+                    <Row key={idx} className="mb-2 bg-light p-2 rounded mx-0">
+                      <Col sm={4}><strong>Name:</strong> {rel.name} ({rel.relationType})</Col>
+                      <Col sm={4}><strong>Username:</strong> {rel.email}</Col>
+                      <Col sm={4}><strong>Password:</strong> {rel.password}</Col>
+                    </Row>
+                  ))}
+                </>
+              )}
+
+              <h5 className="fw-bold mb-3 text-dark border-bottom pb-2 mt-4">Students Credentials:</h5>
               {successDetails.students.map((std: any, idx: number) => (
                 <Row key={idx} className="mb-2 bg-light p-2 rounded mx-0">
                   <Col sm={4}><strong>Child:</strong> {std.name}</Col>

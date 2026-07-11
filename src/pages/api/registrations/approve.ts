@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const adminId = session.user.id;
-  const { registrationRequestId, parentPassword, students } = req.body;
+  const { registrationRequestId, parentPassword, relatives, students } = req.body;
 
   if (!registrationRequestId || !parentPassword || !students || !Array.isArray(students)) {
     return res.status(400).json({ message: 'Missing required parameters' });
@@ -52,6 +52,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const academyName = settings?.appTitle || 'AIMS Academy';
 
     // 2. Perform validation checks before executing transaction
+    // Validate additional relatives if provided
+    if (relatives && Array.isArray(relatives)) {
+      for (const rel of relatives) {
+        if (!rel.email) {
+          return res.status(400).json({ message: `Relative ${rel.name} is missing an email address` });
+        }
+        if (!rel.password) {
+          return res.status(400).json({ message: `Relative ${rel.name} is missing a password` });
+        }
+        const relEmailExists = await prisma.user.findUnique({ where: { email: rel.email } });
+        if (relEmailExists) {
+          return res.status(400).json({ message: `Relative email ${rel.email} is already registered` });
+        }
+      }
+    }
+
+    // Validate students
     for (const student of students) {
       if (!student.email) {
         return res.status(400).json({ message: `Student ${student.name} is missing an email address` });
@@ -78,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // 3. Database Transaction
     const results = await prisma.$transaction(async (tx) => {
-      // Find or create parent account
+      // Find or create primary parent account
       let parentUser = await tx.user.findUnique({
         where: { email: request.parentEmail },
       });
@@ -106,9 +123,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
 
+      // Create additional relatives accounts
+      const createdRelativesInfo = [];
+      if (relatives && Array.isArray(relatives)) {
+        for (const rel of relatives) {
+          let relUser = await tx.user.findUnique({
+            where: { email: rel.email },
+          });
+
+          if (!relUser) {
+            const hashedRelPassword = bcrypt.hashSync(rel.password, 10);
+            relUser = await tx.user.create({
+              data: {
+                name: rel.name,
+                email: rel.email,
+                password: hashedRelPassword,
+                role: Role.PARENT,
+                adminId,
+                mobile: rel.mobile,
+                isWhatsApp: !!rel.isWhatsApp,
+                profession: rel.profession || null,
+                address: rel.address || request.parentAddress || null,
+                country: rel.country || request.parentCountry || null,
+                parentProfile: {
+                  create: {
+                    cnic: rel.cnic || null,
+                  },
+                },
+              },
+            });
+          }
+
+          createdRelativesInfo.push({
+            id: relUser.id,
+            name: rel.name,
+            email: rel.email,
+            password: rel.password,
+            relationType: rel.relation,
+          });
+        }
+      }
+
       const createdStudentsInfo = [];
 
-      // Create each student account, profile, ParentStudent association, and Assignments
+      // Create each student account, profile, ParentStudent associations, and Assignments
       for (const student of students) {
         const hashedStudentPassword = bcrypt.hashSync(student.password, 10);
         const studentUser = await tx.user.create({
@@ -141,7 +199,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           },
         });
 
-        // Link Parent & Student
+        // Link Primary Parent & Student
         await tx.parentStudent.create({
           data: {
             parentId: parentUser.id,
@@ -150,6 +208,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             contactForStudentInfo: true,
           },
         });
+
+        // Link Additional Relatives & Student
+        for (const rel of createdRelativesInfo) {
+          await tx.parentStudent.create({
+            data: {
+              parentId: rel.id,
+              studentId: studentUser.id,
+              relationType: (rel.relationType || 'GUARDIAN') as RelationType,
+              contactForStudentInfo: true,
+            },
+          });
+        }
 
         const studentSubjectDetails = [];
 
@@ -231,6 +301,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         parentEmail: request.parentEmail,
         parentMobile: request.parentMobile,
         parentIsWhatsApp: request.parentIsWhatsApp,
+        relatives: createdRelativesInfo,
         students: createdStudentsInfo,
         updatedRequest,
       };
@@ -245,9 +316,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `لاگ ان لنک: https://aims.absons.net`,
       `یوزر نیم: ${results.parentEmail}`,
       `پاس ورڈ: ${parentPassword}\n`,
-      `*بچوں کے اکاؤنٹس:*`,
     ];
 
+    if (results.relatives && results.relatives.length > 0) {
+      messageLines.push(`*دیگر سرپرست/رشتہ داروں کے اکاؤنٹس:*`);
+      results.relatives.forEach((rel: any) => {
+        messageLines.push(`- *${rel.name}* (${rel.relationType}):`);
+        messageLines.push(`  یوزر نیم: ${rel.email}`);
+        messageLines.push(`  پاس ورڈ: ${rel.password}`);
+      });
+      messageLines.push('');
+    }
+
+    messageLines.push(`*بچوں کے اکاؤنٹس:*`);
     results.students.forEach((std, i) => {
       messageLines.push(`${i + 1}. *${std.name}*`);
       messageLines.push(`   یوزر نیم: ${std.email}`);
@@ -332,6 +413,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               <li><strong>Username / Email:</strong> ${results.parentEmail}</li>
               <li><strong>Password:</strong> ${parentPassword}</li>
             </ul>
+            ${results.relatives && results.relatives.length > 0 ? `
+              <h4>Additional Relatives Accounts:</h4>
+              <ul>
+                ${results.relatives.map((rel: any) => `
+                  <li><strong>${rel.name} (${rel.relationType}):</strong> Username: ${rel.email} | Password: ${rel.password}</li>
+                `).join('')}
+              </ul>
+            ` : ''}
             <h4>Student Account(s):</h4>
             ${results.students.map((std, i) => `
               <div style="margin-left: 20px; border-left: 2px solid #ccc; padding-left: 10px; margin-bottom: 10px;">
@@ -372,7 +461,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       message: 'Registration approved successfully',
       notificationSent,
-      welcomeMessageText, // Returns password in body so admin can display and copy manually if needed
+      welcomeMessageText,
+      relatives: results.relatives,
       students: results.students,
     });
   } catch (error) {

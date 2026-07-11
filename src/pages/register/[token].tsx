@@ -78,7 +78,7 @@ export default function PublicRegisterPage() {
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form State - Parent
+  // Form State - Parent (Primary Contact)
   const [parentName, setParentName] = useState('');
   const [parentEmail, setParentEmail] = useState('');
   const [parentMobile, setParentMobile] = useState('');
@@ -89,10 +89,24 @@ export default function PublicRegisterPage() {
   const [parentAddress, setParentAddress] = useState('');
   const [parentCountry, setParentCountry] = useState('');
 
+  // Form State - Additional Relatives
+  const [relatives, setRelatives] = useState<any[]>([]);
+
   // Form State - Students List
   const [students, setStudents] = useState<any[]>([
     createEmptyStudent()
   ]);
+
+  function createEmptyRelative() {
+    return {
+      name: '',
+      email: '',
+      mobile: '',
+      isWhatsApp: false,
+      cnic: '',
+      relation: 'FATHER'
+    };
+  }
 
   function createEmptyStudent() {
     return {
@@ -143,6 +157,22 @@ export default function PublicRegisterPage() {
     router.push(router.pathname, router.asPath, { locale });
   };
 
+  const handleAddRelative = () => {
+    setRelatives([...relatives, createEmptyRelative()]);
+  };
+
+  const handleRemoveRelative = (index: number) => {
+    const copy = [...relatives];
+    copy.splice(index, 1);
+    setRelatives(copy);
+  };
+
+  const handleRelativeChange = (index: number, field: string, value: any) => {
+    const copy = [...relatives];
+    copy[index][field] = value;
+    setRelatives(copy);
+  };
+
   const handleAddStudent = () => {
     setStudents([...students, createEmptyStudent()]);
   };
@@ -171,7 +201,7 @@ export default function PublicRegisterPage() {
       newSubjects.push({
         courseId,
         startTime: '16:00',
-        duration: 60,
+        duration: 30, // Changed from 60 to 30 default as requested
         classDays: ['MONDAY', 'WEDNESDAY', 'FRIDAY'],
         timezone: 'Asia/Karachi',
         monthlyFee: 0,
@@ -220,6 +250,7 @@ export default function PublicRegisterPage() {
         parentRelation,
         parentAddress,
         parentCountry,
+        relatives, // Dynamic additional relatives
         students
       };
 
@@ -334,11 +365,11 @@ export default function PublicRegisterPage() {
         {error && <Alert variant="danger" className="mb-4 shadow-sm">{error}</Alert>}
 
         <Form onSubmit={handleSubmit}>
-          {/* PARENT / GUARDIAN SECTION */}
+          {/* PRIMARY PARENT / GUARDIAN SECTION */}
           <Card className="shadow-sm border-0 mb-4 rounded-4 overflow-hidden">
             <Card.Header className="bg-primary text-white py-3 px-4 fw-bold fs-5">
               <i className="bi bi-person-fill me-2"></i>
-              {router.locale === 'ur' ? 'والدین / سرپرست کی تفصیلات' : 'Parent / Guardian Details'}
+              {router.locale === 'ur' ? 'بنیادی سرپرست / والدین کی تفصیلات' : 'Primary Parent / Guardian Details'}
             </Card.Header>
             <Card.Body className="p-4 bg-white">
               <Row className="g-3">
@@ -453,6 +484,106 @@ export default function PublicRegisterPage() {
               </Row>
             </Card.Body>
           </Card>
+
+          {/* ADDITIONAL RELATIVES / GUARDIANS SECTION */}
+          {relatives.map((rel, rIdx) => (
+            <Card key={rIdx} className="shadow-sm border-0 mb-4 rounded-4 overflow-hidden border-info">
+              <Card.Header className="bg-info text-white py-3 px-4 d-flex justify-content-between align-items-center">
+                <span className="fw-bold fs-5">
+                  <i className="bi bi-people-fill me-2"></i>
+                  {router.locale === 'ur' ? `اضافی سرپرست / رشتہ دار #${rIdx + 1}` : `Additional Relative / Guardian #${rIdx + 1}`}
+                </span>
+                <Button variant="danger" size="sm" onClick={() => handleRemoveRelative(rIdx)}>
+                  <i className="bi bi-trash-fill"></i>
+                </Button>
+              </Card.Header>
+              <Card.Body className="p-4 bg-white">
+                <Row className="g-3">
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-medium">{t('auto.fullName', 'Full Name')} *</Form.Label>
+                      <Form.Control
+                        type="text"
+                        required
+                        value={rel.name}
+                        onChange={(e) => handleRelativeChange(rIdx, 'name', e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-medium">{t('auto.emailAddress', 'Email Address')} *</Form.Label>
+                      <Form.Control
+                        type="email"
+                        required
+                        placeholder="relative.email@example.com"
+                        value={rel.email}
+                        onChange={(e) => handleRelativeChange(rIdx, 'email', e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-medium">{t('auto.mobileNumber', 'Mobile Number')} *</Form.Label>
+                      <Form.Control
+                        type="tel"
+                        required
+                        placeholder="+923001234567"
+                        value={rel.mobile}
+                        onChange={(e) => handleRelativeChange(rIdx, 'mobile', e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-medium">{t('auto.relationType', 'Relation Type')} *</Form.Label>
+                      <Form.Select
+                        value={rel.relation}
+                        onChange={(e) => handleRelativeChange(rIdx, 'relation', e.target.value)}
+                      >
+                        {relationTypes.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {router.locale === 'ur' && type.value === 'FATHER' ? 'والد' :
+                             router.locale === 'ur' && type.value === 'MOTHER' ? 'والدہ' :
+                             router.locale === 'ur' && type.value === 'GUARDIAN' ? 'سرپرست' :
+                             type.label}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <Form.Group>
+                      <Form.Label className="fw-medium">CNIC / ID Number</Form.Label>
+                      <Form.Control
+                        type="text"
+                        placeholder="e.g. 42101-1234567-1"
+                        value={rel.cnic}
+                        onChange={(e) => handleRelativeChange(rIdx, 'cnic', e.target.value)}
+                      />
+                    </Form.Group>
+                  </Col>
+                  <Col md={6} className="d-flex align-items-center">
+                    <Form.Check
+                      type="switch"
+                      id={`relWhatsApp-${rIdx}`}
+                      label={router.locale === 'ur' ? 'واٹس ایپ پر دستیاب ہے۔' : 'Available on WhatsApp'}
+                      checked={rel.isWhatsApp}
+                      onChange={(e) => handleRelativeChange(rIdx, 'isWhatsApp', e.target.checked)}
+                    />
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
+          ))}
+
+          {/* Add Additional Relative Button */}
+          <div className="d-flex justify-content-start mb-4">
+            <Button variant="outline-info" size="sm" className="rounded-pill px-4" onClick={handleAddRelative}>
+              <i className="bi bi-person-plus-fill me-2"></i>
+              {router.locale === 'ur' ? 'اضافی سرپرست / رشتہ دار شامل کریں' : 'Add Another Relative / Guardian'}
+            </Button>
+          </div>
 
           {/* STUDENTS DYNAMIC SECTION */}
           {students.map((student, sIdx) => (
