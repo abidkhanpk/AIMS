@@ -65,7 +65,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Validate students details
-    for (const [index, student] of students.entries()) {
+    for (let index = 0; index < students.length; index++) {
+      const student = students[index];
       if (!student.name) {
         return res.status(400).json({ message: `Student #${index + 1} is missing a name` });
       }

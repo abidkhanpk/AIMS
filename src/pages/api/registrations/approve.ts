@@ -295,7 +295,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (waRes.ok) {
             notificationSent = 'WHATSAPP';
             // Log message in DB
-            await prisma.whatsappMessageLog.create({
+            await prisma.whatsAppMessageLog.create({
               data: {
                 sessionId: waSession.id,
                 recipientPhone: results.parentMobile,
