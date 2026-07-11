@@ -221,6 +221,7 @@ model User {
   parentProfile       ParentProfile?
   whatsappSession     WhatsAppSession?
   registrationRequests RegistrationRequest[] @relation("AdminRegistrationRequests")
+  registrationTokens   RegistrationToken[]   @relation("AdminRegistrationTokens")
 }
 
 model StudentProfile {
@@ -759,4 +760,17 @@ model RegistrationRequest {
 
   admin            User             @relation("AdminRegistrationRequests", fields: [adminId], references: [id], onDelete: Cascade)
 }
+
+model RegistrationToken {
+  id        String   @id @default(uuid())
+  adminId   String
+  token     String   @unique
+  type      String   @default("UNIVERSAL") // UNIVERSAL, SINGLE_USE
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  admin     User     @relation("AdminRegistrationTokens", fields: [adminId], references: [id], onDelete: Cascade)
+}
+
 

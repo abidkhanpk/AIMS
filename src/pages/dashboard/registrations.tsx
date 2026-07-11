@@ -13,7 +13,9 @@ import {
   Row,
   Col,
   Alert,
-  InputGroup
+  InputGroup,
+  Tabs,
+  Tab
 } from 'react-bootstrap';
 import AdminMenu from '../../components/dashboards/AdminMenu';
 import menuStyles from '../../components/dashboards/AdminMenu.module.css';
@@ -28,7 +30,7 @@ interface SubjectRequest {
   timezone: string;
   monthlyFee?: number;
   currency?: string;
-  teacherId?: string; // Admin assigns this
+  teacherId?: string;
 }
 
 interface StudentRequest {
@@ -48,7 +50,7 @@ interface StudentRequest {
   fatherAlive?: boolean;
   motherAlive?: boolean;
   notes?: string;
-  password?: string; // Generated password
+  password?: string;
   subjects: SubjectRequest[];
 }
 
@@ -66,7 +68,16 @@ interface RegistrationRequest {
   parentRelation: string;
   parentAddress?: string;
   parentCountry?: string;
-  studentsJson: any; // Raw JSON or array of StudentRequest
+  studentsJson: any;
+  createdAt: string;
+}
+
+interface RegistrationToken {
+  id: string;
+  adminId: string;
+  token: string;
+  type: 'UNIVERSAL' | 'SINGLE_USE';
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -97,15 +108,38 @@ const timezones = [
   'Asia/Kolkata', 'Asia/Dubai', 'Australia/Sydney', 'Pacific/Auckland', 'Asia/Karachi'
 ];
 
+const relationTypes = [
+  { value: 'FATHER', label: 'Father' },
+  { value: 'MOTHER', label: 'Mother' },
+  { value: 'GUARDIAN', label: 'Guardian' },
+  { value: 'SIBLING', label: 'Sibling' },
+  { value: 'UNCLE', label: 'Uncle' },
+  { value: 'AUNT', label: 'Aunt' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+const classDaysList = [
+  { value: 'MONDAY', label: 'Mon' },
+  { value: 'TUESDAY', label: 'Tue' },
+  { value: 'WEDNESDAY', label: 'Wed' },
+  { value: 'THURSDAY', label: 'Thu' },
+  { value: 'FRIDAY', label: 'Fri' },
+  { value: 'SATURDAY', label: 'Sat' },
+  { value: 'SUNDAY', label: 'Sun' },
+];
+
 export default function AdminRegistrationsPage() {
   const { t } = useTranslation('common');
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const [activeTab, setActiveTab] = useState<string>('applications');
   const [registrations, setRegistrations] = useState<RegistrationRequest[]>([]);
+  const [tokens, setTokens] = useState<RegistrationToken[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tokensLoading, setTokensLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeFilter, setActiveFilter] = useState('PENDING');
@@ -124,8 +158,14 @@ export default function AdminRegistrationsPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successDetails, setSuccessDetails] = useState<any>(null);
 
-  // Copy Link State
-  const [copiedLink, setCopiedLink] = useState(false);
+  // QR Code Modal State
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrLink, setQrLink] = useState('');
+  const [qrToken, setQrToken] = useState<RegistrationToken | null>(null);
+
+  // Link Action State
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [copyStates, setCopyStates] = useState<Record<string, boolean>>({});
 
   // Authentication guards
   useEffect(() => {
@@ -158,17 +198,36 @@ export default function AdminRegistrationsPage() {
         setCourses(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      setError('Failed to fetch data.');
+      setError('Failed to fetch registration data.');
     } finally {
       setLoading(false);
     }
   }, [activeFilter]);
 
+  const fetchTokens = useCallback(async () => {
+    try {
+      setTokensLoading(true);
+      const res = await fetch('/api/registrations/tokens');
+      if (res.ok) {
+        const data = await res.json();
+        setTokens(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      setError('Failed to fetch registration tokens.');
+    } finally {
+      setTokensLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.role === 'ADMIN') {
-      fetchData();
+      if (activeTab === 'applications') {
+        fetchData();
+      } else {
+        fetchTokens();
+      }
     }
-  }, [status, session, fetchData]);
+  }, [status, session, activeTab, fetchData, fetchTokens]);
 
   const handleSelect = (key?: string | null) => {
     if (!key || key === 'registrations') return;
@@ -195,12 +254,70 @@ export default function AdminRegistrationsPage() {
     router.push(routeMap[key] || `/dashboard?tab=${key}`);
   };
 
-  const handleCopyLink = () => {
-    if (typeof window === 'undefined' || !session?.user?.id) return;
-    const link = `${window.location.origin}/register/${session.user.id}`;
+  const getFullLink = (tokenValue: string) => {
+    if (typeof window === 'undefined') return '';
+    return `${window.location.origin}/register/${tokenValue}`;
+  };
+
+  const handleCopyLink = (tokenValue: string, id: string) => {
+    const link = getFullLink(tokenValue);
     navigator.clipboard.writeText(link);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
+    setCopyStates(prev => ({ ...prev, [id]: true }));
+    setTimeout(() => {
+      setCopyStates(prev => ({ ...prev, [id]: false }));
+    }, 2000);
+  };
+
+  // Generate Tokens
+  const handleGenerateToken = async (type: 'UNIVERSAL' | 'SINGLE_USE') => {
+    setGeneratingLink(true);
+    setError('');
+    try {
+      const res = await fetch('/api/registrations/tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type })
+      });
+      if (res.ok) {
+        setSuccess(`Successfully generated ${type.toLowerCase().replace('_', '-')} link!`);
+        fetchTokens();
+        setTimeout(() => setSuccess(''), 4000);
+      } else {
+        const data = await res.json();
+        setError(data.message || 'Failed to generate registration token.');
+      }
+    } catch (e) {
+      setError('Connection error.');
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const handleDeleteToken = async (id: string) => {
+    setError('');
+    try {
+      const res = await fetch('/api/registrations/tokens', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      if (res.ok) {
+        setSuccess('Registration link deactivated and deleted.');
+        fetchTokens();
+        setTimeout(() => setSuccess(''), 4000);
+      } else {
+        setError('Failed to deactivate token.');
+      }
+    } catch (e) {
+      setError('Connection error.');
+    }
+  };
+
+  const handleShowQr = (token: RegistrationToken) => {
+    const link = getFullLink(token.token);
+    setQrLink(link);
+    setQrToken(token);
+    setShowQrModal(true);
   };
 
   // Review & Approval Flow
@@ -369,138 +486,249 @@ export default function AdminRegistrationsPage() {
                 <div>
                   <h2 className="h5 mb-1">
                     <i className="bi bi-clipboard-check me-2"></i>
-                    Student Registrations
+                    Student Admissions & Registrations
                   </h2>
-                  <p className="text-muted mb-0">Review and approve self-registration requests from parents and students.</p>
+                  <p className="text-muted mb-0">Generate dynamic registration links, generate QR codes, and review student applications.</p>
                 </div>
               </div>
-
-              {/* Share link card */}
-              <Card className="shadow-sm border-0 mb-4 bg-light">
-                <Card.Body className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-                  <div>
-                    <strong className="text-dark">Online Admission Form Link:</strong>
-                    <div className="text-muted small mt-1">Copy and send this link to parents or students to let them register themselves:</div>
-                  </div>
-                  <div className="d-flex gap-2 w-100 w-md-auto align-items-center">
-                    <InputGroup size="sm" style={{ minWidth: '350px' }}>
-                      <Form.Control
-                        readOnly
-                        value={typeof window !== 'undefined' ? `${window.location.origin}/register/${session?.user?.id}` : ''}
-                        className="bg-white"
-                      />
-                      <Button variant="outline-primary" onClick={handleCopyLink}>
-                        <i className={`bi ${copiedLink ? 'bi-check' : 'bi-clipboard'} me-1`}></i>
-                        {copiedLink ? 'Copied' : 'Copy'}
-                      </Button>
-                    </InputGroup>
-                  </div>
-                </Card.Body>
-              </Card>
 
               {error && <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert>}
               {success && <Alert variant="success" onClose={() => setSuccess('')} dismissible>{success}</Alert>}
 
-              {/* Filter Tabs */}
-              <div className="d-flex gap-2 mb-3">
-                <Button
-                  size="sm"
-                  variant={activeFilter === 'PENDING' ? 'primary' : 'outline-secondary'}
-                  onClick={() => { setActiveFilter('PENDING'); }}
-                >
-                  Pending Requests
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeFilter === 'APPROVED' ? 'success' : 'outline-secondary'}
-                  onClick={() => { setActiveFilter('APPROVED'); }}
-                >
-                  Approved
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeFilter === 'REJECTED' ? 'danger' : 'outline-secondary'}
-                  onClick={() => { setActiveFilter('REJECTED'); }}
-                >
-                  Rejected
-                </Button>
-              </div>
+              {/* Tabs */}
+              <Tabs
+                activeKey={activeTab}
+                onSelect={(k) => setActiveTab(k || 'applications')}
+                className="mb-4"
+              >
+                <Tab eventKey="applications" title={<span><i className="bi bi-file-earmark-person me-2"></i>Applications Queue</span>}>
+                  <div className="pt-2">
+                    {/* Filter Sub-Tabs */}
+                    <div className="d-flex gap-2 mb-3">
+                      <Button
+                        size="sm"
+                        variant={activeFilter === 'PENDING' ? 'primary' : 'outline-secondary'}
+                        onClick={() => { setActiveFilter('PENDING'); }}
+                      >
+                        Pending Requests
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={activeFilter === 'APPROVED' ? 'success' : 'outline-secondary'}
+                        onClick={() => { setActiveFilter('APPROVED'); }}
+                      >
+                        Approved
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant={activeFilter === 'REJECTED' ? 'danger' : 'outline-secondary'}
+                        onClick={() => { setActiveFilter('REJECTED'); }}
+                      >
+                        Rejected
+                      </Button>
+                    </div>
 
-              {/* Data Table */}
-              <Card className="shadow-sm">
-                <Card.Body className="p-0">
-                  {loading ? (
-                    <div className="text-center py-5">
-                      <Spinner animation="border" />
-                    </div>
-                  ) : registrations.length === 0 ? (
-                    <div className="text-center py-5 text-muted">
-                      <i className="bi bi-clipboard-x display-4"></i>
-                      <p className="mt-2">No registration requests found in this category.</p>
-                    </div>
-                  ) : (
-                    <div className="table-responsive">
-                      <Table hover size="sm" className="mb-0 mobile-card-table align-middle">
-                        <thead className="table-light">
-                          <tr>
-                            <th>Parent / Contact</th>
-                            <th>Relation</th>
-                            <th>Mobile</th>
-                            <th>Address</th>
-                            <th>Submission Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {registrations.map((reg) => (
-                            <tr key={reg.id}>
-                              <td data-label="Parent">
-                                <div className="fw-semibold text-dark">{reg.parentName}</div>
-                                <div className="text-muted small">{reg.parentEmail}</div>
-                              </td>
-                              <td data-label="Relation">
-                                <Badge bg="info" className="text-capitalize">{reg.parentRelation.toLowerCase()}</Badge>
-                              </td>
-                              <td data-label="Mobile">
-                                {reg.parentMobile}
-                                {reg.parentIsWhatsApp && (
-                                  <i className="bi bi-whatsapp text-success ms-1" title="WhatsApp available"></i>
-                                )}
-                              </td>
-                              <td data-label="Address" className="text-muted small text-truncate" style={{ maxWidth: '180px' }}>
-                                {reg.parentAddress || '-'}, {reg.parentCountry || '-'}
-                              </td>
-                              <td data-label="Submitted">
-                                {new Date(reg.createdAt).toLocaleDateString()}
-                              </td>
-                              <td data-label="Status">
-                                <Badge bg={
-                                  reg.status === 'PENDING' ? 'warning' :
-                                  reg.status === 'APPROVED' ? 'success' : 'danger'
-                                }>
-                                  {reg.status}
-                                </Badge>
-                              </td>
-                              <td data-label="Actions">
-                                {reg.status === 'PENDING' ? (
-                                  <Button variant="primary" size="sm" onClick={() => handleOpenReview(reg)}>
-                                    <i className="bi bi-eye me-1"></i> Review
-                                  </Button>
-                                ) : (
-                                  <Button variant="outline-secondary" size="sm" onClick={() => handleOpenReview(reg)}>
-                                    <i className="bi bi-eye me-1"></i> Details
-                                  </Button>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </Table>
-                    </div>
-                  )}
-                </Card.Body>
-              </Card>
+                    {/* Data Table */}
+                    <Card className="shadow-sm border-0">
+                      <Card.Body className="p-0">
+                        {loading ? (
+                          <div className="text-center py-5">
+                            <Spinner animation="border" />
+                          </div>
+                        ) : registrations.length === 0 ? (
+                          <div className="text-center py-5 text-muted">
+                            <i className="bi bi-clipboard-x display-4"></i>
+                            <p className="mt-2">No registration requests found in this category.</p>
+                          </div>
+                        ) : (
+                          <div className="table-responsive">
+                            <Table hover size="sm" className="mb-0 mobile-card-table align-middle">
+                              <thead className="table-light">
+                                <tr>
+                                  <th>Parent / Contact</th>
+                                  <th>Relation</th>
+                                  <th>Mobile</th>
+                                  <th>Address</th>
+                                  <th>Submission Date</th>
+                                  <th>Status</th>
+                                  <th>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {registrations.map((reg) => (
+                                  <tr key={reg.id}>
+                                    <td data-label="Parent">
+                                      <div className="fw-semibold text-dark">{reg.parentName}</div>
+                                      <div className="text-muted small">{reg.parentEmail}</div>
+                                    </td>
+                                    <td data-label="Relation">
+                                      <Badge bg="info" className="text-capitalize">{reg.parentRelation.toLowerCase()}</Badge>
+                                    </td>
+                                    <td data-label="Mobile">
+                                      {reg.parentMobile}
+                                      {reg.parentIsWhatsApp && (
+                                        <i className="bi bi-whatsapp text-success ms-1" title="WhatsApp available"></i>
+                                      )}
+                                    </td>
+                                    <td data-label="Address" className="text-muted small text-truncate" style={{ maxWidth: '180px' }}>
+                                      {reg.parentAddress || '-'}, {reg.parentCountry || '-'}
+                                    </td>
+                                    <td data-label="Submitted">
+                                      {new Date(reg.createdAt).toLocaleDateString()}
+                                    </td>
+                                    <td data-label="Status">
+                                      <Badge bg={
+                                        reg.status === 'PENDING' ? 'warning' :
+                                        reg.status === 'APPROVED' ? 'success' : 'danger'
+                                      }>
+                                        {reg.status}
+                                      </Badge>
+                                    </td>
+                                    <td data-label="Actions">
+                                      {reg.status === 'PENDING' ? (
+                                        <Button variant="primary" size="sm" onClick={() => handleOpenReview(reg)}>
+                                          <i className="bi bi-pencil-square me-1"></i> Review & Setup
+                                        </Button>
+                                      ) : (
+                                        <Button variant="outline-secondary" size="sm" onClick={() => handleOpenReview(reg)}>
+                                          <i className="bi bi-eye me-1"></i> Details
+                                        </Button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </Table>
+                          </div>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </div>
+                </Tab>
+
+                <Tab eventKey="tokens" title={<span><i className="bi bi-link-45deg me-2"></i>Registration Link Manager</span>}>
+                  <div className="pt-2">
+                    
+                    {/* Link Generation controls */}
+                    <Card className="shadow-sm border-0 mb-4 bg-light">
+                      <Card.Body className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                        <div>
+                          <strong className="text-dark fs-6">Generate Secure Registration Link:</strong>
+                          <div className="text-muted small mt-1">
+                            Generate secure, obfuscated tokens so parents/students can enter their own data.
+                          </div>
+                        </div>
+                        <div className="d-flex gap-2">
+                          <Button 
+                            variant="primary" 
+                            disabled={generatingLink || tokensLoading} 
+                            onClick={() => handleGenerateToken('UNIVERSAL')}
+                          >
+                            <i className="bi bi-infinity me-1"></i> Universal Link
+                          </Button>
+                          <Button 
+                            variant="outline-secondary" 
+                            disabled={generatingLink || tokensLoading} 
+                            onClick={() => handleGenerateToken('SINGLE_USE')}
+                          >
+                            <i className="bi bi-1-circle me-1"></i> Single-Use Link
+                          </Button>
+                        </div>
+                      </Card.Body>
+                    </Card>
+
+                    {/* Active tokens list */}
+                    <Card className="shadow-sm border-0">
+                      <Card.Header className="bg-white border-bottom py-3">
+                        <h6 className="mb-0 text-dark fw-bold">Active and Historical Link Tokens</h6>
+                      </Card.Header>
+                      <Card.Body className="p-0">
+                        {tokensLoading ? (
+                          <div className="text-center py-5">
+                            <Spinner animation="border" />
+                          </div>
+                        ) : tokens.length === 0 ? (
+                          <div className="text-center py-5 text-muted">
+                            <i className="bi bi-link display-4"></i>
+                            <p className="mt-2">No registration links generated yet. Use the buttons above to create one.</p>
+                          </div>
+                        ) : (
+                          <div className="table-responsive">
+                            <Table hover size="sm" className="mb-0 align-middle">
+                              <thead className="table-light">
+                                <tr>
+                                  <th>Type</th>
+                                  <th>Secure Registration Link</th>
+                                  <th>Status</th>
+                                  <th>Created At</th>
+                                  <th>Actions</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {tokens.map((tok) => {
+                                  const url = getFullLink(tok.token);
+                                  const isCopied = copyStates[tok.id];
+                                  return (
+                                    <tr key={tok.id}>
+                                      <td>
+                                        <Badge bg={tok.type === 'UNIVERSAL' ? 'primary' : 'secondary'}>
+                                          {tok.type === 'UNIVERSAL' ? 'Universal (Multi-Use)' : 'Single-Use'}
+                                        </Badge>
+                                      </td>
+                                      <td>
+                                        <code className="text-dark small select-all">{url}</code>
+                                      </td>
+                                      <td>
+                                        <Badge bg={tok.isActive ? 'success' : 'danger'}>
+                                          {tok.isActive ? 'Active' : 'Used/Deactivated'}
+                                        </Badge>
+                                      </td>
+                                      <td className="text-muted small">
+                                        {new Date(tok.createdAt).toLocaleString()}
+                                      </td>
+                                      <td>
+                                        <div className="d-flex gap-2">
+                                          <Button 
+                                            variant="outline-primary" 
+                                            size="sm" 
+                                            onClick={() => handleCopyLink(tok.token, tok.id)}
+                                            title="Copy Link"
+                                          >
+                                            <i className={`bi ${isCopied ? 'bi-check' : 'bi-clipboard'}`}></i>
+                                          </Button>
+                                          {tok.isActive && (
+                                            <Button 
+                                              variant="outline-success" 
+                                              size="sm" 
+                                              onClick={() => handleShowQr(tok)}
+                                              title="Show QR Code"
+                                            >
+                                              <i className="bi bi-qr-code"></i>
+                                            </Button>
+                                          )}
+                                          <Button 
+                                            variant="outline-danger" 
+                                            size="sm" 
+                                            onClick={() => handleDeleteToken(tok.id)}
+                                            title="Deactivate / Delete Link"
+                                          >
+                                            <i className="bi bi-trash"></i>
+                                          </Button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </Table>
+                          </div>
+                        )}
+                      </Card.Body>
+                    </Card>
+
+                  </div>
+                </Tab>
+              </Tabs>
 
             </div>
           </div>
@@ -589,7 +817,7 @@ export default function AdminRegistrationsPage() {
                             <i className="bi bi-arrow-clockwise"></i>
                           </Button>
                         </InputGroup>
-                        <Form.Text className="text-muted">Memorable password word generated for the parent.</Form.Text>
+                        <Form.Text className="text-muted font-monospace small">Memorable password word generated for parent.</Form.Text>
                       </Form.Group>
                     </Card.Body>
                   </Card>
@@ -847,7 +1075,7 @@ export default function AdminRegistrationsPage() {
         </Modal.Footer>
       </Modal>
 
-      {/* Success Confirmation Modal (Show Credentials & Welcome message to Admin) */}
+      {/* Success Confirmation Modal */}
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} size="lg">
         <Modal.Header closeButton className="bg-success text-white">
           <Modal.Title>
@@ -904,6 +1132,79 @@ export default function AdminRegistrationsPage() {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="success" onClick={() => setShowSuccessModal(false)}>Close & Refresh</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* QR Code Display Modal */}
+      <Modal show={showQrModal} onHide={() => setShowQrModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <i className="bi bi-qr-code me-2"></i>
+            Registration QR Code
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-center">
+          {qrToken && (
+            <div className="p-3">
+              <p className="mb-3 text-muted">
+                Scan this QR code to access the registration form for 
+                <strong> {qrToken.type === 'UNIVERSAL' ? 'Universal link' : 'Single-Use link'}</strong>.
+              </p>
+              
+              <div className="mb-3 p-3 bg-white d-inline-block rounded shadow-sm border">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrLink)}`} 
+                  alt="Registration Link QR Code"
+                  style={{ width: '250px', height: '250px' }}
+                />
+              </div>
+
+              <div className="mb-3 font-monospace small bg-light p-2 rounded text-truncate">
+                {qrLink}
+              </div>
+
+              <div className="d-flex justify-content-center gap-2">
+                <Button variant="outline-primary" size="sm" onClick={() => {
+                  navigator.clipboard.writeText(qrLink);
+                  alert('Link copied to clipboard!');
+                }}>
+                  <i className="bi bi-clipboard me-1"></i> Copy Link
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    const printWin = window.open('', '_blank');
+                    if (printWin) {
+                      printWin.document.write(`
+                        <html>
+                          <head>
+                            <title>Print QR Code - AIMS</title>
+                            <style>
+                              body { text-align: center; font-family: sans-serif; padding: 40px; }
+                              img { border: 1px solid #ccc; padding: 10px; border-radius: 8px; margin: 20px 0; }
+                              h2 { margin-bottom: 5px; }
+                              p { color: #555; max-width: 400px; margin: 0 auto; }
+                            </style>
+                          </head>
+                          <body>
+                            <h2>Scan to Register</h2>
+                            <p>${qrToken.type === 'UNIVERSAL' ? 'Academy General Registration Link' : 'Academy One-time Registration Link'}</p>
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrLink)}" />
+                            <div><br/><button onclick="window.print()">Print QR Code</button></div>
+                          </body>
+                        </html>
+                      `);
+                      printWin.document.close();
+                    }
+                  }
+                }}>
+                  <i className="bi bi-printer me-1"></i> Print QR Code
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowQrModal(false)}>Close</Button>
         </Modal.Footer>
       </Modal>
 

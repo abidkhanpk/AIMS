@@ -7,6 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const {
+    token, // New parameter to track the specific link used
     adminId,
     parentName,
     parentEmail,
@@ -21,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } = req.body;
 
   // Basic validation
-  if (!adminId || !parentName || !parentEmail || !parentMobile || !parentRelation) {
+  if (!parentName || !parentEmail || !parentMobile || !parentRelation) {
     return res.status(400).json({ message: 'Missing required parent/relative fields' });
   }
 
@@ -30,9 +31,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    let finalAdminId = adminId;
+
+    // 1. Enforce adminId lookup from token to prevent request payload tampering
+    if (token) {
+      const tokenRecord = await prisma.registrationToken.findUnique({
+        where: { token },
+      });
+
+      if (!tokenRecord) {
+        return res.status(400).json({ message: 'Invalid registration token.' });
+      }
+
+      if (!tokenRecord.isActive) {
+        return res.status(400).json({ message: 'This registration link has already been used.' });
+      }
+
+      // Hard lock the adminId to the token's owner
+      finalAdminId = tokenRecord.adminId;
+    }
+
+    if (!finalAdminId) {
+      return res.status(400).json({ message: 'Academy identifier is missing or invalid.' });
+    }
+
     // Verify admin exists
     const admin = await prisma.user.findFirst({
-      where: { id: adminId, role: 'ADMIN' },
+      where: { id: finalAdminId, role: 'ADMIN' },
     });
 
     if (!admin) {
@@ -61,26 +86,45 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    // Create the registration request record
-    const registrationRequest = await prisma.registrationRequest.create({
-      data: {
-        adminId,
-        parentName,
-        parentEmail,
-        parentMobile,
-        parentIsWhatsApp: !!parentIsWhatsApp,
-        parentCnic: parentCnic || null,
-        parentProfession: parentProfession || null,
-        parentRelation: parentRelation,
-        parentAddress: parentAddress || null,
-        parentCountry: parentCountry || null,
-        studentsJson: students, // Storing students payload as JSON
-      },
+    // Perform database writes in a transaction to guarantee deactivation of single-use token
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create the registration request record
+      const registrationRequest = await tx.registrationRequest.create({
+        data: {
+          adminId: finalAdminId,
+          parentName,
+          parentEmail,
+          parentMobile,
+          parentIsWhatsApp: !!parentIsWhatsApp,
+          parentCnic: parentCnic || null,
+          parentProfession: parentProfession || null,
+          parentRelation: parentRelation,
+          parentAddress: parentAddress || null,
+          parentCountry: parentCountry || null,
+          studentsJson: students,
+        },
+      });
+
+      // 2. If the token is SINGLE_USE, deactivate it
+      if (token) {
+        const tokenRecord = await tx.registrationToken.findUnique({
+          where: { token },
+        });
+
+        if (tokenRecord && tokenRecord.type === 'SINGLE_USE') {
+          await tx.registrationToken.update({
+            where: { token },
+            data: { isActive: false },
+          });
+        }
+      }
+
+      return registrationRequest;
     });
 
     return res.status(201).json({
       message: 'Registration request submitted successfully',
-      requestId: registrationRequest.id,
+      requestId: result.id,
     });
   } catch (error) {
     console.error('Error creating registration request:', error);

@@ -24,10 +24,12 @@ interface Course {
 }
 
 interface AcademyInfo {
+  adminId: string;
   academyName: string;
   logo: string;
   tagline?: string;
   currency: string;
+  isSingleUse: boolean;
   courses: Course[];
 }
 
@@ -67,7 +69,7 @@ export async function getServerSideProps({ locale }: { locale: string }) {
 
 export default function PublicRegisterPage() {
   const router = useRouter();
-  const { adminId } = router.query;
+  const { token } = router.query;
   const { t } = useTranslation('common');
 
   const [loading, setLoading] = useState(true);
@@ -114,18 +116,18 @@ export default function PublicRegisterPage() {
     };
   }
 
-  // Load Academy Config
+  // Load Academy Config using Token
   useEffect(() => {
-    if (!adminId) return;
+    if (!token) return;
     async function fetchAcademy() {
       try {
         setLoading(true);
-        const res = await fetch(`/api/public/academy-info?adminId=${adminId}`);
+        const res = await fetch(`/api/public/academy-info?token=${token}`);
+        const data = await res.json();
         if (res.ok) {
-          const data = await res.json();
           setAcademyInfo(data);
         } else {
-          setError('Failed to fetch academy settings. Please check your link.');
+          setError(data.message || 'Failed to fetch academy settings. Please check your link.');
         }
       } catch (err) {
         setError('Error loading academy. Please try again.');
@@ -134,7 +136,7 @@ export default function PublicRegisterPage() {
       }
     }
     fetchAcademy();
-  }, [adminId]);
+  }, [token]);
 
   const handleLanguageToggle = (locale: string) => {
     document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000`;
@@ -207,7 +209,8 @@ export default function PublicRegisterPage() {
 
     try {
       const payload = {
-        adminId,
+        token, // Pass token so server can deactivate it if SINGLE_USE
+        adminId: academyInfo?.adminId,
         parentName,
         parentEmail,
         parentMobile,
@@ -249,6 +252,24 @@ export default function PublicRegisterPage() {
     );
   }
 
+  if (error && !academyInfo) {
+    return (
+      <Container className="d-flex justify-content-center align-items-center min-vh-100">
+        <Card className="text-center p-5 shadow-lg border-0" style={{ maxWidth: '600px', borderRadius: '16px' }}>
+          <Card.Body>
+            <div className="text-danger mb-4">
+              <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: '4.5rem' }}></i>
+            </div>
+            <h3 className="fw-bold mb-3">Registration Link Inactive</h3>
+            <p className="text-muted mb-0" style={{ fontSize: '1.1rem' }}>
+              {error}
+            </p>
+          </Card.Body>
+        </Card>
+      </Container>
+    );
+  }
+
   if (success) {
     return (
       <Container className="d-flex justify-content-center align-items-center min-vh-100">
@@ -258,14 +279,11 @@ export default function PublicRegisterPage() {
               <i className="bi bi-check-circle-fill" style={{ fontSize: '4.5rem' }}></i>
             </div>
             <h2 className="fw-bold mb-3">{router.locale === 'ur' ? 'داخلہ فارم موصول ہو گیا!' : 'Registration Submitted!'}</h2>
-            <p className="text-muted mb-4" style={{ fontSize: '1.1rem' }}>
+            <p className="text-muted mb-0" style={{ fontSize: '1.1rem' }}>
               {router.locale === 'ur' 
                 ? 'آپ کی رجسٹریشن کی درخواست کامیابی کے ساتھ جمع ہو گئی ہے۔ ایڈمنسٹریٹر آپ کے فراہم کردہ فون یا ای میل پر اکاؤنٹ کی تفصیلات بھیجیں گے۔'
                 : 'Your registration request has been successfully submitted. The administrator will approve the details and notify you with your account login credentials.'}
             </p>
-            <Button variant="primary" size="lg" className="px-5 rounded-pill" onClick={() => router.reload()}>
-              {router.locale === 'ur' ? 'نیا فارم بھریں' : 'Submit Another Form'}
-            </Button>
           </Card.Body>
         </Card>
       </Container>
