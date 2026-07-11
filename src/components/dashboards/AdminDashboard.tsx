@@ -5813,6 +5813,7 @@ export default function AdminDashboard() {
     'assignments',
     'attendance-reports',
     'report-cards',
+    'registrations',
   ]), []);
   const initialTab = typeof router.query.tab === 'string' && !disallowedTabs.has(router.query.tab)
     ? router.query.tab
