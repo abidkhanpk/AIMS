@@ -938,7 +938,7 @@ export default function AdminRegistrationsPage() {
                         {std.dateOfBirth && (
                           <Col md={6}>
                             <span className="small text-muted d-block">DOB</span>
-                            <span className="fw-medium text-dark">{std.dateOfBirth} ({std.dateOfBirthInWords || 'words N/A'})</span>
+                            <span className="fw-medium text-dark">{std.dateOfBirth}</span>
                           </Col>
                         )}
                         {std.bFormNumber && (

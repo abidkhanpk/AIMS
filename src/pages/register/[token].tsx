@@ -116,7 +116,6 @@ export default function PublicRegisterPage() {
       isWhatsApp: false,
       dateOfBirth: '',
       bFormNumber: '',
-      dateOfBirthInWords: '',
       religiousEducation: '',
       formalEducation: '',
       previousInstitution: '',
@@ -644,17 +643,6 @@ export default function PublicRegisterPage() {
                         type="text"
                         value={student.bFormNumber}
                         onChange={(e) => handleStudentChange(sIdx, 'bFormNumber', e.target.value)}
-                      />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label className="fw-medium">Date of Birth in Words</Form.Label>
-                      <Form.Control
-                        type="text"
-                        placeholder="e.g. First January Two Thousand Ten"
-                        value={student.dateOfBirthInWords}
-                        onChange={(e) => handleStudentChange(sIdx, 'dateOfBirthInWords', e.target.value)}
                       />
                     </Form.Group>
                   </Col>
