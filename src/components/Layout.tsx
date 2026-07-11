@@ -134,6 +134,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const isAuthPage = router.pathname.startsWith('/auth/') || router.pathname.startsWith('/register/');
+    if (isAuthPage) return;
+
     if (status === 'authenticated') {
       fetchSettings();
       fetchUserSettings();
@@ -141,7 +144,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       const interval = setInterval(loadUnreadMessages, 30000);
       return () => clearInterval(interval);
     }
-  }, [status, fetchSettings, fetchUserSettings, loadUnreadMessages]);
+  }, [status, router.pathname, fetchSettings, fetchUserSettings, loadUnreadMessages]);
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
