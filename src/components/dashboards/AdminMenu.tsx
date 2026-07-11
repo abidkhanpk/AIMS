@@ -27,6 +27,7 @@ const menuItems: MenuItem[] = [
       { key: 'teachers', label: 'menu.teachers', icon: 'bi-person-workspace' },
       { key: 'parents', label: 'menu.parents', icon: 'bi-people' },
       { key: 'students', label: 'menu.students', icon: 'bi-mortarboard' },
+      { key: 'registrations', label: 'menu.registrations', icon: 'bi-clipboard-check' },
     ],
   },
   {

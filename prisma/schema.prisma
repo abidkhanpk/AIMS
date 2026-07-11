@@ -220,6 +220,7 @@ model User {
   studentProfile      StudentProfile?
   parentProfile       ParentProfile?
   whatsappSession     WhatsAppSession?
+  registrationRequests RegistrationRequest[] @relation("AdminRegistrationRequests")
 }
 
 model StudentProfile {
@@ -732,3 +733,30 @@ model WhatsAppMessageLog {
 
   session WhatsAppSession @relation(fields: [sessionId], references: [id])
 }
+
+model RegistrationRequest {
+  id               String           @id @default(uuid())
+  adminId          String
+  status           String           @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejectionReason  String?
+  
+  // Parent details
+  parentName       String
+  parentEmail      String
+  parentMobile     String
+  parentIsWhatsApp Boolean          @default(false)
+  parentCnic       String?
+  parentProfession String?
+  parentRelation   RelationType     @default(GUARDIAN)
+  parentAddress    String?
+  parentCountry    String?
+
+  // JSON payload containing list of children, their profile details and requested subjects/schedules
+  studentsJson     Json
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  admin            User             @relation("AdminRegistrationRequests", fields: [adminId], references: [id], onDelete: Cascade)
+}
+

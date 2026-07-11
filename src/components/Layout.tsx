@@ -458,7 +458,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const isAuthPage = router.pathname.startsWith('/auth/');
+  const isAuthPage = router.pathname.startsWith('/auth/') || router.pathname.startsWith('/register/');
 
   if (isAuthPage) {
     return <>{children}</>;
