@@ -16,30 +16,55 @@ function RoutePrefixer({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!session?.user) return;
     const handleRouteChange = (url: string) => {
       if (url.startsWith('/_next') || url.startsWith('/api')) return;
-      const sessionSlug = (session.user as any).academySlug;
-      if (sessionSlug && session.user.role !== 'DEVELOPER') {
-        const pathOnly = url.split('?')[0].split('#')[0];
-        const segments = pathOnly.split('/').filter(Boolean);
-        
-        let hasLocale = false;
-        let locale = '';
-        if (segments[0] && ['en', 'ur'].includes(segments[0])) {
-          hasLocale = true;
-          locale = segments.shift() || '';
-        }
+      const pathOnly = url.split('?')[0].split('#')[0];
+      const segments = pathOnly.split('/').filter(Boolean);
+      
+      let hasLocale = false;
+      let locale = '';
+      if (segments[0] && ['en', 'ur'].includes(segments[0])) {
+        hasLocale = true;
+        locale = segments.shift() || '';
+      }
 
-        if (segments[0] && segments[0] !== sessionSlug) {
-          const relativeUrl = segments.join('/');
+      // 1. Intercept unauthenticated transitions to auth pages to preserve slug
+      const targetPath = '/' + segments.join('/');
+      if (targetPath === '/auth/signin' || targetPath === '/auth/forgot-password') {
+        const currentPath = window.location.pathname;
+        const currentSegments = currentPath.split('/').filter(Boolean);
+        
+        if (currentSegments[0] && ['en', 'ur'].includes(currentSegments[0])) {
+          currentSegments.shift();
+        }
+        
+        const RESERVED_WORDS = new Set(['auth', 'dashboard', 'register', 'messages', 'privacy-policy', 'developer', '404', 'en', 'ur']);
+        if (currentSegments[0] && !RESERVED_WORDS.has(currentSegments[0])) {
+          const currentSlug = currentSegments[0];
           const queryStr = url.includes('?') ? url.substring(url.indexOf('?')) : '';
           const targetUrl = hasLocale
-            ? `/${locale}/${sessionSlug}/${relativeUrl}${queryStr}`
-            : `/${sessionSlug}/${relativeUrl}${queryStr}`;
+            ? `/${locale}/${currentSlug}${targetPath}${queryStr}`
+            : `/${currentSlug}${targetPath}${queryStr}`;
             
           router.push(targetUrl);
           throw 'routeChangeAborted';
+        }
+      }
+
+      // 2. Intercept authenticated user transitions to prepend slug
+      if (session?.user) {
+        const sessionSlug = (session.user as any).academySlug;
+        if (sessionSlug && session.user.role !== 'DEVELOPER') {
+          if (segments[0] && segments[0] !== sessionSlug) {
+            const relativeUrl = segments.join('/');
+            const queryStr = url.includes('?') ? url.substring(url.indexOf('?')) : '';
+            const targetUrl = hasLocale
+              ? `/${locale}/${sessionSlug}/${relativeUrl}${queryStr}`
+              : `/${sessionSlug}/${relativeUrl}${queryStr}`;
+              
+            router.push(targetUrl);
+            throw 'routeChangeAborted';
+          }
         }
       }
     };
