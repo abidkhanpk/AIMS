@@ -545,7 +545,7 @@ export default function VideosPage() {
         <title>{t('menu.help', 'Help') + ' | AIMS'}</title>
       </Head>
 
-      {session?.user?.role === 'ADMIN' || session?.user?.role === 'DEVELOPER' ? (
+      {session?.user?.role === 'ADMIN' ? (
         <div className={menuStyles.menuShell}>
           <div className={menuStyles.menuLayout}>
             <AdminMenu activeKey="tutorials" onSelect={handleSelect} />

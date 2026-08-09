@@ -7,6 +7,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
+import packageJson from '../../../../package.json';
 
 export default function SignIn() {
     const { t } = useTranslation('common');
@@ -194,6 +195,9 @@ export default function SignIn() {
                   </div>
                 </Card.Body>
               </Card>
+              <div className="text-center mt-3 text-muted small">
+                v{packageJson.version}
+              </div>
             </Col>
           </Row>
         </Container>
