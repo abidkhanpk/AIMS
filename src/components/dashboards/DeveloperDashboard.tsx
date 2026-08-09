@@ -65,6 +65,7 @@ interface AppSettings {
   storageProvider?: 'DRIVE' | 'CLOUDINARY';
   driveFolderId?: string | null;
   cloudinaryFolder?: string | null;
+  webPlayerScript?: string | null;
   smtpHost?: string | null;
   smtpPort?: string | null;
   smtpUser?: string | null;
@@ -1727,6 +1728,7 @@ function GlobalSettingsTab() {
   const [storageProvider, setStorageProvider] = useState<'DRIVE' | 'CLOUDINARY'>('DRIVE');
   const [driveFolderId, setDriveFolderId] = useState('');
   const [cloudinaryFolder, setCloudinaryFolder] = useState('');
+  const [webPlayerScript, setWebPlayerScript] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [smtpHost, setSmtpHost] = useState('');
   const [smtpPort, setSmtpPort] = useState('');
@@ -1758,6 +1760,7 @@ function GlobalSettingsTab() {
         setStorageProvider((data.storageProvider as any) || 'DRIVE');
         setDriveFolderId(data.driveFolderId || '');
         setCloudinaryFolder(data.cloudinaryFolder || '');
+        setWebPlayerScript(data.webPlayerScript || '');
         setSmtpHost(data.smtpHost || '');
         setSmtpPort(data.smtpPort || '');
         setSmtpUser(data.smtpUser || '');
@@ -1840,6 +1843,7 @@ function GlobalSettingsTab() {
           storageProvider,
           driveFolderId: driveFolderId || null,
           cloudinaryFolder: cloudinaryFolder || null,
+          webPlayerScript: webPlayerScript || null,
           smtpHost: smtpHost || null,
           smtpPort: smtpPort || null,
           smtpUser: smtpUser || null,
