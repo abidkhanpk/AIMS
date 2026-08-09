@@ -7,7 +7,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import packageJson from '../../../../package.json';
+import packageJson from '../../../package.json';
 
 export default function SignIn() {
     const { t } = useTranslation('common');
