@@ -65,6 +65,7 @@ interface AppSettings {
   storageProvider?: 'DRIVE' | 'CLOUDINARY';
   driveFolderId?: string | null;
   cloudinaryFolder?: string | null;
+  webPlayerScript?: string | null;
   smtpHost?: string | null;
   smtpPort?: string | null;
   smtpUser?: string | null;
@@ -169,7 +170,7 @@ function AdminManagementTab() {
   const getTemplateText = (type: string) => {
     switch (type) {
       case 'WELCOME':
-        return `السلام علیکم ورحمۃ اللہ وبرکاتہ\n\nمحترم  {name}، ایمز (AIMS) ایپ میں آپ کو خوش آمدید!\n\nآپ کا ایڈمن اکاؤنٹ کامیابی کے ساتھ بنا دیا گیا ہے۔ لاگ اِن کے لیے درج ذیل معلومات استعمال کریں:\n\nلنک: https://aims.absons.net\nیوزر نیم: آپ کا فراہم کردہ ای میل ایڈریس\nپاس ورڈ: {password}\n\nبراہِ کرم پہلی مرتبہ لاگ اِن کرنے کے فوراً بعد اپنا پاس ورڈ تبدیل کر لیں۔\n\nلاگ اِن کرنے کے بعد آپ معلمین، طلبہ اور رشتہ داروں کے اکاؤنٹس اپنے ایڈمن اکاؤنٹ سے خود بنا سکیں گے۔\n\nکسی بھی رہنمائی کی ضرورت ہو تو رابطہ کر سکتے ہیں۔\n\nجزاکم اللہ خیراً`;
+        return `السلام علیکم ورحمۃ اللہ وبرکاتہ\n\nمحترم  {name}، ایمز (AIMS) ایپ میں آپ کو خوش آمدید!\n\nآپ کا ایڈمن اکاؤنٹ کامیابی کے ساتھ بنا دیا گیا ہے۔ لاگ اِن کے لیے درج ذیل معلومات استعمال کریں:\n\nلنک: https://aims.absons.net/{slug}\nیوزر نیم: آپ کا فراہم کردہ ای میل ایڈریس\nپاس ورڈ: {password}\n\nبراہِ کرم پہلی مرتبہ لاگ اِن کرنے کے فوراً بعد اپنا پاس ورڈ تبدیل کر لیں۔\n\nلاگ اِن کرنے کے بعد آپ معلمین، طلبہ اور رشتہ داروں کے اکاؤنٹس اپنے ایڈمن اکاؤنٹ سے خود بنا سکیں گے۔\n\nکسی بھی رہنمائی کی ضرورت ہو تو رابطہ کر سکتے ہیں۔\n\nجزاکم اللہ خیراً`;
       case 'INACTIVITY':
         return `السلام علیکم {name}،\n\nامید ہے آپ خیریت سے ہوں گے۔\n\nیہ AIMS (اکیڈمی انفارمیشن مینجمنٹ سسٹم) کی طرف سے ایک خودکار پیغام ہے۔ ہمارے ریکارڈ کے مطابق، آپ نے گزشتہ کچھ دنوں سے AIMS پورٹل لاگ ان یا استعمال نہیں کیا ہے۔\n\nہم یہ جاننا چاہتے ہیں کہ آیا آپ کو سسٹم استعمال کرنے میں کسی قسم کی دشواری یا فنی خرابی کا سامنا تو نہیں کرنا پڑ رہا؟ یا اگر کوئی اور وجہ ہے جس کی وجہ سے آپ اسے استعمال نہیں کر پا رہے، تو براہ کرم ہمیں ضرور آگاہ کریں۔ آپ کا فیڈ بیک ہمارے لیے انتہائی قیمتی ہے اور ہم آپ کے تعاون سے اپنے سسٹم کو مزید بہتر اور آسان بنانا چاہتے ہیں۔\n\nمزید برآں، اگر آپ کسی بھی وجہ سے مستقبل میں AIMS سسٹم استعمال کرنا جاری نہیں رکھنا چاہتے، تو براہ کرم ہمیں مطلع کر دیں تاکہ آپ کا ڈیٹا اور یوزرز حذف کر کے دوسرے صارفین کے لیے جگہ خالی کی جا سکے۔\n\nاگر آپ کو کسی قسم کی تکنیکی مدد یا گائیڈنس کی ضرورت ہو، تو آپ کسی بھی وقت ہم سے رابطہ کر سکتے ہیں۔ ہم آپ کی رہنمائی اور مدد کے لیے ہمیشہ دستیاب ہیں۔\n\nنیک تمناؤں کے ساتھ،\nAIMS سپورٹ ٹیم`;
       case 'SUBSCRIPTION':
@@ -184,6 +185,7 @@ function AdminManagementTab() {
     if (!text) return '';
     const adminName = admin ? admin.name : '{AdminName}';
     const email = admin ? admin.email : '{AdminEmail}';
+    const slug = admin?.settings?.slug || '';
     const endDate = admin?.settings?.subscriptionStartDate
       ? calculateEndDate(admin.settings.subscriptionStartDate, admin.settings.subscriptionType) || 'N/A'
       : '{EndDate}';
@@ -195,6 +197,8 @@ function AdminManagementTab() {
       .replace(/{Email}/g, email)
       .replace(/{password}/g, password || '')
       .replace(/{Password}/g, password || '')
+      .replace(/{slug}/g, slug)
+      .replace(/{Slug}/g, slug)
       .replace(/{endDate}/g, endDate)
       .replace(/{EndDate}/g, endDate);
   };
@@ -1724,6 +1728,7 @@ function GlobalSettingsTab() {
   const [storageProvider, setStorageProvider] = useState<'DRIVE' | 'CLOUDINARY'>('DRIVE');
   const [driveFolderId, setDriveFolderId] = useState('');
   const [cloudinaryFolder, setCloudinaryFolder] = useState('');
+  const [webPlayerScript, setWebPlayerScript] = useState('');
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [smtpHost, setSmtpHost] = useState('');
   const [smtpPort, setSmtpPort] = useState('');
@@ -1755,6 +1760,7 @@ function GlobalSettingsTab() {
         setStorageProvider((data.storageProvider as any) || 'DRIVE');
         setDriveFolderId(data.driveFolderId || '');
         setCloudinaryFolder(data.cloudinaryFolder || '');
+        setWebPlayerScript(data.webPlayerScript || '');
         setSmtpHost(data.smtpHost || '');
         setSmtpPort(data.smtpPort || '');
         setSmtpUser(data.smtpUser || '');
@@ -1837,6 +1843,7 @@ function GlobalSettingsTab() {
           storageProvider,
           driveFolderId: driveFolderId || null,
           cloudinaryFolder: cloudinaryFolder || null,
+          webPlayerScript: webPlayerScript || null,
           smtpHost: smtpHost || null,
           smtpPort: smtpPort || null,
           smtpUser: smtpUser || null,

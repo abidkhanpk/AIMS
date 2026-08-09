@@ -46,7 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const { enableHomePage, appName, appLogo, tagline, defaultCurrency, storageProvider, driveFolderId, cloudinaryFolder, smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom } = req.body;
+    const { enableHomePage, appName, appLogo, tagline, defaultCurrency, storageProvider, driveFolderId, cloudinaryFolder, webPlayerScript, smtpHost, smtpPort, smtpUser, smtpPass, smtpSecure, smtpReplyTo, smtpFrom } = req.body;
  
     let finalSmtpPass = undefined;
     if (smtpPass !== undefined) {
@@ -77,6 +77,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             ...(storageProvider && { storageProvider }),
             ...(driveFolderId !== undefined && { driveFolderId }),
             ...(cloudinaryFolder !== undefined && { cloudinaryFolder }),
+            ...(webPlayerScript !== undefined && { webPlayerScript }),
             ...(smtpHost !== undefined && { smtpHost }),
             ...(smtpPort !== undefined && { smtpPort }),
             ...(smtpUser !== undefined && { smtpUser }),
@@ -98,6 +99,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             storageProvider: storageProvider || 'DRIVE',
             driveFolderId: driveFolderId || null,
             cloudinaryFolder: cloudinaryFolder || null,
+            webPlayerScript: webPlayerScript || null,
             smtpHost: smtpHost || null,
             smtpPort: smtpPort || null,
             smtpUser: smtpUser || null,

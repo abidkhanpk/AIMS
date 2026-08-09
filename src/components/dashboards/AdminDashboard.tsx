@@ -3653,6 +3653,33 @@ export function SubjectManagementTab() {
     setShowDetailModal(true);
   };
 
+  const handleDeleteSubject = async (subject: Course) => {
+    if (!confirm(t('auto.confirmDeleteSubject', `Are you sure you want to delete the subject "${subject.name}"? This action cannot be undone.`))) {
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+
+    try {
+      const res = await fetch('/api/subjects/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: subject.id }),
+      });
+
+      if (res.ok) {
+        setSuccess(t('auto.subjectDeletedSuccessfully', `Subject deleted successfully!`));
+        fetchSubjects();
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Failed to delete subject');
+      }
+    } catch (error) {
+      setError(t('auto.errorDeletingSubject', `Error deleting subject`));
+    }
+  };
+
   return (
     <div>
       {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
@@ -3806,6 +3833,14 @@ export function SubjectManagementTab() {
                             title={t('auto.editSubject', `Edit Subject`)}
                           >
                             <i className="bi bi-pencil"></i>
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleDeleteSubject(subject)}
+                            title={t('auto.deleteSubject', `Delete Subject`)}
+                          >
+                            <i className="bi bi-trash"></i>
                           </Button>
                         </div>
                       </td>

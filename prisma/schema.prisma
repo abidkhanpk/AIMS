@@ -669,6 +669,7 @@ model AppSettings {
   storageProvider StorageProvider @default(DRIVE)
   driveFolderId   String?
   cloudinaryFolder String?
+  webPlayerScript  String? @db.Text
   
   // Global Developer SMTP Settings
   smtpHost       String?
