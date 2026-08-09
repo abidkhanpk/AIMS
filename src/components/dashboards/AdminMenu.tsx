@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import NotificationDropdown from '../NotificationDropdown';
 import { useTranslation } from 'react-i18next';
 import { signOut, useSession } from 'next-auth/react';
+import packageJson from '../../../package.json';
 import styles from './AdminMenu.module.css';
 
 type MenuItem = {
@@ -388,6 +389,11 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               <span className={styles.linkText}>{t('logout')}</span>
             </button>
           </li>
+          <li className={`${styles.navbarItem} mt-3`}>
+            <div className="text-center text-muted small w-100" style={{ fontSize: '0.75rem' }}>
+              v{packageJson.version}
+            </div>
+          </li>
         </ul>
       </nav>
 
@@ -531,6 +537,9 @@ export default function AdminMenu({ activeKey, onSelect }: { activeKey: string; 
               <i className="bi bi-box-arrow-right me-2"></i>
               {t('logout', 'Sign Out')}
             </Button>
+            <div className="text-center text-muted small mt-2" style={{ fontSize: '0.75rem' }}>
+              v{packageJson.version}
+            </div>
           </div>
         </Offcanvas.Body>
       </Offcanvas>

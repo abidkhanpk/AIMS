@@ -1986,6 +1986,23 @@ function GlobalSettingsTab() {
               </Form.Group>
             </Col>
           </Row>
+          <Row>
+            <Col md={12}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t('auto.webPlayerScript', `Webplayer Script`)}</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={webPlayerScript}
+                  onChange={(e) => setWebPlayerScript(e.target.value)}
+                  placeholder="<script src='...' defer></script>"
+                />
+                <Form.Text className="text-muted">
+                  Script tag to load the custom webplayer on the Help/Videos page.
+                </Form.Text>
+              </Form.Group>
+            </Col>
+          </Row>
           <Row className="mb-3">
             <Col>
               <div className="p-3 bg-light rounded border">
